@@ -1090,7 +1090,12 @@ machine_init() {
     gpu_count="$(nvidia-smi -L 2>/dev/null | grep -c GPU || echo 0)"
     vram_min="$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | sort -n | head -1)"
   elif [[ "$ACCEL" == rocm ]]; then
-    gpu_count="$(rocm-smi -i 2>/dev/null | grep -c '^GPU' || echo 0)"
+    # rocm-smi -i prints several `GPU[N] : ...` lines per device — count unique indices
+    gpu_count="$(rocm-smi -i 2>/dev/null | grep -oE '^GPU\[[0-9]+\]' | sort -u | wc -l)"
+    vram_min="$(rocm-smi --showmeminfo vram 2>/dev/null \
+      | sed -n 's/^GPU\[[0-9]*\][[:space:]]*: VRAM Total Memory (B): *//p' \
+      | sort -n | head -1)"
+    [[ -n "$vram_min" ]] && vram_min=$(( vram_min / 1048576 ))   # bytes -> MiB
   fi
   if (( gpu_count > 0 )); then
     gpus="$(seq -s, 0 $((gpu_count-1)))"
