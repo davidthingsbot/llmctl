@@ -73,8 +73,8 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl point <model>` | repoint agents + web UI only |
 | `llmctl status` / `list` | units, health, agent targets, chat links, GPU memory |
 | `llmctl add` / `remove <model>` | wizard to register a model / unregister it |
-| `llmctl bench <model>` | benchmark now: tok/s + GPU util/power sampled mid-generation |
-| `llmctl stats [model]` | load-time + benchmark history and per-model averages |
+| `llmctl bench <model>` | benchmark now: prefill tok/s (via time-to-first-token over a ~1.5K prompt), generation tok/s, GPU util/power sampled in both phases |
+| `llmctl stats [model]` | load-time + benchmark history (load, ttft, prefill/gen tok/s) and per-model averages |
 | `llmctl env <model>` | print `OPENAI_*` exports for shell clients |
 | `llmctl logs <model> [-f]` | the model unit's journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |

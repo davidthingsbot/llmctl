@@ -296,33 +296,39 @@ est_load() { # est_load <name> — avg of last 5 recorded load times, empty if n
   [[ -n "$v" ]] && echo "$v"
 }
 
-bench_and_log() { # bench_and_log <name> [load_seconds] — 1 warmup + 1 timed generation,
-  local name="$1" load="${2:-}"           # GPU sampled mid-generation, record appended
+bench_and_log() { # bench_and_log <name> [load_seconds]
+  # 1 warmup, then 1 streamed generation over a ~1.5K-token prompt:
+  #   time-to-first-token          -> prompt processing (prefill) tok/s
+  #   token cadence after 1st tok  -> generation tok/s
+  # GPU sampled in both phases; record appended to STATS_FILE.
+  local name="$1" load="${2:-}"
   mkdir -p "$RUN_DIR"
   B_URL="$(url_of "$name")" B_KEY="$(key_of "$name")" B_ID="${ID[$name]}" \
   B_NAME="$name" B_LOAD="$load" B_STATS="$STATS_FILE" python3 <<'PYEOF'
 import json, os, subprocess, threading, time, urllib.request
 
 url, key, mid = os.environ["B_URL"], os.environ["B_KEY"], os.environ["B_ID"]
+HDRS = {"Content-Type": "application/json", "Authorization": "Bearer " + key}
 
-def chat(max_tokens):
-    req = urllib.request.Request(
-        url + "/chat/completions",
-        data=json.dumps({
-            "model": mid, "max_tokens": max_tokens, "temperature": 0,
-            "messages": [{"role": "user",
-                          "content": "Write a detailed paragraph about how GPUs work."}],
-        }).encode(),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
-    t0 = time.monotonic()
-    with urllib.request.urlopen(req, timeout=300) as r:
-        return time.monotonic() - t0, json.load(r)
+def req(body):
+    return urllib.request.Request(url + "/chat/completions",
+                                  data=json.dumps(body).encode(), headers=HDRS)
 
-chat(8)  # warmup (first request may pay one-time compile/graph costs)
+# warmup absorbs one-time compile/graph costs; salted so it can't seed the
+# prefix cache for the measured prompt below
+salt = str(time.time_ns())
+with urllib.request.urlopen(req({
+    "model": mid, "max_tokens": 8, "temperature": 0,
+    "messages": [{"role": "user", "content": "warmup " + salt}]}), timeout=300) as r:
+    r.read()
+
+prompt = (f"[bench {salt}] Ignore the repetition and reply with one sentence: "
+          + "The quick brown fox jumps over the lazy dog. " * 150)
 
 gpu = []
-def sample():
-    time.sleep(2.5)  # land mid-generation
+first_token = threading.Event()
+def sample(phase, delay):
+    time.sleep(delay)
     try:
         out = subprocess.run(
             ["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,power.draw",
@@ -330,30 +336,71 @@ def sample():
             capture_output=True, text=True, timeout=5).stdout
         for line in out.strip().splitlines():
             i, u, m, p = [x.strip() for x in line.split(",")]
-            gpu.append({"gpu": int(i), "util_pct": float(u),
+            gpu.append({"phase": phase, "gpu": int(i), "util_pct": float(u),
                         "mem_mib": float(m), "power_w": float(p)})
     except Exception:
         pass
+def sample_gen():
+    if first_token.wait(timeout=280):
+        sample("gen", 0.25)
 
-t = threading.Thread(target=sample); t.start()
-dt, resp = chat(200)
-t.join()
+th_pre = threading.Thread(target=sample, args=("prefill", 0.15)); th_pre.start()
+th_gen = threading.Thread(target=sample_gen); th_gen.start()
 
-ct = resp.get("usage", {}).get("completion_tokens")
-tok_s = round(ct / dt, 1) if ct else None
+t0 = time.monotonic(); t_first = None; usage = None; chunks = 0
+with urllib.request.urlopen(req({
+    "model": mid, "max_tokens": 200, "temperature": 0, "stream": True,
+    "stream_options": {"include_usage": True},
+    "messages": [{"role": "user", "content": prompt}]}), timeout=300) as r:
+    for raw in r:
+        line = raw.decode("utf-8", "replace").strip()
+        if not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if data == "[DONE]":
+            break
+        try:
+            ev = json.loads(data)
+        except ValueError:
+            continue
+        if ev.get("usage"):
+            usage = ev["usage"]
+        ch = ev.get("choices") or []
+        if ch:
+            d = ch[0].get("delta") or {}
+            if d.get("content") or d.get("reasoning") or d.get("reasoning_content"):
+                if t_first is None:
+                    t_first = time.monotonic()
+                    first_token.set()
+                chunks += 1
+t_end = time.monotonic()
+first_token.set()  # release the gen sampler even if nothing streamed
+th_pre.join(); th_gen.join()
+
+pt = (usage or {}).get("prompt_tokens")
+ct = (usage or {}).get("completion_tokens") or chunks or None
+ttft = round(t_first - t0, 3) if t_first else None
+prompt_tps = round(pt / ttft, 1) if pt and ttft else None
+gen_tps = (round((ct - 1) / (t_end - t_first), 1)
+           if ct and ct > 1 and t_first and t_end > t_first else None)
+tok_s = round(ct / (t_end - t0), 1) if ct else None
+
 rec = {
     "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
     "model": os.environ["B_NAME"],
     "load_s": float(os.environ["B_LOAD"]) if os.environ["B_LOAD"] else None,
-    "tok_s": tok_s, "bench_tokens": ct, "bench_time_s": round(dt, 2),
+    "ttft_s": ttft, "prompt_tokens": pt, "prompt_tps": prompt_tps,
+    "gen_tps": gen_tps, "tok_s": tok_s,
+    "bench_tokens": ct, "bench_time_s": round(t_end - t0, 2),
     "gpu": gpu,
 }
 with open(os.environ["B_STATS"], "a") as f:
     f.write(json.dumps(rec) + "\n")
 
-g = " | ".join(f"GPU{s['gpu']}: {s['util_pct']:.0f}% {s['power_w']:.0f}W {s['mem_mib']:.0f}MiB"
-               for s in gpu) or "no GPU sample"
-print(f"[llmctl]   benchmark: {tok_s} tok/s ({ct} tokens in {dt:.1f}s) | {g}")
+g = " | ".join(f"GPU{s['gpu']}: {s['util_pct']:.0f}% {s['power_w']:.0f}W"
+               for s in gpu if s["phase"] == "gen") or "no GPU sample"
+print(f"[llmctl]   benchmark: prefill {pt or '?'} tok in {ttft or '?'}s"
+      f" ({prompt_tps or '?'} tok/s) | gen {ct or '?'} tok @ {gen_tps or '?'} tok/s | {g}")
 PYEOF
 }
 
@@ -1137,23 +1184,31 @@ if not rows:
 def fmt(v, suffix="", nd=1):
     return "-" if v is None else f"{round(v, nd):g}{suffix}"
 
-print(f"{'when':<20}{'model':<15}{'load':>7}{'tok/s':>8}  {'gpu util / power (sampled mid-gen)'}")
+print(f"{'when':<20}{'model':<15}{'load':>7}{'ttft':>7}{'pp t/s':>8}{'gen t/s':>8}  "
+      f"{'gpu util / power (gen phase)'}")
 for r in rows[-30:]:
-    g = " ".join(f"GPU{s['gpu']}:{s['util_pct']:.0f}%/{s['power_w']:.0f}W" for s in r.get("gpu") or [])
+    gs = [s for s in (r.get("gpu") or []) if s.get("phase", "gen") == "gen"]
+    g = " ".join(f"GPU{s['gpu']}:{s['util_pct']:.0f}%/{s['power_w']:.0f}W" for s in gs)
+    # pre-split records only have blended tok_s — show it in the gen column
+    gen = r.get("gen_tps", r.get("tok_s"))
     print(f"{r.get('ts','?'):<20}{r.get('model','?'):<15}"
-          f"{fmt(r.get('load_s'),'s',0):>7}{fmt(r.get('tok_s')):>8}  {g}")
+          f"{fmt(r.get('load_s'),'s',0):>7}{fmt(r.get('ttft_s'),'s',2):>7}"
+          f"{fmt(r.get('prompt_tps')):>8}{fmt(gen):>8}  {g}")
 
-agg = defaultdict(lambda: {"load": [], "tok": []})
+agg = defaultdict(lambda: {"load": [], "pp": [], "gen": []})
 for r in rows:
-    if r.get("load_s") is not None: agg[r["model"]]["load"].append(r["load_s"])
-    if r.get("tok_s")  is not None: agg[r["model"]]["tok"].append(r["tok_s"])
+    a = agg[r.get("model", "?")]
+    if r.get("load_s") is not None: a["load"].append(r["load_s"])
+    if r.get("prompt_tps") is not None: a["pp"].append(r["prompt_tps"])
+    gen = r.get("gen_tps", r.get("tok_s"))
+    if gen is not None: a["gen"].append(gen)
 
+def avg(xs): return sum(xs) / len(xs) if xs else None
 print("\naverages:")
 for m, a in sorted(agg.items()):
-    load = sum(a["load"]) / len(a["load"]) if a["load"] else None
-    tok  = sum(a["tok"])  / len(a["tok"])  if a["tok"]  else None
-    print(f"  {m:<15} load {fmt(load,'s',0):>6} ({len(a['load'])} starts)   "
-          f"{fmt(tok):>6} tok/s ({len(a['tok'])} benches)")
+    print(f"  {m:<15} load {fmt(avg(a['load']),'s',0):>6} ({len(a['load'])} starts)   "
+          f"prefill {fmt(avg(a['pp'])):>8} tok/s   gen {fmt(avg(a['gen'])):>6} tok/s "
+          f"({len(a['gen'])} benches)")
 PYEOF
 }
 
