@@ -1,0 +1,1290 @@
+#!/usr/bin/env bash
+# llmctl — run one or more local LLM servers on this host (dual RTX 3090) and
+# keep the agents (openclaw + hermes) pointed at the right one.
+#
+# Fresh replacement for the dual-rtx3090__*.sh switch scripts. Differences:
+#   * Every model has its OWN port (convention below) — models are no longer
+#     mutually exclusive by port, so several can run at once IF they fit in VRAM.
+#   * Generates its own systemd user units (llm-<name>.service) and run scripts
+#     (~/.config/llmctl/run-<name>.sh). The legacy qwen-dual3090-* /
+#     local-agent-qwen units are stopped+disabled the first time you start
+#     anything from here.
+#   * `set` / `point` rewrite the agent configs (hermes ~/.hermes/config.yaml,
+#     openclaw ~/.openclaw/*.json incl. auth-profiles) with the right base_url,
+#     model id, context window and API key, then restart the gateways.
+#   * `set` / `point` also manage the browser chat page: llama.cpp models serve
+#     their own UI on the model port; for vLLM models the open-webui docker
+#     container (http://localhost:8088) is started/repointed, and it is stopped
+#     when a llama.cpp model takes over. `status` shows the current chat link.
+#
+# Port convention (fixed per model, agents never need to guess):
+#   19434  27b-fp8        vLLM       Qwen/Qwen3.6-27B-FP8          (current default)
+#   19435  35b-moe-vllm   vLLM       Qwen/Qwen3.6-35B-A3B-FP8
+#   19436  27b-q8         llama.cpp  Qwen3.6-27B-Q8_0.gguf
+#   19437  35b-moe-gguf   llama.cpp  Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+#
+# Usage:
+#   llmctl                     interactive menu
+#   llmctl <model>             shorthand for `llmctl set <model>`
+#   llmctl list                registry + status
+#   llmctl status              units, health, GPU, where the agents point
+#   llmctl set  <model>        THE switch: stop everything else, start <model>,
+#                              point both agents at it (permanent across boot)
+#   llmctl up   <model>...     start model(s) alongside whatever is running
+#   llmctl down <model>...|all stop model(s)
+#   llmctl point <model>       repoint openclaw+hermes only (model must be up)
+#   llmctl env  <model>        print OPENAI_* exports for shell/manual clients
+#   llmctl logs <model> [-f]   journal for a model's unit
+#   llmctl add                 interactive wizard: register a NEW model
+#   llmctl remove <model>      unregister a wizard-added model (stops it first)
+#   llmctl bench <model>       benchmark a running model now (tok/s, GPU, power)
+#   llmctl stats [model]       show recorded load times + benchmark history
+#   llmctl machine             show the effective machine profile + probed hardware
+#   llmctl machine init        probe this machine and write ~/.config/llmctl/machine.conf
+#
+# Machine profile: host-specific facts live in ~/.config/llmctl/machine.conf
+# (key=value, optional — without it the defaults below describe THIS box).
+# Keys: MACHINE_NAME, GPUS_DEFAULT, TENSOR_PARALLEL_DEFAULT, VRAM_PER_GPU_MB,
+#       VLLM_BIN, VLLM_KEYFILE, LLAMA_SERVER, LLAMA_KEYFILE, WIZARD_BASE_PORT,
+#       ENABLE_BUILTIN_MODELS (0 on other machines: registry comes only from
+#       models.d/), LEGACY_UNITS, HERMES_ENABLE/CFG/UNIT,
+#       OPENCLAW_ENABLE/DIR/UNIT, WEBUI_ENABLE/CONTAINER/PORT/IMAGE.
+# To port llmctl to a new machine: copy this script + run `llmctl machine init`,
+# edit the generated profile, then `llmctl add` your models.
+#
+# Every start is timed and (by default) followed by a small benchmark; results
+# append to ~/.config/llmctl/stats.jsonl and feed the "typical load time"
+# estimate shown on the next start. STATS=0 llmctl set <m> skips the benchmark.
+#
+# Wizard-added models live in ~/.config/llmctl/models.d/<name>.conf (key=value,
+# editable by hand; see `llmctl add` output). Built-in models live in the
+# registry block below.
+#
+# NOTE: all four current configs want ~21-23 GB per card, so no two of them fit
+# together on 2x24 GB. `up` checks free VRAM first (FORCE=1 to override).
+# Concurrency becomes useful once you add smaller configs to the registry.
+
+set -euo pipefail
+
+# ----------------------------------------------------------------------------
+# Registry — add a model: append its name and fill in every map + a cmd_* case
+# ----------------------------------------------------------------------------
+MODELS=(27b-fp8 35b-moe-vllm 27b-q8 35b-moe-gguf)
+
+declare -A PORT=(    [27b-fp8]=19434 [35b-moe-vllm]=19435 [27b-q8]=19436 [35b-moe-gguf]=19437 )
+declare -A BACKEND=( [27b-fp8]=vllm  [35b-moe-vllm]=vllm  [27b-q8]=llamacpp [35b-moe-gguf]=llamacpp )
+# id = served model name (what agents put in "model")
+declare -A ID=(      [27b-fp8]=qwen3.6-27b-fp8 [35b-moe-vllm]=qwen3.6-35b-a3b-fp8
+                     [27b-q8]=qwen3.6-27b-q8   [35b-moe-gguf]=qwen3.6-35b-a3b-q4 )
+# context window written into the agent configs (safe round numbers <= server max)
+declare -A CTX=(     [27b-fp8]=128000 [35b-moe-vllm]=128000 [27b-q8]=256000 [35b-moe-gguf]=256000 )
+declare -A DESC=(    [27b-fp8]="Qwen3.6-27B dense FP8, vLLM, 128K, tuned"
+                     [35b-moe-vllm]="Qwen3.6-35B-A3B MoE FP8, vLLM, 128K"
+                     [27b-q8]="Qwen3.6-27B dense Q8_0 GGUF, llama.cpp, 2x256K"
+                     [35b-moe-gguf]="Qwen3.6-35B-A3B MoE Q4 GGUF, llama.cpp, 2x256K" )
+# MiB of free VRAM needed PER GPU before start (estimates from past runs)
+declare -A VRAM=(    [27b-fp8]=23200 [35b-moe-vllm]=22700 [27b-q8]=23000 [35b-moe-gguf]=21500 )
+# seconds to wait for /health
+declare -A TIMEOUT=( [27b-fp8]=900 [35b-moe-vllm]=900 [27b-q8]=240 [35b-moe-gguf]=240 )
+
+VLLM_BIN="$HOME/.venvs/vllm/bin/vllm"
+VLLM_KEYFILE="$HOME/.config/vllm/api-keys"
+LLAMA_SERVER="${LLAMA_SERVER:-$HOME/work/llama.cpp/build/bin/llama-server}"
+LLAMA_KEYFILE="$HOME/.config/llama.cpp/api-keys"
+declare -A KEYFILE=( [27b-fp8]=$VLLM_KEYFILE [35b-moe-vllm]=$VLLM_KEYFILE
+                     [27b-q8]=$LLAMA_KEYFILE [35b-moe-gguf]=$LLAMA_KEYFILE )
+
+MODELS_DIR="$HOME/models"   # where GGUF weights live (profile-overridable);
+                            # llmctl itself can be installed/run from anywhere
+# GGUF_27B / GGUF_35B are derived from MODELS_DIR after the profile loads
+
+RUN_DIR="$HOME/.config/llmctl"
+STATS_FILE="${STATS_FILE:-$RUN_DIR/stats.jsonl}"   # one JSON record per start/bench
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+
+# Old single-port (19434) units this script supersedes
+LEGACY_UNITS=(
+  qwen-dual3090-27b-q8-llamacpp.service
+  qwen-dual3090-35b-moe-llamacpp.service
+  qwen-dual3090-27b-fp8-vllm.service
+  qwen-dual3090-35b-moe-vllm.service
+  local-agent-qwen.service
+)
+
+# Browser chat: llama.cpp serves its own UI on the model port; vLLM has none,
+# so the open-webui docker container (port 8088) fronts it. `set`/`point` keep
+# it running+pointed for vLLM models and stop it for llama.cpp ones.
+WEBUI_CONTAINER="open-webui"
+WEBUI_PORT=8088
+WEBUI_IMAGE="ghcr.io/open-webui/open-webui:main"
+
+HERMES_CFG="$HOME/.hermes/config.yaml"
+HERMES_CTX_CACHE="$HOME/.hermes/context_length_cache.yaml"
+HERMES_UNIT="hermes-gateway.service"
+OPENCLAW_DIR="$HOME/.openclaw"
+OPENCLAW_UNIT="openclaw-gateway.service"
+
+# Machine-profile defaults (overridable via ~/.config/llmctl/machine.conf).
+# These describe the original host: DW-ASUS-LINUX, dual RTX 3090.
+MACHINE_CONF="${MACHINE_CONF:-$RUN_DIR/machine.conf}"
+MACHINE_NAME="$(hostname 2>/dev/null || echo unknown)"
+ACCEL=""                       # cuda | rocm | cpu; empty = auto-detect
+GPUS_DEFAULT="0,1"             # default visible devices for new models ("" on cpu)
+TENSOR_PARALLEL_DEFAULT=""     # empty = derive from GPUS_DEFAULT
+VRAM_PER_GPU_MB=24576          # informational / sanity checks (0 on cpu)
+WIZARD_BASE_PORT=19438         # `llmctl add` picks the next free port from here
+ENABLE_BUILTIN_MODELS=1        # 0 = ignore the registry block (models.d/ only)
+HERMES_ENABLE=1
+OPENCLAW_ENABLE=1
+WEBUI_ENABLE=1
+
+# ----------------------------------------------------------------------------
+# Helpers
+# ----------------------------------------------------------------------------
+log() { printf '\033[1;36m[llmctl]\033[0m %s\n' "$*"; }
+err() { printf '\033[1;31m[llmctl:error]\033[0m %s\n' "$*" >&2; }
+die() { err "$*"; exit 1; }
+
+unit_of()  { echo "llm-$1.service"; }
+url_of()   { echo "http://127.0.0.1:${PORT[$1]}/v1"; }
+key_of()   { cat "${KEYFILE[$1]}"; }
+
+# ----------------------------------------------------------------------------
+# External models (~/.config/llmctl/models.d/*.conf) — added by `llmctl add`.
+# Files are PARSED (key=value), not sourced, so a broken file can't break llmctl.
+# Required keys: BACKEND (vllm|llamacpp), PORT, MODEL_REF (HF repo | gguf path).
+# Optional: MODEL_ID, CTX, DESC, VRAM_MB, HEALTH_TIMEOUT, GPUS, EXTRA_ARGS,
+#           TENSOR_PARALLEL, GPU_UTIL, MAX_MODEL_LEN (vllm),
+#           SERVER_CTX, STREAMS (llamacpp).
+# ----------------------------------------------------------------------------
+MODELS_D="$HOME/.config/llmctl/models.d"
+declare -A EXTERNAL MREF TP GUTIL MAXLEN SRVCTX STREAMS GPUS XARGS
+
+conf_get() { # conf_get <key> <file> [default]
+  local v
+  v="$(sed -n "s/^$1=//p" "$2" | tail -1)"
+  v="${v%\"}"; v="${v#\"}"
+  echo "${v:-${3:-}}"
+}
+
+load_machine_profile() {
+  [[ -f "$MACHINE_CONF" ]] || return 0
+  local k v n
+  for k in MACHINE_NAME GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT VRAM_PER_GPU_MB \
+           VLLM_BIN VLLM_KEYFILE LLAMA_SERVER LLAMA_KEYFILE MODELS_DIR \
+           WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
+           HERMES_ENABLE HERMES_CFG HERMES_UNIT \
+           OPENCLAW_ENABLE OPENCLAW_DIR OPENCLAW_UNIT \
+           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE; do
+    v="$(conf_get "$k" "$MACHINE_CONF")"
+    [[ -n "$v" ]] && printf -v "$k" '%s' "$v"
+  done
+  v="$(conf_get ACCEL "$MACHINE_CONF")"
+  [[ -n "$v" ]] && ACCEL="$v"
+  v="$(conf_get LEGACY_UNITS "$MACHINE_CONF")"
+  [[ -n "$v" ]] && read -ra LEGACY_UNITS <<< "$v"
+
+  if [[ "$ENABLE_BUILTIN_MODELS" != 1 ]]; then
+    for n in "${MODELS[@]}"; do
+      unset "PORT[$n]" "BACKEND[$n]" "ID[$n]" "CTX[$n]" "DESC[$n]" \
+            "VRAM[$n]" "TIMEOUT[$n]" "KEYFILE[$n]"
+    done
+    MODELS=()
+  else
+    # keyfile paths may have been overridden — refresh the built-ins' entries
+    for n in "${MODELS[@]}"; do
+      [[ "${BACKEND[$n]}" == vllm ]] && KEYFILE[$n]="$VLLM_KEYFILE" || KEYFILE[$n]="$LLAMA_KEYFILE"
+    done
+  fi
+}
+load_machine_profile
+
+# Resolve the accelerator: never assume CUDA. Auto-detect when unset, and pick
+# the matching visible-devices env var for generated run scripts.
+if [[ -z "$ACCEL" ]]; then
+  if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+    ACCEL=cuda
+  elif command -v rocm-smi >/dev/null 2>&1; then
+    ACCEL=rocm
+  else
+    ACCEL=cpu
+  fi
+fi
+case "$ACCEL" in
+  cuda) GPU_ENV_VAR="CUDA_VISIBLE_DEVICES";;
+  rocm) GPU_ENV_VAR="HIP_VISIBLE_DEVICES";;
+  *)    GPU_ENV_VAR=""; GPUS_DEFAULT=""; VRAM_PER_GPU_MB=0;;
+esac
+
+GGUF_27B="$MODELS_DIR/gguf/qwen3.6/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q8_0.gguf"
+GGUF_35B="$MODELS_DIR/gguf/qwen3.6/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf"
+
+load_external_models() {
+  local f name backend port
+  shopt -s nullglob
+  for f in "$MODELS_D"/*.conf; do
+    name="$(basename "$f" .conf)"
+    if [[ -n "${PORT[$name]:-}" ]]; then
+      err "models.d: '$name' collides with an existing model — skipping $f"; continue
+    fi
+    backend="$(conf_get BACKEND "$f")"
+    port="$(conf_get PORT "$f")"
+    if [[ ! "$backend" =~ ^(vllm|llamacpp)$ || ! "$port" =~ ^[0-9]+$ || -z "$(conf_get MODEL_REF "$f")" ]]; then
+      err "models.d: $f needs BACKEND=vllm|llamacpp, numeric PORT, MODEL_REF — skipping"; continue
+    fi
+    local n
+    for n in "${MODELS[@]}"; do
+      [[ "${PORT[$n]}" == "$port" ]] && { err "models.d: $f wants port $port, already used by '$n' — skipping"; continue 2; }
+    done
+    MODELS+=("$name")
+    EXTERNAL[$name]="$f"
+    BACKEND[$name]="$backend"
+    PORT[$name]="$port"
+    MREF[$name]="$(conf_get MODEL_REF "$f")"
+    ID[$name]="$(conf_get MODEL_ID "$f" "$name")"
+    CTX[$name]="$(conf_get CTX "$f" 128000)"
+    DESC[$name]="$(conf_get DESC "$f" "${MREF[$name]} ($backend)")"
+    VRAM[$name]="$(conf_get VRAM_MB "$f" 20000)"
+    GPUS[$name]="$(conf_get GPUS "$f" "$GPUS_DEFAULT")"
+    XARGS[$name]="$(conf_get EXTRA_ARGS "$f")"
+    if [[ "$backend" == vllm ]]; then
+      KEYFILE[$name]="$VLLM_KEYFILE"
+      TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 900)"
+      TP[$name]="$(conf_get TENSOR_PARALLEL "$f" 2)"
+      GUTIL[$name]="$(conf_get GPU_UTIL "$f" 0.90)"
+      MAXLEN[$name]="$(conf_get MAX_MODEL_LEN "$f" "${CTX[$name]}")"
+    else
+      KEYFILE[$name]="$LLAMA_KEYFILE"
+      TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 300)"
+      SRVCTX[$name]="$(conf_get SERVER_CTX "$f" "${CTX[$name]}")"
+      STREAMS[$name]="$(conf_get STREAMS "$f" 1)"
+    fi
+  done
+}
+load_external_models
+
+require_model() {
+  [[ -n "${PORT[$1]:-}" ]] || die "unknown model '$1' (know: ${MODELS[*]})"
+}
+
+is_active() { systemctl --user is-active --quiet "$(unit_of "$1")" 2>/dev/null; }
+
+is_healthy() {
+  curl -fsS -o /dev/null --max-time 2 "http://127.0.0.1:${PORT[$1]}/health" 2>/dev/null
+}
+
+wait_health_timed() { # wait_health_timed <name> <timeout> [est] — stdout: elapsed seconds
+  local name="$1" timeout="$2" est="${3:-}" i
+  for ((i=0; i<timeout; i++)); do
+    is_healthy "$name" && { echo "$i"; return 0; }
+    if (( i > 0 && i % 10 == 0 )); then
+      printf '\033[1;36m[llmctl]\033[0m   … loading: %ss elapsed%s\n' \
+        "$i" "${est:+ (typical ~${est}s)}" >&2
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+est_load() { # est_load <name> — avg of last 5 recorded load times, empty if none
+  [[ -f "$STATS_FILE" ]] || return 1
+  local v
+  v="$(jq -rs --arg m "$1" \
+    '[.[] | select(.model==$m and .load_s!=null) | .load_s]
+     | if length==0 then empty else (.[-5:] | add/length | round) end' \
+    "$STATS_FILE" 2>/dev/null)"
+  [[ -n "$v" ]] && echo "$v"
+}
+
+bench_and_log() { # bench_and_log <name> [load_seconds] — 1 warmup + 1 timed generation,
+  local name="$1" load="${2:-}"           # GPU sampled mid-generation, record appended
+  mkdir -p "$RUN_DIR"
+  B_URL="$(url_of "$name")" B_KEY="$(key_of "$name")" B_ID="${ID[$name]}" \
+  B_NAME="$name" B_LOAD="$load" B_STATS="$STATS_FILE" python3 <<'PYEOF'
+import json, os, subprocess, threading, time, urllib.request
+
+url, key, mid = os.environ["B_URL"], os.environ["B_KEY"], os.environ["B_ID"]
+
+def chat(max_tokens):
+    req = urllib.request.Request(
+        url + "/chat/completions",
+        data=json.dumps({
+            "model": mid, "max_tokens": max_tokens, "temperature": 0,
+            "messages": [{"role": "user",
+                          "content": "Write a detailed paragraph about how GPUs work."}],
+        }).encode(),
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
+    t0 = time.monotonic()
+    with urllib.request.urlopen(req, timeout=300) as r:
+        return time.monotonic() - t0, json.load(r)
+
+chat(8)  # warmup (first request may pay one-time compile/graph costs)
+
+gpu = []
+def sample():
+    time.sleep(2.5)  # land mid-generation
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,power.draw",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=5).stdout
+        for line in out.strip().splitlines():
+            i, u, m, p = [x.strip() for x in line.split(",")]
+            gpu.append({"gpu": int(i), "util_pct": float(u),
+                        "mem_mib": float(m), "power_w": float(p)})
+    except Exception:
+        pass
+
+t = threading.Thread(target=sample); t.start()
+dt, resp = chat(200)
+t.join()
+
+ct = resp.get("usage", {}).get("completion_tokens")
+tok_s = round(ct / dt, 1) if ct else None
+rec = {
+    "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    "model": os.environ["B_NAME"],
+    "load_s": float(os.environ["B_LOAD"]) if os.environ["B_LOAD"] else None,
+    "tok_s": tok_s, "bench_tokens": ct, "bench_time_s": round(dt, 2),
+    "gpu": gpu,
+}
+with open(os.environ["B_STATS"], "a") as f:
+    f.write(json.dumps(rec) + "\n")
+
+g = " | ".join(f"GPU{s['gpu']}: {s['util_pct']:.0f}% {s['power_w']:.0f}W {s['mem_mib']:.0f}MiB"
+               for s in gpu) or "no GPU sample"
+print(f"[llmctl]   benchmark: {tok_s} tok/s ({ct} tokens in {dt:.1f}s) | {g}")
+PYEOF
+}
+
+start_model() { # start_model <name> — write unit, timed start, health-wait, bench+log
+  local name="$1" est="" elapsed
+  write_unit "$name"
+  est="$(est_load "$name" || true)"
+  if [[ -n "$est" ]]; then
+    log "starting $name (:${PORT[$name]}) — typical load time ~${est}s, timeout ${TIMEOUT[$name]}s"
+  else
+    log "starting $name (:${PORT[$name]}) — no load-time history yet, timeout ${TIMEOUT[$name]}s"
+  fi
+  systemctl --user start "$(unit_of "$name")"
+  elapsed="$(wait_health_timed "$name" "${TIMEOUT[$name]}" "$est")" || return 1
+  log "READY in ${elapsed}s: ${ID[$name]} @ $(url_of "$name")"
+  if [[ "${STATS:-1}" == 1 ]]; then
+    bench_and_log "$name" "$elapsed" || err "benchmark failed — model is up regardless"
+  fi
+}
+
+status_of() { # short status string
+  if is_active "$1"; then
+    is_healthy "$1" && echo "up+healthy" || echo "starting"
+  else
+    echo "-"
+  fi
+}
+
+stop_legacy() {
+  local u any=0
+  for u in "${LEGACY_UNITS[@]}"; do
+    if systemctl --user is-active --quiet "$u" 2>/dev/null; then
+      log "stopping legacy unit $u (superseded by llmctl)"
+      systemctl --user stop "$u" || true
+      any=1
+    fi
+    systemctl --user disable "$u" 2>/dev/null || true
+  done
+  (( any )) && log "legacy 19434 units stopped+disabled" || true
+}
+
+ensure_linger() {
+  loginctl show-user "$USER" 2>/dev/null | grep -q 'Linger=yes' && return 0
+  log "enabling user lingering (boot autostart without login)"
+  loginctl enable-linger "$USER" 2>/dev/null \
+    || sudo loginctl enable-linger "$USER" 2>/dev/null \
+    || err "could not enable linger; run: sudo loginctl enable-linger $USER"
+}
+
+vram_ok() { # free VRAM per GPU >= VRAM[name], unless FORCE=1 (CUDA only)
+  local name="$1" need="${VRAM[$name]}" line idx free bad=0
+  [[ "${FORCE:-0}" == 1 ]] && { log "FORCE=1 — skipping VRAM check"; return 0; }
+  if [[ "$ACCEL" != cuda ]]; then
+    log "VRAM pre-check unavailable on accel=$ACCEL — starting without it"
+    return 0
+  fi
+  command -v nvidia-smi >/dev/null || return 0
+  while IFS=, read -r idx free; do
+    free="${free// /}"; free="${free%MiB}"
+    if (( free < need )); then
+      err "GPU $idx has ${free} MiB free, '$name' needs ~${need} MiB per GPU"
+      bad=1
+    fi
+  done < <(nvidia-smi --query-gpu=index,memory.free --format=csv,noheader,nounits 2>/dev/null | sed 's/, /,/')
+  (( bad )) && { err "not enough VRAM — 'llmctl down <other>' first, or FORCE=1 to try anyway"; return 1; }
+  return 0
+}
+
+gpu_report() {
+  case "$ACCEL" in
+    cuda)
+      command -v nvidia-smi >/dev/null || return 0
+      log "GPU memory:"
+      nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader | sed 's/^/    /';;
+    rocm)
+      command -v rocm-smi >/dev/null || return 0
+      log "GPU memory (rocm):"
+      rocm-smi --showmeminfo vram 2>/dev/null | grep -i vram | sed 's/^/    /' || true;;
+    *) : ;;  # cpu — nothing to report
+  esac
+}
+
+# ----------------------------------------------------------------------------
+# Run scripts + units (generated fresh on every `up`/`set` — edit registry, not these)
+# ----------------------------------------------------------------------------
+write_external_run_script() { # generic template for models.d entries
+  local name="$1" port="${PORT[$name]}" script="$RUN_DIR/run-$name.sh"
+  local gpu_export="" accel_env="" gpu_flags="" mem_flag=""
+
+  # never assume CUDA: device env var and GPU-only flags come from ACCEL
+  [[ -n "$GPU_ENV_VAR" && -n "${GPUS[$name]}" ]] && gpu_export="export $GPU_ENV_VAR=${GPUS[$name]}"
+
+  if [[ "${BACKEND[$name]}" == vllm ]]; then
+    [[ "$ACCEL" == cuda ]] && accel_env="export VLLM_USE_FLASHINFER_SAMPLER=0"
+    [[ "$ACCEL" != cpu ]] && mem_flag="--gpu-memory-utilization ${GUTIL[$name]} "
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${EXTERNAL[$name]} — edit that file, not this one
+set -euo pipefail
+export PATH="$(dirname "$VLLM_BIN"):\$PATH"
+${gpu_export}
+${accel_env}
+export VLLM_NO_USAGE_STATS=1
+exec "$VLLM_BIN" serve ${MREF[$name]} \\
+  --served-model-name ${ID[$name]} \\
+  --tensor-parallel-size ${TP[$name]} ${mem_flag}\\
+  --max-model-len ${MAXLEN[$name]} \\
+  --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)" ${XARGS[$name]}
+EOF
+  else
+    if [[ "$ACCEL" != cpu ]]; then
+      gpu_flags="-ngl 99 "
+      [[ "${GPUS[$name]}" == *,* ]] && gpu_flags+="--split-mode layer --tensor-split 1,1 "
+    fi
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${EXTERNAL[$name]} — edit that file, not this one
+set -euo pipefail
+${gpu_export}
+exec "$LLAMA_SERVER" -m "${MREF[$name]}" --alias ${ID[$name]} \\
+  --host 0.0.0.0 --port $port ${gpu_flags}\\
+  --ctx-size ${SRVCTX[$name]} -np ${STREAMS[$name]} --flash-attn on --jinja \\
+  --api-key-file "$LLAMA_KEYFILE" ${XARGS[$name]}
+EOF
+  fi
+  chmod +x "$script"
+}
+
+write_run_script() { # write_run_script <name>
+  local name="$1" port="${PORT[$name]}" script="$RUN_DIR/run-$name.sh"
+  mkdir -p "$RUN_DIR"
+
+  if [[ -n "${EXTERNAL[$name]:-}" ]]; then
+    write_external_run_script "$name"
+    return 0
+  fi
+
+  case "$name" in
+    27b-fp8)
+      cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl — tuned config carried over from run-27b-fp8.sh
+set -euo pipefail
+export PATH="$HOME/.venvs/vllm/bin:\$PATH"
+export CUDA_VISIBLE_DEVICES=0,1
+export VLLM_USE_FLASHINFER_SAMPLER=0
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:False
+export VLLM_DISABLED_KERNELS=AllSparkLinearKernel
+export VLLM_MARLIN_USE_ATOMIC_ADD=1
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+export VLLM_FLOAT32_MATMUL_PRECISION=high
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+export NCCL_CUMEM_ENABLE=0
+export OMP_NUM_THREADS=1
+export VLLM_NO_USAGE_STATS=1
+exec "$VLLM_BIN" serve Qwen/Qwen3.6-27B-FP8 \\
+  --served-model-name ${ID[$name]} \\
+  --tensor-parallel-size 2 --disable-custom-all-reduce --dtype float16 \\
+  --gpu-memory-utilization 0.94 --kv-cache-memory-bytes 4981989376 \\
+  --max-model-len 131072 --max-num-seqs 3 --max-num-batched-tokens 2048 \\
+  --compilation-config '{"cudagraph_capture_sizes":[4,8,12]}' \\
+  --enable-prefix-caching \\
+  --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml \\
+  --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)"
+EOF
+      ;;
+    35b-moe-vllm)
+      cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl
+set -euo pipefail
+export PATH="$HOME/.venvs/vllm/bin:\$PATH"
+export CUDA_VISIBLE_DEVICES=0,1
+export VLLM_USE_FLASHINFER_SAMPLER=0
+export VLLM_NO_USAGE_STATS=1
+exec "$VLLM_BIN" serve Qwen/Qwen3.6-35B-A3B-FP8 \\
+  --served-model-name ${ID[$name]} \\
+  --tensor-parallel-size 2 --max-model-len 131072 --max-num-seqs 2 \\
+  --gpu-memory-utilization 0.92 \\
+  --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser hermes \\
+  --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)"
+EOF
+      ;;
+    27b-q8)
+      cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl — 2 streams x 256K, q8_0 KV
+set -euo pipefail
+export CUDA_VISIBLE_DEVICES=0,1
+exec "$LLAMA_SERVER" -m "$GGUF_27B" --alias ${ID[$name]} \\
+  --host 0.0.0.0 --port $port -ngl 99 --split-mode layer --tensor-split 1,1 \\
+  --ctx-size 524288 -np 2 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja \\
+  --temp 0.7 --top-k 20 --top-p 0.9 --min-p 0.0 --presence-penalty 0.0 \\
+  --api-key-file "$LLAMA_KEYFILE"
+EOF
+      ;;
+    35b-moe-gguf)
+      cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl — 2 streams x 256K, q8_0 KV
+set -euo pipefail
+export CUDA_VISIBLE_DEVICES=0,1
+exec "$LLAMA_SERVER" -m "$GGUF_35B" --alias ${ID[$name]} \\
+  --host 0.0.0.0 --port $port -ngl 99 --ctx-size 524288 -np 2 \\
+  --split-mode layer --tensor-split 1,1 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja \\
+  --temp 0.7 --top-k 20 --top-p 0.9 --min-p 0.0 --presence-penalty 0.2 \\
+  --api-key-file "$LLAMA_KEYFILE"
+EOF
+      ;;
+    *) die "no run script recipe for '$name'";;
+  esac
+  chmod +x "$script"
+}
+
+check_prereqs() { # backend binaries / model files present
+  local name="$1"
+  [[ -s "${KEYFILE[$name]}" ]] || die "missing API key file ${KEYFILE[$name]}"
+  case "${BACKEND[$name]}" in
+    vllm)     [[ -x "$VLLM_BIN" ]] || die "vllm not found at $VLLM_BIN";;
+    llamacpp) [[ -x "$LLAMA_SERVER" ]] || die "llama-server not found at $LLAMA_SERVER";;
+  esac
+  case "$name" in
+    27b-q8)       [[ -f "$GGUF_27B" ]] || die "missing $GGUF_27B (hf download unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q8_0.gguf --local-dir $(dirname "$GGUF_27B"))";;
+    35b-moe-gguf) [[ -f "$GGUF_35B" ]] || die "missing $GGUF_35B (hf download unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --local-dir $(dirname "$GGUF_35B"))";;
+  esac
+  if [[ -n "${EXTERNAL[$name]:-}" && "${BACKEND[$name]}" == llamacpp && ! -f "${MREF[$name]}" ]]; then
+    die "missing GGUF file ${MREF[$name]} (fix MODEL_REF in ${EXTERNAL[$name]} or download it)"
+  fi
+}
+
+write_unit() { # write_unit <name>
+  local name="$1" unit
+  unit="$(unit_of "$name")"
+  write_run_script "$name"
+  mkdir -p "$SYSTEMD_USER_DIR"
+  cat > "$SYSTEMD_USER_DIR/$unit" <<EOF
+[Unit]
+Description=llmctl: ${DESC[$name]} (:${PORT[$name]})
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=$RUN_DIR/run-$name.sh
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target
+EOF
+  systemctl --user daemon-reload
+}
+
+# ----------------------------------------------------------------------------
+# Agent repointing
+# ----------------------------------------------------------------------------
+point_hermes() { # point_hermes <name>
+  [[ "$HERMES_ENABLE" == 1 ]] || { log "hermes: disabled in machine profile — skipping"; return 0; }
+  local name="$1" id="${ID[$name]}" url key bak
+  url="$(url_of "$name")" key="$(key_of "$name")"
+  [[ -f "$HERMES_CFG" ]] || { err "hermes config not found ($HERMES_CFG) — skipping"; return 0; }
+  bak="$HERMES_CFG.bak.llmctl.$(date +%Y%m%d_%H%M%S)"
+  cp "$HERMES_CFG" "$bak"
+
+  # Edit only the top-level `model:` block (keeps comments/format elsewhere intact)
+  awk -v id="$id" -v url="$url" -v key="$key" '
+    /^model:/            { inblk=1; print; next }
+    inblk && /^[^ ]/     { inblk=0 }
+    inblk && /^  default:/  { print "  default: " id;  next }
+    inblk && /^  base_url:/ { print "  base_url: " url; next }
+    inblk && /^  api_key:/  { print "  api_key: " key;  next }
+    { print }
+  ' "$bak" > "$HERMES_CFG.tmp"
+
+  # Validate the result parses and took the edit before installing it
+  if python3 - "$HERMES_CFG.tmp" "$id" "$url" <<'PYEOF'
+import sys, yaml
+cfg = yaml.safe_load(open(sys.argv[1]))
+m = cfg["model"]
+assert m["default"] == sys.argv[2] and m["base_url"] == sys.argv[3], "model block not updated"
+PYEOF
+  then
+    mv "$HERMES_CFG.tmp" "$HERMES_CFG"
+    rm -f "$HERMES_CTX_CACHE"   # force re-probe of context length
+    if systemctl --user is-active --quiet "$HERMES_UNIT" 2>/dev/null; then
+      systemctl --user restart "$HERMES_UNIT"
+      log "hermes -> $id @ $url (gateway restarted, backup: $(basename "$bak"))"
+    else
+      log "hermes -> $id @ $url (gateway not running; config updated, backup: $(basename "$bak"))"
+    fi
+  else
+    rm -f "$HERMES_CFG.tmp"
+    err "hermes config edit failed validation — original untouched (backup at $bak)"
+    return 1
+  fi
+}
+
+point_openclaw() { # point_openclaw <name>
+  [[ "$OPENCLAW_ENABLE" == 1 ]] || { log "openclaw: disabled in machine profile — skipping"; return 0; }
+  local name="$1" id="${ID[$name]}" url ctx key was_active=0
+  url="$(url_of "$name")" ctx="${CTX[$name]}" key="$(key_of "$name")"
+  [[ -f "$OPENCLAW_DIR/openclaw.json" ]] || { err "openclaw config not found — skipping"; return 0; }
+
+  # openclaw rewrites its own config — stop the gateway before editing
+  if systemctl --user is-active --quiet "$OPENCLAW_UNIT" 2>/dev/null; then
+    was_active=1
+    systemctl --user stop "$OPENCLAW_UNIT"
+  fi
+
+  OC_DIR="$OPENCLAW_DIR" OC_ID="$id" OC_URL="$url" OC_CTX="$ctx" OC_KEY="$key" python3 <<'PYEOF'
+import json, os, shutil, time
+
+d      = os.environ["OC_DIR"]
+mid    = os.environ["OC_ID"]
+url    = os.environ["OC_URL"]
+ctx    = int(os.environ["OC_CTX"])
+key    = os.environ["OC_KEY"]
+stamp  = time.strftime("%Y%m%d_%H%M%S")
+
+def edit(path, fn):
+    if not os.path.exists(path):
+        print(f"  [skip] {path} (not found)")
+        return
+    shutil.copy2(path, f"{path}.bak.llmctl.{stamp}")
+    with open(path) as f:
+        data = json.load(f)
+    fn(data)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    print(f"  [ok]   {path}")
+
+def fix_provider(prov):
+    prov["baseUrl"] = url
+    for m in prov.get("models", [])[:1]:   # single local model per provider
+        m["id"] = mid
+        m["name"] = mid
+        m["contextWindow"] = ctx
+
+def main_cfg(data):
+    fix_provider(data["models"]["providers"]["vllm"])
+    data.setdefault("agents", {}).setdefault("defaults", {}) \
+        .setdefault("model", {})["primary"] = f"vllm/{mid}"
+
+def agent_models(data):
+    fix_provider(data["providers"]["vllm"])
+
+def auth(data):
+    data["profiles"]["vllm:default"]["key"] = key
+
+edit(os.path.join(d, "openclaw.json"), main_cfg)
+edit(os.path.join(d, "agents/main/agent/models.json"), agent_models)
+edit(os.path.join(d, "agents/main/agent/auth-profiles.json"), auth)
+PYEOF
+  local rc=$?
+
+  if (( was_active )); then
+    systemctl --user start "$OPENCLAW_UNIT"
+  fi
+  if (( rc == 0 )); then
+    log "openclaw -> $id @ $url$( (( was_active )) && echo ' (gateway restarted)')"
+  else
+    err "openclaw config edit failed (backups: *.bak.llmctl.*) — check $OPENCLAW_DIR"
+    return 1
+  fi
+}
+
+# ----------------------------------------------------------------------------
+# Browser chat (open-webui for vLLM, llama.cpp's built-in UI otherwise)
+# ----------------------------------------------------------------------------
+lan_ip() { hostname -I 2>/dev/null | awk '{print $1}'; }
+
+chat_url() { # chat_url <name> — the page a human opens to talk to this model
+  if [[ "${BACKEND[$1]}" == llamacpp ]]; then
+    echo "http://localhost:${PORT[$1]}/"
+  else
+    echo "http://localhost:${WEBUI_PORT}/"
+  fi
+}
+
+webui_running() {
+  [[ "$(docker inspect -f '{{.State.Running}}' "$WEBUI_CONTAINER" 2>/dev/null)" == "true" ]]
+}
+
+webui_base_url() {
+  docker inspect "$WEBUI_CONTAINER" --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null \
+    | sed -n 's/^OPENAI_API_BASE_URL=//p'
+}
+
+point_webui() { # point_webui <name> — vllm: run open-webui against it; llamacpp: stop it
+  local name="$1"
+  [[ "$WEBUI_ENABLE" == 1 ]] || return 0
+  command -v docker >/dev/null 2>&1 || { err "docker not found — skipping web UI"; return 0; }
+
+  if [[ "${BACKEND[$name]}" == llamacpp ]]; then
+    if webui_running; then
+      log "stopping ${WEBUI_CONTAINER} — llama.cpp serves its own chat UI at $(chat_url "$name")"
+      docker stop "$WEBUI_CONTAINER" >/dev/null
+    fi
+    return 0
+  fi
+
+  local want="http://$(lan_ip):${PORT[$name]}/v1" have
+  have="$(webui_base_url)"
+  if [[ -n "$have" && "$have" == "$want" ]]; then
+    if webui_running; then
+      log "web UI: ${WEBUI_CONTAINER} already pointed at $want — $(chat_url "$name")"
+    else
+      docker start "$WEBUI_CONTAINER" >/dev/null
+      log "web UI: started ${WEBUI_CONTAINER} — $(chat_url "$name")"
+    fi
+  else
+    # endpoint changed: recreate the container (chats live in the docker volume
+    # and survive; ENABLE_PERSISTENT_CONFIG=false makes the env authoritative)
+    log "web UI: repointing ${WEBUI_CONTAINER} -> $want (recreating container, chats preserved)"
+    docker rm -f "$WEBUI_CONTAINER" >/dev/null 2>&1 || true
+    docker run -d --name "$WEBUI_CONTAINER" \
+      -p "${WEBUI_PORT}:8080" \
+      -v open-webui:/app/backend/data \
+      --restart unless-stopped \
+      -e OPENAI_API_BASE_URL="$want" \
+      -e OPENAI_API_KEY="$(key_of "$name")" \
+      -e ENABLE_PERSISTENT_CONFIG=false \
+      -e WEBUI_AUTH=False \
+      "$WEBUI_IMAGE" >/dev/null
+    log "web UI: $(chat_url "$name")"
+  fi
+}
+
+cmd_point() {
+  local name="$1"; require_model "$name"
+  is_healthy "$name" || err "warning: '$name' is not answering /health on :${PORT[$name]} — pointing agents anyway"
+  point_hermes "$name"
+  point_openclaw "$name"
+  point_webui "$name"
+  log "agents now target ${ID[$name]} @ $(url_of "$name") — chat in browser: $(chat_url "$name")"
+}
+
+# ----------------------------------------------------------------------------
+# Lifecycle
+# ----------------------------------------------------------------------------
+cmd_up() { # start without stopping others
+  local name
+  for name in "$@"; do require_model "$name"; done
+  ensure_linger
+  # legacy units own :19434 — only displace them if a requested model needs it
+  for name in "$@"; do
+    [[ "${PORT[$name]}" == 19434 ]] && { stop_legacy; break; }
+  done
+  for name in "$@"; do
+    if is_active "$name"; then log "'$name' already active on :${PORT[$name]}"; continue; fi
+    check_prereqs "$name"
+    vram_ok "$name" || return 1
+    if start_model "$name"; then
+      systemctl --user enable "$(unit_of "$name")" 2>/dev/null
+      log "UP: $name — enabled on boot"
+    else
+      err "'$name' not healthy after ${TIMEOUT[$name]}s — stopping it. Logs: llmctl logs $name"
+      systemctl --user stop "$(unit_of "$name")" || true
+      return 1
+    fi
+  done
+  gpu_report
+}
+
+cmd_down() {
+  local names=("$@") name
+  [[ "${1:-}" == all ]] && names=("${MODELS[@]}")
+  for name in "${names[@]}"; do
+    require_model "$name"
+    systemctl --user stop "$(unit_of "$name")" 2>/dev/null || true
+    systemctl --user disable "$(unit_of "$name")" 2>/dev/null || true
+    log "DOWN: $name (stopped + removed from boot)"
+  done
+}
+
+cmd_set() { # exclusive switch + agents; rolls back on failure
+  local name="$1" prev=() m
+  require_model "$name"
+  check_prereqs "$name"
+  for m in "${MODELS[@]}"; do
+    [[ "$m" != "$name" ]] && is_active "$m" && prev+=("$m")
+  done
+
+  ensure_linger
+  stop_legacy
+  if ((${#prev[@]})); then
+    log "stopping: ${prev[*]}"
+    for m in "${prev[@]}"; do
+      systemctl --user stop "$(unit_of "$m")" || true
+      systemctl --user disable "$(unit_of "$m")" 2>/dev/null || true
+    done
+  fi
+
+  if is_active "$name" && is_healthy "$name"; then
+    log "'$name' already up on :${PORT[$name]}"
+  else
+    if ! start_model "$name"; then
+      err "'$name' failed to become healthy in ${TIMEOUT[$name]}s. Logs: llmctl logs $name"
+      systemctl --user stop "$(unit_of "$name")" || true
+      if ((${#prev[@]})); then
+        err "rolling back: restarting ${prev[*]} (agents left untouched)"
+        for m in "${prev[@]}"; do
+          systemctl --user start "$(unit_of "$m")" || true
+          systemctl --user enable "$(unit_of "$m")" 2>/dev/null || true
+        done
+      fi
+      return 1
+    fi
+  fi
+  systemctl --user enable "$(unit_of "$name")" 2>/dev/null
+
+  cmd_point "$name"
+  gpu_report
+  log "SET: $name is the active model — server + both agents survive reboot"
+}
+
+# ----------------------------------------------------------------------------
+# Add / remove models (wizard writes ~/.config/llmctl/models.d/<name>.conf)
+# ----------------------------------------------------------------------------
+ask() { # ask <prompt> [default] — read with default
+  local v
+  read -rp "  $1${2:+ [$2]}: " v
+  echo "${v:-${2:-}}"
+}
+
+next_free_port() {
+  local p="$WIZARD_BASE_PORT" n used
+  while :; do
+    used=0
+    for n in "${MODELS[@]}"; do [[ "${PORT[$n]}" == "$p" ]] && used=1; done
+    ss -ltn 2>/dev/null | grep -q ":$p " && used=1
+    (( used )) || { echo "$p"; return; }
+    ((p++))
+  done
+}
+
+cmd_add() {
+  echo "llmctl add — register a new model (writes $MODELS_D/<name>.conf)"
+  echo
+
+  local name backend mref id port ctx gpus vram xargs desc timeout
+  while :; do
+    name="$(ask "short name (used in all llmctl commands)")"
+    [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || { err "letters/digits/._- only"; continue; }
+    [[ -n "${PORT[$name]:-}" ]] && { err "'$name' already exists"; continue; }
+    break
+  done
+
+  local b
+  b="$(ask "backend: 1=vllm (HF safetensors)  2=llama.cpp (GGUF)" 1)"
+  [[ "$b" == 2 ]] && backend=llamacpp || backend=vllm
+
+  if [[ "$backend" == vllm ]]; then
+    mref="$(ask "HuggingFace repo (e.g. Qwen/Qwen3.6-27B-FP8)")"
+    [[ -n "$mref" ]] || die "a model repo is required"
+  else
+    mref="$(ask "path to .gguf file")"
+    mref="${mref/#\~/$HOME}"
+    [[ -f "$mref" ]] || err "warning: $mref does not exist yet — download it before starting"
+  fi
+
+  id="$(ask "served model name (what agents/clients put in 'model')" "$name")"
+  port="$(ask "port" "$(next_free_port)")"
+  local n
+  for n in "${MODELS[@]}"; do
+    [[ "${PORT[$n]}" == "$port" ]] && die "port $port already used by '$n'"
+  done
+  ctx="$(ask "context window to advertise to agents (tokens)" 128000)"
+  if [[ "$ACCEL" == cpu ]]; then
+    gpus=""
+  else
+    gpus="$(ask "GPUs ($GPU_ENV_VAR)" "$GPUS_DEFAULT")"
+  fi
+
+  local tp gutil maxlen srvctx streams
+  if [[ "$backend" == vllm ]]; then
+    if [[ -n "$TENSOR_PARALLEL_DEFAULT" ]]; then tp="$TENSOR_PARALLEL_DEFAULT"
+    elif [[ "$gpus" == *,* ]]; then tp=2; else tp=1; fi
+    tp="$(ask "tensor-parallel-size" "$tp")"
+    gutil="$(ask "gpu-memory-utilization (0.0-1.0)" 0.90)"
+    maxlen="$(ask "max-model-len (server-side cap)" "$ctx")"
+    timeout=900
+  else
+    srvctx="$(ask "server --ctx-size (total across streams)" "$ctx")"
+    streams="$(ask "concurrent streams (-np)" 1)"
+    timeout=300
+  fi
+
+  if [[ "$ACCEL" == cpu ]]; then
+    vram=0
+  else
+    vram="$(ask "free VRAM needed per GPU before start, MiB (overestimate is safer)" 20000)"
+  fi
+  xargs="$(ask "extra server args (optional, appended verbatim)" "")"
+  desc="$(ask "description" "$id ($backend)")"
+
+  mkdir -p "$MODELS_D"
+  local conf="$MODELS_D/$name.conf"
+  {
+    echo "# llmctl model definition — created $(date +%F) by 'llmctl add'"
+    echo "# Edit freely; llmctl re-reads this on every run. Delete with: llmctl remove $name"
+    echo "BACKEND=$backend"
+    echo "PORT=$port"
+    echo "MODEL_REF=\"$mref\""
+    echo "MODEL_ID=\"$id\""
+    echo "CTX=$ctx"
+    echo "DESC=\"$desc\""
+    echo "VRAM_MB=$vram"
+    echo "HEALTH_TIMEOUT=$timeout"
+    echo "GPUS=\"$gpus\""
+    if [[ "$backend" == vllm ]]; then
+      echo "TENSOR_PARALLEL=$tp"
+      echo "GPU_UTIL=$gutil"
+      echo "MAX_MODEL_LEN=$maxlen"
+    else
+      echo "SERVER_CTX=$srvctx"
+      echo "STREAMS=$streams"
+    fi
+    [[ -n "$xargs" ]] && echo "EXTRA_ARGS=\"$xargs\""
+  } > "$conf"
+
+  log "registered '$name' -> $conf"
+  echo
+  local start
+  start="$(ask "start it now with 'up' (runs alongside current models)? y/N" "n")"
+  if [[ "$start" =~ ^[yY] ]]; then
+    exec "$0" up "$name"   # re-exec so the new conf is loaded fresh
+  else
+    log "later: llmctl up $name   (or: llmctl set $name  to make it THE model + point agents)"
+  fi
+}
+
+cmd_remove() {
+  local name="$1"; require_model "$name"
+  [[ -n "${EXTERNAL[$name]:-}" ]] || die "'$name' is a built-in (registry block in this script) — not removable here"
+  local yn
+  yn="$(ask "stop and unregister '$name' (${DESC[$name]})? y/N" "n")"
+  [[ "$yn" =~ ^[yY] ]] || { log "aborted"; return 0; }
+  systemctl --user stop "$(unit_of "$name")" 2>/dev/null || true
+  systemctl --user disable "$(unit_of "$name")" 2>/dev/null || true
+  rm -f "$SYSTEMD_USER_DIR/$(unit_of "$name")" "$RUN_DIR/run-$name.sh" "${EXTERNAL[$name]}"
+  systemctl --user daemon-reload
+  log "removed '$name' (conf, unit, run script). Model weights were NOT deleted."
+}
+
+# ----------------------------------------------------------------------------
+# Machine profile: show effective values, or probe + generate machine.conf
+# ----------------------------------------------------------------------------
+machine_show() {
+  if [[ -f "$MACHINE_CONF" ]]; then
+    echo "profile: $MACHINE_CONF"
+  else
+    echo "profile: (none — using built-in defaults; 'llmctl machine init' to generate)"
+  fi
+  local k
+  for k in MACHINE_NAME ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT VRAM_PER_GPU_MB \
+           MODELS_DIR VLLM_BIN VLLM_KEYFILE LLAMA_SERVER LLAMA_KEYFILE \
+           WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
+           HERMES_ENABLE HERMES_CFG OPENCLAW_ENABLE OPENCLAW_DIR \
+           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT; do
+    printf '  %-24s %s\n' "$k" "${!k:-—}"
+  done
+  printf '  %-24s %s\n' LEGACY_UNITS "${LEGACY_UNITS[*]:-—}"
+  echo
+  echo "probed hardware:"
+  case "$ACCEL" in
+    cuda) nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader 2>/dev/null | sed 's/^/  GPU /';;
+    rocm) rocm-smi --showproductname 2>/dev/null | grep -i series | sed 's/^/  /' || echo "  (rocm-smi probe failed)";;
+    *)    echo "  no GPU accelerator detected (accel=cpu)";;
+  esac
+  echo "  RAM: $(free -h 2>/dev/null | awk '/^Mem:/{print $2}')  CPUs: $(nproc 2>/dev/null)"
+}
+
+machine_init() {
+  if [[ -f "$MACHINE_CONF" && "${FORCE:-0}" != 1 ]]; then
+    die "$MACHINE_CONF already exists (FORCE=1 llmctl machine init to overwrite)"
+  fi
+  local mdir
+  mdir="$(ask "where do model weights live on this machine" "$MODELS_DIR")"
+  mdir="${mdir/#\~/$HOME}"
+  [[ -d "$mdir" ]] || err "note: $mdir does not exist yet — create it before downloading models"
+  MODELS_DIR="$mdir"
+  local gpu_count=0 vram_min="" gpus="" tp=1
+  if [[ "$ACCEL" == cuda ]]; then
+    gpu_count="$(nvidia-smi -L 2>/dev/null | grep -c GPU || echo 0)"
+    vram_min="$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | sort -n | head -1)"
+  elif [[ "$ACCEL" == rocm ]]; then
+    gpu_count="$(rocm-smi -i 2>/dev/null | grep -c '^GPU' || echo 0)"
+  fi
+  if (( gpu_count > 0 )); then
+    gpus="$(seq -s, 0 $((gpu_count-1)))"
+    tp="$gpu_count"
+  fi
+  mkdir -p "$(dirname "$MACHINE_CONF")"
+  cat > "$MACHINE_CONF" <<EOF
+# llmctl machine profile — generated $(date +%F) on $(hostname) by 'llmctl machine init'
+# key=value; parsed (not sourced). Delete a line to fall back to llmctl's default.
+MACHINE_NAME="$(hostname)"
+ACCEL=$ACCEL
+GPUS_DEFAULT="$gpus"
+TENSOR_PARALLEL_DEFAULT=$tp
+VRAM_PER_GPU_MB=${vram_min:-0}
+
+# where model weights (gguf/) live — llmctl itself can be installed anywhere
+MODELS_DIR="$MODELS_DIR"
+
+# serving binaries + API key files (one key per backend)
+VLLM_BIN="$VLLM_BIN"
+VLLM_KEYFILE="$VLLM_KEYFILE"
+LLAMA_SERVER="$LLAMA_SERVER"
+LLAMA_KEYFILE="$LLAMA_KEYFILE"
+
+# the built-in registry describes the dual-RTX-3090 box (DW-ASUS-LINUX);
+# on other machines set 0 and define models with 'llmctl add' (models.d/)
+ENABLE_BUILTIN_MODELS=$( [[ "$(hostname)" == "DW-ASUS-LINUX" ]] && echo 1 || echo 0 )
+WIZARD_BASE_PORT=$WIZARD_BASE_PORT
+
+# agents present on this machine (0 = llmctl won't touch them)
+HERMES_ENABLE=$( [[ -f "$HERMES_CFG" ]] && echo 1 || echo 0 )
+HERMES_CFG="$HERMES_CFG"
+HERMES_UNIT="$HERMES_UNIT"
+OPENCLAW_ENABLE=$( [[ -d "$OPENCLAW_DIR" ]] && echo 1 || echo 0 )
+OPENCLAW_DIR="$OPENCLAW_DIR"
+OPENCLAW_UNIT="$OPENCLAW_UNIT"
+
+# browser chat for vLLM models (docker open-webui); llama.cpp uses its own UI
+WEBUI_ENABLE=$( command -v docker >/dev/null 2>&1 && echo 1 || echo 0 )
+WEBUI_CONTAINER="$WEBUI_CONTAINER"
+WEBUI_PORT=$WEBUI_PORT
+WEBUI_IMAGE="$WEBUI_IMAGE"
+
+# old single-port units to stop/disable when llmctl takes over :19434
+LEGACY_UNITS="${LEGACY_UNITS[*]}"
+EOF
+  log "wrote $MACHINE_CONF"
+  log "review it, then: llmctl machine   (to see effective values)"
+}
+
+cmd_machine() {
+  case "${1:-show}" in
+    init)    machine_init;;
+    show)    machine_show;;
+    *)       die "usage: llmctl machine [init]";;
+  esac
+}
+
+cmd_bench() {
+  local name="$1"; require_model "$name"
+  is_healthy "$name" || die "'$name' is not answering /health on :${PORT[$name]} — start it first"
+  log "benchmarking ${ID[$name]} @ $(url_of "$name") (1 warmup + 200-token generation)…"
+  bench_and_log "$name"
+}
+
+cmd_stats() {
+  [[ -s "$STATS_FILE" ]] || die "no stats recorded yet ($STATS_FILE)"
+  python3 - "$STATS_FILE" "${1:-}" <<'PYEOF'
+import json, sys
+from collections import defaultdict
+
+path, only = sys.argv[1], sys.argv[2]
+rows = []
+with open(path) as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if only and r.get("model") != only:
+            continue
+        rows.append(r)
+
+if not rows:
+    print(f"no records{' for ' + only if only else ''}")
+    sys.exit(0)
+
+def fmt(v, suffix="", nd=1):
+    return "-" if v is None else f"{round(v, nd):g}{suffix}"
+
+print(f"{'when':<20}{'model':<15}{'load':>7}{'tok/s':>8}  {'gpu util / power (sampled mid-gen)'}")
+for r in rows[-30:]:
+    g = " ".join(f"GPU{s['gpu']}:{s['util_pct']:.0f}%/{s['power_w']:.0f}W" for s in r.get("gpu") or [])
+    print(f"{r.get('ts','?'):<20}{r.get('model','?'):<15}"
+          f"{fmt(r.get('load_s'),'s',0):>7}{fmt(r.get('tok_s')):>8}  {g}")
+
+agg = defaultdict(lambda: {"load": [], "tok": []})
+for r in rows:
+    if r.get("load_s") is not None: agg[r["model"]]["load"].append(r["load_s"])
+    if r.get("tok_s")  is not None: agg[r["model"]]["tok"].append(r["tok_s"])
+
+print("\naverages:")
+for m, a in sorted(agg.items()):
+    load = sum(a["load"]) / len(a["load"]) if a["load"] else None
+    tok  = sum(a["tok"])  / len(a["tok"])  if a["tok"]  else None
+    print(f"  {m:<15} load {fmt(load,'s',0):>6} ({len(a['load'])} starts)   "
+          f"{fmt(tok):>6} tok/s ({len(a['tok'])} benches)")
+PYEOF
+}
+
+cmd_logs() {
+  local name="$1"; shift; require_model "$name"
+  if [[ "${1:-}" == "-f" ]]; then
+    journalctl --user -u "$(unit_of "$name")" -n 40 -f
+  else
+    journalctl --user -u "$(unit_of "$name")" -n "${1:-80}" --no-pager
+  fi
+}
+
+cmd_env() {
+  local name="$1"; require_model "$name"
+  echo "export OPENAI_BASE_URL=$(url_of "$name")"
+  echo "export OPENAI_API_KEY=$(key_of "$name")"
+  echo "export OPENAI_MODEL=${ID[$name]}"
+}
+
+# ----------------------------------------------------------------------------
+# Reporting
+# ----------------------------------------------------------------------------
+print_table() {
+  local i=1 name st
+  printf '  %-2s %-14s %-9s %-6s %-11s %s\n' '#' name backend port status description
+  for name in "${MODELS[@]}"; do
+    st="$(status_of "$name")"
+    printf '  %-2s %-14s %-9s %-6s %-11s %s\n' \
+      "$i" "$name" "${BACKEND[$name]}" "${PORT[$name]}" "$st" "${DESC[$name]}"
+    ((i++))
+  done
+}
+
+agents_report() {
+  local h_model h_url oc_url oc_primary
+  if [[ -f "$HERMES_CFG" ]]; then
+    h_model="$(awk '/^model:/{f=1;next} f&&/^  default:/{print $2;exit}' "$HERMES_CFG")"
+    h_url="$(awk '/^model:/{f=1;next} f&&/^  base_url:/{print $2;exit}' "$HERMES_CFG")"
+    echo "  hermes   -> ${h_model:-?} @ ${h_url:-?}"
+  fi
+  if [[ -f "$OPENCLAW_DIR/openclaw.json" ]] && command -v jq >/dev/null; then
+    oc_url="$(jq -r '.models.providers.vllm.baseUrl // "?"' "$OPENCLAW_DIR/openclaw.json")"
+    oc_primary="$(jq -r '.agents.defaults.model.primary // "?"' "$OPENCLAW_DIR/openclaw.json")"
+    echo "  openclaw -> ${oc_primary} @ ${oc_url}"
+  fi
+}
+
+chat_report() { # browser links for whatever is up
+  local name any=0
+  for name in "${MODELS[@]}"; do
+    is_active "$name" || continue
+    (( any++ )) || echo "chat (browser):"
+    if [[ "${BACKEND[$name]}" == llamacpp ]]; then
+      echo "  $name -> $(chat_url "$name") (built into llama.cpp)"
+    elif webui_running; then
+      echo "  $name -> $(chat_url "$name") (open-webui, backend $(webui_base_url))"
+    else
+      echo "  $name -> open-webui is STOPPED — run: llmctl point $name"
+    fi
+  done
+}
+
+cmd_status() {
+  echo "models:"
+  print_table
+  echo
+  echo "agents:"
+  agents_report
+  echo
+  chat_report
+  echo
+  gpu_report
+  # flag any legacy unit still alive
+  local u
+  for u in "${LEGACY_UNITS[@]}"; do
+    if systemctl --user is-active --quiet "$u" 2>/dev/null; then
+      echo
+      log "note: legacy unit $u is still running on :19434 — 'llmctl set <model>' will take over"
+    fi
+  done
+}
+
+# ----------------------------------------------------------------------------
+# Interactive menu
+# ----------------------------------------------------------------------------
+menu() {
+  local ans n name
+  while true; do
+    echo
+    print_table
+    echo
+    agents_report
+    chat_report
+    echo
+    echo "  N = set model N (exclusive + point agents)   uN = up   dN = down   pN = point agents   a = add model   q = quit"
+    read -rp "  > " ans || { echo; return 0; }
+    case "$ans" in
+      q|Q|'') return 0;;
+      a|A) cmd_add;;
+      [0-9]*)          n="$ans";          name="${MODELS[$((n-1))]:-}"; [[ -n "$name" ]] && cmd_set "$name"   || err "no model #$n";;
+      u[0-9]*)         n="${ans#u}";      name="${MODELS[$((n-1))]:-}"; [[ -n "$name" ]] && cmd_up "$name"    || err "no model #$n";;
+      d[0-9]*)         n="${ans#d}";      name="${MODELS[$((n-1))]:-}"; [[ -n "$name" ]] && cmd_down "$name"  || err "no model #$n";;
+      p[0-9]*)         n="${ans#p}";      name="${MODELS[$((n-1))]:-}"; [[ -n "$name" ]] && cmd_point "$name" || err "no model #$n";;
+      *) err "unrecognized: $ans";;
+    esac
+  done
+}
+
+# ----------------------------------------------------------------------------
+usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; }
+
+case "${1:-menu}" in
+  menu)          menu;;
+  list)          print_table;;
+  status)        cmd_status;;
+  up)            shift; (($#)) || die "usage: llmctl up <model>..."; cmd_up "$@";;
+  down)          shift; (($#)) || die "usage: llmctl down <model>...|all"; cmd_down "$@";;
+  set)           shift; (($#==1)) || die "usage: llmctl set <model>"; cmd_set "$1";;
+  point)         shift; (($#==1)) || die "usage: llmctl point <model>"; cmd_point "$1";;
+  env)           shift; (($#==1)) || die "usage: llmctl env <model>"; cmd_env "$1";;
+  logs)          shift; (($#)) || die "usage: llmctl logs <model> [-f|N]"; cmd_logs "$@";;
+  add)           cmd_add;;
+  remove)        shift; (($#==1)) || die "usage: llmctl remove <model>"; cmd_remove "$1";;
+  bench)         shift; (($#==1)) || die "usage: llmctl bench <model>"; cmd_bench "$1";;
+  stats)         shift; cmd_stats "${1:-}";;
+  machine)       shift; cmd_machine "${1:-show}";;
+  help|-h|--help) usage;;
+  *)             # `llmctl <model-name>` == `llmctl set <model-name>`
+                 if [[ -n "${PORT[${1}]:-}" ]]; then
+                   cmd_set "$1"
+                 else
+                   die "unknown command or model '${1}' (models: ${MODELS[*]} — try: llmctl help)"
+                 fi;;
+esac
