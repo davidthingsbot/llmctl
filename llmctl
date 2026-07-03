@@ -1,84 +1,53 @@
 #!/usr/bin/env bash
-# llmctl — run one or more local LLM servers on this host (dual RTX 3090) and
-# keep the agents (openclaw + hermes) pointed at the right one.
-#
-# Fresh replacement for the dual-rtx3090__*.sh switch scripts. Differences:
-#   * Every model has its OWN port (convention below) — models are no longer
-#     mutually exclusive by port, so several can run at once IF they fit in VRAM.
-#   * Generates its own systemd user units (llm-<name>.service) and run scripts
-#     (~/.config/llmctl/run-<name>.sh). The legacy qwen-dual3090-* /
-#     local-agent-qwen units are stopped+disabled the first time you start
-#     anything from here.
-#   * `set` / `point` rewrite the registered agents' configs (agents.d/ — any
-#     number of hermes and openclaw instances per machine) with the right
-#     base_url, model id, context window and API key, then restart the gateways.
-#   * `set` / `point` also manage the browser chat page: llama.cpp models serve
-#     their own UI on the model port; for vLLM models the open-webui docker
-#     container (http://localhost:8088) is started/repointed, and it is stopped
-#     when a llama.cpp model takes over. `status` shows the current chat link.
-#
-# Port convention (fixed per model, agents never need to guess):
-#   19434  27b-fp8        vLLM       Qwen/Qwen3.6-27B-FP8          (current default)
-#   19435  35b-moe-vllm   vLLM       Qwen/Qwen3.6-35B-A3B-FP8
-#   19436  27b-q8         llama.cpp  Qwen3.6-27B-Q8_0.gguf
-#   19437  35b-moe-gguf   llama.cpp  Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+# llmctl — run local LLM servers (vLLM / llama.cpp) as systemd user units,
+# one fixed port per model, and keep this machine's agents pointed at the
+# right one. Several models can run at once if they fit in VRAM.
 #
 # Usage:
 #   llmctl                     interactive menu
 #   llmctl <model>             shorthand for `llmctl set <model>`
-#   llmctl list                registry + status
-#   llmctl status              units, health, GPU, where the agents point
-#   llmctl set  <model>        THE switch: stop everything else, start <model>,
-#                              point both agents at it (permanent across boot)
+#   llmctl list                model registry + status
+#   llmctl status              units, health, GPU, agent targets, chat links
+#   llmctl set  <model>        THE switch: stop other models, start <model>,
+#                              repoint the following agents + browser chat
+#                              (open-webui for vLLM, llama.cpp's own UI else);
+#                              rolls back on failure, permanent across boot
 #   llmctl up   <model>...     start model(s) alongside whatever is running
 #   llmctl down <model>...|all stop model(s)
 #   llmctl point <model> [agent...]  repoint agents only (model must be up):
 #                              all FOLLOW=1 agents, or just the named ones
 #   llmctl agents              list registered agents + where each points
-#   llmctl agent add           interactive wizard: register a NEW agent
-#   llmctl agent remove <name> unregister an agent (its own config is untouched)
+#   llmctl agent add           wizard: register an agent  (agents.d/<name>.conf)
+#   llmctl agent remove <name> unregister an agent (its own config untouched)
+#   llmctl add                 wizard: register a model   (models.d/<name>.conf)
+#   llmctl remove <model>      unregister a model (stops it first)
 #   llmctl env  <model>        print OPENAI_* exports for shell/manual clients
 #   llmctl logs <model> [-f]   journal for a model's unit
-#   llmctl add                 interactive wizard: register a NEW model
-#   llmctl remove <model>      unregister a wizard-added model (stops it first)
-#   llmctl bench <model>       benchmark a running model now (tok/s, GPU, power)
-#   llmctl stats [model]       show recorded load times + benchmark history
-#   llmctl machine             show the effective machine profile + probed hardware
-#   llmctl machine init        probe this machine and write ~/.config/llmctl/machine.conf
+#   llmctl bench <model>       benchmark a running model (tok/s, GPU, power)
+#   llmctl stats [model]       recorded load times + benchmark history
+#   llmctl machine             show machine profile + probed hardware
+#   llmctl machine init        probe host, write machine.conf, discover agents
 #
-# Machine profile: host-specific facts live in ~/.config/llmctl/machine.conf
-# (key=value, optional — without it the defaults below describe THIS box).
-# Keys: MACHINE_NAME, GPUS_DEFAULT, TENSOR_PARALLEL_DEFAULT, VRAM_PER_GPU_MB,
-#       VLLM_BIN, VLLM_KEYFILE, LLAMA_SERVER, LLAMA_KEYFILE, WIZARD_BASE_PORT,
-#       ENABLE_BUILTIN_MODELS (0 on other machines: registry comes only from
-#       models.d/), LEGACY_UNITS, WEBUI_ENABLE/CONTAINER/PORT/IMAGE, plus the
-#       legacy pre-agents.d keys HERMES_ENABLE/CFG/UNIT, OPENCLAW_ENABLE/DIR/UNIT.
+# Env toggles: STATS=0 skips the post-start benchmark; FORCE=1 overrides the
+# VRAM pre-check and the `machine init` overwrite protection.
 #
-# Agents — the consumers `set`/`point` repoint — are a per-machine registry
-# just like models: one file per agent in ~/.config/llmctl/agents.d/<name>.conf
-# (TYPE=hermes|openclaw, CFG, UNIT, FOLLOW). Any number of agents of either
-# type. `llmctl machine init` discovers the ones on the box, `llmctl agent add`
-# registers more. If agents.d/ is EMPTY, the legacy HERMES_*/OPENCLAW_*
-# machine.conf keys synthesize agents named 'hermes' and 'openclaw'.
-# To port llmctl to a new machine: copy this script + run `llmctl machine init`,
-# edit the generated profile, then `llmctl add` your models.
+# Everything host-specific lives in ~/.config/llmctl/ :
+#   machine.conf      host facts: accelerator, GPUs, binaries, web UI, ...
+#   models.d/*.conf   one file per model (`llmctl add`)
+#   agents.d/*.conf   one file per agent (`llmctl agent add`): TYPE=hermes|
+#                     openclaw, CFG, UNIT, FOLLOW — FOLLOW=0 pins an agent so
+#                     `set` leaves it alone. While agents.d/ is empty, legacy
+#                     HERMES_*/OPENCLAW_* machine.conf keys apply instead.
+#   stats.jsonl       start/bench records (feed "typical load time" estimates)
 #
-# Every start is timed and (by default) followed by a small benchmark; results
-# append to ~/.config/llmctl/stats.jsonl and feed the "typical load time"
-# estimate shown on the next start. STATS=0 llmctl set <m> skips the benchmark.
-#
-# Wizard-added models live in ~/.config/llmctl/models.d/<name>.conf (key=value,
-# editable by hand; see `llmctl add` output). Built-in models live in the
-# registry block below.
-#
-# NOTE: all four current configs want ~21-23 GB per card, so no two of them fit
-# together on 2x24 GB. `up` checks free VRAM first (FORCE=1 to override).
-# Concurrency becomes useful once you add smaller configs to the registry.
+# New machine: copy this script, `llmctl machine init`, then `llmctl add`.
+# Full docs: README.md (github.com/davidthingsbot/llmctl).
 
 set -euo pipefail
 
 # ----------------------------------------------------------------------------
-# Registry — add a model: append its name and fill in every map + a cmd_* case
+# Built-in registry (the author's dual-RTX-3090 box; ENABLE_BUILTIN_MODELS=0
+# hides it). Normal machines define models in models.d/ via `llmctl add`.
 # ----------------------------------------------------------------------------
 MODELS=(27b-fp8 35b-moe-vllm 27b-q8 35b-moe-gguf)
 
