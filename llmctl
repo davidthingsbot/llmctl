@@ -27,6 +27,10 @@
 #   llmctl stats [model]       recorded load times + benchmark history
 #   llmctl machine             show machine profile + probed hardware
 #   llmctl machine init        probe host, write machine.conf, discover agents
+#   llmctl sleep-hook install  stop models before suspend, restart on resume
+#                              (VRAM-heavy CUDA contexts don't survive sleep;
+#                              writes /etc/systemd/system-sleep/llmctl, sudo)
+#   llmctl sleep-hook status|uninstall
 #
 # Env toggles: STATS=0 skips the post-start benchmark; FORCE=1 overrides the
 # VRAM pre-check and the `machine init` overwrite protection.
@@ -1311,6 +1315,99 @@ cmd_machine() {
   esac
 }
 
+# ----------------------------------------------------------------------------
+# Suspend/resume: CUDA contexts with ~20 GB of VRAM loaded do not survive
+# system sleep — on resume the driver throws Xid 31/32, the server's threads
+# wedge inside nvidia_uvm as unkillable zombies still pinning VRAM, and only a
+# reboot recovers. The sleep hook stops running models before suspend and
+# restarts them afterwards (fresh process, fresh CUDA context, clean reload).
+# ----------------------------------------------------------------------------
+SLEEP_HOOK="/etc/systemd/system-sleep/llmctl"
+SLEEP_STATE="$RUN_DIR/resume-models"
+
+cmd_sleep() { # internal: invoked by $SLEEP_HOOK as this user with pre|post
+  local phase="${1:-}" name active=()
+  case "$phase" in
+    pre)
+      for name in "${MODELS[@]}"; do is_active "$name" && active+=("$name"); done
+      if ((${#active[@]})); then
+        mkdir -p "$RUN_DIR"
+        printf '%s\n' "${active[@]}" > "$SLEEP_STATE"
+        log "suspend: stopping ${active[*]} (CUDA contexts don't survive sleep)"
+        for name in "${active[@]}"; do
+          systemctl --user stop "$(unit_of "$name")" || err "suspend: stop of $name failed"
+        done
+      else
+        rm -f "$SLEEP_STATE"
+        log "suspend: no models running — nothing to stop"
+      fi
+      ;;
+    post)
+      [[ -s "$SLEEP_STATE" ]] || { log "resume: no models to restart"; return 0; }
+      while IFS= read -r name; do
+        [[ -n "${PORT[$name]:-}" ]] || { err "resume: unknown model '$name' — skipping"; continue; }
+        log "resume: restarting $name (:${PORT[$name]}) — health-wait skipped, it loads in the background"
+        systemctl --user start "$(unit_of "$name")" || err "resume: start of $name failed"
+      done < "$SLEEP_STATE"
+      rm -f "$SLEEP_STATE"
+      ;;
+    *) die "usage: llmctl sleep pre|post (called by $SLEEP_HOOK, not by hand)";;
+  esac
+}
+
+sleephook_install() {
+  local self tmp
+  self="$(readlink -f "$0")"
+  tmp="$(mktemp)"
+  # systemd-sleep runs hooks as root with $1=pre|post $2=suspend|hibernate|...;
+  # runuser drops to this user, XDG_RUNTIME_DIR lets systemctl --user find the
+  # user manager. User, uid and llmctl path are baked in at install time.
+  cat > "$tmp" <<EOF
+#!/bin/sh
+# llmctl system-sleep hook — installed $(date +%F) by 'llmctl sleep-hook install'
+# Stops llmctl-managed model servers before suspend/hibernate and restarts them
+# on resume; VRAM-heavy CUDA contexts do not survive sleep (Xid 31/32 on resume
+# wedges nvidia_uvm until reboot). Reinstall after moving llmctl: this embeds
+# its absolute path.
+exec runuser -u $USER -- env XDG_RUNTIME_DIR=/run/user/$(id -u) "$self" sleep "\$1"
+EOF
+  if [[ $EUID -eq 0 ]]; then
+    install -Dm755 "$tmp" "$SLEEP_HOOK"
+  else
+    sudo install -Dm755 "$tmp" "$SLEEP_HOOK" || { rm -f "$tmp"; die "could not write $SLEEP_HOOK (needs sudo)"; }
+  fi
+  rm -f "$tmp"
+  log "installed $SLEEP_HOOK (models stop before suspend, restart on resume)"
+  log "test without sleeping: sudo $SLEEP_HOOK pre && sudo $SLEEP_HOOK post"
+}
+
+sleephook_uninstall() {
+  [[ -e "$SLEEP_HOOK" ]] || { log "sleep hook not installed"; return 0; }
+  if [[ $EUID -eq 0 ]]; then rm -f "$SLEEP_HOOK"; else sudo rm -f "$SLEEP_HOOK" || die "could not remove $SLEEP_HOOK (needs sudo)"; fi
+  log "removed $SLEEP_HOOK — models will no longer survive suspend/resume"
+}
+
+sleephook_status() {
+  if [[ -e "$SLEEP_HOOK" ]]; then
+    log "sleep hook installed: $SLEEP_HOOK"
+    sed -n 's/^exec /  runs: /p' "$SLEEP_HOOK"
+    if [[ -s "$SLEEP_STATE" ]]; then
+      log "pending resume list ($SLEEP_STATE): $(tr '\n' ' ' < "$SLEEP_STATE")"
+    fi
+  else
+    log "sleep hook NOT installed — running models will not survive suspend (llmctl sleep-hook install)"
+  fi
+}
+
+cmd_sleephook() {
+  case "${1:-status}" in
+    install)   sleephook_install;;
+    uninstall) sleephook_uninstall;;
+    status)    sleephook_status;;
+    *)         die "usage: llmctl sleep-hook [install|uninstall|status]";;
+  esac
+}
+
 cmd_bench() {
   local name="$1"; require_model "$name"
   is_healthy "$name" || die "'$name' is not answering /health on :${PORT[$name]} — start it first"
@@ -1490,6 +1587,10 @@ cmd_status() {
       log "note: legacy unit $u is still running on :19434 — 'llmctl set <model>' will take over"
     fi
   done
+  if [[ "$ACCEL" != cpu && ! -e "$SLEEP_HOOK" ]]; then
+    echo
+    log "note: no sleep hook — a suspend while a model is loaded wedges the GPU driver ('llmctl sleep-hook install')"
+  fi
 }
 
 # ----------------------------------------------------------------------------
@@ -1543,6 +1644,8 @@ case "${1:-menu}" in
   bench)         shift; (($#==1)) || die "usage: llmctl bench <model>"; cmd_bench "$1";;
   stats)         shift; cmd_stats "${1:-}";;
   machine)       shift; cmd_machine "${1:-show}";;
+  sleep-hook)    shift; cmd_sleephook "${1:-status}";;
+  sleep)         shift; cmd_sleep "${1:-}";;
   help|-h|--help) usage;;
   *)             # `llmctl <model-name>` == `llmctl set <model-name>`
                  if [[ -n "${PORT[${1}]:-}" ]]; then

@@ -85,9 +85,23 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl env <model>` | print `OPENAI_*` exports for shell clients |
 | `llmctl logs <model> [-f]` | the model unit's journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
+| `llmctl sleep-hook [install\|uninstall\|status]` | survive suspend: stop running models before sleep, restart them on resume |
 
 `STATS=0` skips the post-start benchmark; `FORCE=1` overrides the VRAM check
 and `machine init` overwrite protection.
+
+### Suspend and resume
+
+A CUDA context holding 20+ GB of VRAM does not survive system sleep: on resume
+the driver throws Xid 31/32 errors, the server's threads wedge inside
+`nvidia_uvm` as unkillable zombies that keep the VRAM pinned, and only a reboot
+recovers. `llmctl sleep-hook install` writes `/etc/systemd/system-sleep/llmctl`
+(root hook, hence sudo) which calls back into llmctl as your user: before
+suspend/hibernate it stops every running model (recording them in
+`~/.config/llmctl/resume-models`), and after resume it starts them again — a
+fresh process with a fresh CUDA context. Agents keep pointing at the same port
+and reconnect once the model finishes loading. The hook embeds llmctl's
+absolute path; re-run `install` if you move it.
 
 ## Machine profile (`~/.config/llmctl/machine.conf`)
 
