@@ -9,9 +9,9 @@
 #     (~/.config/llmctl/run-<name>.sh). The legacy qwen-dual3090-* /
 #     local-agent-qwen units are stopped+disabled the first time you start
 #     anything from here.
-#   * `set` / `point` rewrite the agent configs (hermes ~/.hermes/config.yaml,
-#     openclaw ~/.openclaw/*.json incl. auth-profiles) with the right base_url,
-#     model id, context window and API key, then restart the gateways.
+#   * `set` / `point` rewrite the registered agents' configs (agents.d/ — any
+#     number of hermes and openclaw instances per machine) with the right
+#     base_url, model id, context window and API key, then restart the gateways.
 #   * `set` / `point` also manage the browser chat page: llama.cpp models serve
 #     their own UI on the model port; for vLLM models the open-webui docker
 #     container (http://localhost:8088) is started/repointed, and it is stopped
@@ -32,7 +32,11 @@
 #                              point both agents at it (permanent across boot)
 #   llmctl up   <model>...     start model(s) alongside whatever is running
 #   llmctl down <model>...|all stop model(s)
-#   llmctl point <model>       repoint openclaw+hermes only (model must be up)
+#   llmctl point <model> [agent...]  repoint agents only (model must be up):
+#                              all FOLLOW=1 agents, or just the named ones
+#   llmctl agents              list registered agents + where each points
+#   llmctl agent add           interactive wizard: register a NEW agent
+#   llmctl agent remove <name> unregister an agent (its own config is untouched)
 #   llmctl env  <model>        print OPENAI_* exports for shell/manual clients
 #   llmctl logs <model> [-f]   journal for a model's unit
 #   llmctl add                 interactive wizard: register a NEW model
@@ -47,8 +51,15 @@
 # Keys: MACHINE_NAME, GPUS_DEFAULT, TENSOR_PARALLEL_DEFAULT, VRAM_PER_GPU_MB,
 #       VLLM_BIN, VLLM_KEYFILE, LLAMA_SERVER, LLAMA_KEYFILE, WIZARD_BASE_PORT,
 #       ENABLE_BUILTIN_MODELS (0 on other machines: registry comes only from
-#       models.d/), LEGACY_UNITS, HERMES_ENABLE/CFG/UNIT,
-#       OPENCLAW_ENABLE/DIR/UNIT, WEBUI_ENABLE/CONTAINER/PORT/IMAGE.
+#       models.d/), LEGACY_UNITS, WEBUI_ENABLE/CONTAINER/PORT/IMAGE, plus the
+#       legacy pre-agents.d keys HERMES_ENABLE/CFG/UNIT, OPENCLAW_ENABLE/DIR/UNIT.
+#
+# Agents — the consumers `set`/`point` repoint — are a per-machine registry
+# just like models: one file per agent in ~/.config/llmctl/agents.d/<name>.conf
+# (TYPE=hermes|openclaw, CFG, UNIT, FOLLOW). Any number of agents of either
+# type. `llmctl machine init` discovers the ones on the box, `llmctl agent add`
+# registers more. If agents.d/ is EMPTY, the legacy HERMES_*/OPENCLAW_*
+# machine.conf keys synthesize agents named 'hermes' and 'openclaw'.
 # To port llmctl to a new machine: copy this script + run `llmctl machine init`,
 # edit the generated profile, then `llmctl add` your models.
 #
@@ -118,8 +129,10 @@ WEBUI_CONTAINER="open-webui"
 WEBUI_PORT=8088
 WEBUI_IMAGE="ghcr.io/open-webui/open-webui:main"
 
+# Legacy single-instance agent defaults — used only to synthesize agents when
+# agents.d/ is empty. (Each hermes instance's context_length_cache.yaml is
+# derived from its CFG's directory, so profiles keep separate caches.)
 HERMES_CFG="$HOME/.hermes/config.yaml"
-HERMES_CTX_CACHE="$HOME/.hermes/context_length_cache.yaml"
 HERMES_UNIT="hermes-gateway.service"
 OPENCLAW_DIR="$HOME/.openclaw"
 OPENCLAW_UNIT="openclaw-gateway.service"
@@ -262,6 +275,63 @@ load_external_models() {
   done
 }
 load_external_models
+
+# ----------------------------------------------------------------------------
+# Agents (~/.config/llmctl/agents.d/*.conf) — the consumers `set`/`point`
+# repoint. One file per agent, PARSED like models.d. Keys:
+#   TYPE=hermes|openclaw   which repoint recipe to use
+#   CFG                    hermes: path to its config.yaml
+#                          openclaw: the directory holding openclaw.json
+#   UNIT                   the agent's gateway systemd user unit
+#   FOLLOW                 1 (default) = repointed by every `llmctl set`;
+#                          0 = pinned, moves only when named in `llmctl point`
+# If NO files exist, the legacy HERMES_*/OPENCLAW_* machine.conf keys
+# synthesize agents named 'hermes' and 'openclaw' (old single-agent setups).
+# ----------------------------------------------------------------------------
+AGENTS_D="${AGENTS_D:-$HOME/.config/llmctl/agents.d}"
+AGENTS=()
+declare -A A_TYPE A_CFG A_UNIT A_FOLLOW A_FILE
+
+load_agents() {
+  local f name type cfg unit
+  shopt -s nullglob
+  for f in "$AGENTS_D"/*.conf; do
+    name="$(basename "$f" .conf)"
+    type="$(conf_get TYPE "$f")"
+    cfg="$(conf_get CFG "$f")"; cfg="${cfg/#\~/$HOME}"
+    unit="$(conf_get UNIT "$f")"
+    if [[ ! "$type" =~ ^(hermes|openclaw)$ || -z "$cfg" || -z "$unit" ]]; then
+      err "agents.d: $f needs TYPE=hermes|openclaw, CFG, UNIT — skipping"; continue
+    fi
+    AGENTS+=("$name")
+    A_TYPE[$name]="$type"
+    A_CFG[$name]="$cfg"
+    A_UNIT[$name]="$unit"
+    A_FOLLOW[$name]="$(conf_get FOLLOW "$f" 1)"
+    A_FILE[$name]="$f"
+  done
+  if ((${#AGENTS[@]} == 0)); then
+    if [[ "$HERMES_ENABLE" == 1 ]]; then
+      AGENTS+=(hermes)
+      A_TYPE[hermes]=hermes
+      A_CFG[hermes]="$HERMES_CFG"
+      A_UNIT[hermes]="$HERMES_UNIT"
+      A_FOLLOW[hermes]=1
+    fi
+    if [[ "$OPENCLAW_ENABLE" == 1 ]]; then
+      AGENTS+=(openclaw)
+      A_TYPE[openclaw]=openclaw
+      A_CFG[openclaw]="$OPENCLAW_DIR"
+      A_UNIT[openclaw]="$OPENCLAW_UNIT"
+      A_FOLLOW[openclaw]=1
+    fi
+  fi
+}
+load_agents
+
+require_agent() {
+  [[ -n "${A_TYPE[$1]:-}" ]] || die "unknown agent '$1' (registered: ${AGENTS[*]:-none})"
+}
 
 require_model() {
   [[ -n "${PORT[$1]:-}" ]] || die "unknown model '$1' (know: ${MODELS[*]})"
@@ -658,13 +728,21 @@ EOF
 # ----------------------------------------------------------------------------
 # Agent repointing
 # ----------------------------------------------------------------------------
-point_hermes() { # point_hermes <name>
-  [[ "$HERMES_ENABLE" == 1 ]] || { log "hermes: disabled in machine profile — skipping"; return 0; }
-  local name="$1" id="${ID[$name]}" url key bak
+point_agent() { # point_agent <agent> <model> — dispatch on the agent's TYPE
+  local a="$1" name="$2"
+  case "${A_TYPE[$a]}" in
+    hermes)   point_hermes_at "$a" "$name";;
+    openclaw) point_openclaw_at "$a" "$name";;
+  esac
+}
+
+point_hermes_at() { # point_hermes_at <agent> <model>
+  local a="$1" name="$2" id="${ID[$name]}" url key bak
+  local cfg="${A_CFG[$a]}" unit="${A_UNIT[$a]}"
   url="$(url_of "$name")" key="$(key_of "$name")"
-  [[ -f "$HERMES_CFG" ]] || { err "hermes config not found ($HERMES_CFG) — skipping"; return 0; }
-  bak="$HERMES_CFG.bak.llmctl.$(date +%Y%m%d_%H%M%S)"
-  cp "$HERMES_CFG" "$bak"
+  [[ -f "$cfg" ]] || { err "$a: hermes config not found ($cfg) — skipping"; return 0; }
+  bak="$cfg.bak.llmctl.$(date +%Y%m%d_%H%M%S)"
+  cp "$cfg" "$bak"
 
   # Edit only the top-level `model:` block (keeps comments/format elsewhere intact)
   awk -v id="$id" -v url="$url" -v key="$key" '
@@ -674,44 +752,44 @@ point_hermes() { # point_hermes <name>
     inblk && /^  base_url:/ { print "  base_url: " url; next }
     inblk && /^  api_key:/  { print "  api_key: " key;  next }
     { print }
-  ' "$bak" > "$HERMES_CFG.tmp"
+  ' "$bak" > "$cfg.tmp"
 
   # Validate the result parses and took the edit before installing it
-  if python3 - "$HERMES_CFG.tmp" "$id" "$url" <<'PYEOF'
+  if python3 - "$cfg.tmp" "$id" "$url" <<'PYEOF'
 import sys, yaml
 cfg = yaml.safe_load(open(sys.argv[1]))
 m = cfg["model"]
 assert m["default"] == sys.argv[2] and m["base_url"] == sys.argv[3], "model block not updated"
 PYEOF
   then
-    mv "$HERMES_CFG.tmp" "$HERMES_CFG"
-    rm -f "$HERMES_CTX_CACHE"   # force re-probe of context length
-    if systemctl --user is-active --quiet "$HERMES_UNIT" 2>/dev/null; then
-      systemctl --user restart "$HERMES_UNIT"
-      log "hermes -> $id @ $url (gateway restarted, backup: $(basename "$bak"))"
+    mv "$cfg.tmp" "$cfg"
+    rm -f "$(dirname "$cfg")/context_length_cache.yaml"   # force re-probe of context length
+    if systemctl --user is-active --quiet "$unit" 2>/dev/null; then
+      systemctl --user restart "$unit"
+      log "$a (hermes) -> $id @ $url (gateway restarted, backup: $(basename "$bak"))"
     else
-      log "hermes -> $id @ $url (gateway not running; config updated, backup: $(basename "$bak"))"
+      log "$a (hermes) -> $id @ $url (gateway not running; config updated, backup: $(basename "$bak"))"
     fi
   else
-    rm -f "$HERMES_CFG.tmp"
-    err "hermes config edit failed validation — original untouched (backup at $bak)"
+    rm -f "$cfg.tmp"
+    err "$a: hermes config edit failed validation — original untouched (backup at $bak)"
     return 1
   fi
 }
 
-point_openclaw() { # point_openclaw <name>
-  [[ "$OPENCLAW_ENABLE" == 1 ]] || { log "openclaw: disabled in machine profile — skipping"; return 0; }
-  local name="$1" id="${ID[$name]}" url ctx key was_active=0
+point_openclaw_at() { # point_openclaw_at <agent> <model>
+  local a="$1" name="$2" id="${ID[$name]}" url ctx key was_active=0 rc=0
+  local dir="${A_CFG[$a]}" unit="${A_UNIT[$a]}"
   url="$(url_of "$name")" ctx="${CTX[$name]}" key="$(key_of "$name")"
-  [[ -f "$OPENCLAW_DIR/openclaw.json" ]] || { err "openclaw config not found — skipping"; return 0; }
+  [[ -f "$dir/openclaw.json" ]] || { err "$a: openclaw config not found ($dir/openclaw.json) — skipping"; return 0; }
 
   # openclaw rewrites its own config — stop the gateway before editing
-  if systemctl --user is-active --quiet "$OPENCLAW_UNIT" 2>/dev/null; then
+  if systemctl --user is-active --quiet "$unit" 2>/dev/null; then
     was_active=1
-    systemctl --user stop "$OPENCLAW_UNIT"
+    systemctl --user stop "$unit"
   fi
 
-  OC_DIR="$OPENCLAW_DIR" OC_ID="$id" OC_URL="$url" OC_CTX="$ctx" OC_KEY="$key" python3 <<'PYEOF'
+  OC_DIR="$dir" OC_ID="$id" OC_URL="$url" OC_CTX="$ctx" OC_KEY="$key" python3 <<'PYEOF' || rc=1
 import json, os, shutil, time
 
 d      = os.environ["OC_DIR"]
@@ -756,15 +834,14 @@ edit(os.path.join(d, "openclaw.json"), main_cfg)
 edit(os.path.join(d, "agents/main/agent/models.json"), agent_models)
 edit(os.path.join(d, "agents/main/agent/auth-profiles.json"), auth)
 PYEOF
-  local rc=$?
 
   if (( was_active )); then
-    systemctl --user start "$OPENCLAW_UNIT"
+    systemctl --user start "$unit"
   fi
   if (( rc == 0 )); then
-    log "openclaw -> $id @ $url$( (( was_active )) && echo ' (gateway restarted)')"
+    log "$a (openclaw) -> $id @ $url$( (( was_active )) && echo ' (gateway restarted)')"
   else
-    err "openclaw config edit failed (backups: *.bak.llmctl.*) — check $OPENCLAW_DIR"
+    err "$a: openclaw config edit failed (backups: *.bak.llmctl.*) — check $dir"
     return 1
   fi
 }
@@ -831,13 +908,32 @@ point_webui() { # point_webui <name> — vllm: run open-webui against it; llamac
   fi
 }
 
-cmd_point() {
-  local name="$1"; require_model "$name"
+cmd_point() { # cmd_point <model> [agent...]
+  local name="$1"; shift
+  require_model "$name"
   is_healthy "$name" || err "warning: '$name' is not answering /health on :${PORT[$name]} — pointing agents anyway"
-  point_hermes "$name"
-  point_openclaw "$name"
-  point_webui "$name"
+  local rc=0 a
+
+  if (($#)); then
+    # selective: only the named agents (FOLLOW=0 included — naming overrides),
+    # web UI untouched
+    for a in "$@"; do require_agent "$a"; done
+    for a in "$@"; do point_agent "$a" "$name" || rc=1; done
+    (( rc )) || log "named agent(s) now target ${ID[$name]} @ $(url_of "$name")"
+    return $rc
+  fi
+
+  ((${#AGENTS[@]})) || log "no agents registered ('llmctl agent add' or $AGENTS_D/)"
+  for a in "${AGENTS[@]}"; do
+    if [[ "${A_FOLLOW[$a]}" != 1 ]]; then
+      log "$a: pinned (FOLLOW=0) — skipping (repoint explicitly: llmctl point $name $a)"
+      continue
+    fi
+    point_agent "$a" "$name" || rc=1
+  done
+  point_webui "$name" || rc=1
   log "agents now target ${ID[$name]} @ $(url_of "$name") — chat in browser: $(chat_url "$name")"
+  return $rc
 }
 
 # ----------------------------------------------------------------------------
@@ -916,7 +1012,7 @@ cmd_set() { # exclusive switch + agents; rolls back on failure
 
   cmd_point "$name"
   gpu_report
-  log "SET: $name is the active model — server + both agents survive reboot"
+  log "SET: $name is the active model — server + agents survive reboot"
 }
 
 # ----------------------------------------------------------------------------
@@ -1049,6 +1145,61 @@ cmd_remove() {
 }
 
 # ----------------------------------------------------------------------------
+# Add / remove agents (wizard writes ~/.config/llmctl/agents.d/<name>.conf)
+# ----------------------------------------------------------------------------
+cmd_agent_add() {
+  echo "llmctl agent add — register an agent (writes $AGENTS_D/<name>.conf)"
+  echo
+
+  local name t type cfg unit follow
+  while :; do
+    name="$(ask "agent name (used in 'llmctl point <model> <name>')")"
+    [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || { err "letters/digits/._- only"; continue; }
+    [[ -f "$AGENTS_D/$name.conf" ]] && { err "'$name' already exists ($AGENTS_D/$name.conf)"; continue; }
+    break
+  done
+
+  t="$(ask "type: 1=hermes  2=openclaw" 1)"
+  if [[ "$t" == 2 ]]; then
+    type=openclaw
+    cfg="$(ask "openclaw dir (contains openclaw.json)" "$HOME/.openclaw")"
+    unit="$(ask "gateway systemd user unit" "openclaw-gateway.service")"
+  else
+    type=hermes
+    cfg="$(ask "hermes config.yaml" "$HOME/.hermes/profiles/$name/config.yaml")"
+    unit="$(ask "gateway systemd user unit" "hermes-gateway-$name.service")"
+  fi
+  cfg="${cfg/#\~/$HOME}"
+  [[ -e "$cfg" ]] || err "warning: $cfg does not exist yet — the agent is skipped until it does"
+  follow="$(ask "follow 'llmctl set'? 1=always repointed, 0=pinned (only 'llmctl point <model> $name')" 1)"
+
+  mkdir -p "$AGENTS_D"
+  local conf="$AGENTS_D/$name.conf"
+  {
+    echo "# llmctl agent definition — created $(date +%F) by 'llmctl agent add'"
+    echo "# Edit freely; llmctl re-reads this on every run. Delete with: llmctl agent remove $name"
+    echo "TYPE=$type"
+    echo "CFG=\"$cfg\""
+    echo "UNIT=\"$unit\""
+    echo "FOLLOW=$follow"
+  } > "$conf"
+
+  log "registered agent '$name' -> $conf"
+  log "repoint it now: llmctl point <model> $name   (FOLLOW=1 agents also move on the next 'llmctl set')"
+}
+
+cmd_agent_remove() {
+  local name="$1"; require_agent "$name"
+  [[ -n "${A_FILE[$name]:-}" ]] \
+    || die "'$name' is synthesized from legacy machine.conf keys — set HERMES_ENABLE=0 / OPENCLAW_ENABLE=0 there instead"
+  local yn
+  yn="$(ask "unregister agent '$name' (${A_TYPE[$name]}: ${A_CFG[$name]})? y/N" "n")"
+  [[ "$yn" =~ ^[yY] ]] || { log "aborted"; return 0; }
+  rm -f "${A_FILE[$name]}"
+  log "removed agent '$name' from llmctl. Its own config and gateway unit were NOT touched."
+}
+
+# ----------------------------------------------------------------------------
 # Machine profile: show effective values, or probe + generate machine.conf
 # ----------------------------------------------------------------------------
 machine_show() {
@@ -1061,11 +1212,13 @@ machine_show() {
   for k in MACHINE_NAME ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT VRAM_PER_GPU_MB \
            MODELS_DIR VLLM_BIN VLLM_KEYFILE LLAMA_SERVER LLAMA_KEYFILE \
            WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
-           HERMES_ENABLE HERMES_CFG OPENCLAW_ENABLE OPENCLAW_DIR \
            WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT; do
     printf '  %-24s %s\n' "$k" "${!k:-—}"
   done
   printf '  %-24s %s\n' LEGACY_UNITS "${LEGACY_UNITS[*]:-—}"
+  echo
+  echo "agents ($AGENTS_D):"
+  agents_report
   echo
   echo "probed hardware:"
   case "$ACCEL" in
@@ -1125,13 +1278,8 @@ LLAMA_KEYFILE="$LLAMA_KEYFILE"
 ENABLE_BUILTIN_MODELS=$( [[ "$(hostname)" == "DW-ASUS-LINUX" ]] && echo 1 || echo 0 )
 WIZARD_BASE_PORT=$WIZARD_BASE_PORT
 
-# agents present on this machine (0 = llmctl won't touch them)
-HERMES_ENABLE=$( [[ -f "$HERMES_CFG" ]] && echo 1 || echo 0 )
-HERMES_CFG="$HERMES_CFG"
-HERMES_UNIT="$HERMES_UNIT"
-OPENCLAW_ENABLE=$( [[ -d "$OPENCLAW_DIR" ]] && echo 1 || echo 0 )
-OPENCLAW_DIR="$OPENCLAW_DIR"
-OPENCLAW_UNIT="$OPENCLAW_UNIT"
+# agents are not keys here — they live in $AGENTS_D/<name>.conf, one file
+# per agent ('llmctl agents' to list, 'llmctl agent add' to register more)
 
 # browser chat for vLLM models (docker open-webui); llama.cpp uses its own UI
 WEBUI_ENABLE=$( command -v docker >/dev/null 2>&1 && echo 1 || echo 0 )
@@ -1143,7 +1291,47 @@ WEBUI_IMAGE="$WEBUI_IMAGE"
 LEGACY_UNITS="${LEGACY_UNITS[*]}"
 EOF
   log "wrote $MACHINE_CONF"
-  log "review it, then: llmctl machine   (to see effective values)"
+
+  # Discover agents on this box and register them in agents.d/ (existing
+  # entries are left alone). FOLLOW=1 only when the agent already points at a
+  # local endpoint; cloud-pointed instances are registered but pinned, so
+  # `llmctl set` won't yank them off their current model.
+  local hdir hcfg hname hunit hurl hfollow ocurl ocfollow
+  for hdir in "$HOME/.hermes" "$HOME/.hermes/profiles"/*; do
+    hcfg="$hdir/config.yaml"
+    [[ -f "$hcfg" ]] || continue
+    if [[ "$hdir" == "$HOME/.hermes" ]]; then
+      hname="hermes"; hunit="hermes-gateway.service"
+    else
+      hname="$(basename "$hdir")"; hunit="hermes-gateway-$hname.service"
+    fi
+    hurl="$(awk '/^model:/{f=1;next} f&&/^[^ ]/{f=0} f&&/^  base_url:/{print $2;exit}' "$hcfg")"
+    hfollow=0; [[ "$hurl" == *127.0.0.1* || "$hurl" == *localhost* ]] && hfollow=1
+    init_agent_conf "$hname" hermes "$hcfg" "$hunit" "$hfollow"
+  done
+  if [[ -f "$HOME/.openclaw/openclaw.json" ]]; then
+    ocurl="$(jq -r '.models.providers.vllm.baseUrl // ""' "$HOME/.openclaw/openclaw.json" 2>/dev/null || true)"
+    ocfollow=0; [[ "$ocurl" == *127.0.0.1* || "$ocurl" == *localhost* ]] && ocfollow=1
+    init_agent_conf openclaw openclaw "$HOME/.openclaw" "openclaw-gateway.service" "$ocfollow"
+  fi
+
+  log "review the profile + agents, then: llmctl machine   (to see effective values)"
+}
+
+init_agent_conf() { # init_agent_conf <name> <type> <cfg> <unit> <follow>
+  local conf="$AGENTS_D/$1.conf"
+  [[ -f "$conf" ]] && { log "agents.d: '$1' already registered — left as is"; return 0; }
+  mkdir -p "$AGENTS_D"
+  {
+    echo "# llmctl agent definition — created $(date +%F) by 'llmctl machine init'"
+    echo "# FOLLOW=1: repointed by every 'llmctl set'; FOLLOW=0: pinned, only"
+    echo "# moved when named explicitly ('llmctl point <model> $1')"
+    echo "TYPE=$2"
+    echo "CFG=\"$3\""
+    echo "UNIT=\"$4\""
+    echo "FOLLOW=$5"
+  } > "$conf"
+  log "agents.d: registered '$1' ($2, FOLLOW=$5) -> $conf"
 }
 
 cmd_machine() {
@@ -1247,17 +1435,56 @@ print_table() {
   done
 }
 
+agent_target() { # agent_target <agent> — "model @ url" as configured right now
+  local a="$1" cfg="${A_CFG[$a]}" m="" u=""
+  case "${A_TYPE[$a]}" in
+    hermes)
+      [[ -f "$cfg" ]] || { echo "(config missing: $cfg)"; return 0; }
+      m="$(awk '/^model:/{f=1;next} f&&/^  default:/{print $2;exit}' "$cfg")"
+      u="$(awk '/^model:/{f=1;next} f&&/^  base_url:/{print $2;exit}' "$cfg")"
+      ;;
+    openclaw)
+      [[ -f "$cfg/openclaw.json" ]] || { echo "(config missing: $cfg/openclaw.json)"; return 0; }
+      if command -v jq >/dev/null; then
+        m="$(jq -r '.agents.defaults.model.primary // ""' "$cfg/openclaw.json")"
+        u="$(jq -r '.models.providers.vllm.baseUrl // ""' "$cfg/openclaw.json")"
+      fi
+      ;;
+  esac
+  echo "${m:-?} @ ${u:-?}"
+}
+
 agents_report() {
-  local h_model h_url oc_url oc_primary
-  if [[ -f "$HERMES_CFG" ]]; then
-    h_model="$(awk '/^model:/{f=1;next} f&&/^  default:/{print $2;exit}' "$HERMES_CFG")"
-    h_url="$(awk '/^model:/{f=1;next} f&&/^  base_url:/{print $2;exit}' "$HERMES_CFG")"
-    echo "  hermes   -> ${h_model:-?} @ ${h_url:-?}"
+  local a note
+  ((${#AGENTS[@]})) || { echo "  (none registered — 'llmctl agent add' or $AGENTS_D/)"; return 0; }
+  for a in "${AGENTS[@]}"; do
+    note=""
+    [[ "${A_FOLLOW[$a]}" == 1 ]] || note="  [pinned]"
+    [[ -n "${A_FILE[$a]:-}" ]] || note+="  [legacy machine.conf keys]"
+    printf '  %-12s %-10s -> %s%s\n' "$a" "(${A_TYPE[$a]})" "$(agent_target "$a")" "$note"
+  done
+}
+
+cmd_agents() {
+  if ((${#AGENTS[@]} == 0)); then
+    log "no agents registered — 'llmctl agent add' writes $AGENTS_D/<name>.conf"
+    return 0
   fi
-  if [[ -f "$OPENCLAW_DIR/openclaw.json" ]] && command -v jq >/dev/null; then
-    oc_url="$(jq -r '.models.providers.vllm.baseUrl // "?"' "$OPENCLAW_DIR/openclaw.json")"
-    oc_primary="$(jq -r '.agents.defaults.model.primary // "?"' "$OPENCLAW_DIR/openclaw.json")"
-    echo "  openclaw -> ${oc_primary} @ ${oc_url}"
+  local a st legacy=0
+  printf '  %-14s %-9s %-7s %-9s %s\n' name type follow gateway target
+  for a in "${AGENTS[@]}"; do
+    st="$(systemctl --user is-active "${A_UNIT[$a]}" 2>/dev/null || true)"
+    printf '  %-14s %-9s %-7s %-9s %s\n' \
+      "$a" "${A_TYPE[$a]}" "${A_FOLLOW[$a]}" "${st:-?}" "$(agent_target "$a")"
+    [[ -n "${A_FILE[$a]:-}" ]] || legacy=1
+  done
+  echo
+  if (( legacy )); then
+    echo "  (synthesized from legacy machine.conf keys — 'llmctl agent add' or"
+    echo "   'llmctl machine init' migrates them to $AGENTS_D/)"
+  else
+    echo "  (definitions: $AGENTS_D/<name>.conf — FOLLOW=1 agents move on every"
+    echo "   'llmctl set'; pinned ones only via 'llmctl point <model> <name>')"
   fi
 }
 
@@ -1332,7 +1559,14 @@ case "${1:-menu}" in
   up)            shift; (($#)) || die "usage: llmctl up <model>..."; cmd_up "$@";;
   down)          shift; (($#)) || die "usage: llmctl down <model>...|all"; cmd_down "$@";;
   set)           shift; (($#==1)) || die "usage: llmctl set <model>"; cmd_set "$1";;
-  point)         shift; (($#==1)) || die "usage: llmctl point <model>"; cmd_point "$1";;
+  point)         shift; (($#>=1)) || die "usage: llmctl point <model> [agent...]"; cmd_point "$@";;
+  agents)        cmd_agents;;
+  agent)         shift
+                 case "${1:-}" in
+                   add)    cmd_agent_add;;
+                   remove) [[ -n "${2:-}" ]] || die "usage: llmctl agent remove <name>"; cmd_agent_remove "$2";;
+                   *)      die "usage: llmctl agent add | llmctl agent remove <name>";;
+                 esac;;
   env)           shift; (($#==1)) || die "usage: llmctl env <model>"; cmd_env "$1";;
   logs)          shift; (($#)) || die "usage: llmctl logs <model> [-f|N]"; cmd_logs "$@";;
   add)           cmd_add;;

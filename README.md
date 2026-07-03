@@ -17,8 +17,9 @@ models:
   2  35b-moe-vllm   vllm      19435  up+healthy  Qwen3.6-35B-A3B MoE FP8, vLLM, 128K
 
 agents:
-  hermes   -> qwen3.6-35b-a3b-fp8 @ http://127.0.0.1:19435/v1
-  openclaw -> vllm/qwen3.6-35b-a3b-fp8 @ http://127.0.0.1:19435/v1
+  mrlomo       (hermes)   -> qwen3.6-35b-a3b-fp8 @ http://127.0.0.1:19435/v1
+  mr-simm      (hermes)   -> gpt-5.5 @ https://chatgpt.com/backend-api/codex  [pinned]
+  openclaw     (openclaw) -> vllm/qwen3.6-35b-a3b-fp8 @ http://127.0.0.1:19435/v1
 
 chat (browser):
   35b-moe-vllm -> http://localhost:8088/ (open-webui, backend http://192.168.1.127:19435/v1)
@@ -40,11 +41,15 @@ chat (browser):
   `~/.config/llmctl/models.d/`, created by an interactive wizard (`llmctl add`)
   and hand-editable. (A built-in registry describes the author's dual-RTX-3090
   box; `ENABLE_BUILTIN_MODELS=0` hides it.)
-- **Consumers follow the model.** On switch, llmctl rewrites the configs of
-  the agents that consume the endpoint and restarts their gateways, and it
-  manages an [open-webui](https://github.com/open-webui/open-webui) docker
-  container for browser chat with vLLM models (llama.cpp serves its own UI on
-  the model port). Each integration is optional per machine.
+- **Consumers follow the model.** Agents are a per-machine registry just like
+  models: one `key=value` file per agent in `~/.config/llmctl/agents.d/`, any
+  number of hermes and openclaw instances. On switch, llmctl rewrites each
+  following agent's config and restarts its gateway; agents pinned with
+  `FOLLOW=0` (e.g. instances on cloud models) are left alone unless named
+  explicitly in `llmctl point`. llmctl also manages an
+  [open-webui](https://github.com/open-webui/open-webui) docker container for
+  browser chat with vLLM models (llama.cpp serves its own UI on the model
+  port). Each integration is optional per machine.
 
 ## Install
 
@@ -70,9 +75,11 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl <model>` / `llmctl set <model>` | exclusive switch: stop others, start, health-check (rollback on failure), repoint agents + web UI, persist across boot |
 | `llmctl up <model>...` | start model(s) alongside what's running (VRAM pre-check) |
 | `llmctl down <model>...\|all` | stop + remove from boot |
-| `llmctl point <model>` | repoint agents + web UI only |
+| `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
 | `llmctl status` / `list` | units, health, agent targets, chat links, GPU memory |
+| `llmctl agents` | list registered agents: type, FOLLOW, gateway state, current target |
 | `llmctl add` / `remove <model>` | wizard to register a model / unregister it |
+| `llmctl agent add` / `agent remove <name>` | wizard to register an agent / unregister it |
 | `llmctl bench <model>` | benchmark now: prefill tok/s (via time-to-first-token over a ~1.5K prompt), generation tok/s, GPU util/power sampled in both phases |
 | `llmctl stats [model]` | load-time + benchmark history (load, ttft, prefill/gen tok/s) and per-model averages |
 | `llmctl env <model>` | print `OPENAI_*` exports for shell clients |
@@ -99,12 +106,32 @@ LLAMA_SERVER="/home/me/llama.cpp/build/bin/llama-server"
 LLAMA_KEYFILE="/home/me/.config/llama.cpp/api-keys"
 ENABLE_BUILTIN_MODELS=0     # 1 only on the author's dual-3090 box
 WIZARD_BASE_PORT=19438
-HERMES_ENABLE=0             # agent integrations, off unless present
-OPENCLAW_ENABLE=0
 WEBUI_ENABLE=1              # open-webui docker container for vLLM chat
 WEBUI_PORT=8088
 LEGACY_UNITS=""             # old units to displace when llmctl takes over
 ```
+
+Agents are not machine.conf keys — they live in `agents.d/` (below). The
+pre-agents.d keys (`HERMES_ENABLE/CFG/UNIT`, `OPENCLAW_ENABLE/DIR/UNIT`) are
+still honored, but only while `agents.d/` is empty.
+
+## Agent definition (`~/.config/llmctl/agents.d/<name>.conf`)
+
+One file per agent — however many hermes/openclaw instances a machine runs.
+Written by `llmctl machine init` (auto-discovery: hermes default + profiles,
+openclaw) or `llmctl agent add`; example:
+
+```ini
+TYPE=hermes                 # repoint recipe: hermes | openclaw
+CFG="/home/me/.hermes/profiles/mrlomo/config.yaml"   # openclaw: the dir with openclaw.json
+UNIT="hermes-gateway-mrlomo.service"                 # gateway systemd user unit
+FOLLOW=1                    # 1 = repointed by every `llmctl set`
+                            # 0 = pinned; moves only via `llmctl point <model> <name>`
+```
+
+`machine init` sets `FOLLOW=1` only for agents already pointing at a local
+endpoint, so instances living on cloud models are registered but never
+yanked off them by a model switch.
 
 ## Model definition (`~/.config/llmctl/models.d/<name>.conf`)
 
