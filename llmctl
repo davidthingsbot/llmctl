@@ -570,10 +570,12 @@ export PATH="$(dirname "$VLLM_BIN"):\$PATH"
 ${gpu_export}
 ${accel_env}
 export VLLM_NO_USAGE_STATS=1
+export HF_HUB_OFFLINE=1
 exec "$VLLM_BIN" serve ${MREF[$name]} \\
   --served-model-name ${ID[$name]} \\
   --tensor-parallel-size ${TP[$name]} ${mem_flag}\\
   --max-model-len ${MAXLEN[$name]} \\
+  --enable-prefix-caching \\
   --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)" ${XARGS[$name]}
 EOF
   else
@@ -589,6 +591,7 @@ ${gpu_export}
 exec "$LLAMA_SERVER" -m "${MREF[$name]}" --alias ${ID[$name]} \\
   --host 0.0.0.0 --port $port ${gpu_flags}\\
   --ctx-size ${SRVCTX[$name]} -np ${STREAMS[$name]} --flash-attn on --jinja \\
+  --cache-reuse 256 \\
   --api-key-file "$LLAMA_KEYFILE" ${XARGS[$name]}
 EOF
   fi
@@ -622,6 +625,7 @@ export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
 export NCCL_CUMEM_ENABLE=0
 export OMP_NUM_THREADS=1
 export VLLM_NO_USAGE_STATS=1
+export HF_HUB_OFFLINE=1
 exec "$VLLM_BIN" serve Qwen/Qwen3.6-27B-FP8 \\
   --served-model-name ${ID[$name]} \\
   --tensor-parallel-size 2 --disable-custom-all-reduce --dtype float16 \\
@@ -642,10 +646,12 @@ export PATH="$HOME/.venvs/vllm/bin:\$PATH"
 export CUDA_VISIBLE_DEVICES=0,1
 export VLLM_USE_FLASHINFER_SAMPLER=0
 export VLLM_NO_USAGE_STATS=1
+export HF_HUB_OFFLINE=1
 exec "$VLLM_BIN" serve Qwen/Qwen3.6-35B-A3B-FP8 \\
   --served-model-name ${ID[$name]} \\
   --tensor-parallel-size 2 --max-model-len 131072 --max-num-seqs 2 \\
   --gpu-memory-utilization 0.92 \\
+  --enable-prefix-caching \\
   --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml \\
   --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)"
 EOF
@@ -659,6 +665,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 exec "$LLAMA_SERVER" -m "$GGUF_27B" --alias ${ID[$name]} \\
   --host 0.0.0.0 --port $port -ngl 99 --split-mode layer --tensor-split 1,1 \\
   --ctx-size 524288 -np 2 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja \\
+  --cache-reuse 256 \\
   --temp 0.7 --top-k 20 --top-p 0.9 --min-p 0.0 --presence-penalty 0.0 \\
   --api-key-file "$LLAMA_KEYFILE"
 EOF
@@ -672,6 +679,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 exec "$LLAMA_SERVER" -m "$GGUF_35B" --alias ${ID[$name]} \\
   --host 0.0.0.0 --port $port -ngl 99 --ctx-size 524288 -np 2 \\
   --split-mode layer --tensor-split 1,1 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja \\
+  --cache-reuse 256 \\
   --temp 0.7 --top-k 20 --top-p 0.9 --min-p 0.0 --presence-penalty 0.2 \\
   --api-key-file "$LLAMA_KEYFILE"
 EOF
