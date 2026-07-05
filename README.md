@@ -84,6 +84,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl stats [model]` | load-time + benchmark history (load, ttft, prefill/gen tok/s) and per-model averages |
 | `llmctl env <model>` | print `OPENAI_*` exports for shell clients |
 | `llmctl logs <model> [-f]` | the model unit's journal |
+| `llmctl usage [model] [-n N]` | who's using the GPUs: per-process VRAM, each running model's connected clients (resolved to commands), last N request lines from the journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
 | `llmctl sleep-hook [install\|uninstall\|status]` | survive suspend: stop running models before sleep, restart them on resume |
 

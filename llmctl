@@ -23,6 +23,8 @@
 #   llmctl remove <model>      unregister a model (stops it first)
 #   llmctl env  <model>        print OPENAI_* exports for shell/manual clients
 #   llmctl logs <model> [-f]   journal for a model's unit
+#   llmctl usage [model] [-n N] who's using the GPUs: per-process VRAM, each
+#                              model's connected clients, recent request lines
 #   llmctl bench <model>       benchmark a running model (tok/s, GPU, power)
 #   llmctl stats [model]       recorded load times + benchmark history
 #   llmctl machine             show machine profile + probed hardware
@@ -549,6 +551,46 @@ gpu_report() {
   esac
 }
 
+gpu_proc_report() { # per-process VRAM — who exactly is on the GPUs
+  case "$ACCEL" in
+    cuda)
+      command -v nvidia-smi >/dev/null || return 0
+      log "GPU processes:"
+      local gpu pid type mem args
+      while read -r gpu pid type mem; do
+        args="$(ps -o args= -p "$pid" 2>/dev/null | cut -c1-90)"
+        printf '    GPU%-2s %-8s %-3s %9s  %s\n' "$gpu" "$pid" "$type" "$mem" "${args:-(exited)}"
+      done < <(nvidia-smi 2>/dev/null \
+               | awk '/Processes:/{sect=1} sect && $1=="|" && $5+0==$5 && $6~/^[CG]/ {print $2, $5, $6, $(NF-1)}')
+      ;;
+    rocm)
+      command -v rocm-smi >/dev/null || return 0
+      log "GPU processes (rocm):"
+      rocm-smi --showpids 2>/dev/null | grep -E 'PID|^[0-9]' | sed 's/^/    /' || true
+      ;;
+    *) : ;;  # cpu — nothing to report
+  esac
+}
+
+client_report() { # client_report <port> — who is talking to the model on <port>
+  local port="$1" pid args n=0 remote
+  # local clients: their side of an established connection to $port names the pid
+  while read -r pid; do
+    n=$((n+1))
+    args="$(ps -o args= -p "$pid" 2>/dev/null | cut -c1-100)"
+    printf '    pid %-7s %s\n' "$pid" "${args:-(exited)}"
+  done < <(ss -tnpH state established "( dport = :$port )" 2>/dev/null \
+           | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un)
+  # remote clients have no local pid — show their address
+  remote="$(ss -tnH state established "( sport = :$port )" 2>/dev/null \
+            | awk '{print $4}' | grep -vE '^(127\.|\[::1\])' | sort -u || true)"
+  if [[ -n "$remote" ]]; then
+    n=$((n+1))
+    sed 's/^/    remote: /' <<<"$remote"
+  fi
+  ((n)) || echo "    (no established connections)"
+}
+
 # ----------------------------------------------------------------------------
 # Run scripts + units (generated fresh on every `up`/`set` — edit registry, not these)
 # ----------------------------------------------------------------------------
@@ -629,7 +671,7 @@ export HF_HUB_OFFLINE=1
 exec "$VLLM_BIN" serve Qwen/Qwen3.6-27B-FP8 \\
   --served-model-name ${ID[$name]} \\
   --tensor-parallel-size 2 --disable-custom-all-reduce --dtype float16 \\
-  --gpu-memory-utilization 0.94 --kv-cache-memory-bytes 4981989376 \\
+  --gpu-memory-utilization 0.90 --kv-cache-memory-bytes 4981989376 \\
   --max-model-len 131072 --max-num-seqs 3 --max-num-batched-tokens 2048 \\
   --compilation-config '{"cudagraph_capture_sizes":[4,8,12]}' \\
   --enable-prefix-caching \\
@@ -1511,6 +1553,44 @@ cmd_logs() {
   fi
 }
 
+cmd_usage() { # cmd_usage [model] [-n N] — who's on the GPUs + what they're asking
+  local name="" n=15
+  while (($#)); do
+    case "$1" in
+      -n) n="${2:?usage: llmctl usage [model] [-n lines]}"; shift 2;;
+      *)  name="$1"; shift;;
+    esac
+  done
+  [[ -z "$name" ]] || require_model "$name"
+
+  gpu_proc_report
+
+  local m lines any=0
+  for m in "${MODELS[@]}"; do
+    [[ -n "$name" && "$m" != "$name" ]] && continue
+    is_active "$m" || continue
+    any=1
+    echo
+    log "clients of $m (:${PORT[$m]}):"
+    client_report "${PORT[$m]}"
+    echo
+    log "recent requests to $m (last $n lines — full log: llmctl logs $m):"
+    lines="$(journalctl --user -u "$(unit_of "$m")" -n 3000 --no-pager 2>/dev/null \
+             | grep -E 'POST /v1/|Avg prompt throughput|request: POST' \
+             | tail -n "$n" || true)"
+    if [[ -n "$lines" ]]; then
+      sed 's/^/    /' <<<"$lines"
+    else
+      echo "    (no requests in the recent journal)"
+    fi
+  done
+  ((any)) || { echo; log "${name:-no model} is not running"; }
+  echo
+  echo "  (request bodies aren't logged: vLLM logs client port + throughput only —"
+  echo "   add --enable-log-requests to a vLLM recipe to log request params; the"
+  echo "   full prompts live in each agent's own session store)"
+}
+
 cmd_env() {
   local name="$1"; require_model "$name"
   echo "export OPENAI_BASE_URL=$(url_of "$name")"
@@ -1670,6 +1750,7 @@ case "${1:-menu}" in
                  esac;;
   env)           shift; (($#==1)) || die "usage: llmctl env <model>"; cmd_env "$1";;
   logs)          shift; (($#)) || die "usage: llmctl logs <model> [-f|N]"; cmd_logs "$@";;
+  usage)         shift; cmd_usage "$@";;
   add)           cmd_add;;
   remove)        shift; (($#==1)) || die "usage: llmctl remove <model>"; cmd_remove "$1";;
   bench)         shift; (($#==1)) || die "usage: llmctl bench <model>"; cmd_bench "$1";;
