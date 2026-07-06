@@ -33,6 +33,10 @@
 #                              (VRAM-heavy CUDA contexts don't survive sleep;
 #                              writes /etc/systemd/system-sleep/llmctl, sudo)
 #   llmctl sleep-hook status|uninstall
+#   llmctl watchdog install    restart an agent's gateway if it gets stuck in a
+#                              request loop (harnesses like OpenClaw have no turn
+#                              cap on local models); runs as a systemd --user svc
+#   llmctl watchdog status|once|uninstall
 #
 # Env toggles: STATS=0 skips the post-start benchmark; FORCE=1 overrides the
 # VRAM pre-check and the `machine init` overwrite protection.
@@ -1481,6 +1485,153 @@ cmd_sleephook() {
   esac
 }
 
+# ----------------------------------------------------------------------------
+# Runaway watchdog — an external backstop for agent harnesses that lack a turn
+# cap. OpenClaw's local-model runner has no max-iteration limit (verified
+# 2026-07-05): a wedged heartbeat turn re-calls the model every few seconds
+# until a human notices. This watches each model's request rate and restarts an
+# agent's gateway when a single gateway client is clearly stuck (sustained high
+# rate, still ongoing), then backs off. It never touches the harness's code, so
+# it survives OpenClaw/Hermes updates — the whole point.
+# ----------------------------------------------------------------------------
+WATCHDOG_UNIT="llmctl-watchdog.service"
+WATCHDOG_WINDOW="${WATCHDOG_WINDOW:-360}"     # seconds of history that defines "sustained"
+WATCHDOG_RATE="${WATCHDOG_RATE:-5}"           # requests/min above which a lone gateway is a runaway
+WATCHDOG_INTERVAL="${WATCHDOG_INTERVAL:-30}"  # seconds between checks
+WATCHDOG_COOLDOWN="${WATCHDOG_COOLDOWN:-600}" # seconds to leave an agent alone after restarting it
+declare -A WD_COOLDOWN_UNTIL
+
+unit_of_pid() { # <pid> -> the systemd unit a pid belongs to (last cgroup component), or ""
+  local pid="$1" cg
+  cg="$(cat /proc/"$pid"/cgroup 2>/dev/null)" || return 0
+  printf '%s\n' "$cg" | grep -oE '[^/]+\.(service|scope)' | tail -1 || true
+}
+
+agent_of_unit() { # <unit> -> registered agent name whose gateway is <unit>, or ""
+  local unit="$1" a
+  for a in "${AGENTS[@]}"; do
+    [[ "${A_UNIT[$a]}" == "$unit" ]] && { echo "$a"; return 0; }
+  done
+  return 0
+}
+
+wd_post_count() { # <model> <since_seconds> -> chat/completions POSTs to that model's unit in the window
+  journalctl --user -u "$(unit_of "$1")" --since "${2} seconds ago" --no-pager 2>/dev/null \
+    | grep -cE 'POST /v1/chat/completions|POST /completion' || true
+}
+
+wd_agent_gateways_on() { # <port> -> unique "agent unit" pairs for established agent-gateway clients
+  local port="$1" pid unit a
+  while read -r pid; do
+    [[ -n "$pid" ]] || continue
+    unit="$(unit_of_pid "$pid")"
+    [[ -n "$unit" ]] || continue
+    a="$(agent_of_unit "$unit")"
+    [[ -n "$a" ]] && printf '%s %s\n' "$a" "$unit"
+  done < <(ss -tnpH state established "( dport = :$port )" 2>/dev/null \
+           | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un) | sort -u
+}
+
+watchdog_tick() { # one detection pass; $1=verbose prints per-model observations
+  local verbose="${1:-}" name port count recent min_count now until pairs n agent unit
+  now="$(date +%s)"
+  min_count=$(( WATCHDOG_RATE * WATCHDOG_WINDOW / 60 ))
+  for name in "${MODELS[@]}"; do
+    is_active "$name" || continue
+    port="${PORT[$name]}"
+    recent="$(wd_post_count "$name" 45)"          # still ongoing right now?
+    count="$(wd_post_count "$name" "$WATCHDOG_WINDOW")"
+    [[ -n "$verbose" ]] && log "watchdog: $name :$port — ${count} req/${WATCHDOG_WINDOW}s (need ≥${min_count}), ${recent} in last 45s"
+    (( recent > 0 )) || continue
+    (( count >= min_count )) || continue
+    # sustained + ongoing: attribute to a single registered agent gateway
+    mapfile -t pairs < <(wd_agent_gateways_on "$port")
+    n="${#pairs[@]}"
+    if (( n == 0 )); then
+      log "watchdog: $name is being hammered (${count}/${WATCHDOG_WINDOW}s) but no registered agent gateway is the client — leaving it (could be open-webui / a real task)"
+      continue
+    fi
+    if (( n > 1 )); then
+      log "watchdog: $name hammered by ${n} agent gateways (${pairs[*]}) — ambiguous, not restarting"
+      continue
+    fi
+    agent="${pairs[0]%% *}"; unit="${pairs[0]#* }"
+    until="${WD_COOLDOWN_UNTIL[$unit]:-0}"
+    if (( now < until )); then
+      log "watchdog: $agent ($unit) still looping but in cooldown for $(( until - now ))s more — not restarting again yet"
+      continue
+    fi
+    err "watchdog: RUNAWAY — $agent ($unit) drove ${count} requests to $name in ${WATCHDOG_WINDOW}s and is still going; restarting its gateway"
+    if systemctl --user restart "$unit"; then
+      WD_COOLDOWN_UNTIL[$unit]=$(( now + WATCHDOG_COOLDOWN ))
+      log "watchdog: restarted $unit — cooling down ${WATCHDOG_COOLDOWN}s before it can be restarted again"
+    else
+      err "watchdog: failed to restart $unit"
+    fi
+  done
+}
+
+watchdog_run() {
+  log "watchdog: watching — window=${WATCHDOG_WINDOW}s rate=${WATCHDOG_RATE}/min interval=${WATCHDOG_INTERVAL}s cooldown=${WATCHDOG_COOLDOWN}s"
+  while true; do
+    watchdog_tick || err "watchdog: tick failed (continuing)"
+    sleep "$WATCHDOG_INTERVAL"
+  done
+}
+
+watchdog_install() {
+  local self; self="$(readlink -f "$0")"
+  mkdir -p "$SYSTEMD_USER_DIR"
+  cat > "$SYSTEMD_USER_DIR/$WATCHDOG_UNIT" <<EOF
+[Unit]
+Description=llmctl runaway watchdog — restarts an agent gateway stuck in a request loop
+After=default.target
+
+[Service]
+Type=simple
+Environment=WATCHDOG_WINDOW=$WATCHDOG_WINDOW WATCHDOG_RATE=$WATCHDOG_RATE WATCHDOG_INTERVAL=$WATCHDOG_INTERVAL WATCHDOG_COOLDOWN=$WATCHDOG_COOLDOWN
+ExecStart=$self watchdog run
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target
+EOF
+  systemctl --user daemon-reload
+  systemctl --user enable --now "$WATCHDOG_UNIT"
+  log "watchdog installed + started ($WATCHDOG_UNIT)"
+  log "  thresholds: restart an agent gateway that drives ≥${WATCHDOG_RATE} req/min for ≥${WATCHDOG_WINDOW}s and is still going"
+  log "  logs: journalctl --user -u $WATCHDOG_UNIT -f   (tune via WATCHDOG_RATE=.. WATCHDOG_WINDOW=.. llmctl watchdog install)"
+}
+
+watchdog_uninstall() {
+  [[ -e "$SYSTEMD_USER_DIR/$WATCHDOG_UNIT" ]] || { log "watchdog not installed"; return 0; }
+  systemctl --user disable --now "$WATCHDOG_UNIT" 2>/dev/null || true
+  rm -f "$SYSTEMD_USER_DIR/$WATCHDOG_UNIT"
+  systemctl --user daemon-reload
+  log "watchdog removed ($WATCHDOG_UNIT)"
+}
+
+watchdog_status() {
+  if [[ -e "$SYSTEMD_USER_DIR/$WATCHDOG_UNIT" ]]; then
+    log "watchdog installed: $(systemctl --user is-active "$WATCHDOG_UNIT" 2>/dev/null) — window=${WATCHDOG_WINDOW}s rate=${WATCHDOG_RATE}/min cooldown=${WATCHDOG_COOLDOWN}s"
+    journalctl --user -u "$WATCHDOG_UNIT" --no-pager 2>/dev/null | grep -iE 'RUNAWAY|restarted' | tail -5 | sed 's/^/    /' || true
+  else
+    log "watchdog NOT installed — a stuck agent gateway can loop unbounded ('llmctl watchdog install')"
+  fi
+}
+
+cmd_watchdog() {
+  case "${1:-status}" in
+    install)   watchdog_install;;
+    uninstall) watchdog_uninstall;;
+    status)    watchdog_status;;
+    run)       watchdog_run;;                 # invoked by the service
+    once)      watchdog_tick verbose;;        # one pass, verbose — for testing
+    *)         die "usage: llmctl watchdog [install|uninstall|status|once]";;
+  esac
+}
+
 cmd_bench() {
   local name="$1"; require_model "$name"
   is_healthy "$name" || die "'$name' is not answering /health on :${PORT[$name]} — start it first"
@@ -1757,6 +1908,7 @@ case "${1:-menu}" in
   stats)         shift; cmd_stats "${1:-}";;
   machine)       shift; cmd_machine "${1:-show}";;
   sleep-hook)    shift; cmd_sleephook "${1:-status}";;
+  watchdog)      shift; cmd_watchdog "${1:-status}";;
   sleep)         shift; cmd_sleep "${1:-}";;
   help|-h|--help) usage;;
   *)             # `llmctl <model-name>` == `llmctl set <model-name>`

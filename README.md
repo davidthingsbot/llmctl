@@ -87,6 +87,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl usage [model] [-n N]` | who's using the GPUs: per-process VRAM, each running model's connected clients (resolved to commands), last N request lines from the journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
 | `llmctl sleep-hook [install\|uninstall\|status]` | survive suspend: stop running models before sleep, restart them on resume |
+| `llmctl watchdog [install\|uninstall\|status\|once]` | external runaway backstop: restart an agent's gateway when a single gateway client drives a sustained request loop (agent harnesses like OpenClaw have no turn cap on local models, so a wedged heartbeat can loop unbounded). Runs as a systemd `--user` service; tune with `WATCHDOG_RATE` (req/min, default 5), `WATCHDOG_WINDOW` (seconds, default 360), `WATCHDOG_COOLDOWN` (default 600). Only restarts registered agent gateways — never open-webui or ad-hoc clients. |
 
 `STATS=0` skips the post-start benchmark; `FORCE=1` overrides the VRAM check
 and `machine init` overwrite protection.
