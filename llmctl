@@ -636,7 +636,7 @@ set -euo pipefail
 ${gpu_export}
 exec "$LLAMA_SERVER" -m "${MREF[$name]}" --alias ${ID[$name]} \\
   --host 0.0.0.0 --port $port ${gpu_flags}\\
-  --ctx-size ${SRVCTX[$name]} -np ${STREAMS[$name]} --flash-attn on --jinja \\
+  --ctx-size ${SRVCTX[$name]} -np ${STREAMS[$name]} --flash-attn on --jinja --metrics \\
   --cache-reuse 256 \\
   --api-key-file "$LLAMA_KEYFILE" ${XARGS[$name]}
 EOF
@@ -710,7 +710,7 @@ set -euo pipefail
 export CUDA_VISIBLE_DEVICES=0,1
 exec "$LLAMA_SERVER" -m "$GGUF_27B" --alias ${ID[$name]} \\
   --host 0.0.0.0 --port $port -ngl 99 --split-mode layer --tensor-split 1,1 \\
-  --ctx-size 524288 -np 2 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja \\
+  --ctx-size 524288 -np 2 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja --metrics \\
   --cache-reuse 256 \\
   --temp 0.7 --top-k 20 --top-p 0.9 --min-p 0.0 --presence-penalty 0.0 \\
   --api-key-file "$LLAMA_KEYFILE"
@@ -724,7 +724,7 @@ set -euo pipefail
 export CUDA_VISIBLE_DEVICES=0,1
 exec "$LLAMA_SERVER" -m "$GGUF_35B" --alias ${ID[$name]} \\
   --host 0.0.0.0 --port $port -ngl 99 --ctx-size 524288 -np 2 \\
-  --split-mode layer --tensor-split 1,1 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja \\
+  --split-mode layer --tensor-split 1,1 --flash-attn on -ctk q8_0 -ctv q8_0 --jinja --metrics \\
   --cache-reuse 256 \\
   --temp 0.7 --top-k 20 --top-p 0.9 --min-p 0.0 --presence-penalty 0.2 \\
   --api-key-file "$LLAMA_KEYFILE"
