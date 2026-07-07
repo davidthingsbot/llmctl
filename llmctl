@@ -2002,8 +2002,8 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         L.append(c("1;35", f" GPU{g['i']}") + f"   util {GREEN}█{RESET} · vram {CYAN}─{RESET} of "
                  f"{fmt_gib(g['total'])} GiB · {pw} · {tp}")
         block = chart_block(hists[f"g{g['i']}u"], hists[f"g{g['i']}v"], gsz[n], cw)
-        block[0] += " " + c("32", f"█{g['util']:4.0f}%")
-        block[1] += " " + c("36", f"─ {fmt_gib(g['used'])}G")
+        block[0] += f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:4.0f}%")
+        block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
         L.extend(block)
     if gpus:
         L.append(c("2", f"⏴ {min(cw, len(hists['cpu']))}s @{TICK:.0f}s".rjust(W - 1)))
@@ -2032,10 +2032,11 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     used_gib = (mem["total"] - mem["avail"]) / 2**20
     L.append(c("1;35", " RAM") + f"    of {mem['total']/2**20:.1f} GiB ({ram_pct:.0f}%)")
     if rsz[0] == 1:
-        L.append("    │" + spark_row(hists["ram"], cw) + f" {used_gib:.1f}G")
+        L.append("    │" + spark_row(hists["ram"], cw)
+                 + " " + c(color_class(ram_pct), f"{used_gib:.1f}G"))
     else:
         block = chart_block(hists["ram"], None, rsz[0], cw)
-        block[0] += f" {used_gib:.1f}G"
+        block[0] += " " + c(color_class(ram_pct), f"{used_gib:.1f}G")
         L.extend(block)
 
     L.extend(mlines)
