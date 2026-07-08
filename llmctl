@@ -1756,7 +1756,7 @@ cmd_top() { # cmd_top [--once] — live dashboard: GPUs, per-core CPU, RAM, mode
   # which stays the tty for the q-to-quit key handling
   T_ACCEL="$ACCEL" T_ONCE="$once" T_HOST="$(hostname -s 2>/dev/null || echo host)" \
     T_MODELS="$(printf '%s\n' "${rows[@]}")" python3 <(cat <<'PYEOF'
-import json, os, re, select, shutil, subprocess, sys, time, urllib.request
+import glob, json, os, re, select, shutil, subprocess, sys, time, urllib.request
 
 ACCEL = os.environ.get("T_ACCEL", "cpu")
 ONCE  = os.environ.get("T_ONCE") == "1"
@@ -1764,7 +1764,11 @@ HOST  = os.environ.get("T_HOST", "host")
 MODELS = [l.split("\t") for l in os.environ.get("T_MODELS", "").splitlines()
           if len(l.split("\t")) == 5]  # name, port, id, backend, key
 
-TICK, HIST = 1.0, 240
+TICKS = [0.25, 0.35, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0, 7.0, 10.0]
+tick_i = TICKS.index(1.0)  # +/- keys walk the ladder at runtime
+TICK = TICKS[tick_i]
+HIST = 1024  # history outlives any full-screen width: widening the
+             # window backfills the charts instead of restarting them
 ESC = "\x1b"
 GREEN, CYAN, RESET = ESC + "[32m", ESC + "[36m", ESC + "[0m"
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -1826,20 +1830,40 @@ def cpu_read():  # {label: (busy, total)} — "cpu" aggregate + "cpuN" per core
             out[parts[0]] = (sum(vals) - idle, sum(vals))
     return out
 
+def cpu_clocks():  # {core: current clock in MHz} (sysfs, /proc fallback)
+    out = {}
+    try:
+        for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq"):
+            with open(p) as f:
+                out[int(re.search(r"cpu(\d+)", p).group(1))] = int(f.read()) / 1000
+        if not out:
+            cur = None
+            with open("/proc/cpuinfo") as f:
+                for l in f:
+                    if l.startswith("processor"):
+                        cur = int(l.split(":")[1])
+                    elif l.startswith("cpu MHz") and cur is not None:
+                        out[cur] = float(l.split(":")[1])
+    except Exception:
+        pass
+    return out
+
 def rocm_field(card, frag, exclude=None):
+    # values may be bare numbers or wrapped like "(1269Mhz)"
     for k, v in card.items():
         if frag in k and not (exclude and exclude in k):
-            try: return float(v)
-            except (TypeError, ValueError): return None
+            m = re.search(r"-?\d+\.?\d*", str(v))
+            return float(m.group()) if m else None
     return None
 
-def gpu_read():  # [{i, util, used_mib, total_mib, power, temp}]
+def gpu_read():  # [{i, util, used_mib, total_mib, power, temp, clock}]
     gpus = []
     try:
         if ACCEL == "rocm":
             out = subprocess.run(
                 ["rocm-smi", "--showuse", "--showpower", "--showmeminfo", "vram",
-                 "--showtemp", "--json"], capture_output=True, text=True, timeout=5).stdout
+                 "--showtemp", "--showgpuclocks", "--showmaxpower", "--json"],
+                capture_output=True, text=True, timeout=5).stdout
             for name, card in sorted(json.loads(out).items()):
                 if not name.startswith("card"):
                     continue
@@ -1849,19 +1873,23 @@ def gpu_read():  # [{i, util, used_mib, total_mib, power, temp}]
                              "util":  rocm_field(card, "GPU use (%)") or 0.0,
                              "used":  (used  or 0) / 2**20,
                              "total": (total or 0) / 2**20,
-                             "power": rocm_field(card, "Power (W)"),
+                             "power": rocm_field(card, "Power (W)", exclude="Max"),
+                             "plimit": rocm_field(card, "Max Graphics Package Power"),
                              "temp":  rocm_field(card, "Temperature (Sensor edge)")
-                                      or rocm_field(card, "Temperature")})
+                                      or rocm_field(card, "Temperature"),
+                             "clock": rocm_field(card, "sclk")})
         elif ACCEL == "cuda":
             out = subprocess.run(
                 ["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,"
-                 "memory.total,power.draw,temperature.gpu",
+                 "memory.total,power.draw,power.limit,temperature.gpu,clocks.sm",
                  "--format=csv,noheader,nounits"],
                 capture_output=True, text=True, timeout=5).stdout
+            def num(x): return float(x) if x.replace(".", "").isdigit() else None
             for line in out.strip().splitlines():
-                i, u, m, t, p, tc = [x.strip() for x in line.split(",")]
+                i, u, m, t, p, pl, tc, ck = [x.strip() for x in line.split(",")]
                 gpus.append({"i": int(i), "util": float(u), "used": float(m),
-                             "total": float(t), "power": float(p), "temp": float(tc)})
+                             "total": float(t), "power": float(p), "plimit": num(pl),
+                             "temp": float(tc), "clock": num(ck)})
     except Exception:
         pass
     return gpus
@@ -1905,6 +1933,9 @@ def model_read(name, port, mid, backend, key):
 
 def fmt_gib(mib): return f"{mib/1024:.1f}"
 def fmt_k(n): return f"{n/1000:.1f}k" if n >= 1000 else f"{n:.0f}"
+def fmt_t(s):
+    if s < 1: return f"{s*1000:.0f}ms"
+    return f"{s:g}s" if s < 120 else f"{s/60:.0f}m"
 
 def model_line(m, models_prev, dt):
     if not m["up"]:
@@ -1973,16 +2004,16 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     # grow; otherwise the other charts split them round-robin (capped)
     ncores = len(core_pct)
     CAP, CORE_CAP = 12, 4
-    fixed = len(L) + len(gpus) + (1 if gpus else 0) + 1 + 1 + len(mlines) + 1
-    #       header    stat lines   time marker      cpu  ram  models    footer
-    gsz, rsz, csz = [4] * len(gpus), [4], []       # rows: gpu charts, ram, combined-cpu
+    fixed = len(L) + len(gpus) + 1 + 1 + len(mlines) + 1
+    #       header    stat lines  cpu  ram  models    footer
+    gsz, rsz, csz = [4] * len(gpus), [4], [3]      # rows: gpu charts, ram, total-cpu
     core_rows = 1
-    spare = H - fixed - sum(gsz) - rsz[0] - ncores
+    spare = H - fixed - sum(gsz) - rsz[0] - csz[0] - ncores
     if ncores and spare >= ncores:
         core_rows = min(CORE_CAP, 1 + spare // ncores)
         spare -= (core_rows - 1) * ncores
-    elif spare < 0:  # per-core doesn't fit: one combined cpu chart
-        core_rows, csz = 0, [3]
+    elif spare < 0:  # per-core doesn't fit: just the total-cpu chart
+        core_rows = 0
         spare = H - fixed - sum(gsz) - rsz[0] - csz[0]
         if spare < 0:  # tiny terminal: single-row cpu + ram traces
             rsz, csz, spare = [1], [1], 0
@@ -1998,18 +2029,22 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     for n, g in enumerate(gpus):
         vp = hists[f"g{g['i']}v"][-1]
         pw = f"{g['power']:.0f}W" if g["power"] is not None else "-"
+        if g["power"] is not None and g.get("plimit"):
+            pw += f"/{g['plimit']:.0f}W"
         tp = f"{g['temp']:.0f}°C" if g["temp"] is not None else "-"
+        ck = f"{g['clock']:.0f}MHz" if g["clock"] is not None else "-"
         L.append(c("1;35", f" GPU{g['i']}") + f"   util {GREEN}█{RESET} · vram {CYAN}─{RESET} of "
-                 f"{fmt_gib(g['total'])} GiB · {pw} · {tp}")
+                 f"{fmt_gib(g['total'])} GiB · {pw} · {tp} · {ck}")
         block = chart_block(hists[f"g{g['i']}u"], hists[f"g{g['i']}v"], gsz[n], cw)
         block[0] += f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:4.0f}%")
         block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
         L.extend(block)
-    if gpus:
-        L.append(c("2", f"⏴ {min(cw, len(hists['cpu']))}s @{TICK:.0f}s".rjust(W - 1)))
 
     la = os.getloadavg()
-    L.append(c("1;35", " CPU") + f"    {ncores} cores · load {la[0]:.2f} {la[1]:.2f} {la[2]:.2f}")
+    clks = cpu_clocks()
+    ck = f" · {sum(clks.values())/len(clks)/1000:.2f}GHz" if clks else ""
+    L.append(c("1;35", " CPU") + f"    {ncores} cores{ck}"
+             + f" · load {la[0]:.2f} {la[1]:.2f} {la[2]:.2f}")
     if core_rows == 1:
         for i in sorted(core_pct):
             L.append(f" c{i:<3d}" + spark_row(hists[f"c{i}"], cw)
@@ -2019,15 +2054,19 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
             labels = [f" c{i:<3d}"] + ["     "] * (core_rows - 1)
             block = chart_block(hists[f"c{i}"], None, core_rows, cw, labels)
             block[0] += " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%")
+            if i in clks:
+                block[1] += " " + c("2", f"{clks[i]/1000:.2f}GHz")
             L.extend(block)
+    # total-cpu chart: labelled when it sits under the per-core rows, on the
+    # axis gutter when it stands alone
+    if csz[0] == 1:
+        L.append("    │" + spark_row(hists["cpu"], cw)
+                 + " " + c(color_class(agg_pct), f"{agg_pct:3.0f}%"))
     else:
-        if csz[0] == 1:
-            L.append("    │" + spark_row(hists["cpu"], cw)
-                     + " " + c(color_class(agg_pct), f"{agg_pct:3.0f}%"))
-        else:
-            block = chart_block(hists["cpu"], None, csz[0], cw)
-            block[0] += " " + c(color_class(agg_pct), f"{agg_pct:3.0f}%")
-            L.extend(block)
+        labels = [" all "] + ["     "] * (csz[0] - 1) if core_rows else None
+        block = chart_block(hists["cpu"], None, csz[0], cw, labels)
+        block[0] += " " + c(color_class(agg_pct), f"{agg_pct:3.0f}%")
+        L.extend(block)
 
     used_gib = (mem["total"] - mem["avail"]) / 2**20
     L.append(c("1;35", " RAM") + f"    of {mem['total']/2**20:.1f} GiB ({ram_pct:.0f}%)")
@@ -2040,7 +2079,11 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         L.extend(block)
 
     L.extend(mlines)
-    L.append(c("2", " q quit · refresh 1s"))
+    # span label assumes the current tick for all samples; history kept across
+    # a +/- change is really older/younger than it claims
+    foot = " q quit · +/- speed"
+    L.append(c("2", foot + (f"⏴ {fmt_t(min(cw, len(hists['cpu'])) * TICK)}"
+                            f" @{fmt_t(TICK)}").rjust(W - len(foot) - 1)))
     return L[:H]
 
 def draw(lines):
@@ -2084,8 +2127,15 @@ try:
         else:
             draw(lines)
             r, _, _ = select.select([sys.stdin], [], [], TICK)
-            if r and sys.stdin.read(1).lower() == "q":
-                break
+            if r:
+                k = sys.stdin.read(1).lower()
+                if k == "q":
+                    break
+                if k in "+=":  # faster ('=' spares the shift)
+                    tick_i = max(0, tick_i - 1)
+                elif k == "-":  # slower
+                    tick_i = min(len(TICKS) - 1, tick_i + 1)
+                TICK = TICKS[tick_i]
         cpu_prev, models_prev, t_prev = cpu_now, {m["name"]: m for m in models}, t_now
 except KeyboardInterrupt:
     pass
