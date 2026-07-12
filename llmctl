@@ -357,7 +357,7 @@ bench_and_log() { # bench_and_log <name> [load_seconds]
   mkdir -p "$RUN_DIR"
   B_URL="$(url_of "$name")" B_KEY="$(key_of "$name")" B_ID="${ID[$name]}" \
   B_NAME="$name" B_LOAD="$load" B_STATS="$STATS_FILE" B_ACCEL="$ACCEL" python3 <<'PYEOF'
-import json, os, subprocess, threading, time, urllib.request
+import glob, json, os, re, subprocess, threading, time, urllib.request
 
 url, key, mid = os.environ["B_URL"], os.environ["B_KEY"], os.environ["B_ID"]
 HDRS = {"Content-Type": "application/json", "Authorization": "Bearer " + key}
@@ -387,8 +387,37 @@ def rocm_field(card, frag):  # rocm-smi key names vary by ASIC; match on fragmen
             except ValueError:
                 return None
     return None
+def sample_sysfs(phase):  # amdgpu via /sys — no rocm-smi needed (Vulkan / iGPU)
+    def rd(p):
+        try:
+            with open(p) as f:
+                return f.read().strip()
+        except Exception:
+            return None
+    def num(p):
+        try:
+            return float(rd(p))
+        except (TypeError, ValueError):
+            return None
+    for busy in sorted(glob.glob("/sys/class/drm/card*/device/gpu_busy_percent")):
+        d = os.path.dirname(busy)
+        if (rd(d + "/vendor") or "").lower() != "0x1002":   # AMD cards only
+            continue
+        mo = re.search(r"/card(\d+)/", busy)
+        # APU unified memory: VRAM carve-out + GTT (shared RAM), matching Vulkan
+        used = ((num(d + "/mem_info_vram_used") or 0.0)
+                + (num(d + "/mem_info_gtt_used") or 0.0)) / 2**20
+        power = None
+        hw = sorted(glob.glob(d + "/hwmon/hwmon*"))
+        if hw:
+            p = num(hw[0] + "/power1_average")
+            power = round(p / 1e6, 1) if p is not None else None   # uW -> W
+        gpu.append({"phase": phase, "gpu": int(mo.group(1)) if mo else 0,
+                    "util_pct": num(busy), "mem_mib": round(used, 1),
+                    "power_w": power})
 def sample(phase, delay):
     time.sleep(delay)
+    before = len(gpu)
     try:
         if os.environ.get("B_ACCEL") == "rocm":
             out = subprocess.run(
@@ -413,6 +442,8 @@ def sample(phase, delay):
                             "mem_mib": float(m), "power_w": float(p)})
     except Exception:
         pass
+    if len(gpu) == before:            # no smi output (e.g. Vulkan iGPU): use sysfs
+        sample_sysfs(phase)
 def sample_gen():
     if first_token.wait(timeout=280):
         sample("gen", 0.25)
