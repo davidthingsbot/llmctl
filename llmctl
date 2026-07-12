@@ -1856,6 +1856,46 @@ def rocm_field(card, frag, exclude=None):
             return float(m.group()) if m else None
     return None
 
+def _sysfs(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return None
+
+def _sysnum(path):
+    try:
+        return float(_sysfs(path))
+    except (TypeError, ValueError):
+        return None
+
+def gpu_read_sysfs():  # amdgpu via /sys — no rocm-smi needed (Vulkan / iGPU boxes)
+    gpus = []
+    for busy in sorted(glob.glob("/sys/class/drm/card*/device/gpu_busy_percent")):
+        d = os.path.dirname(busy)
+        if (_sysfs(d + "/vendor") or "").lower() != "0x1002":   # AMD cards only
+            continue
+        mo = re.search(r"/card(\d+)/", busy)
+        idx = int(mo.group(1)) if mo else len(gpus)
+        # APU unified memory: the GPU draws on the VRAM carve-out *and* GTT
+        # (shared system RAM), so add both — this matches the Vulkan heap the
+        # server actually allocates from and keeps used/total <= 100%
+        used  = ((_sysnum(d + "/mem_info_vram_used")  or 0.0)
+                 + (_sysnum(d + "/mem_info_gtt_used")  or 0.0)) / 2**20
+        total = ((_sysnum(d + "/mem_info_vram_total") or 0.0)
+                 + (_sysnum(d + "/mem_info_gtt_total") or 0.0)) / 2**20
+        power = temp = clock = plimit = None
+        hw = sorted(glob.glob(d + "/hwmon/hwmon*"))
+        if hw:
+            p  = _sysnum(hw[0] + "/power1_average"); power  = p  / 1e6 if p  is not None else None
+            t  = _sysnum(hw[0] + "/temp1_input");    temp   = t  / 1e3 if t  is not None else None
+            ck = _sysnum(hw[0] + "/freq1_input");    clock  = ck / 1e6 if ck is not None else None
+            pc = _sysnum(hw[0] + "/power1_cap");     plimit = pc / 1e6 if pc else None
+        gpus.append({"i": idx, "util": _sysnum(busy) or 0.0,
+                     "used": used, "total": total, "power": power,
+                     "plimit": plimit, "temp": temp, "clock": clock})
+    return gpus
+
 def gpu_read():  # [{i, util, used_mib, total_mib, power, temp, clock}]
     gpus = []
     try:
@@ -1892,6 +1932,8 @@ def gpu_read():  # [{i, util, used_mib, total_mib, power, temp, clock}]
                              "temp": float(tc), "clock": num(ck)})
     except Exception:
         pass
+    if not gpus:                 # no smi output (e.g. Vulkan iGPU, ACCEL=cpu):
+        gpus = gpu_read_sysfs()  # fall back to reading amdgpu sysfs directly
     return gpus
 
 def http(port, path, key, timeout=0.5):
