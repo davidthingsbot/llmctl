@@ -1952,15 +1952,17 @@ def gpu_read():  # [{i, util, used_mib, total_mib, power, temp, clock}]
         elif ACCEL == "cuda":
             out = subprocess.run(
                 ["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used,"
-                 "memory.total,power.draw,power.limit,temperature.gpu,clocks.sm",
+                 "memory.total,power.draw,power.limit,temperature.gpu,clocks.sm,"
+                 "clocks_event_reasons.active",
                  "--format=csv,noheader,nounits"],
                 capture_output=True, text=True, timeout=5).stdout
             def num(x): return float(x) if x.replace(".", "").isdigit() else None
             for line in out.strip().splitlines():
-                i, u, m, t, p, pl, tc, ck = [x.strip() for x in line.split(",")]
+                i, u, m, t, p, pl, tc, ck, tr = [x.strip() for x in line.split(",")]
                 gpus.append({"i": int(i), "util": float(u), "used": float(m),
                              "total": float(t), "power": float(p), "plimit": num(pl),
-                             "temp": float(tc), "clock": num(ck)})
+                             "temp": float(tc), "clock": num(ck),
+                             "throttle": int(tr, 16) if tr.startswith("0x") else None})
     except Exception:
         pass
     if not gpus:                 # no smi output (e.g. Vulkan iGPU, ACCEL=cpu):
@@ -2106,6 +2108,9 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
             pw += f"/{g['plimit']:.0f}W"
         tp = f"{g['temp']:.0f}°C" if g["temp"] is not None else "-"
         ck = f"{g['clock']:.0f}MHz" if g["clock"] is not None else "-"
+        tr = g.get("throttle")
+        if tr is not None:  # 0x20/0x40 = SW/HW thermal slowdown
+            ck += " " + (c("1;31", "THERM") if tr & 0x60 else c("2", "therm"))
         L.append(c("1;35", f" GPU{g['i']}") + f"   util {GREEN}█{RESET} · vram {CYAN}─{RESET} of "
                  f"{fmt_gib(g['total'])} GiB · {pw} · {tp} · {ck}")
         block = chart_block(hists[f"g{g['i']}u"], hists[f"g{g['i']}v"], gsz[n], cw)
