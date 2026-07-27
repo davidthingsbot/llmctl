@@ -1,0 +1,31 @@
+# nvidia-power-limit.service — cap both 3090s at 300 W on every boot.
+#
+# WHY: GPU 0 (older board, 350 W default limit) thermally saturates under
+# TP=2 inference and fell off the PCIe bus (Xid 79) on 2026-07-19 running
+# uncapped. Gen is memory-bandwidth-bound so the token cost of 300 W is
+# small, and TP lockstep means the pair runs at the slower card anyway.
+#
+# Install (from repo root):
+#   sudo cp scripts/nvidia-power-limit.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now nvidia-power-limit.service
+# Verify:
+#   nvidia-smi --query-gpu=index,power.limit --format=csv
+#
+# ExecStart lines are "-" prefixed so one dead/missing GPU (e.g. fallen off
+# the bus) doesn't abort the cap on the surviving card.
+
+[Unit]
+Description=Cap NVIDIA GPU power limit to 300W
+After=nvidia-persistenced.service
+Wants=nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=-/usr/bin/nvidia-smi -pm 1
+ExecStart=-/usr/bin/nvidia-smi -i 0 -pl 300
+ExecStart=-/usr/bin/nvidia-smi -i 1 -pl 300
+
+[Install]
+WantedBy=multi-user.target
