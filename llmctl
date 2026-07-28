@@ -142,7 +142,12 @@ die() { err "$*"; exit 1; }
 
 unit_of()  { echo "llm-$1.service"; }
 url_of()   { echo "http://127.0.0.1:${PORT[$1]}/v1"; }
-key_of()   { cat "${KEYFILE[$1]}"; }
+# First non-blank line only. Server-side `--api-key-file` takes the whole file
+# (llama.cpp accepts any key in the list), but every key_of consumer — hermes /
+# openclaw configs, `llmctl env`, bench, open-webui — needs exactly ONE. The
+# llama.cpp keyfile holds 3 keys; cat'ing all of them injected raw newlines into
+# hermes' YAML and broke every llamacpp repoint (found 2026-07-27 on coder-next).
+key_of()   { sed -n '/./{p;q}' "${KEYFILE[$1]}"; }
 
 # ----------------------------------------------------------------------------
 # External models (~/.config/llmctl/models.d/*.conf) — added by `llmctl add`.
