@@ -2236,15 +2236,33 @@ cmd_env() {
 # ----------------------------------------------------------------------------
 # Reporting
 # ----------------------------------------------------------------------------
+bench_of() { # bench_of <name> — "prefill/gen tok/s" avg of last 5 benches, "" if none
+  [[ -f "$STATS_FILE" ]] || return 0
+  jq -rs --arg m "$1" '
+    [.[] | select(.model==$m)] | .[-5:]
+    | { pp:  [.[].prompt_tps | select(. != null)],
+        gen: [.[] | (.gen_tps // .tok_s) | select(. != null)] }
+    | if (.pp|length)==0 and (.gen|length)==0 then empty else
+        ([.pp, .gen] | map(if length==0 then "-"
+                           else (add/length | .*10 | round | ./10 | tostring) end)
+         | join("/"))
+      end' "$STATS_FILE" 2>/dev/null
+}
+
 print_table() {
-  local i=1 name st
-  printf '  %-2s %-14s %-9s %-6s %-11s %s\n' '#' name backend port status description
+  local i=1 name st pg any_bench=0
+  printf '  %-2s %-14s %-9s %-6s %-11s %-12s %s\n' '#' name backend port status 'pp/gen t/s' description
   for name in "${MODELS[@]}"; do
     st="$(status_of "$name")"
-    printf '  %-2s %-14s %-9s %-6s %-11s %s\n' \
-      "$i" "$name" "${BACKEND[$name]}" "${PORT[$name]}" "$st" "${DESC[$name]}"
+    pg="$(bench_of "$name")"
+    [[ -n "$pg" ]] && any_bench=1
+    printf '  %-2s %-14s %-9s %-6s %-11s %-12s %s\n' \
+      "$i" "$name" "${BACKEND[$name]}" "${PORT[$name]}" "$st" "${pg:--}" "${DESC[$name]}"
     ((i++))
   done
+  if (( any_bench )); then
+    echo "  (pp/gen = prefill/generation tok/s, avg of last 5 start benches — 'llmctl stats' for history)"
+  fi
 }
 
 agent_target() { # agent_target <agent> — "model @ url" as configured right now
