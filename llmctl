@@ -709,9 +709,10 @@ export HF_HUB_OFFLINE=1
 exec "$VLLM_BIN" serve Qwen/Qwen3.6-27B-FP8 \\
   --served-model-name ${ID[$name]} \\
   --tensor-parallel-size 2 --disable-custom-all-reduce --dtype float16 \\
-  --gpu-memory-utilization 0.90 --kv-cache-memory-bytes 4981989376 \\
-  --max-model-len 131072 --max-num-seqs 3 --max-num-batched-tokens 2048 \\
-  --compilation-config '{"cudagraph_capture_sizes":[4,8,12]}' \\
+  --gpu-memory-utilization 0.90 --kv-cache-memory-bytes 6055731200 \\
+  --kv-cache-dtype fp8 \\
+  --max-model-len 262144 --max-num-seqs 8 --max-num-batched-tokens 2048 \\
+  --compilation-config '{"cudagraph_capture_sizes":[1,2,4,8]}' \\
   --enable-prefix-caching \\
   --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml \\
   --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)"
