@@ -147,8 +147,8 @@ inventory/machines/<MACHINE_NAME>/stats.jsonl
 The recorded configuration is projected onto llmctl's machine/model key
 allowlists. API-key file settings, legacy agent settings, unknown fields, and
 comments are omitted; key files are never opened. Credential-bearing values in
-free-form model fields (for example auth arguments or URL userinfo) are
-rejected. Benchmark records must have exactly the fields and types written by
+model fields (for example auth arguments or URL userinfo) are rejected.
+Benchmark records must have exactly the fields and types written by
 llmctl; they are rewritten as deterministic compact JSONL. A missing local
 history produces an empty `stats.jsonl`.
 

@@ -164,7 +164,11 @@ key_of()   { sed -n '/./{p;q}' "${KEYFILE[$1]}"; }
 #           TENSOR_PARALLEL, GPU_UTIL, MAX_MODEL_LEN (vllm),
 #           SERVER_CTX, STREAMS (llamacpp).
 # ----------------------------------------------------------------------------
-MODELS_D="${MODELS_D:-$HOME/.config/llmctl/models.d}"
+if ((MACHINE_RECORD_REQUEST)); then
+  MODELS_D="${MODELS_D:-$HOME/.config/llmctl/models.d}"
+else
+  MODELS_D="$HOME/.config/llmctl/models.d"
+fi
 declare -A EXTERNAL MREF TP GUTIL MAXLEN SRVCTX STREAMS GPUS XARGS
 
 conf_get() { # conf_get <key> <file> [default]

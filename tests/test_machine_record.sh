@@ -191,6 +191,15 @@ rm "$CONF_DIR/machine.conf"
 rm "$CONF_DIR/machine.pipe"
 mv "$CONF_DIR/machine.real" "$CONF_DIR/machine.conf"
 
+mv "$CONF_DIR" "$TMP/config.real"
+ln -s "$TMP/config.real" "$CONF_DIR"
+if run_llmctl machine record >"$TMP/symlink-parent.out" 2>&1; then
+  echo "machine record accepted a symlinked configuration parent" >&2
+  exit 1
+fi
+rm "$CONF_DIR"
+mv "$TMP/config.real" "$CONF_DIR"
+
 mv "$CONF_DIR/models.d/next.conf" "$CONF_DIR/models.d/next.real"
 mkfifo "$CONF_DIR/models.d/next.pipe"
 ln -s "$CONF_DIR/models.d/next.pipe" "$CONF_DIR/models.d/next.conf"
@@ -220,6 +229,15 @@ if run_llmctl machine record >"$TMP/unexpected-stats.out" 2>&1; then
 fi
 [[ "$(sha256sum "$TARGET/stats.jsonl")" == "$before" ]]
 ! compgen -G "$REPO/inventory/machines/.record-*" >/dev/null
+
+cat > "$CONF_DIR/stats.jsonl" <<'EOF'
+{"ts":"first","ts":"duplicate","model":"next","load_s":null,"ttft_s":null,"prompt_tokens":null,"prompt_tps":null,"gen_tps":null,"tok_s":null,"bench_tokens":null,"bench_time_s":1.0,"gpu":[]}
+EOF
+if run_llmctl machine record >"$TMP/duplicate-stats.out" 2>&1; then
+  echo "machine record accepted a duplicate benchmark field" >&2
+  exit 1
+fi
+[[ "$(sha256sum "$TARGET/stats.jsonl")" == "$before" ]]
 
 cp "$CONF_DIR/stats.good" "$CONF_DIR/stats.jsonl"
 cp "$TARGET/machine.conf" "$TMP/recorded-machine.good"
