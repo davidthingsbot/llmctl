@@ -32,6 +32,7 @@
 #   llmctl stats [model]       recorded load times + benchmark history
 #   llmctl machine             show machine profile + probed hardware
 #   llmctl machine init        probe host, write machine.conf, discover agents
+#   llmctl machine record      record safe config + benchmark history in repo
 #   llmctl sleep-hook install  stop models before suspend, restart on resume
 #                              (VRAM-heavy CUDA contexts don't survive sleep;
 #                              writes /etc/systemd/system-sleep/llmctl, sudo)
@@ -57,6 +58,8 @@
 # Full docs: README.md (github.com/davidthingsbot/llmctl).
 
 set -euo pipefail
+MACHINE_RECORD_REQUEST=0
+[[ "${1:-}" == machine && "${2:-}" == record ]] && MACHINE_RECORD_REQUEST=1
 
 # ----------------------------------------------------------------------------
 # Built-in registry (the author's dual-RTX-3090 box; ENABLE_BUILTIN_MODELS=0
@@ -122,7 +125,11 @@ OPENCLAW_UNIT="openclaw-gateway.service"
 # Machine-profile defaults (overridable via ~/.config/llmctl/machine.conf).
 # These describe the original host: DW-ASUS-LINUX, dual RTX 3090.
 MACHINE_CONF="${MACHINE_CONF:-$RUN_DIR/machine.conf}"
-MACHINE_NAME="$(hostname 2>/dev/null || echo unknown)"
+if ((MACHINE_RECORD_REQUEST)); then
+  MACHINE_NAME=""
+else
+  MACHINE_NAME="$(hostname 2>/dev/null || echo unknown)"
+fi
 ACCEL=""                       # cuda | rocm | cpu; empty = auto-detect
 GPUS_DEFAULT="0,1"             # default visible devices for new models ("" on cpu)
 TENSOR_PARALLEL_DEFAULT=""     # empty = derive from GPUS_DEFAULT
@@ -157,7 +164,7 @@ key_of()   { sed -n '/./{p;q}' "${KEYFILE[$1]}"; }
 #           TENSOR_PARALLEL, GPU_UTIL, MAX_MODEL_LEN (vllm),
 #           SERVER_CTX, STREAMS (llamacpp).
 # ----------------------------------------------------------------------------
-MODELS_D="$HOME/.config/llmctl/models.d"
+MODELS_D="${MODELS_D:-$HOME/.config/llmctl/models.d}"
 declare -A EXTERNAL MREF TP GUTIL MAXLEN SRVCTX STREAMS GPUS XARGS
 
 conf_get() { # conf_get <key> <file> [default]
@@ -197,11 +204,11 @@ load_machine_profile() {
     done
   fi
 }
-load_machine_profile
+((MACHINE_RECORD_REQUEST)) || load_machine_profile
 
 # Resolve the accelerator: never assume CUDA. Auto-detect when unset, and pick
 # the matching visible-devices env var for generated run scripts.
-if [[ -z "$ACCEL" ]]; then
+if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 ]]; then
   if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
     ACCEL=cuda
   elif command -v rocm-smi >/dev/null 2>&1; then
@@ -261,7 +268,7 @@ load_external_models() {
     fi
   done
 }
-load_external_models
+((MACHINE_RECORD_REQUEST)) || load_external_models
 
 # ----------------------------------------------------------------------------
 # Agents (~/.config/llmctl/agents.d/*.conf) — the consumers `set`/`point`
@@ -314,7 +321,7 @@ load_agents() {
     fi
   fi
 }
-load_agents
+((MACHINE_RECORD_REQUEST)) || load_agents
 
 require_agent() {
   [[ -n "${A_TYPE[$1]:-}" ]] || die "unknown agent '$1' (registered: ${AGENTS[*]:-none})"
@@ -1299,6 +1306,168 @@ cmd_agent_remove() {
 # ----------------------------------------------------------------------------
 # Machine profile: show effective values, or probe + generate machine.conf
 # ----------------------------------------------------------------------------
+record_project_conf() { # record_project_conf <source> <destination> <allowed-key>...
+  local source="$1" destination="$2" key line
+  shift 2
+  : > "$destination"
+  for key in "$@"; do
+    line="$(sed -n "/^${key}=/p" "$source" | tail -1)"
+    if [[ -n "$line" ]]; then
+      printf '%s\n' "$line" >> "$destination"
+    fi
+  done
+}
+
+record_stats() { # record_stats <source> <destination>
+  local source="$1" destination="$2"
+  [[ -f "$source" ]] || { : > "$destination"; return 0; }
+  python3 - "$source" "$destination" <<'PYEOF'
+import json, math, sys
+
+top = {"ts", "model", "load_s", "ttft_s", "prompt_tokens", "prompt_tps",
+       "gen_tps", "tok_s", "bench_tokens", "bench_time_s", "gpu"}
+gpu_keys = {"phase", "gpu", "util_pct", "mem_mib", "power_w"}
+numbers = {"load_s", "ttft_s", "prompt_tps", "gen_tps", "tok_s", "bench_time_s"}
+integers = {"prompt_tokens", "bench_tokens"}
+
+def number_or_none(value):
+    return value is None or (type(value) in (int, float) and math.isfinite(value))
+
+def strict_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate field {key!r}")
+        result[key] = value
+    return result
+
+with open(sys.argv[1], encoding="utf-8") as src, open(sys.argv[2], "w", encoding="utf-8") as dst:
+    for number, line in enumerate(src, 1):
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line, object_pairs_hook=strict_object)
+        except (TypeError, ValueError) as exc:
+            raise SystemExit(f"stats.jsonl line {number}: invalid JSON: {exc}")
+        if not isinstance(record, dict) or set(record) != top:
+            raise SystemExit(f"stats.jsonl line {number}: unexpected benchmark fields")
+        if not isinstance(record["ts"], str) or not isinstance(record["model"], str):
+            raise SystemExit(f"stats.jsonl line {number}: ts and model must be strings")
+        if any(not number_or_none(record[key]) for key in numbers):
+            raise SystemExit(f"stats.jsonl line {number}: invalid numeric benchmark field")
+        if any(record[key] is not None and type(record[key]) is not int for key in integers):
+            raise SystemExit(f"stats.jsonl line {number}: invalid integer benchmark field")
+        if not isinstance(record["gpu"], list):
+            raise SystemExit(f"stats.jsonl line {number}: gpu must be a list")
+        if any(not isinstance(sample, dict) or set(sample) != gpu_keys for sample in record["gpu"]):
+            raise SystemExit(f"stats.jsonl line {number}: unexpected GPU sample fields")
+        for sample in record["gpu"]:
+            if sample["phase"] not in ("prefill", "gen") or type(sample["gpu"]) is not int:
+                raise SystemExit(f"stats.jsonl line {number}: invalid GPU sample identity")
+            if any(not number_or_none(sample[key]) for key in ("util_pct", "mem_mib", "power_w")):
+                raise SystemExit(f"stats.jsonl line {number}: invalid numeric GPU sample field")
+        dst.write(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n")
+PYEOF
+}
+
+RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC VRAM_MB HEALTH_TIMEOUT GPUS
+                   EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS)
+
+model_conf_is_safe() {
+  local file="$1" key value
+  for key in "${RECORD_MODEL_KEYS[@]}"; do
+    value="$(conf_get "$key" "$file")"
+    value="${value,,}"
+    if [[ "$value" =~ ://[^/[:space:]]*@ ]] \
+       || [[ "$value" =~ (^|[[:space:]])--?[a-z0-9_-]*(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?([=[:space:]]|$) ]] \
+       || [[ "$value" =~ (^|[^[:alnum:]_-])(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?= ]] \
+       || [[ "$value" =~ authorization[=:[:space:]] ]]; then
+      err "models.d: credential-bearing value in $key is not recordable ($file)"
+      return 1
+    fi
+  done
+}
+
+path_has_no_symlink_component() {
+  local path="$1"
+  [[ "$path" == /* ]] || path="$PWD/$path"
+  while [[ "$path" != / ]]; do
+    [[ ! -L "$path" ]] || return 1
+    path="$(dirname "$path")"
+  done
+}
+
+machine_record() {
+  [[ -f "$MACHINE_CONF" && ! -L "$MACHINE_CONF" ]] \
+    && path_has_no_symlink_component "$MACHINE_CONF" \
+    || die "machine record requires an ordinary, non-symlink machine.conf: $MACHINE_CONF"
+  local machine_id repo machines stage target backup="" current_id f name
+  machine_id="$(conf_get MACHINE_NAME "$MACHINE_CONF")"
+  [[ -n "$machine_id" ]] || die "machine record requires MACHINE_NAME in $MACHINE_CONF"
+  [[ "$machine_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]] \
+    || die "invalid MACHINE_NAME '$machine_id' (use 1-64 letters, digits, '.', '_' or '-')"
+  repo="$(git -C "$(dirname "$(readlink -f "$0")")" rev-parse --show-toplevel 2>/dev/null)" \
+    || die "machine record requires llmctl to be inside a Git repository"
+  machines="$repo/inventory/machines"
+  target="$machines/$machine_id"
+  path_has_no_symlink_component "$machines" || die "refusing symlinked inventory path $machines"
+  if [[ -e "$MODELS_D" || -L "$MODELS_D" ]]; then
+    [[ -d "$MODELS_D" && ! -L "$MODELS_D" ]] && path_has_no_symlink_component "$MODELS_D" \
+      || die "refusing non-directory or symlink models.d: $MODELS_D"
+  fi
+  if [[ -e "$STATS_FILE" || -L "$STATS_FILE" ]]; then
+    [[ -f "$STATS_FILE" && ! -L "$STATS_FILE" ]] && path_has_no_symlink_component "$STATS_FILE" \
+      || die "refusing non-file or symlink stats history: $STATS_FILE"
+  fi
+  if [[ -e "$target" || -L "$target" ]]; then
+    [[ -d "$target" && ! -L "$target" ]] || die "refusing non-directory or symlink target $target"
+    [[ -f "$target/machine.conf" && ! -L "$target/machine.conf" ]] \
+      || die "refusing target without an ordinary machine.conf: $target"
+    current_id="$(conf_get MACHINE_NAME "$target/machine.conf")"
+    [[ "$current_id" == "$machine_id" ]] \
+      || die "refusing to replace '$current_id' with machine '$machine_id'"
+  fi
+  shopt -s nullglob
+  for f in "$MODELS_D"/*.conf; do
+    [[ -f "$f" && ! -L "$f" ]] && path_has_no_symlink_component "$f" \
+      && model_conf_is_safe "$f" || die "refusing unsafe or symlinked model configuration"
+  done
+  mkdir -p "$machines"
+  stage="$machines/.record-${machine_id}-$$"
+  rm -rf -- "$stage"
+  trap '[[ -z "${stage:-}" ]] || rm -rf -- "$stage"; if [[ -n "${backup:-}" && ! -e "${target:-}" ]]; then mv -- "$backup" "$target"; fi' EXIT
+  mkdir -p "$stage/models.d"
+
+  record_project_conf "$MACHINE_CONF" "$stage/machine.conf" \
+    MACHINE_NAME ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT VRAM_PER_GPU_MB \
+    VLLM_BIN LLAMA_SERVER MODELS_DIR WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
+    WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS
+  shopt -s nullglob
+  for f in "$MODELS_D"/*.conf; do
+    name="$(basename "$f")"
+    record_project_conf "$f" "$stage/models.d/$name" "${RECORD_MODEL_KEYS[@]}"
+  done
+  record_stats "$STATS_FILE" "$stage/stats.jsonl"
+  if [[ -e "$target" ]]; then
+    backup="$machines/.previous-${machine_id}-$$"
+    mv -- "$target" "$backup"
+    if mv -- "$stage" "$target"; then
+      stage=""
+      rm -rf -- "$backup"
+      backup=""
+    else
+      mv -- "$backup" "$target"
+      backup=""
+      die "failed to install refreshed record for '$machine_id'"
+    fi
+  else
+    mv -- "$stage" "$target"
+    stage=""
+  fi
+  trap - EXIT
+  log "recorded machine '$machine_id' in $target"
+}
+
 machine_show() {
   if [[ -f "$MACHINE_CONF" ]]; then
     echo "profile: $MACHINE_CONF"
@@ -1434,8 +1603,9 @@ init_agent_conf() { # init_agent_conf <name> <type> <cfg> <unit> <follow>
 cmd_machine() {
   case "${1:-show}" in
     init)    machine_init;;
+    record)  machine_record;;
     show)    machine_show;;
-    *)       die "usage: llmctl machine [init]";;
+    *)       die "usage: llmctl machine [init|record]";;
   esac
 }
 
@@ -2422,7 +2592,7 @@ case "${1:-menu}" in
   remove)        shift; (($#==1)) || die "usage: llmctl remove <model>"; cmd_remove "$1";;
   bench)         shift; (($#==1)) || die "usage: llmctl bench <model>"; cmd_bench "$1";;
   stats)         shift; cmd_stats "${1:-}";;
-  machine)       shift; cmd_machine "${1:-show}";;
+  machine)       shift; (($#<=1)) || die "usage: llmctl machine [init|record]"; cmd_machine "${1:-show}";;
   sleep-hook)    shift; cmd_sleephook "${1:-status}";;
   watchdog)      shift; cmd_watchdog "${1:-status}";;
   sleep)         shift; cmd_sleep "${1:-}";;

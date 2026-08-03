@@ -86,6 +86,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl logs <model> [-f]` | the model unit's journal |
 | `llmctl usage [model] [-n N]` | who's using the GPUs: per-process VRAM, each running model's connected clients (resolved to commands), last N request lines from the journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
+| `llmctl machine record` | record this machine's allowlisted profile, model definitions, and benchmark history as repository files |
 | `llmctl sleep-hook [install\|uninstall\|status]` | survive suspend: stop running models before sleep, restart them on resume |
 | `llmctl watchdog [install\|uninstall\|status\|once]` | external runaway backstop: restart an agent's gateway when a single gateway client drives a sustained request loop (agent harnesses like OpenClaw have no turn cap on local models, so a wedged heartbeat can loop unbounded). Runs as a systemd `--user` service; tune with `WATCHDOG_RATE` (req/min, default 5), `WATCHDOG_WINDOW` (seconds, default 360), `WATCHDOG_COOLDOWN` (default 600). Only restarts registered agent gateways — never open-webui or ad-hoc clients. |
 
@@ -130,6 +131,39 @@ LEGACY_UNITS=""             # old units to displace when llmctl takes over
 Agents are not machine.conf keys — they live in `agents.d/` (below). The
 pre-agents.d keys (`HERMES_ENABLE/CFG/UNIT`, `OPENCLAW_ENABLE/DIR/UNIT`) are
 still honored, but only while `agents.d/` is empty.
+
+### Recording a machine in the repository
+
+Run `llmctl machine record` from the repository's `llmctl` script. It requires
+an explicit, path-safe `MACHINE_NAME` in the local profile and writes ordinary
+text files under:
+
+```text
+inventory/machines/<MACHINE_NAME>/machine.conf
+inventory/machines/<MACHINE_NAME>/models.d/*.conf
+inventory/machines/<MACHINE_NAME>/stats.jsonl
+```
+
+The recorded configuration is projected onto llmctl's machine/model key
+allowlists. API-key file settings, legacy agent settings, unknown fields, and
+comments are omitted; key files are never opened. Credential-bearing values in
+free-form model fields (for example auth arguments or URL userinfo) are
+rejected. Benchmark records must have exactly the fields and types written by
+llmctl; they are rewritten as deterministic compact JSONL. A missing local
+history produces an empty `stats.jsonl`.
+
+Recording the same identity again performs a staged, best-effort refresh: the
+new snapshot replaces the old history and model directory, so removed models
+do not linger and history is not duplicated. Validation and ordinary write
+failures preserve the previous record, but this is not a concurrency or
+crash-atomicity guarantee. Symlinked inputs/targets and a target containing a
+different `MACHINE_NAME` are refused.
+
+The command does not inspect running services or hardware, read or record agent
+definitions, apply configuration, or run Git commands other than locating the
+containing worktree.
+Review and commit the resulting files normally; another machine can inspect
+them after the user performs the usual Git update.
 
 ## Agent definition (`~/.config/llmctl/agents.d/<name>.conf`)
 
