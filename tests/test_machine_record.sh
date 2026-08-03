@@ -140,7 +140,18 @@ if run_llmctl machine record >"$TMP/credential-query.out" 2>&1; then
 fi
 [[ ! -e "$REPO/inventory/machines/query-box" ]]
 
-sed 's/MACHINE_NAME="query-box"/MACHINE_NAME="allowed-field-box"/' \
+sed 's/MACHINE_NAME="query-box"/MACHINE_NAME="access-token-box"/' \
+  "$CONF_DIR/machine.conf" > "$CONF_DIR/machine.access-token"
+mv "$CONF_DIR/machine.access-token" "$CONF_DIR/machine.conf"
+sed -i 's#MODEL_REF=.*#MODEL_REF="https://example.invalid/model?access_token=FAKE_ACCESS_TOKEN_CREDENTIAL"#' \
+  "$CONF_DIR/models.d/demo.conf"
+if run_llmctl machine record >"$TMP/credential-access-token.out" 2>&1; then
+  echo "machine record accepted an access_token URL query" >&2
+  exit 1
+fi
+[[ ! -e "$REPO/inventory/machines/access-token-box" ]]
+
+sed 's/MACHINE_NAME="access-token-box"/MACHINE_NAME="allowed-field-box"/' \
   "$CONF_DIR/machine.conf" > "$CONF_DIR/machine.allowed-field"
 mv "$CONF_DIR/machine.allowed-field" "$CONF_DIR/machine.conf"
 sed -i 's#MODEL_REF=.*#MODEL_REF="safe/model"#' "$CONF_DIR/models.d/demo.conf"

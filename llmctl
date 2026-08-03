@@ -1384,7 +1384,7 @@ model_conf_is_safe() {
     value="${value,,}"
     if [[ "$value" =~ ://[^/[:space:]]*@ ]] \
        || [[ "$value" =~ (^|[[:space:]])--?[a-z0-9_-]*(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?([=[:space:]]|$) ]] \
-       || [[ "$value" =~ (^|[^[:alnum:]_-])(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?= ]] \
+       || [[ "$value" =~ (^|[^[:alnum:]])(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?= ]] \
        || [[ "$value" =~ authorization[=:[:space:]] ]]; then
       err "models.d: credential-bearing value in $key is not recordable ($file)"
       return 1
