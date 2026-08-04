@@ -145,12 +145,19 @@ inventory/machines/<MACHINE_NAME>/stats.jsonl
 ```
 
 The recorded configuration is projected onto llmctl's machine/model key
-allowlists. API-key file settings, legacy agent settings, unknown fields, and
+allowlists. API-key file settings, agent definitions, unknown fields, and
 comments are omitted; key files are never opened. Credential-bearing values in
-model fields (for example auth arguments or URL userinfo) are rejected.
-Benchmark records must have exactly the fields and types written by
+machine *or* model fields (for example auth arguments or URL userinfo) are
+rejected. Benchmark records must have exactly the fields and types written by
 llmctl; they are rewritten as deterministic compact JSONL. A missing local
 history produces an empty `stats.jsonl`.
+
+Because the record is rebuilt from the allowlists rather than filtered, a key
+that is not listed — including one added to `machine.conf` later — cannot reach
+the repository. `#` comments are local scratch space and stay local. To publish
+the reasoning behind a setting, put it in `NOTES` in `machine.conf` or a
+`models.d/*.conf`; it is recorded, and scanned for credentials like any other
+value. Keep it to a single line, as llmctl reads one line per key.
 
 Recording the same identity again performs a staged, best-effort refresh: the
 new snapshot replaces the old history and model directory, so removed models

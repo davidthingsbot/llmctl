@@ -1147,7 +1147,7 @@ cmd_add() {
   echo "llmctl add — register a new model (writes $MODELS_D/<name>.conf)"
   echo
 
-  local name backend mref id port ctx gpus vram xargs desc timeout
+  local name backend mref id port ctx gpus vram xargs desc notes timeout
   while :; do
     name="$(ask "short name (used in all llmctl commands)")"
     [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || { err "letters/digits/._- only"; continue; }
@@ -1202,18 +1202,21 @@ cmd_add() {
   fi
   xargs="$(ask "extra server args (optional, appended verbatim)" "")"
   desc="$(ask "description" "$id ($backend)")"
+  notes="$(ask "notes — why this config, one line (recorded by 'machine record')" "")"
 
   mkdir -p "$MODELS_D"
   local conf="$MODELS_D/$name.conf"
   {
     echo "# llmctl model definition — created $(date +%F) by 'llmctl add'"
     echo "# Edit freely; llmctl re-reads this on every run. Delete with: llmctl remove $name"
+    echo "# Comments stay local; put anything worth recording in NOTES."
     echo "BACKEND=$backend"
     echo "PORT=$port"
     echo "MODEL_REF=\"$mref\""
     echo "MODEL_ID=\"$id\""
     echo "CTX=$ctx"
     echo "DESC=\"$desc\""
+    [[ -n "$notes" ]] && echo "NOTES=\"$notes\""
     echo "VRAM_MB=$vram"
     echo "HEALTH_TIMEOUT=$timeout"
     echo "GPUS=\"$gpus\""
@@ -1387,19 +1390,28 @@ with open(sys.argv[1], encoding="utf-8") as src, open(sys.argv[2], "w", encoding
 PYEOF
 }
 
-RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC VRAM_MB HEALTH_TIMEOUT GPUS
+RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH_TIMEOUT GPUS
                    EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS)
 
-model_conf_is_safe() {
+# machine.conf fields that are repository data. Comments are not: the record is
+# rebuilt from this allowlist so an unlisted (or later-added) key cannot leak.
+# Rationale worth publishing goes in NOTES, which is scanned like any other value.
+RECORD_MACHINE_KEYS=(MACHINE_NAME NOTES ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT
+                     VRAM_PER_GPU_MB VLLM_BIN LLAMA_SERVER MODELS_DIR WIZARD_BASE_PORT
+                     ENABLE_BUILTIN_MODELS HERMES_ENABLE OPENCLAW_ENABLE
+                     WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS)
+
+conf_is_safe() { # conf_is_safe <file> <recordable-key>...
   local file="$1" key value
-  for key in "${RECORD_MODEL_KEYS[@]}"; do
+  shift
+  for key in "$@"; do
     value="$(conf_get "$key" "$file")"
     value="${value,,}"
     if [[ "$value" =~ ://[^/[:space:]]*@ ]] \
        || [[ "$value" =~ (^|[[:space:]])--?[a-z0-9_-]*(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?([=[:space:]]|$) ]] \
        || [[ "$value" =~ (^|[^[:alnum:]])(api[-_]?key|token|auth|authorization|password|secret)([-_]?file)?= ]] \
        || [[ "$value" =~ authorization[=:[:space:]] ]]; then
-      err "models.d: credential-bearing value in $key is not recordable ($file)"
+      err "credential-bearing value in $key is not recordable ($file)"
       return 1
     fi
   done
@@ -1418,7 +1430,10 @@ machine_record() {
   [[ -f "$MACHINE_CONF" && ! -L "$MACHINE_CONF" ]] \
     && path_has_no_symlink_component "$MACHINE_CONF" \
     || die "machine record requires an ordinary, non-symlink machine.conf: $MACHINE_CONF"
-  local machine_id repo machines stage target backup="" current_id f name
+  local machine_id repo machines current_id f name
+  # NOT local: bash pops the function frame before running the EXIT trap, so a
+  # local here reads as empty and the cleanup/restore below silently no-ops.
+  stage="" target="" backup=""
   machine_id="$(conf_get MACHINE_NAME "$MACHINE_CONF")"
   [[ -n "$machine_id" ]] || die "machine record requires MACHINE_NAME in $MACHINE_CONF"
   [[ "$machine_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]] \
@@ -1444,10 +1459,13 @@ machine_record() {
     [[ "$current_id" == "$machine_id" ]] \
       || die "refusing to replace '$current_id' with machine '$machine_id'"
   fi
+  conf_is_safe "$MACHINE_CONF" "${RECORD_MACHINE_KEYS[@]}" \
+    || die "refusing unsafe machine configuration"
   shopt -s nullglob
   for f in "$MODELS_D"/*.conf; do
     [[ -f "$f" && ! -L "$f" ]] && path_has_no_symlink_component "$f" \
-      && model_conf_is_safe "$f" || die "refusing unsafe or symlinked model configuration"
+      && conf_is_safe "$f" "${RECORD_MODEL_KEYS[@]}" \
+      || die "refusing unsafe or symlinked model configuration"
   done
   mkdir -p "$machines"
   stage="$machines/.record-${machine_id}-$$"
@@ -1455,10 +1473,7 @@ machine_record() {
   trap '[[ -z "${stage:-}" ]] || rm -rf -- "$stage"; if [[ -n "${backup:-}" && ! -e "${target:-}" ]]; then mv -- "$backup" "$target"; fi' EXIT
   mkdir -p "$stage/models.d"
 
-  record_project_conf "$MACHINE_CONF" "$stage/machine.conf" \
-    MACHINE_NAME ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT VRAM_PER_GPU_MB \
-    VLLM_BIN LLAMA_SERVER MODELS_DIR WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
-    WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS
+  record_project_conf "$MACHINE_CONF" "$stage/machine.conf" "${RECORD_MACHINE_KEYS[@]}"
   shopt -s nullglob
   for f in "$MODELS_D"/*.conf; do
     name="$(basename "$f")"
