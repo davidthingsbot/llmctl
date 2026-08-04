@@ -309,4 +309,34 @@ if ! run_llmctl machine record >/dev/null; then
   exit 1
 fi
 
+# Benchmarks written before the throughput fields existed lack ttft_s,
+# prompt_tokens, prompt_tps and gen_tps, and sampled the GPUs once rather than
+# per phase. Those are still llmctl's own records, so they must be accepted and
+# normalised to the current schema with nulls — not rejected, which would make
+# `machine record` unusable on any machine with pre-existing history.
+cat > "$CONF_DIR/stats.jsonl" <<'EOF'
+{"model":"demo","ts":"2026-07-02T12:00:00","load_s":1.5,"tok_s":20.0,"bench_tokens":5,"bench_time_s":0.4,"gpu":[{"power_w":null,"mem_mib":12.5,"util_pct":75.0,"gpu":0}]}
+EOF
+sed -i 's/MACHINE_NAME="agent-free-box"/MACHINE_NAME="legacy-box"/' \
+  "$CONF_DIR/machine.conf"
+if ! run_llmctl machine record >/dev/null; then
+  echo "machine record rejected a legacy benchmark record" >&2
+  exit 1
+fi
+legacy_expected='{"bench_time_s":0.4,"bench_tokens":5,"gen_tps":null,"gpu":[{"gpu":0,"mem_mib":12.5,"phase":null,"power_w":null,"util_pct":75.0}],"load_s":1.5,"model":"demo","prompt_tokens":null,"prompt_tps":null,"tok_s":20.0,"ts":"2026-07-02T12:00:00","ttft_s":null}'
+if [[ "$(cat "$REPO/inventory/machines/legacy-box/stats.jsonl")" != "$legacy_expected" ]]; then
+  echo "legacy benchmark record was not normalised to the current schema" >&2
+  exit 1
+fi
+
+# A genuinely malformed record must still be refused.
+cat > "$CONF_DIR/stats.jsonl" <<'EOF'
+{"model":"demo","ts":"2026-07-02T12:00:00","surprise":1}
+EOF
+sed -i 's/MACHINE_NAME="legacy-box"/MACHINE_NAME="bad-box"/' "$CONF_DIR/machine.conf"
+if run_llmctl machine record >/dev/null 2>&1; then
+  echo "machine record accepted a malformed benchmark record" >&2
+  exit 1
+fi
+
 echo "PASS: machine record happy path"

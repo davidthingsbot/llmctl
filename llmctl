@@ -1330,7 +1330,16 @@ import json, math, sys
 
 top = {"ts", "model", "load_s", "ttft_s", "prompt_tokens", "prompt_tps",
        "gen_tps", "tok_s", "bench_tokens", "bench_time_s", "gpu"}
+# Benchmarks written before the throughput fields were added lack these four.
+# They are still records llmctl itself wrote, so accept and normalise them
+# rather than refusing to record a machine with any pre-existing history.
+legacy_absent = {"ttft_s", "prompt_tokens", "prompt_tps", "gen_tps"}
+legacy = top - legacy_absent
 gpu_keys = {"phase", "gpu", "util_pct", "mem_mib", "power_w"}
+# Older benchmarks sampled the GPUs once instead of per prefill/gen phase, so
+# their samples carry no "phase". Recorded as null — the phase is genuinely
+# unknown for those runs rather than assumed.
+gpu_legacy = gpu_keys - {"phase"}
 numbers = {"load_s", "ttft_s", "prompt_tps", "gen_tps", "tok_s", "bench_time_s"}
 integers = {"prompt_tokens", "bench_tokens"}
 
@@ -1353,8 +1362,10 @@ with open(sys.argv[1], encoding="utf-8") as src, open(sys.argv[2], "w", encoding
             record = json.loads(line, object_pairs_hook=strict_object)
         except (TypeError, ValueError) as exc:
             raise SystemExit(f"stats.jsonl line {number}: invalid JSON: {exc}")
-        if not isinstance(record, dict) or set(record) != top:
+        if not isinstance(record, dict) or set(record) not in (top, legacy):
             raise SystemExit(f"stats.jsonl line {number}: unexpected benchmark fields")
+        for absent in legacy_absent - set(record):
+            record[absent] = None
         if not isinstance(record["ts"], str) or not isinstance(record["model"], str):
             raise SystemExit(f"stats.jsonl line {number}: ts and model must be strings")
         if any(not number_or_none(record[key]) for key in numbers):
@@ -1363,10 +1374,12 @@ with open(sys.argv[1], encoding="utf-8") as src, open(sys.argv[2], "w", encoding
             raise SystemExit(f"stats.jsonl line {number}: invalid integer benchmark field")
         if not isinstance(record["gpu"], list):
             raise SystemExit(f"stats.jsonl line {number}: gpu must be a list")
-        if any(not isinstance(sample, dict) or set(sample) != gpu_keys for sample in record["gpu"]):
+        if any(not isinstance(sample, dict) or set(sample) not in (gpu_keys, gpu_legacy)
+               for sample in record["gpu"]):
             raise SystemExit(f"stats.jsonl line {number}: unexpected GPU sample fields")
         for sample in record["gpu"]:
-            if sample["phase"] not in ("prefill", "gen") or type(sample["gpu"]) is not int:
+            sample.setdefault("phase", None)
+            if sample["phase"] not in ("prefill", "gen", None) or type(sample["gpu"]) is not int:
                 raise SystemExit(f"stats.jsonl line {number}: invalid GPU sample identity")
             if any(not number_or_none(sample[key]) for key in ("util_pct", "mem_mib", "power_w")):
                 raise SystemExit(f"stats.jsonl line {number}: invalid numeric GPU sample field")
