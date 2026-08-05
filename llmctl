@@ -795,10 +795,12 @@ check_prereqs() { # backend binaries / model files present
     vllm)     [[ -x "$VLLM_BIN" ]] || die "vllm not found at $VLLM_BIN";;
     llamacpp) [[ -x "$LLAMA_SERVER" ]] || die "llama-server not found at $LLAMA_SERVER";;
   esac
-  case "$name" in
-    27b-q8)       [[ -f "$GGUF_27B" ]] || die "missing $GGUF_27B (hf download unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q8_0.gguf --local-dir $(dirname "$GGUF_27B"))";;
-    35b-moe-gguf) [[ -f "$GGUF_35B" ]] || die "missing $GGUF_35B (hf download unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --local-dir $(dirname "$GGUF_35B"))";;
-  esac
+  if [[ -z "${EXTERNAL[$name]:-}" ]]; then
+    case "$name" in
+      27b-q8)       [[ -f "$GGUF_27B" ]] || die "missing $GGUF_27B (hf download unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q8_0.gguf --local-dir $(dirname "$GGUF_27B"))";;
+      35b-moe-gguf) [[ -f "$GGUF_35B" ]] || die "missing $GGUF_35B (hf download unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --local-dir $(dirname "$GGUF_35B"))";;
+    esac
+  fi
   if [[ -n "${EXTERNAL[$name]:-}" && "${BACKEND[$name]}" == llamacpp && ! -f "${MREF[$name]}" ]]; then
     die "missing GGUF file ${MREF[$name]} (fix MODEL_REF in ${EXTERNAL[$name]} or download it)"
   fi
