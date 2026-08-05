@@ -1,0 +1,52 @@
+{
+  "evaluation": "deep_reasoning_v1_open_response_blind_review",
+  "does_not_modify_objective_score": true,
+  "labels": {
+    "A": "qwen3.6-27b-q8",
+    "B": "qwen3-coder-next-iq4-xs",
+    "C": "qwen3.6-35b-a3b-q5"
+  },
+  "tasks": [
+    "adversarial_epistemology",
+    "complex_policy_reasoning"
+  ],
+  "maximum_per_judge": 20,
+  "judges": [
+    {
+      "judge": 1,
+      "scores": {
+        "A": {"adversarial_epistemology": 9.7, "complex_policy_reasoning": 9.3, "total": 19.0, "rank": 1},
+        "C": {"adversarial_epistemology": 8.7, "complex_policy_reasoning": 8.5, "total": 17.2, "rank": 2},
+        "B": {"adversarial_epistemology": 7.0, "complex_policy_reasoning": 8.5, "total": 15.5, "rank": 3}
+      }
+    },
+    {
+      "judge": 2,
+      "scores": {
+        "A": {"adversarial_epistemology": 10.0, "complex_policy_reasoning": 9.5, "total": 19.5, "rank": 1},
+        "C": {"adversarial_epistemology": 9.5, "complex_policy_reasoning": 9.0, "total": 18.5, "rank": 2},
+        "B": {"adversarial_epistemology": 8.0, "complex_policy_reasoning": 9.5, "total": 17.5, "rank": 3}
+      }
+    },
+    {
+      "judge": 3,
+      "scores": {
+        "C": {"adversarial_epistemology": 10.0, "complex_policy_reasoning": 7.0, "total": 17.0, "rank": 1},
+        "A": {"adversarial_epistemology": 9.0, "complex_policy_reasoning": 7.0, "total": 16.0, "rank": 2},
+        "B": {"adversarial_epistemology": 7.0, "complex_policy_reasoning": 7.0, "total": 14.0, "rank": 3}
+      }
+    }
+  ],
+  "aggregate": {
+    "qwen3.6-27b-q8": {"mean_total": 18.17, "judge_totals": [19.0, 19.5, 16.0], "rank": 1},
+    "qwen3.6-35b-a3b-q5": {"mean_total": 17.57, "judge_totals": [17.2, 18.5, 17.0], "rank": 2},
+    "qwen3-coder-next-iq4-xs": {"mean_total": 15.67, "judge_totals": [15.5, 17.5, 14.0], "rank": 3}
+  },
+  "consensus": [
+    "All three judges ranked Coder-Next third on the open responses.",
+    "Two judges ranked dense 27B first; one ranked 35B first.",
+    "Coder-Next's epistemology response was internally inconsistent about whether the ledger should raise or lower belief.",
+    "Unsupported precision and output truncation reduced several policy scores.",
+    "The open-response review is supplementary and does not change the deterministic 100-point scores."
+  ]
+}

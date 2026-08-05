@@ -69,7 +69,19 @@ Objective tasks use exact JSON checks or executable tests. The open protocol and
 - **35B remained strongest on scientific mechanism discrimination**, tying dense 27B at 12/12 and exceeding Coder by one point.
 - **All three computed the first positive-test posterior correctly and the second incorrectly**, despite the prompt explicitly granting conditional independence.
 - **All three made material expected-value mistakes.** They generally selected the right contingent actions and policy, but produced incorrect conditional EVs and net test values.
-- The result changes the role recommendation: Coder-Next is not merely a fast code model; on this suite it is the preferred local model for difficult standalone reasoning when its 44.25 GiB VRAM footprint is acceptable. The 35B remains the better always-on default because it uses about 12.25 GiB less VRAM and remains strong for practical engineering work.
+- The result changes the role recommendation: Coder-Next is not merely a fast code model; on the deterministic suite it is the preferred local model for structured standalone reasoning when its 44.25 GiB VRAM footprint is acceptable. The blind open-response review below prevents generalizing that result to all forms of deep thought. The 35B remains the better always-on default because it uses about 12.25 GiB less VRAM and remains strong for practical engineering work.
+
+### Independent blind review of open responses
+
+Three independent judges scored only the raw historical-evidence and policy responses under labels A/B/C. These scores are supplementary and do not modify the 100-point deterministic totals.
+
+| Model | Judge totals (/20) | Mean | Open-response rank |
+|---|---|---:|---:|
+| 27B dense Q8 | 19.0, 19.5, 16.0 | **18.17** | **1** |
+| 35B-A3B Q5 | 17.2, 18.5, 17.0 | **17.57** | **2** |
+| Coder-Next IQ4_XS | 15.5, 17.5, 14.0 | **15.67** | **3** |
+
+Two judges ranked dense 27B first and one ranked 35B first; all three ranked Coder last. Coder's historical-evidence answer opened by increasing belief, then concluded that personal diversion remained weak, creating an internal directional inconsistency. Judges also penalized unsupported numerical policy thresholds and truncation. Dense 27B gave the best average open argument but remains impractically slow; 35B is therefore the practical choice for open-ended local analysis. Coder remains the strongest measured option for structured causal, conditional and constrained reasoning.
 
 ## Caveats
 
