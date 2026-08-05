@@ -1,0 +1,195 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "qwen3-coder-next-iq4-xs",
+  "endpoint": "http://127.0.0.1:19440/v1/chat/completions",
+  "score": 83,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 6,
+      "max_score": 12,
+      "elapsed_s": 5.509,
+      "usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 152,
+        "total_tokens": 227,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "```json\n{\n  \"Ada\": {\"day\": \"Wednesday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Thursday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}\n```",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 11,
+      "max_score": 14,
+      "elapsed_s": 12.3908,
+      "usage": {
+        "completion_tokens": 243,
+        "prompt_tokens": 191,
+        "total_tokens": 434,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"Assignment score (continuous running variable) with deterministic eligibility rule at cutoff 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) at the cutoff: the causal effect of participation for individuals with score exactly at 70 (i.e., the compliers who participate only if score \u2265 70)\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"The score cannot be precisely manipulated (no perfect faking or sorting exactly at the cutoff)\",\n    \"Potential outcomes are smooth across the cutoff in the absence of treatment (continuity of conditional expectation functions)\",\n    \"No other policy changes or shocks occur at the cutoff (no confounding interventions)\",\n    \"Random assignment is not required, but participation is deterministic only at the cutoff (monotonicity: no defiers\u2014i.e., no one who participates below 70 but would not participate above 70)\",\n    \"The cutoff is strictly enforced in terms of eligibility, though participation is not universal above it and some below still participate (compliance structure consistent with RDD)\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 6.2566,
+      "usage": {
+        "completion_tokens": 98,
+        "prompt_tokens": 152,
+        "total_tokens": 250,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 78.3,\n  \"independence_caveat\": \"The calculation assumes test errors are conditionally independent given the true condition status, but in reality, systematic errors (e.g., assay interference, lab contamination, or biological factors) can cause correlated false positives, making multiple positive results more likely than the model predicts\u2014thus potentially overestimating the post-test probability.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 11,
+      "max_score": 12,
+      "elapsed_s": 8.7627,
+      "usage": {
+        "completion_tokens": 156,
+        "prompt_tokens": 227,
+        "total_tokens": 383,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reduces signaling in an orthogonal assay, ruling out assay artifact (H3 falsified)\",\n    \"No binding of X to R detected in a validated occupancy assay, falsifying direct block (H1)\",\n    \"R protein decreases after X treatment while R mRNA is unchanged, indicating post-translational loss\",\n    \"Proteasome inhibitor prevents both R-protein decline and signaling reduction, linking degradation to functional effect\"\n  ],\n  \"decisive_falsifier\": \"Demonstrating that R degradation occurs normally in the presence of X but signaling is restored by expressing a proteasome-resistant, constitutively active R mutant\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": false
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 18.1411,
+      "usage": {
+        "completion_tokens": 379,
+        "prompt_tokens": 227,
+        "total_tokens": 606,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "Belief in the claim should increase modestly, but remain cautious.  \n\nS1 provides a direct accusation from a politically motivated rival, whose incentive to fabricate or exaggerate is high\u2014yet it lacks specifics, limiting its probative value. S2 and S4 are derivative: S2 relies solely on S1, and S4 further amplifies that without independent verification, so they add no new evidentiary weight and may propagate error.  \n\nS3, however, is a primary, contemporaneous record: the treasury ledger reconciles and shows the disputed funds paid to named suppliers. This corroborates that the money *was* disbursed as claimed, undermining any suggestion of embezzlement *into the mayor\u2019s private account*. Crucially, S3 does *not* establish *illegality* or *intent*\u2014the payments could be legitimate, even if politically questionable.  \n\nThe fact that one supplier was the mayor\u2019s cousin might suggest favoritism, but the price matches market rates for that month, weakening inference of corruption. This implies the transaction was not obviously anomalous, though it remains ethically dubious.  \n\nThus, S3 shifts belief toward the *fact* of disbursement (supporting the *mechanism* of the claim) but not the *illicit nature* of the diversion. Belief in *secret diversion for personal gain* remains weak; belief in *diversion through questionable but plausible channels* gains modest support.  \n\nThe highest-value next evidence would be internal municipal records (e.g., council minutes, audit reports, or internal correspondence) from 1892\u2014particularly any justification for the supplier selection or emergency procurement procedures. Such material could clarify intent, procedure, and whether the mayor or his office bypassed normal oversight, directly addressing the \u201csecret\u201d and \u201cdiverted\u201d elements of the claim.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 9,
+      "max_score": 12,
+      "elapsed_s": 6.8152,
+      "usage": {
+        "completion_tokens": 109,
+        "prompt_tokens": 204,
+        "total_tokens": 313,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "```json\n{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 65.5,\n  \"launch_ev_given_negative\": -30.0,\n  \"test_policy_ev_after_cost\": 14.8,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}\n```",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 12.6903,
+      "usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 138,
+        "total_tokens": 398,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is a conditional: 'If vowel, then even number.' To test it, we must check for counterexamples: (1) a vowel with an odd number on the reverse (violates the rule), or (2) an odd number with a non-vowel on the reverse (irrelevant to the rule, so not needed). Specifically: \\n- Turn 'A' (vowel) to verify the other side is even (required to confirm the consequent holds when antecedent is true). \\n- Turn '7' (odd number) to verify the other side is *not* a vowel (because if it were a vowel, that would be a vowel with an odd number \u2014 a direct violation). \\n- Do *not* turn 'D' (consonant): the rule says nothing about consonants; a consonant with even or odd number is consistent with the rule. \\n- Do *not* turn '4' (even number): the rule only requires vowels to have even numbers; it does *not* forbid non-vowels from having even numbers, so this card cannot falsify the rule regardless of what's on the other side.\"\n",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 25.6033,
+      "usage": {
+        "completion_tokens": 566,
+        "prompt_tokens": 206,
+        "total_tokens": 772,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "**Recommendation:** Do *not* automatically impose restrictive supervision based solely on a fixed risk threshold. Instead, deploy the tool as a *risk-informed triage aid*\u2014only for flagging cases for *additional review* by human decision-makers\u2014within a tightly bounded, adaptive framework with built-in safeguards.\n\n**Why calibration alone is insufficient:** Calibration ensures predicted probabilities match observed outcomes *within demographic groups*, but this does not address low base rates of severe violence (e.g., <2% of released defendants). At such rates, even a well-calibrated model yields many false positives: for a 10% threshold, ~90% of those flagged will *not* commit severe violence. Asymmetric costs favor false negatives (missing a violent act), but false positives impose severe, unjust harms\u2014loss of liberty, employment, and family stability\u2014without evidence of harm. Calibration does *not* guarantee fairness across groups when base rates or offense prevalence differ, nor does it resolve whether the prediction reflects causation or merely correlation.\n\n**Causation vs. prediction:** The model predicts *association*, not *causation*. Features like zip code or prior arrests may proxy structural disadvantage rather than risk per se. Using them to impose restrictions risks reinforcing discriminatory cycles.\n\n**Feedback loops & selective labels:** Police deployment changes who is observed and arrested; if high-risk zones receive more policing, more arrests occur there, reinforcing the model\u2019s bias. Defendants may also adapt behavior when they know the model\u2019s inputs (e.g., avoiding certain areas), altering the distribution of observable features.\n\n**Policy design with safeguards:**\n1. **Use only for flagging, not imposition:** Predictions trigger mandatory *human review* by a multidisciplinary team (including defense counsel, social workers, and community representatives).\n2. **Dynamic thresholds:** Thresholds must be adjusted based on real-time base rates and impact assessments\u2014not fixed.\n3. **Continuous evaluation:** Monitor false positive/negative rates *by demographic group*, recidivism outcomes, and downstream harms (e.g., employment loss, mental health). Pre-specify stopping rules: halt use if false positive rate exceeds 80% *or* if disparities across groups widen beyond 10%.\n4. **Transparency & appeal:** Defendants receive a plain-language summary of risk factors and have an expedited appeal process.\n5. **Pilot with sunset clause:** Deploy only in one jurisdiction for 18 months, with independent oversight and public data reporting. Automatic sunset unless re-authorized with evidence of net benefit.\n\n**Conclusion:** Risk prediction tools cannot ethically justify restrictive supervision in isolation. Their value lies in *augmenting* human judgment\u2014not replacing it\u2014within a system that prioritizes due process, equity, and adaptability to shifting conditions.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    }
+  ]
+}

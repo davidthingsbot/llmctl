@@ -1,0 +1,195 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "qwen3.6-27b-q8",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 71,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 42.4126,
+      "usage": {
+        "completion_tokens": 112,
+        "prompt_tokens": 164,
+        "total_tokens": 276,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "```json\n{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}\n```",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 6,
+      "max_score": 14,
+      "elapsed_s": 75.3429,
+      "usage": {
+        "completion_tokens": 208,
+        "prompt_tokens": 195,
+        "total_tokens": 403,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"The assignment variable (score) relative to the cutoff of 70, which creates a discontinuous jump in the probability of treatment (program participation)\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) or Local Average Causal Effect (LACE) for individuals with scores near the cutoff of 70\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity of potential outcomes: The expected values of the outcome and covariates are continuous functions of the running variable (score) at the cutoff in the absence of treatment.\",\n    \"No precise manipulation: Individuals cannot precisely manipulate their score to be just above or just below the cutoff (no sorting).\",\n    \"Exclusivity/No other interventions: No other variables or policies change discontinuously at the cutoff of 70 that could affect the outcome.\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": false,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 49.8108,
+      "usage": {
+        "completion_tokens": 136,
+        "prompt_tokens": 157,
+        "total_tokens": 293,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 73.9,\n  \"independence_caveat\": \"The calculation assumes conditional independence of test errors, meaning a false positive in the first test does not influence the probability of a false positive in the second. In reality, tests of the same type often share systematic biases, calibration errors, or cross-reactivity with similar conditions, causing errors to be correlated. If errors are positively correlated, the second positive test provides less new information than assumed, making the calculated posterior probability (73.9%) an overestimate of the true probability.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 60.0122,
+      "usage": {
+        "completion_tokens": 163,
+        "prompt_tokens": 240,
+        "total_tokens": 403,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The orthogonal assay confirms the signaling reduction is not an artifact, falsifying H3.\",\n    \"The validated occupancy assay shows no binding of X to R, falsifying H1 (direct block).\",\n    \"R protein levels decrease while mRNA remains unchanged, indicating post-transcriptional regulation (e.g., degradation).\",\n    \"Proteasome inhibition prevents both the loss of R protein and the signaling reduction, linking the mechanism directly to proteasomal degradation.\"\n  ],\n  \"decisive_falsifier\": \"Treatment with a proteasome inhibitor fails to prevent the decline of R protein levels or the reduction in signaling.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 149.2002,
+      "usage": {
+        "completion_tokens": 423,
+        "prompt_tokens": 238,
+        "total_tokens": 661,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "Belief in the claim that the mayor diverted famine relief should significantly decrease, shifting from plausible suspicion to low probability, though not absolute dismissal.\n\nSource dependence heavily weakens the accusation. S2 and S4 are derivative; S2 relies solely on S1, and S4 relies on S2 or each other. This creates a single-point-of-failure chain where the only original source is S1. S1 is an authenticated diary, but its provenance introduces severe bias: the author is a political rival with a clear incentive to damage the mayor\u2019s reputation. Without transaction details, S1 offers an allegation, not evidence.\n\nS3, the treasury ledger, provides strong counter-evidence. As an independently preserved administrative record, it shows funds were paid to named suppliers and that totals reconcile. This establishes that money left the treasury for grain. However, S3 does not establish that the grain was actually delivered, that the prices were fair market value, or that the suppliers were legitimate entities rather than fronts. It proves payment, not necessarily proper relief distribution.\n\nThe fact that one supplier was the mayor\u2019s cousin raises a conflict of interest but is not conclusive proof of diversion. The critical mitigating factor is that the price paid to the cousin matched other suppliers that month. This suggests the transaction was not an obvious kickback via inflated pricing, which is the most common method of such fraud. While nepotism is unethical, it does not inherently prove the funds were \"diverted\" from their intended purpose if the price was fair and the ledger balances.\n\nThe highest-value next evidence to seek is independent verification of the grain\u2019s delivery. Specifically, one should look for warehouse receipts, transport logs, or contemporary reports from neutral observers (e.g., local clergy or international aid workers) confirming that the grain purchased by the cousin and other suppliers actually reached the famine-stricken population. Without this, the ledger proves payment, but not efficacy or honesty in execution. Until such evidence is found, the balance of probability favors the ledger\u2019s record of payment over the rival\u2019s unsubstantiated accusation.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 9,
+      "max_score": 12,
+      "elapsed_s": 43.4693,
+      "usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 210,
+        "total_tokens": 325,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 60.0,\n  \"launch_ev_given_negative\": -15.0,\n  \"test_policy_ev_after_cost\": 16.4,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 91.9694,
+      "usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 143,
+        "total_tokens": 403,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"The rule is 'If vowel, then even number' (P -> Q). To test this, we must check for cases where P is true (to verify Q is true) and cases where Q is false (to verify P is false, via modus tollens). \\n1. Card 'A': This is a vowel (P is true). We must turn it to ensure the other side is an even number (Q). If it is odd, the rule is violated.\\n2. Card 'D': This is a consonant (P is false). The rule does not apply to non-vowels. Whether the other side is even or odd does not violate the rule. Thus, it is not required.\\n3. Card '4': This is an even number (Q is true). The rule does not state that even numbers must have vowels on the other side (that would be the converse error). A vowel or a consonant on the other side is consistent with the rule. Thus, it is not required.\\n4. Card '7': This is an odd number (Q is false). If the other side is a",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 216.0363,
+      "usage": {
+        "completion_tokens": 620,
+        "prompt_tokens": 211,
+        "total_tokens": 831,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "**Policy Recommendation: Reject Automatic Restrictive Supervision; Adopt a Human-in-the-Loop Advisory Role with Rigorous Auditing**\n\nAutomatic imposition of restrictive supervision based on a fixed threshold is unjustified and dangerous. While calibration ensures that predicted probabilities match observed frequencies within demographic groups, it does not guarantee fairness in individual outcomes or protect against systemic bias. Calibration is a statistical property, not a moral or legal justification for deprivation of liberty.\n\n**Analytical Constraints**\n1.  **Base Rates and Asymmetric Errors:** Severe violence is rare. Even with high specificity, the low base rate results in a high false-positive rate in absolute numbers. The cost of a false positive (unnecessary restriction, stigma, economic harm) is significant, while a false negative (missed offense) carries high societal risk. A fixed threshold ignores this asymmetry and the varying costs of errors across different contexts.\n2.  **Causation vs. Prediction:** The model predicts correlation, not causation. It likely proxies for socioeconomic disadvantage, historical over-policing, or neighborhood effects. Restricting individuals based on these proxies punishes them for circumstances rather than actionable intent, violating principles of individualized justice.\n3.  **Selective Labels and Feedback Loops:** Police deployment is endogenous. Increased surveillance in high-risk areas leads to more arrests, which feeds back into the training data as \"high risk,\" reinforcing the bias. This creates a self-fulfilling prophecy where the model predicts who is policed, not who is inherently dangerous.\n4.  **Distribution Shift and Strategic Adaptation:** Economic shifts and defendant adaptation (e.g., avoiding behaviors that trigger features) will degrade model performance over time. A static threshold cannot account for non-stationary data distributions.\n5.  **Rights and Due Process:** Automatic restrictions bypass judicial discretion and the right to contest evidence. Algorithmic opacity often prevents meaningful defense, violating due process.\n\n**Deployment and Evaluation Design**\nIf the system is used at all, it must be strictly constrained:\n*   **Advisory Only:** Predictions serve as one input for human decision-makers (judges/probation officers), who must provide written justification for any restrictive measures, explicitly stating how the prediction influenced the decision.\n*   **Dynamic Thresholds:** Thresholds must be adjusted based on real-time performance metrics, not fixed.\n*   **Continuous Auditing:** Independent auditors must monitor for disparate impact, feedback loops, and calibration drift. Metrics must include false positive rates by demographic group, not just overall accuracy.\n*   **Right to Appeal:** Defendants must have the right to challenge the algorithmic input and access the features used.\n*   **Stop Conditions:** The system must be paused if: (1) disparate impact exceeds a predefined equity threshold; (2) calibration drift exceeds acceptable limits; or (3) evidence shows strategic adaptation is undermining validity.\n\nThis approach prioritizes human accountability, mitigates feedback loops, and respects due process, acknowledging that prediction is not a",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}
