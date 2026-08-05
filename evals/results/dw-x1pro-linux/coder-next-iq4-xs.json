@@ -1,0 +1,198 @@
+{
+  "suite": "work_quality_v1",
+  "model": "qwen3-coder-next-iq4-xs",
+  "endpoint": "http://127.0.0.1:19440/v1/chat/completions",
+  "score": 84,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 5.5605,
+      "usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 182,
+        "total_tokens": 248,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 5.2989,
+      "usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 275,
+        "total_tokens": 341,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16,\n  \"setup_cost_usd\": 40\n}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 8.1839,
+      "usage": {
+        "completion_tokens": 135,
+        "prompt_tokens": 260,
+        "total_tokens": 395,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    frame_type = frame[0]\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_len = 5 + payload_len\n    if len(frame) != expected_len:\n        raise ValueError(\"invalid length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[:expected_len - 2])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame_type, payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 19.3974,
+      "usage": {
+        "completion_tokens": 408,
+        "prompt_tokens": 244,
+        "total_tokens": 652,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "1. **Uninitialized buffer access**: `payload` is declared but not initialized; if `len` is 0, `crc16(payload, 0)` reads uninitialized memory.  \n   \u2192 *Fix*: Initialize `payload` to zero: `uint8_t payload[32] = {0};`\n\n2. **Missing bounds check on `len`**: `len` (from `rx[1]`) is used directly in `memcpy` and CRC calculation without validation, risking buffer overflow or out-of-bounds reads.  \n   \u2192 *Fix*: Validate `len \u2264 32` and `rx_len \u2265 4 + len` before use.\n\n3. **Assignment instead of comparison in CRC check**: `if (calc = got)` assigns `got` to `calc` and evaluates non-zero (always true), bypassing authentication.  \n   \u2192 *Fix*: Use equality operator: `if (calc == got)`.\n\n4. **CRC computed only on payload, not full message**: CRC must cover command + length + payload, but `crc16(payload, len)` omits `rx[0]` and `rx[1]`.  \n   \u2192 *Fix*: Compute CRC over full header+payload: `crc16(rx, 2 + len)`.\n\n5. **Authentication performed *after* command parsing and state change**: `sequence++` and `parse_command` occur before authentication, enabling command injection.  \n   \u2192 *Fix*: Move authentication *before* `parse_command` and `sequence++`, and only proceed if authentication succeeds.\n\n6. **No check for minimum packet size**: Accessing `rx[1]`, `rx[2 + len]`, etc., assumes `rx_len` is sufficient, causing out-of-bounds reads on short packets.  \n   \u2192 *Fix*: Verify `rx_len >= 4 + len` (minimum: 2 header bytes + 1 minimum payload + 2 CRC bytes) before accessing fields.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 10,
+      "max_score": 18,
+      "elapsed_s": 23.5477,
+      "usage": {
+        "completion_tokens": 520,
+        "prompt_tokens": 162,
+        "total_tokens": 682,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "**Embedded Protocol Specification: `SCAN` Command (v1.2)**\n\n**1. Command Identity & Responsibility**  \n- **Command**: `SCAN [mode]`  \n  - `mode \u2208 {ON_DEMAND, CONTINUOUS_START, CONTINUOUS_STOP}`  \n- **Responsibility**:  \n  - *Sensor Driver*: Acquires raw frame, timestamps (monotonic, hardware-synchronized), and reports sensor ID + revision.  \n  - *Transform Manager*: Applies *immutable* shear transform (snapshot of current parameters at acquisition start).  \n  - *Filter Chain*: Applies *deterministic* filters (stateless or state-reset per frame).  \n  - *Frame Store*: Stores *only* the transformed frame (no raw intermediate).  \n  - *Event Dispatcher*: Emits events *only* if `mode == ON_DEMAND` *and* event mode is enabled *and* frame differs from prior (per configured threshold).  \n\n**2. Acquisition Reproducibility & Auditability**  \n- Each `SCAN` response includes:  \n  - `frame_id`: cryptographically binding hash of (sensor_id, timestamp, transform_params_hash, filter_chain_hash)  \n  - `source_identity`: (sensor_id, firmware_rev, calibration_epoch)  \n  - `transform_params_hash`: SHA-256 of transform parameters *as of acquisition start*  \n  - `filter_chain_hash`: SHA-256 of active filter configuration  \n- Frame data is stored in non-volatile ring buffer with `frame_id` as primary key.  \n- Full audit trail: `frame_id \u2192 [raw_metadata, transformed_payload]` via `GET_FRAME <frame_id>`.  \n- No re-scan required: `frame_id` uniquely identifies reproducible acquisition.  \n\n**3. Continuous vs. On-Demand Behavior**  \n- **Continuous acquisition**:  \n  - Triggered by `SCAN CONTINUOUS_START`.  \n  - Runs in background; frames stored *without* event emission.  \n  - `frame_id` still generated and stored; no ownership race (single producer, lock-free ring buffer).  \n- **On-demand acquisition**:  \n  - Triggered by `SCAN ON_DEMAND`.  \n  - Suspends continuous acquisition *only if active*; resumes after completion.  \n  - Emits event *only if* event mode enabled *and* frame differs from last emitted frame.  \n  - `frame_id` includes `is_on_demand=true` flag in metadata.  \n\n**4. Event Reporting Semantics",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": false,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": false,
+        "acquisition_ownership": true,
+        "event_independent": false,
+        "conflict_rejected_or_queued": false
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 157.4819,
+      "usage": {
+        "completion_tokens": 92,
+        "prompt_tokens": 34510,
+        "total_tokens": 34602,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 7.3513,
+      "usage": {
+        "completion_tokens": 98,
+        "prompt_tokens": 159,
+        "total_tokens": 257,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"files_to_modify\": [\"src/validator.py\", \"tests/test_validator.py\"],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactor the parser\",\n    \"Add telemetry\",\n    \"Change error codes\",\n    \"Update every documentation page\",\n    \"Rename the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "elapsed_s": 6.1166,
+      "usage": {
+        "completion_tokens": 95,
+        "prompt_tokens": 177,
+        "total_tokens": 272,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"data_bits_per_sample\": 24,\n  \"payload_bit_rate\": 48000000,\n  \"wire_time_ms_per_second\": 60000,\n  \"chip_select_overhead_ms_per_second\": 9600,\n  \"total_bus_utilization_percent\": 86.71875,\n  \"remaining_margin_percent\": 13.28125\n}",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": false,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}
