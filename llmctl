@@ -746,8 +746,10 @@ export VLLM_NO_USAGE_STATS=1
 export HF_HUB_OFFLINE=1
 exec "$VLLM_BIN" serve Qwen/Qwen3.6-35B-A3B-FP8 \\
   --served-model-name ${ID[$name]} \\
-  --tensor-parallel-size 2 --max-model-len 131072 --max-num-seqs 2 \\
-  --gpu-memory-utilization 0.92 \\
+  --tensor-parallel-size 2 --max-model-len 262144 --max-num-seqs 8 \\
+  --kv-cache-dtype fp8 --max-num-batched-tokens 4096 \\
+  --kv-cache-memory-bytes 3113851289 --gpu-memory-utilization 0.94 \\
+  --compilation-config '{"cudagraph_capture_sizes":[1,2,4,8]}' \\
   --enable-prefix-caching \\
   --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml \\
   --host 0.0.0.0 --port $port --api-key "\$(cat $VLLM_KEYFILE)"
