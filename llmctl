@@ -27,9 +27,12 @@
 #                              model's connected clients, recent request lines
 #   llmctl top [--once]        live dashboard: per-model streams + tok/s with a
 #                              context-fill history trace per stream (llama.cpp
-#                              slots / vLLM KV pool), then full-width history
-#                              charts — GPU util+VRAM per card, per-core CPU
-#                              traces (combined when short), RAM
+#                              slots / vLLM KV pool) and an event lane (T tool
+#                              ran, C compacting, O overflow — from the hermes
+#                              agent logs + vLLM finish reasons), then
+#                              full-width history charts — GPU util+VRAM per
+#                              card, per-core CPU traces (combined when
+#                              short), RAM
 #   llmctl bench <model>       benchmark a running model (tok/s, GPU, power)
 #   llmctl stats [model]       recorded load times + benchmark history
 #   llmctl machine             show machine profile + probed hardware
@@ -2004,10 +2007,22 @@ cmd_top() { # cmd_top [--once] — live dashboard: GPUs, per-core CPU, RAM, mode
   for m in "${MODELS[@]}"; do
     rows+=("$m"$'\t'"${PORT[$m]}"$'\t'"${ID[$m]}"$'\t'"${BACKEND[$m]}"$'\t'"$(cat "${KEYFILE[$m]}" 2>/dev/null || true)")
   done
+  # hermes agents: their agent.log carries tool/compaction/overflow events
+  # for the model they point at (port parsed from the configured base_url)
+  local a aurl aport arows=()
+  for a in "${AGENTS[@]}"; do
+    [[ "${A_TYPE[$a]}" == hermes && -f "${A_CFG[$a]}" ]] || continue
+    aurl="$(awk '/^model:/{f=1;next} f&&/^  base_url:/{print $2;exit}' "${A_CFG[$a]}")"
+    aport="${aurl##*:}"; aport="${aport%%/*}"
+    [[ "$aport" =~ ^[0-9]+$ ]] || continue
+    arows+=("$a"$'\t'"$aport"$'\t'"$(dirname "${A_CFG[$a]}")/logs/agent.log")
+  done
   # process substitution, not a heredoc: the script must not occupy stdin,
   # which stays the tty for the q-to-quit key handling
   T_ACCEL="$ACCEL" T_ONCE="$once" T_HOST="$(hostname -s 2>/dev/null || echo host)" \
-    T_MODELS="$(printf '%s\n' "${rows[@]}")" python3 <(cat <<'PYEOF'
+    T_MODELS="$(printf '%s\n' "${rows[@]}")" \
+    T_AGENTS="$(((${#arows[@]})) && printf '%s\n' "${arows[@]}" || true)" \
+    python3 <(cat <<'PYEOF'
 import glob, json, os, re, select, shutil, subprocess, sys, time, urllib.request
 
 ACCEL = os.environ.get("T_ACCEL", "cpu")
@@ -2015,6 +2030,8 @@ ONCE  = os.environ.get("T_ONCE") == "1"
 HOST  = os.environ.get("T_HOST", "host")
 MODELS = [l.split("\t") for l in os.environ.get("T_MODELS", "").splitlines()
           if len(l.split("\t")) == 5]  # name, port, id, backend, key
+AGENTS = [l.split("\t") for l in os.environ.get("T_AGENTS", "").splitlines()
+          if len(l.split("\t")) == 3]  # name, target port, agent.log path
 
 TICKS = [0.25, 0.35, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0, 7.0, 10.0]
 tick_i = TICKS.index(1.0)  # +/- keys walk the ladder at runtime
@@ -2041,11 +2058,13 @@ def spark_row(series, width):  # one-line full-width trace, colored per sample
     out.append(RESET)
     return "".join(out)
 
-def area_chart(main, line, rows, width):
-    # filled area (green, rows*8 levels via partial blocks) with an optional
-    # second series as a cyan line — the area overwrites the line where they meet
+def area_chart(main, line, rows, width, colors=None):
+    # filled area (green — or per-sample `colors` codes — rows*8 levels via
+    # partial blocks) with an optional second series as a cyan line — the
+    # area overwrites the line where they meet
     m = list(main)[-width:]
     l = list(line)[-width:] if line is not None else None
+    cl = list(colors)[-width:] if colors is not None else None
     pad = " " * (width - len(m))
     out = []
     for r in range(rows):
@@ -2060,7 +2079,8 @@ def area_chart(main, line, rows, width):
                 continue
             if b == 0:
                 sub = max(sub, 1)  # baseline so idle still traces
-            if cur != GREEN: s.append(GREEN); cur = GREEN
+            col = ESC + "[" + cl[i] + "m" if cl else GREEN
+            if cur != col: s.append(col); cur = col
             s.append(SPARK[sub])
         s.append(RESET)
         out.append("".join(s))
@@ -2190,6 +2210,60 @@ def gpu_read():  # [{i, util, used_mib, total_mib, power, temp, clock}]
         gpus = gpu_read_sysfs()  # fall back to reading amdgpu sysfs directly
     return gpus
 
+class LogTail:  # incremental reader surviving rotation/truncation
+    def __init__(self, path):
+        self.path, self.pos, self.ino = path, None, None
+
+    def read_new(self):
+        try:
+            st = os.stat(self.path)
+        except Exception:
+            return ""
+        if self.pos is None:          # first sight: only future events
+            self.pos, self.ino = st.st_size, st.st_ino
+            return ""
+        if st.st_ino != self.ino or st.st_size < self.pos:  # rotated/truncated
+            self.pos, self.ino = 0, st.st_ino
+        if st.st_size == self.pos:
+            return ""
+        try:
+            with open(self.path, errors="replace") as f:
+                f.seek(self.pos)
+                data = f.read()
+                self.pos = f.tell()
+            return data
+        except Exception:
+            return ""
+
+# hermes agent.log events -> per-target-port marks for the event lane.
+# Tools log only on completion, with duration — backfilled over past ticks.
+# Compaction logs a start line and a completion-telemetry line — the C mark
+# persists between them. Overflow phrases follow hermes' error_classifier.
+TOOL_RE = re.compile(
+    r"tool_executor: tool \S+ (?:completed|failed|cancelled) \((\d+(?:\.\d+)?)s")
+OVERFLOW_RE = re.compile(
+    r"context.overflow|maximum context|prompt is too long|too many tokens", re.I)
+tails, compacting = {}, {}
+
+def agent_events():
+    ev = {}
+    for name, port, path in AGENTS:
+        t = tails.setdefault(path, LogTail(path))
+        s = ev.setdefault(port, {"T": 0.0, "C": False, "O": False})
+        data = t.read_new()
+        for line in data.splitlines():
+            mo = TOOL_RE.search(line)
+            if mo:
+                s["T"] = max(s["T"], float(mo.group(1)))
+            if "context compression started" in line:
+                compacting[path] = True
+            elif "compression attempt telemetry" in line:
+                compacting[path] = False
+            if OVERFLOW_RE.search(line):
+                s["O"] = True
+        s["C"] = s["C"] or compacting.get(path, False)
+    return ev
+
 def http(port, path, key, timeout=0.5):
     req = urllib.request.Request(f"http://127.0.0.1:{port}{path}")
     if key:
@@ -2214,6 +2288,11 @@ def model_read(name, port, mid, backend, key):
                 mo = re.search(r'block_size="(\d+)".*num_gpu_blocks="(\d+)"', metric)
                 if mo:
                     m["kv_pool"] = int(mo.group(1)) * int(mo.group(2))
+                continue
+            if (metric.startswith("vllm:request_success_total")
+                    and 'finished_reason="length"' in metric):
+                # generation cut off at the context/max-tokens cap = overflow
+                m["len_fin"] = m.get("len_fin", 0.0) + float(val)
                 continue
             metric = metric.split("{")[0]
             for want, into in (("prompt_tokens_total", "pp_total"),
@@ -2290,10 +2369,12 @@ def model_block(m, models_prev, dt, hists, cw):
         head += " · " + p
     L = [head]
     CTX_ROWS = 2  # low fills vanish in a single row; 2 rows = 16 levels
+    ctx_color = lambda p: "31" if p >= 80 else ("33" if p >= 60 else "32")
     for s in m.get("slots", []):
         h = hists.get(f"M{m['name']}s{s['id']}") or [0.0]
         block = chart_block(h, None, CTX_ROWS, cw,
-                            [f" s{s['id']:<3d}"] + ["     "] * (CTX_ROWS - 1))
+                            [f" s{s['id']:<3d}"] + ["     "] * (CTX_ROWS - 1),
+                            [ctx_color(p) for p in h])
         block[0] += c("33" if s["busy"] else "2", f"{fmt_k(s['used']):>7}")
         L.extend(block)
     if "kv_pct" in m and "slots" not in m:
@@ -2301,14 +2382,25 @@ def model_block(m, models_prev, dt, hists, cw):
         used = (fmt_k(m["kv_pct"] / 100 * m["kv_pool"]) if m.get("kv_pool")
                 else f"{m['kv_pct']:.0f}%")
         block = chart_block(h, None, CTX_ROWS, cw,
-                            ["  kv "] + ["     "] * (CTX_ROWS - 1))
-        block[0] += c(color_class(m["kv_pct"]), f"{used:>7}")
+                            ["  kv "] + ["     "] * (CTX_ROWS - 1),
+                            [ctx_color(p) for p in h])
+        block[0] += c(ctx_color(m["kv_pct"]), f"{used:>7}")
         L.extend(block)
+    lane = hists.get(f"Mev{m['name']}")
+    if lane is not None:
+        # event lane, same timebase: T tool ran, C compacting, O overflow
+        pts = lane[-cw:]
+        MARK = {"T": c("36", "T"), "C": c("33", "C"), "O": c("1;31", "O")}
+        row = "".join(MARK.get(ch, c("2", "·")) for ch in pts)
+        cnt = (f"{sum(x == 'T' for x in lane)}T "
+               f"{sum(x == 'C' for x in lane)}C "
+               f"{sum(x == 'O' for x in lane)}O")
+        L.append("  ev " + " " * (cw - len(pts)) + row + c("2", f"{cnt:>9}"))
     return L
 
-def chart_block(series, line, rows, width, labels=None):
+def chart_block(series, line, rows, width, labels=None, colors=None):
     # rendered chart rows prefixed with the axis gutter (or custom labels)
-    chart = area_chart(series, line, rows, width)
+    chart = area_chart(series, line, rows, width, colors)
     pre = labels if labels is not None else [" " + g for g in gutter(rows)]
     return [p + row for p, row in zip(pre, chart)]
 
@@ -2340,12 +2432,22 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     # models: running ones only — header + context-fill traces per model,
     # appended on the same tick as every other history
     up = [m for m in models if m["up"]]
+    ev = agent_events()
     for m in up:
         for s in m.get("slots", []):
             hists.setdefault(f"M{m['name']}s{s['id']}", []) \
                  .append(100.0 * s["used"] / max(1, s["ctx"]))
         if "kv_pct" in m and "slots" not in m:
             hists.setdefault(f"M{m['name']}kv", []).append(m["kv_pct"])
+        e = ev.get(m["port"], {"T": 0.0, "C": False, "O": False})
+        over = e["O"] or (m.get("len_fin", 0.0)
+                          > models_prev.get(m["name"], {}).get("len_fin", 0.0))
+        lane = hists.setdefault(f"Mev{m['name']}", [])
+        lane.append("O" if over else "C" if e["C"] else "T" if e["T"] else "")
+        if e["T"] and dt > 0:  # tools log on completion: backfill the runtime
+            for i in range(2, min(len(lane), int(e["T"] / dt) + 1) + 1):
+                if lane[-i] == "":
+                    lane[-i] = "T"
     if not up:
         mlines = [c("1;35", " MODEL") + "  " + c("2", "(none running)")]
     else:
@@ -2388,7 +2490,7 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         ck = f"{g['clock']:.0f}MHz" if g["clock"] is not None else "-"
         tr = g.get("throttle")
         if tr is not None:  # 0x20/0x40 = SW/HW thermal slowdown
-            ck += " " + (c("1;31", "THERM") if tr & 0x60 else c("2", "therm"))
+            ck += " " + (c("1;31", "THERM") if tr & 0x60 else c("32", "therm"))
         L.append(c("1;35", f" GPU{g['i']}") + f"   util {GREEN}█{RESET} · vram {CYAN}─{RESET} of "
                  f"{fmt_gib(g['total'])} GiB · {pw} · {tp} · {ck}")
         block = chart_block(hists[f"g{g['i']}u"], hists[f"g{g['i']}v"], gsz[n], cw)
