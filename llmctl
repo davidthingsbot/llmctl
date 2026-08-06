@@ -25,9 +25,11 @@
 #   llmctl logs <model> [-f]   journal for a model's unit
 #   llmctl usage [model] [-n N] who's using the GPUs: per-process VRAM, each
 #                              model's connected clients, recent request lines
-#   llmctl top [--once]        live dashboard: full-width history charts — GPU
-#                              util+VRAM per card, per-core CPU traces (combined
-#                              when short), RAM, per-model tok/s from /metrics
+#   llmctl top [--once]        live dashboard: per-model streams + tok/s with a
+#                              context-fill history trace per stream (llama.cpp
+#                              slots / vLLM KV pool), then full-width history
+#                              charts — GPU util+VRAM per card, per-core CPU
+#                              traces (combined when short), RAM
 #   llmctl bench <model>       benchmark a running model (tok/s, GPU, power)
 #   llmctl stats [model]       recorded load times + benchmark history
 #   llmctl machine             show machine profile + probed hardware
@@ -2202,25 +2204,46 @@ def model_read(name, port, mid, backend, key):
         m["up"] = True
     except Exception:
         return m
-    try:  # prometheus counters: llamacpp:* or vllm:*
+    try:  # prometheus counters/gauges: llamacpp:* or vllm:*
         for line in http(port, "/metrics", key).splitlines():
             if line.startswith("#") or " " not in line:
                 continue
             metric, val = line.rsplit(" ", 1)
+            if metric.startswith("vllm:cache_config_info"):
+                # pool size lives in the labels: block_size * num_gpu_blocks
+                mo = re.search(r'block_size="(\d+)".*num_gpu_blocks="(\d+)"', metric)
+                if mo:
+                    m["kv_pool"] = int(mo.group(1)) * int(mo.group(2))
+                continue
             metric = metric.split("{")[0]
             for want, into in (("prompt_tokens_total", "pp_total"),
                                ("tokens_predicted_total", "gen_total"),
-                               ("generation_tokens_total", "gen_total")):
+                               ("generation_tokens_total", "gen_total"),
+                               ("num_requests_running", "running"),
+                               ("num_requests_waiting", "waiting"),
+                               ("kv_cache_usage_perc", "kv_pct"),
+                               ("gpu_cache_usage_perc", "kv_pct")):
                 if metric.endswith(want):
                     m[into] = m.get(into, 0.0) + float(val)
+        if "kv_pct" in m:
+            m["kv_pct"] *= 100.0  # gauge is a 0..1 fraction
     except Exception:
         pass
     if backend == "llamacpp":
         try:
-            slots = json.loads(http(port, "/slots", key))
-            m["busy"] = sum(1 for s in slots if s.get("is_processing"))
-            m["decoded"] = sum(s.get("next_token", [{}])[0].get("n_decoded", 0)
-                               for s in slots if s.get("is_processing"))
+            m["slots"] = []
+            for s in sorted(json.loads(http(port, "/slots", key)),
+                            key=lambda s: s.get("id", 0)):
+                nt = (s.get("next_token") or [{}])[0]
+                # idle slots keep task_prev's counts = the KV they still cache
+                m["slots"].append({"id": s.get("id", 0),
+                                   "ctx": s.get("n_ctx", 0),
+                                   "used": s.get("n_prompt_tokens", 0)
+                                           + nt.get("n_decoded", 0),
+                                   "dec": nt.get("n_decoded", 0),
+                                   "busy": bool(s.get("is_processing"))})
+            m["busy"] = sum(1 for s in m["slots"] if s["busy"])
+            m["decoded"] = sum(s["dec"] for s in m["slots"] if s["busy"])
         except Exception:
             pass
     return m
@@ -2231,11 +2254,9 @@ def fmt_t(s):
     if s < 1: return f"{s*1000:.0f}ms"
     return f"{s:g}s" if s < 120 else f"{s/60:.0f}m"
 
-def model_line(m, models_prev, dt):
-    if not m["up"]:
-        return f"{m['name']} :{m['port']} " + c("2", "down")
+def rate_parts(m, models_prev, dt):
     prev = models_prev.get(m["name"], {})
-    parts = [c("32", "up")]
+    parts = []
     if dt > 0:
         # metrics counters only tick on request completion; fold in the
         # live slot decode count so the rate moves mid-generation
@@ -2245,11 +2266,45 @@ def model_line(m, models_prev, dt):
             parts.append(f"gen {max(0.0, (gen_now - gen_was) / dt):.1f} tok/s")
         if "pp_total" in m and "pp_total" in prev:
             parts.append(f"prompt {max(0.0, (m['pp_total'] - prev['pp_total']) / dt):.1f} tok/s")
-    if m.get("busy"):
-        parts.append(c("33", f"generating ({fmt_k(m.get('decoded', 0))} tok)"))
-    else:
-        parts.append("idle")
-    return f"{m['name']} :{m['port']} " + " · ".join(parts)
+    return parts
+
+def model_block(m, models_prev, dt, hists, cw):
+    # header + one context-fill trace per stream on the shared timebase
+    # (fill % over time, like the per-core rows): llama.cpp reports true
+    # per-slot occupancy; vLLM only exposes the shared KV pool, so one
+    # aggregate trace. Current token count on the right.
+    head = c("1;35", " MODEL") + f"  {m['name']} :{m['port']} " + c("32", "up")
+    if "running" in m or "waiting" in m:
+        r, w = int(m.get("running", 0)), int(m.get("waiting", 0))
+        head += " · " + (c("33", f"{r} running") if r else c("2", "0 running"))
+        if w:
+            head += " · " + c("31", f"{w} queued")
+        if m.get("kv_pool"):
+            head += c("2", f" · pool {fmt_k(m['kv_pool'])} tok")
+    elif "slots" in m:
+        b, n = m.get("busy", 0), len(m["slots"])
+        head += " · " + (c("33", f"{b}/{n} busy") if b else c("2", f"0/{n} busy"))
+        if m["slots"]:
+            head += c("2", f" · ctx {fmt_k(m['slots'][0]['ctx'])}/slot")
+    for p in rate_parts(m, models_prev, dt):
+        head += " · " + p
+    L = [head]
+    CTX_ROWS = 2  # low fills vanish in a single row; 2 rows = 16 levels
+    for s in m.get("slots", []):
+        h = hists.get(f"M{m['name']}s{s['id']}") or [0.0]
+        block = chart_block(h, None, CTX_ROWS, cw,
+                            [f" s{s['id']:<3d}"] + ["     "] * (CTX_ROWS - 1))
+        block[0] += c("33" if s["busy"] else "2", f"{fmt_k(s['used']):>7}")
+        L.extend(block)
+    if "kv_pct" in m and "slots" not in m:
+        h = hists.get(f"M{m['name']}kv") or [0.0]
+        used = (fmt_k(m["kv_pct"] / 100 * m["kv_pool"]) if m.get("kv_pool")
+                else f"{m['kv_pct']:.0f}%")
+        block = chart_block(h, None, CTX_ROWS, cw,
+                            ["  kv "] + ["     "] * (CTX_ROWS - 1))
+        block[0] += c(color_class(m["kv_pct"]), f"{used:>7}")
+        L.extend(block)
+    return L
 
 def chart_block(series, line, rows, width, labels=None):
     # rendered chart rows prefixed with the axis gutter (or custom labels)
@@ -2282,17 +2337,19 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         hists.setdefault(f"g{g['i']}u", []).append(g["util"])
         hists.setdefault(f"g{g['i']}v", []).append(100.0 * g["used"] / max(1.0, g["total"]))
 
-    # models: running ones only — one combined line when it fits, else one each
+    # models: running ones only — header + context-fill traces per model,
+    # appended on the same tick as every other history
     up = [m for m in models if m["up"]]
+    for m in up:
+        for s in m.get("slots", []):
+            hists.setdefault(f"M{m['name']}s{s['id']}", []) \
+                 .append(100.0 * s["used"] / max(1, s["ctx"]))
+        if "kv_pct" in m and "slots" not in m:
+            hists.setdefault(f"M{m['name']}kv", []).append(m["kv_pct"])
     if not up:
-        mlines = [" models  " + c("2", "(none running)")]
+        mlines = [c("1;35", " MODEL") + "  " + c("2", "(none running)")]
     else:
-        one = " models  " + "   |   ".join(model_line(m, models_prev, dt) for m in up)
-        if len(ANSI_RE.sub("", one)) <= W:
-            mlines = [one]
-        else:
-            mlines = [c("1;36", " models")] + \
-                     ["  " + model_line(m, models_prev, dt) for m in up]
+        mlines = [l for m in up for l in model_block(m, models_prev, dt, hists, cw)]
 
     # height budget: spare lines go to the cores evenly when every core can
     # grow; otherwise the other charts split them round-robin (capped)
@@ -2318,6 +2375,8 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
             sizes[i] += 1; spare -= 1
         i = (i + 1) % len(sizes)
     gsz, rsz, csz = sizes[:len(gpus)], sizes[len(gpus):len(gpus) + 1], sizes[len(gpus) + 1:]
+
+    L.extend(mlines)
 
     # gpu blocks: stat line + chart; current util/vram on the right
     for n, g in enumerate(gpus):
@@ -2375,7 +2434,6 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         block[0] += " " + c(color_class(ram_pct), f"{used_gib:.1f}G")
         L.extend(block)
 
-    L.extend(mlines)
     # span label assumes the current tick for all samples; history kept across
     # a +/- change is really older/younger than it claims
     foot = " q quit · +/- speed"
