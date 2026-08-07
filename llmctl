@@ -2237,10 +2237,16 @@ class LogTail:  # incremental reader surviving rotation/truncation
 
 # hermes agent.log events -> per-target-port marks for the event lane.
 # Tools log only on completion, with duration — backfilled over past ticks.
-# Compaction logs a start line and a completion-telemetry line — the C mark
-# persists between them. Overflow phrases follow hermes' error_classifier.
+# Compaction logs a start line and an end line — the C mark persists between
+# them. Two end phrasings are accepted because the boxes run different hermes
+# vintages: 'context compression done' is emitted by every version, while the
+# attempt-telemetry line only exists since 356ff99 (upstream 2026-07-07), so
+# matching that alone latches C forever on an older agent and, since C outranks
+# T in the lane, silently swallows every tool tick.
 TOOL_RE = re.compile(
     r"tool_executor: tool \S+ (?:completed|failed|cancelled) \((\d+(?:\.\d+)?)s")
+COMPACT_END_RE = re.compile(
+    r"context compression done|compression attempt telemetry")
 OVERFLOW_RE = re.compile(
     r"context.overflow|maximum context|prompt is too long|too many tokens", re.I)
 tails, compacting = {}, {}
@@ -2257,7 +2263,7 @@ def agent_events():
                 s["T"] = max(s["T"], float(mo.group(1)))
             if "context compression started" in line:
                 compacting[path] = True
-            elif "compression attempt telemetry" in line:
+            elif COMPACT_END_RE.search(line):
                 compacting[path] = False
             if OVERFLOW_RE.search(line):
                 s["O"] = True
