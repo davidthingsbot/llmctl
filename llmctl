@@ -2023,7 +2023,7 @@ cmd_top() { # cmd_top [--once] — live dashboard: GPUs, per-core CPU, RAM, mode
     T_MODELS="$(printf '%s\n' "${rows[@]}")" \
     T_AGENTS="$(((${#arows[@]})) && printf '%s\n' "${arows[@]}" || true)" \
     python3 <(cat <<'PYEOF'
-import glob, json, os, re, select, shutil, subprocess, sys, time, urllib.request
+import concurrent.futures, glob, json, os, re, select, shutil, subprocess, sys, time, urllib.request
 
 ACCEL = os.environ.get("T_ACCEL", "cpu")
 ONCE  = os.environ.get("T_ONCE") == "1"
@@ -2277,7 +2277,16 @@ def http(port, path, key, timeout=0.5):
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read().decode()
 
-def model_read(name, port, mid, backend, key):
+# /health is answered on the HTTP thread and returns in ~1ms, but /metrics and
+# /slots are served by the inference loop between decode steps, so their
+# latency is roughly ONE TOKEN TIME. The 0.5s default is therefore under one
+# token below ~2 tok/s, and the two queued polls also stack up behind each
+# other — measured on a 1.9 tok/s model, /slots timed out on 25 of 25 ticks at
+# 0.5s and returned in ~0ms at 5s. Give the queued endpoints room.
+POLL_TMO = 2.0
+
+def model_read(name, port, mid, backend, key, prev=None):
+    prev = prev or {}
     m = {"name": name, "port": port, "up": False}
     try:
         http(port, "/health", key)
@@ -2285,7 +2294,10 @@ def model_read(name, port, mid, backend, key):
     except Exception:
         return m
     try:  # prometheus counters/gauges: llamacpp:* or vllm:*
-        for line in http(port, "/metrics", key).splitlines():
+        # parsed into a scratch dict so a mid-parse failure cannot leave a
+        # half-read set of counters behind
+        mm = {}
+        for line in http(port, "/metrics", key, POLL_TMO).splitlines():
             if line.startswith("#") or " " not in line:
                 continue
             metric, val = line.rsplit(" ", 1)
@@ -2293,12 +2305,12 @@ def model_read(name, port, mid, backend, key):
                 # pool size lives in the labels: block_size * num_gpu_blocks
                 mo = re.search(r'block_size="(\d+)".*num_gpu_blocks="(\d+)"', metric)
                 if mo:
-                    m["kv_pool"] = int(mo.group(1)) * int(mo.group(2))
+                    mm["kv_pool"] = int(mo.group(1)) * int(mo.group(2))
                 continue
             if (metric.startswith("vllm:request_success_total")
                     and 'finished_reason="length"' in metric):
                 # generation cut off at the context/max-tokens cap = overflow
-                m["len_fin"] = m.get("len_fin", 0.0) + float(val)
+                mm["len_fin"] = mm.get("len_fin", 0.0) + float(val)
                 continue
             metric = metric.split("{")[0]
             for want, into in (("prompt_tokens_total", "pp_total"),
@@ -2309,28 +2321,46 @@ def model_read(name, port, mid, backend, key):
                                ("kv_cache_usage_perc", "kv_pct"),
                                ("gpu_cache_usage_perc", "kv_pct")):
                 if metric.endswith(want):
-                    m[into] = m.get(into, 0.0) + float(val)
-        if "kv_pct" in m:
-            m["kv_pct"] *= 100.0  # gauge is a 0..1 fraction
+                    mm[into] = mm.get(into, 0.0) + float(val)
+        if "kv_pct" in mm:
+            mm["kv_pct"] *= 100.0  # gauge is a 0..1 fraction
+        m.update(mm)
     except Exception:
-        pass
+        # a missed poll is not "the counters went away": carry the last known
+        # values so the header keeps its shape instead of dropping fields
+        for k in ("pp_total", "gen_total", "running", "waiting",
+                  "kv_pct", "kv_pool", "len_fin"):
+            if k in prev:
+                m[k] = prev[k]
+                m["stale"] = True
     if backend == "llamacpp":
         try:
-            m["slots"] = []
-            for s in sorted(json.loads(http(port, "/slots", key)),
+            # built in a local: the list must not be published half-filled, and
+            # an empty one must never stand in for a failed read
+            slots = []
+            for s in sorted(json.loads(http(port, "/slots", key, POLL_TMO)),
                             key=lambda s: s.get("id", 0)):
                 nt = (s.get("next_token") or [{}])[0]
                 # idle slots keep task_prev's counts = the KV they still cache
-                m["slots"].append({"id": s.get("id", 0),
-                                   "ctx": s.get("n_ctx", 0),
-                                   "used": s.get("n_prompt_tokens", 0)
-                                           + nt.get("n_decoded", 0),
-                                   "dec": nt.get("n_decoded", 0),
-                                   "busy": bool(s.get("is_processing"))})
-            m["busy"] = sum(1 for s in m["slots"] if s["busy"])
-            m["decoded"] = sum(s["dec"] for s in m["slots"] if s["busy"])
+                slots.append({"id": s.get("id", 0),
+                              "ctx": s.get("n_ctx", 0),
+                              "used": s.get("n_prompt_tokens", 0)
+                                      + nt.get("n_decoded", 0),
+                              "dec": nt.get("n_decoded", 0),
+                              "busy": bool(s.get("is_processing"))})
+            m["slots"] = slots
+            m["busy"] = sum(1 for s in slots if s["busy"])
+            m["decoded"] = sum(s["dec"] for s in slots if s["busy"])
         except Exception:
-            pass
+            # hold the last known slots. Collapsing to [] would render as
+            # '0/0 busy' — a fabricated zero, while the server is still
+            # decoding — and would drop the block's per-slot trace rows, so
+            # every section below it jumps up and back on alternating ticks.
+            if prev.get("slots"):
+                m["slots"] = prev["slots"]
+                m["busy"] = prev.get("busy", 0)
+                m["decoded"] = prev.get("decoded", 0)
+                m["stale"] = True
     return m
 
 def fmt_gib(mib): return f"{mib/1024:.1f}"
@@ -2341,6 +2371,11 @@ def fmt_t(s):
 
 def rate_parts(m, models_prev, dt):
     prev = models_prev.get(m["name"], {})
+    if m.get("stale") and "rate_parts" in prev:
+        # counters were carried forward, so differencing them yields a bogus
+        # 0 tok/s — hold the last real rate instead of blinking to zero
+        m["rate_parts"] = prev["rate_parts"]
+        return m["rate_parts"]
     parts = []
     if dt > 0:
         # metrics counters only tick on request completion; fold in the
@@ -2351,6 +2386,7 @@ def rate_parts(m, models_prev, dt):
             parts.append(f"gen {max(0.0, (gen_now - gen_was) / dt):.1f} tok/s")
         if "pp_total" in m and "pp_total" in prev:
             parts.append(f"prompt {max(0.0, (m['pp_total'] - prev['pp_total']) / dt):.1f} tok/s")
+    m["rate_parts"] = parts  # carried forward across a missed poll
     return parts
 
 def model_block(m, models_prev, dt, hists, cw):
@@ -2564,6 +2600,11 @@ def mem_read():
 hists = {}
 cpu_prev = cpu_read()
 models_prev, t_prev = {}, time.monotonic()
+# models are polled concurrently: /metrics and /slots each wait on the target's
+# inference loop, so serial polling would make a tick cost the SUM over models
+# (up to 2 x POLL_TMO each) instead of the slowest one. urllib releases the GIL
+# on the socket wait, and model_read only reads its own prev, so this is safe.
+pool = concurrent.futures.ThreadPoolExecutor(max_workers=max(2, len(MODELS)))
 time.sleep(0.3)
 
 interactive = sys.stdin.isatty() and not ONCE
@@ -2577,7 +2618,8 @@ try:
     while True:
         cpu_now, gpus, mem = cpu_read(), gpu_read(), mem_read()
         t_now = time.monotonic()
-        models = [model_read(*m) for m in MODELS]
+        models = list(pool.map(
+            lambda mm: model_read(*mm, prev=models_prev.get(mm[0], {})), MODELS))
         lines = frame(cpu_prev, cpu_now, gpus, mem, models,
                       models_prev, t_now - t_prev, hists)
         for h in hists.values():
