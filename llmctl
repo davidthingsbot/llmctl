@@ -2048,7 +2048,7 @@ SPARK = " ▁▂▃▄▅▆▇█"
 GUT = 5  # left gutter: axis labels like " 100┤"
 
 def c(code, s): return f"{ESC}[{code}m{s}{ESC}[0m"
-def color_class(p): return "31" if p >= 85 else ("33" if p >= 60 else "32")
+def color_class(p): return "31" if p >= 85 else ("38;5;208" if p >= 75 else "32")
 
 def spark_row(series, width):  # one-line full-width trace, colored per sample
     pts = list(series)[-width:]
@@ -2062,9 +2062,13 @@ def spark_row(series, width):  # one-line full-width trace, colored per sample
     return "".join(out)
 
 def area_chart(main, line, rows, width, colors=None):
-    # filled area (green — or per-sample `colors` codes — rows*8 levels via
-    # partial blocks) with an optional second series as a cyan line — the
-    # area overwrites the line where they meet
+    # filled area, rows*8 levels via partial blocks, with an optional second
+    # series as a cyan line — the area overwrites the line where they meet.
+    # Default coloring is level-banded like a VU meter: green base, orange
+    # from 75%, red from 85% — each cell colored by the level of its top, so
+    # a tall column keeps a green body under an orange/red tip. Passing
+    # `colors` (per-sample ANSI codes) overrides banding — used by the
+    # window-autoscaled rate traces where absolute bands are meaningless.
     m = list(main)[-width:]
     l = list(line)[-width:] if line is not None else None
     cl = list(colors)[-width:] if colors is not None else None
@@ -2082,7 +2086,10 @@ def area_chart(main, line, rows, width, colors=None):
                 continue
             if b == 0:
                 sub = max(sub, 1)  # baseline so idle still traces
-            col = ESC + "[" + cl[i] + "m" if cl else GREEN
+            if cl:
+                col = ESC + "[" + cl[i] + "m"
+            else:
+                col = ESC + "[" + color_class(100.0 * (b * 8 + sub) / (rows * 8)) + "m"
             if cur != col: s.append(col); cur = col
             s.append(SPARK[sub])
         s.append(RESET)
@@ -2402,13 +2409,17 @@ def nice_ceil(v):
         if v <= k * mag:
             return float(k * mag)
 
+MROWS = 4  # rows per model trace (rate/context); the height budget takes
+           # the extra out of the per-core CPU charts
+
 def rate_block(label, h, cw, color=None):
-    # 2-row trace autoscaled to the visible window's peak (1-2-5 snapped);
-    # caption = current tok/s, second row = dim scale ceiling
+    # MROWS-row trace autoscaled to the visible window's peak (1-2-5
+    # snapped); caption = current tok/s, second row = dim scale ceiling
     cur = h[-1] if h else 0.0
     scale = nice_ceil(max(h[-cw:], default=0.0))
     pct = [min(100.0, v / scale * 100.0) for v in h]
-    block = chart_block(pct, None, 2, cw, [label, "     "],
+    block = chart_block(pct, None, MROWS, cw,
+                        [label] + ["     "] * (MROWS - 1),
                         [color] * len(pct) if color else None)
     block[0] += f" {fmt_k(cur):>6}"
     block[1] += c("2", f" ⎤{fmt_k(scale)}")
@@ -2435,16 +2446,14 @@ def model_block(m, hists, cw):
     head += f" · gen {GREEN}█{RESET} · prefill {CYAN}█{RESET} tok/s"
     L = [head]
     if f"Mgen{m['name']}" in hists:
-        L.extend(rate_block(" gen ", hists[f"Mgen{m['name']}"], cw))
+        L.extend(rate_block(" gen ", hists[f"Mgen{m['name']}"], cw, "32"))
     if f"Mpp{m['name']}" in hists:
         L.extend(rate_block(" pp  ", hists[f"Mpp{m['name']}"], cw, "36"))
-    CTX_ROWS = 2  # low fills vanish in a single row; 2 rows = 16 levels
-    ctx_color = lambda p: "31" if p >= 80 else ("33" if p >= 60 else "32")
+    CTX_ROWS = MROWS  # taller = finer fill resolution (8 levels/row)
     for s in m.get("slots", []):
         h = hists.get(f"M{m['name']}s{s['id']}") or [0.0]
         block = chart_block(h, None, CTX_ROWS, cw,
-                            [f" s{s['id']:<3d}"] + ["     "] * (CTX_ROWS - 1),
-                            [ctx_color(p) for p in h])
+                            [f" s{s['id']:<3d}"] + ["     "] * (CTX_ROWS - 1))
         block[0] += c("33" if s["busy"] else "2", f"{fmt_k(s['used']):>7}")
         L.extend(block)
     if "kv_pct" in m and "slots" not in m:
@@ -2452,9 +2461,8 @@ def model_block(m, hists, cw):
         used = (fmt_k(m["kv_pct"] / 100 * m["kv_pool"]) if m.get("kv_pool")
                 else f"{m['kv_pct']:.0f}%")
         block = chart_block(h, None, CTX_ROWS, cw,
-                            ["  kv "] + ["     "] * (CTX_ROWS - 1),
-                            [ctx_color(p) for p in h])
-        block[0] += c(ctx_color(m["kv_pct"]), f"{used:>7}")
+                            ["  kv "] + ["     "] * (CTX_ROWS - 1))
+        block[0] += c(color_class(m["kv_pct"]), f"{used:>7}")
         L.extend(block)
     lane = hists.get(f"Mev{m['name']}")
     if lane is not None:
