@@ -1754,7 +1754,10 @@ cmd_sleephook() {
 # ----------------------------------------------------------------------------
 WATCHDOG_UNIT="llmctl-watchdog.service"
 WATCHDOG_WINDOW="${WATCHDOG_WINDOW:-360}"     # seconds of history that defines "sustained"
-WATCHDOG_RATE="${WATCHDOG_RATE:-5}"           # requests/min above which a lone gateway is a runaway
+WATCHDOG_RATE="${WATCHDOG_RATE:-12}"          # requests/min above which a lone gateway is a runaway.
+                                              # Working agent tool-loops measured 4.4-5.5/min (killed
+                                              # twice at 5: 2026-08-05 + 08-07); a wedged heartbeat
+                                              # re-calls every few seconds (>=12/min).
 WATCHDOG_INTERVAL="${WATCHDOG_INTERVAL:-30}"  # seconds between checks
 WATCHDOG_COOLDOWN="${WATCHDOG_COOLDOWN:-600}" # seconds to leave an agent alone after restarting it
 declare -A WD_COOLDOWN_UNTIL
