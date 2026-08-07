@@ -2513,8 +2513,11 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         if "kv_pct" in m and "slots" not in m:
             hists.setdefault(f"M{m['name']}kv", []).append(m["kv_pct"])
         e = ev.get(m["port"], {"T": 0.0, "C": False, "O": False})
-        over = e["O"] or (m.get("len_fin", 0.0)
-                          > models_prev.get(m["name"], {}).get("len_fin", 0.0))
+        # require a prior sample: on the first tick the counter's whole
+        # history since server start would read as a fresh overflow
+        prev_fin = models_prev.get(m["name"], {}).get("len_fin")
+        over = e["O"] or (prev_fin is not None
+                          and m.get("len_fin", 0.0) > prev_fin)
         lane = hists.setdefault(f"Mev{m['name']}", [])
         lane.append("O" if over else "C" if e["C"] else "T" if e["T"] else "")
         if e["T"] and dt > 0:  # tools log on completion: backfill the runtime
