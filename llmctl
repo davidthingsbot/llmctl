@@ -932,7 +932,8 @@ def fix_provider(prov):
 seeded = {}  # vllm provider block from openclaw.json, reused to (re)create it in agent files
 
 def main_cfg(data):
-    prov = data["models"]["providers"]["vllm"]
+    prov = data.setdefault("models", {}).setdefault("providers", {}).setdefault(
+        "vllm", {"baseUrl": url, "models": [{}]})
     fix_provider(prov)
     seeded.update(json.loads(json.dumps(prov)))
     data.setdefault("agents", {}).setdefault("defaults", {}) \
