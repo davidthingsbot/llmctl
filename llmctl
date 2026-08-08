@@ -856,12 +856,28 @@ point_hermes_at() { # point_hermes_at <agent> <model>
 
   # Edit only the top-level `model:` block (keeps comments/format elsewhere intact)
   awk -v id="$id" -v url="$url" -v key="$key" '
-    /^model:/            { inblk=1; print; next }
-    inblk && /^[^ ]/     { inblk=0 }
-    inblk && /^  default:/  { print "  default: " id;  next }
-    inblk && /^  base_url:/ { print "  base_url: " url; next }
-    inblk && /^  api_key:/  { print "  api_key: " key;  next }
+    function emit_missing() {
+      if (!saw_default)  print "  default: " id
+      if (!saw_provider) print "  provider: openai"
+      if (!saw_base_url) print "  base_url: " url
+      if (!saw_api_key)  print "  api_key: " key
+    }
+    /^model:/ {
+      inblk=1
+      saw_default=saw_provider=saw_base_url=saw_api_key=0
+      print
+      next
+    }
+    inblk && /^[^ ]/ {
+      emit_missing()
+      inblk=0
+    }
+    inblk && /^  default:/  { print "  default: " id;       saw_default=1;  next }
+    inblk && /^  provider:/ { print "  provider: openai";   saw_provider=1; next }
+    inblk && /^  base_url:/ { print "  base_url: " url;     saw_base_url=1; next }
+    inblk && /^  api_key:/  { print "  api_key: " key;      saw_api_key=1;  next }
     { print }
+    END { if (inblk) emit_missing() }
   ' "$bak" > "$cfg.tmp"
 
   # Validate the result parses and took the edit before installing it
