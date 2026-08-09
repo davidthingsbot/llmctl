@@ -238,7 +238,16 @@ quality number quietly wrong.
 
 ## What to measure next
 
-Items 1 and 2 are DONE — see the RESULT section above. Remaining:
+Items 1 and 2 are DONE — see the RESULT section above.
+
+> **HOLD — DO NOT RUN ITEMS 1 AND 2 BELOW UNPROMPTED.** David asked on 2026-08-09
+> that Mistral-Small-4-119B **not** be loaded or tested when its download
+> completes; he wants to direct that himself. The weights may finish arriving at
+> `models/gguf/mistral-small-4-119b/` — leave them alone. Loading it requires
+> taking `27b-fp8` off the GPUs, which is the model in daily use by the `hermes`
+> and `mr-c` agents. Verifying the downloaded byte counts is fine; loading is not.
+
+Remaining, when asked:
 
 1. **Small 4 on llama.cpp: confirm the predicted 11.25 KiB/token empirically**
    from the KV allocation printed at load. That single number is the finding;
