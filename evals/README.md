@@ -118,6 +118,39 @@ Note the logic grid: 27b-fp8 scores 0/12 here as it did on DW-X1Pro, so that tas
 still fails to separate anything at the top and Devstral's 3/12 is not a win worth
 counting.
 
+### Blind review of open responses — DW-ASUS-LINUX
+
+Three independent judges scored the two open tasks (`adversarial_epistemology`,
+`complex_policy_reasoning`) under blind labels, as on DW-X1Pro. Supplementary;
+does not modify the deterministic totals.
+
+| Model | Judge totals (/20) | Mean | Rank |
+|---|---|---:|---:|
+| Qwen3.6-27B FP8 | 16.9, 16.0, 16.0 | **16.30** | **1** |
+| Devstral-Small-2-24B FP8 | 10.2, 8.8, 10.0 | **9.67** | 2 |
+
+Unanimous 3-0. **This is the most important qualification on the table above:
+the deterministic rubric OVERSTATED Devstral on precisely these two tasks.** It
+scored 12/14 and 12/14 there — its best showing on the whole reasoning suite —
+while blind review puts it at 9.67 against 16.30. The rubric rewards mentioning
+the right concepts; the judges penalised getting them backwards.
+
+Judges converged on the same concrete faults: Devstral misclassifies a
+contemporaneous diary as a *secondary* source, never states which direction
+belief should move, requests next-evidence that is near-circular, inverts the
+calibration point (claiming calibration equalises error rates across groups),
+invents unmoored numerical thresholds, and truncates mid-sentence while over the
+word limit, never reaching distribution shift, strategic adaptation or stopping
+conditions. Its one acknowledged edge was proposing a randomised trial.
+
+**Method note, recorded because the first attempt was flawed:** an initial pass
+was discarded because the extracted prompt files were 0 bytes — the results JSON
+does not retain prompts — so judges were reconstructing the task from the answers.
+Prompts were pulled from `deep_reasoning_suite.py` and all three judges re-ran.
+Both passes gave the same unanimous ranking with near-identical scores, but only
+the second is recorded. If the results JSON retained prompts this would be a
+one-step process; worth fixing.
+
 ### `--no-template-kwargs`
 
 Both suites send `chat_template_kwargs: {enable_thinking: false}` by default.

@@ -1,0 +1,78 @@
+{
+ "evaluation": "deep_reasoning_v1_open_response_blind_review",
+ "machine": "DW-ASUS-LINUX",
+ "date": "2026-08-09",
+ "does_not_modify_objective_score": true,
+ "labels": {
+  "A": "devstral-small-2-24b-fp8",
+  "B": "qwen3.6-27b-fp8"
+ },
+ "tasks": [
+  "adversarial_epistemology",
+  "complex_policy_reasoning"
+ ],
+ "maximum_per_judge": 20,
+ "judges": [
+  {
+   "judge": 1,
+   "A": {
+    "adversarial_epistemology": 6.0,
+    "complex_policy_reasoning": 4.2,
+    "total": 10.2
+   },
+   "B": {
+    "adversarial_epistemology": 8.6,
+    "complex_policy_reasoning": 8.3,
+    "total": 16.9
+   },
+   "rank": [
+    "B",
+    "A"
+   ],
+   "rationale": "B covers every required element, states a calibrated belief update, and proposes the highest-value next evidence (independent proof of grain delivery); A misclassifies the contemporaneous diary as secondary, offers a circular next-evidence request, wrongly claims calibration equalizes error rates across groups, injects invented thresholds, and truncates mid-sentence with distribution shift, strategic adaptation and stopping conditions never delivered."
+  },
+  {
+   "judge": 2,
+   "A": {
+    "adversarial_epistemology": 5.2,
+    "complex_policy_reasoning": 3.6,
+    "total": 8.8
+   },
+   "B": {
+    "adversarial_epistemology": 8.2,
+    "complex_policy_reasoning": 7.8,
+    "total": 16.0
+   },
+   "rank": [
+    "B",
+    "A"
+   ],
+   "rationale": "B commits to a directional conclusion on both tasks and names the evidence that would move it; A never states how belief should change, miscalls the contemporaneous diary a secondary source, asserts calibration balances error rates across groups, invents unmoored thresholds, and truncates mid-sentence. B's weaknesses are slight over-length and an evaluation design lacking randomization."
+  },
+  {
+   "judge": 3,
+   "A": {
+    "adversarial_epistemology": 6.0,
+    "complex_policy_reasoning": 4.0,
+    "total": 10.0
+   },
+   "B": {
+    "adversarial_epistemology": 8.5,
+    "complex_policy_reasoning": 7.5,
+    "total": 16.0
+   },
+   "rank": [
+    "B",
+    "A"
+   ],
+   "rationale": "B identifies the decisive point that the reconciling ledger proves payment but not delivery and names the right next evidence; A proposes near-circular next evidence, inverts the calibration-vs-equal-error-rates point, and runs over the word limit yet still truncates. A's RCT proposal is its one substantive edge."
+  }
+ ],
+ "means": {
+  "devstral-small-2-24b-fp8": 9.67,
+  "qwen3.6-27b-fp8": 16.3
+ },
+ "verdict": "Unanimous 3-0 for qwen3.6-27b-fp8. Mean 16.30 vs 9.67 of 20.",
+ "method_note": "Judges were blind to model identity and to the key. A first pass was DISCARDED because the extracted PROMPT files were 0 bytes (the results JSON does not retain prompts) and judges reconstructed the tasks from the answers; prompts were then pulled from deep_reasoning_suite.py and all three judges re-ran. Both passes returned the same unanimous ranking with near-identical scores.",
+ "significance": "The deterministic rubric OVERSTATED Devstral on exactly these two tasks: it scored 12/14 and 12/14 there, its best showing on the reasoning suite, while blind review puts it at 9.67/20 against 16.30/20. Rubric scores on open-ended tasks are directional only, as evals/README.md already cautions."
+}
