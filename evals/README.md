@@ -89,23 +89,46 @@ The first paired run on the dual-3090 box. **These are not comparable to the
 DW-X1Pro tables above** — different hardware, different quantisations. They are
 comparable to each other: same machine, same harness, thinking disabled on both.
 
-| | Devstral-Small-2-24B FP8 | Qwen3.6-27B FP8 (`27b-fp8`) |
-|---|---:|---:|
-| Work quality | **73/100** | **83/100** |
-| Deep reasoning | **51/100** | **70/100** |
-| Work suite wall time | 44.4 s | 57.0 s |
-| Reasoning suite wall time | 34.0 s | 41.6 s |
+| | Devstral-Small-2-24B FP8 | Mistral-Small-4-119B IQ2_M | Qwen3.6-27B FP8 (`27b-fp8`) |
+|---|---:|---:|---:|
+| Work quality | 73/100 | 70/100 | **83/100** |
+| Deep reasoning | 51/100 | 53/100 | **70/100** |
+| Blind open-response (mean /20) | 10.60 | 7.63 | **17.27** |
+| Work suite wall time | 44.4 s | 37.9 s | 57.0 s |
+| Reasoning suite wall time | 34.0 s | 16.2 s | 41.6 s |
 
-| Work task | Devstral | 27b-fp8 | | Reasoning task | Devstral | 27b-fp8 |
-|---|---:|---:|---|---|---:|---:|
-| Strict protocol JSON | 12/12 | 12/12 | | Logic grid | 3/12 | 0/12 |
-| BOM consolidation | 6/10 | 10/10 | | Causal inference | 3/14 | 6/14 |
-| Executable code repair | 17/20 | 20/20 | | Bayesian updating | 4/12 | 8/12 |
-| Embedded C review | 10/12 | 8/12 | | Hypothesis discrim. | 8/12 | 12/12 |
-| Protocol architecture | 6/18 | 10/18 | | Adversarial epist. | 12/14 | 14/14 |
-| 35K retrieval | 16/16 | 16/16 | | Value of information | 5/12 | 9/12 |
-| Scope control | 6/6 | 6/6 | | Wason selection | 4/10 | 9/10 |
-| Acquisition timing | 0/6 | 1/6 | | Complex policy | 12/14 | 12/14 |
+| Work task | Dev | S4 | 27b | | Reasoning task | Dev | S4 | 27b |
+|---|---:|---:|---:|---|---|---:|---:|---:|
+| Strict protocol JSON | 12/12 | 12/12 | 12/12 | | Logic grid | 3/12 | 3/12 | 0/12 |
+| BOM consolidation | 6/10 | 1/10 | 10/10 | | Causal inference | 3/14 | 3/14 | 6/14 |
+| Executable code repair | 17/20 | 17/20 | 20/20 | | Bayesian updating | 4/12 | 4/12 | 8/12 |
+| Embedded C review | 10/12 | 6/12 | 8/12 | | Hypothesis discrim. | 8/12 | 7/12 | 12/12 |
+| Protocol architecture | 6/18 | **18/18** | 10/18 | | Adversarial epist. | 12/14 | 12/14 | 14/14 |
+| 35K retrieval | 16/16 | 10/16 | 16/16 | | Value of information | 5/12 | 4/12 | 9/12 |
+| Scope control | 6/6 | 6/6 | 6/6 | | Wason selection | 4/10 | 8/10 | 9/10 |
+| Acquisition timing | 0/6 | 0/6 | 1/6 | | Complex policy | 12/14 | 12/14 | 12/14 |
+
+Two entries deserve attention. **Small 4 scored a perfect 18/18 on protocol
+architecture** — the open design task no model had ever beaten, previous best
+anywhere 12/18 — while scoring only **10/16 on long-context retrieval** where
+both others were perfect, at just ~35K depth. A model whose whole argument is
+cheap long context, missing facts well inside its window, is a hard sell; the
+2-bit quant is the leading suspect.
+
+**`logic_grid` does not discriminate and arguably misleads.** It has one unique
+solution (verified by brute force) and is graded by exact row match, so partial
+luck scores. 27b-fp8's 0/12 answer was a well-formed permutation — four distinct
+days, four distinct topics — that simply picked the wrong one, while both
+challengers scored 3/12 by getting the single row that follows directly from one
+clue, and Small 4 did so while placing two researchers on the same day and
+giving Dion a topic that clue 1 assigns outright. Since the suite disables
+thinking and demands JSON only, there is no scratchpad for the sequential search
+the puzzle needs.
+
+**Both challengers were rejected.** Small 4's own result is covered in the
+survey doc: it confirmed the *hardware* claim (a 119B model does hold 4x128K on
+two 3090s) while losing on quality, and its measured KV came in 35% above
+prediction.
 
 **Devstral was rejected as a replacement.** It is 21-42% faster at every
 concurrency level with far better TTFT, but it won one work task out of eight and
@@ -126,16 +149,26 @@ does not modify the deterministic totals.
 
 | Model | Judge totals (/20) | Mean | Rank |
 |---|---|---:|---:|
-| Qwen3.6-27B FP8 | 16.9, 16.0, 16.0 | **16.30** | **1** |
-| Devstral-Small-2-24B FP8 | 10.2, 8.8, 10.0 | **9.67** | 2 |
+| Qwen3.6-27B FP8 | 17.5, 17.6, 16.7 | **17.27** | **1** |
+| Devstral-Small-2-24B FP8 | 10.7, 11.3, 9.8 | **10.60** | 2 |
+| Mistral-Small-4-119B IQ2_M | 8.4, 7.8, 6.7 | **7.63** | 3 |
 
-Unanimous 3-0. **This is the most important qualification on the table above:
-the deterministic rubric OVERSTATED Devstral on precisely these two tasks.** It
-scored 12/14 and 12/14 there — its best showing on the whole reasoning suite —
-while blind review puts it at 9.67 against 16.30. The rubric rewards mentioning
-the right concepts; the judges penalised getting them backwards.
+Unanimous 3-0-0. (This three-way run supersedes an earlier two-way review of
+Devstral vs 27b-fp8; the ranking between those two was the same.) **This is the most important qualification on the table above: the
+deterministic rubric OVERSTATES both challengers, and overstates Small 4 most.**
+Both scored 12/14 and 12/14 on these two tasks — for each, its best showing on
+the whole reasoning suite — yet blind review puts Small 4 LAST at 7.63 against
+17.27. The rubric rewards mentioning the right concepts; the judges penalised
+getting them backwards. Twice now, on two different models. Treat rubric scores
+on open-ended tasks as directional only, exactly as the Caveats section says.
 
-Judges converged on the same concrete faults: Devstral misclassifies a
+Judges converged on the same concrete fault in **Small 4**: it asserts the ledger
+is "consistent with the claim of diversion" while concluding the opposite, an
+internal contradiction no keyword rubric can see; it also confuses two of the
+sources, truncates mid-conclusion, and answers the policy task by restating the
+prompt's own bullets while 20% over the word limit.
+
+For **Devstral**, judges converged on: it misclassifies a
 contemporaneous diary as a *secondary* source, never states which direction
 belief should move, requests next-evidence that is near-circular, inverts the
 calibration point (claiming calibration equalises error rates across groups),

@@ -1,0 +1,195 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "mistral-small-4-119b-iq2m",
+  "endpoint": "http://127.0.0.1:19447/v1/chat/completions",
+  "score": 53,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 3,
+      "max_score": 12,
+      "elapsed_s": 1.0734,
+      "usage": {
+        "completion_tokens": 97,
+        "prompt_tokens": 157,
+        "total_tokens": 254,
+        "prompt_tokens_details": {
+          "cached_tokens": 2
+        }
+      },
+      "response": "```json\n{\n  \"Ada\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Logic\"\n  },\n  \"Dion\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Biology\"\n  }\n}\n```",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 3,
+      "max_score": 14,
+      "elapsed_s": 1.2563,
+      "usage": {
+        "completion_tokens": 129,
+        "prompt_tokens": 198,
+        "total_tokens": 327,
+        "prompt_tokens_details": {
+          "cached_tokens": 44
+        }
+      },
+      "response": "```json\n{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": null,\n  \"estimand\": \"Effect of voluntary job-training program participation on employment outcomes\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Eligibility for the program is determined by a score cutoff at 70.\",\n    \"The score cannot be precisely manipulated around the threshold.\",\n    \"Potential outcomes vary smoothly through the threshold of 70 in the absence of treatment.\",\n    \"No other policy changes occur at the threshold of 70.\"\n  ]\n}\n```",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": false,
+        "late_compliers": false,
+        "not_global": true,
+        "continuity": false,
+        "no_manipulation": true,
+        "exclusion": false,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 1.1405,
+      "usage": {
+        "completion_tokens": 108,
+        "prompt_tokens": 160,
+        "total_tokens": 268,
+        "prompt_tokens_details": {
+          "cached_tokens": 45
+        }
+      },
+      "response": "```json\n{\n  \"one_positive_percent\": 15.5,\n  \"two_positive_percent\": 22.6,\n  \"independence_caveat\": \"The calculation assumes conditional independence of test errors given the true condition status, meaning the outcome of one test does not influence the outcome of the other. In real life, this assumption may be overconfident because test errors could be correlated (e.g., due to shared biases, sample contamination, or limitations in the test methodology).\"\n}\n```",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 7,
+      "max_score": 12,
+      "elapsed_s": 1.1088,
+      "usage": {
+        "completion_tokens": 106,
+        "prompt_tokens": 231,
+        "total_tokens": 337,
+        "prompt_tokens_details": {
+          "cached_tokens": 44
+        }
+      },
+      "response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X causes R protein to fall after treatment, indicating degradation.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect, supporting the hypothesis that proteasomal degradation is involved.\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome inhibitor fails to prevent the reduction in signaling through receptor R despite stabilization of R protein levels.\"\n}\n```",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": false,
+        "occupancy_against_direct": false,
+        "protein_not_mrna": false,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 3.9454,
+      "usage": {
+        "completion_tokens": 460,
+        "prompt_tokens": 236,
+        "total_tokens": 696,
+        "prompt_tokens_details": {
+          "cached_tokens": 44
+        }
+      },
+      "response": "To assess the claim that the mayor secretly diverted famine relief funds in 1892, we must evaluate the evidence while considering source dependence, incentives, and the limitations of each piece of evidence.\n\n1. **Source Dependence and Incentives**:\n   - **S1 (authenticated diary by a political rival)**: While authenticated, it is a primary source from a political rival, suggesting a potential bias. The diary provides an accusation but lacks transaction details, making it difficult to verify the claim independently.\n   - **S2 (1920 newspaper article citing S1)**: This is a secondary source relying solely on S1. It does not introduce new evidence but rather amplifies the accusation decades later. The lack of primary material in S2 weakens its reliability further.\n   - **S3 (independently preserved treasury ledger)**: This is strong primary evidence. The ledger reconciles totals and shows payments to named grain suppliers, which is consistent with the claim of diversion. However, it does not explicitly state the purpose of the payments, leaving room for alternative interpretations (e.g., legitimate transactions).\n   - **S4 (modern websites citing S2 or one another)**: These are tertiary sources with no primary material. They rely on S2, which itself is not reliable, and thus do not strengthen the claim.\n\n2. **What S3 Does and Does Not Establish**:\n   - S3 establishes that funds were paid to grain suppliers, but it does not prove that these payments were secret or for diverted purposes.\n   - The cousin connection in S4 (S3 shows the cousin was paid at the market rate) does not indicate favoritism, as the price matches other suppliers. This suggests the payments were likely legitimate.\n\n3. **Highest-Value Next Evidence to Seek**:\n   - A contemporaneous ledger or receipts showing the intended recipients of famine relief funds would help determine if the payments in S3 were legitimate or diverted.\n   - Correspondence or orders from the mayor or relief committee regarding the payments would clarify intent.\n   - Additional primary sources (e.g., other diaries, letters, or ledgers) from neutral or corroborating parties would provide balance against the biased S1.\n\n**Conclusion**: Belief in the claim",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": false,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 1.2548,
+      "usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 222,
+        "total_tokens": 346,
+        "prompt_tokens_details": {
+          "cached_tokens": 45
+        }
+      },
+      "response": "```json\n{\n  \"launch_now_ev\": 16.8,\n  \"positive_probability\": 0.48,\n  \"good_given_positive\": 0.8,\n  \"launch_ev_given_positive\": 96.0,\n  \"launch_ev_given_negative\": -12.0,\n  \"test_policy_ev_after_cost\": 33.6,\n  \"positive_action\": \"Launch if positive\",\n  \"negative_action\": \"Decline if negative\",\n  \"best_initial_policy\": \"Purchase the test\"\n}\n```",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": false,
+        "negative_action": false,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 8,
+      "max_score": 10,
+      "elapsed_s": 1.278,
+      "usage": {
+        "completion_tokens": 131,
+        "prompt_tokens": 145,
+        "total_tokens": 276,
+        "prompt_tokens_details": {
+          "cached_tokens": 44
+        }
+      },
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": [\n    \"The card 'A' must be turned because the rule states that if a card has a vowel on one side, then it must have an even number on the other side. Turning 'A' checks whether the rule holds when a vowel is present.\",\n    \"The card '7' must be turned because the rule implies that if a card has an odd number on one side, the other side cannot have a vowel. Turning '7' verifies that the rule is not violated when an odd number is present.\"\n  ]\n}\n```",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": false
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 5.1581,
+      "usage": {
+        "completion_tokens": 610,
+        "prompt_tokens": 216,
+        "total_tokens": 826,
+        "prompt_tokens_details": {
+          "cached_tokens": 44
+        }
+      },
+      "response": "**Policy Recommendation:**\n\nGiven the machine-learning system's calibration within demographic groups and the rarity of severe violent offenses, it is reasonable to use the predictions as one input among others in deciding whether to impose restrictive supervision on released defendants. However, the system alone should not determine policy due to the following considerations:\n\n**Analysis:**\n\n1. **Calibration within demographic groups:** The system's predictions are reliable when evaluated within specific demographic groups, meaning that within those groups, the proportion of high-risk predictions who go on to commit severe violent offenses matches the predicted probability. This justifies using the system to identify defendants who are more likely to commit such offenses, but only within those groups.\n\n2. **Base rates and asymmetric errors:** Severe violent offenses are rare, so even a well-calibrated system will have many false positives (predicting high risk when no offense occurs). The cost of false positives (unnecessary restrictive supervision) is asymmetric: it may infringe on defendants' rights and freedoms, while false negatives (missing true high-risk cases) could lead to preventable offenses. Given this asymmetry, the system should not be the sole basis for decisions.\n\n3. **Causation versus prediction:** The system predicts risk based on historical data, but it does not necessarily imply causation. It may be correlational rather than causal, so restrictive supervision should not be imposed solely based on the prediction.\n\n4. **Rights and due process:** Automatically imposing restrictive supervision based on a prediction could infringe on defendants' rights and due process. The system should be used as a tool to inform decisions, not to automate them.\n\n5. **Selective labels/feedback loops:** Police deployment changes who is observed and arrested, and defendants can adapt when features become known. This could create feedback loops that bias the system over time. Regular audits and updates are necessary to ensure fairness and accuracy.\n\n6. **Distribution shift and strategic adaptation:** The city expects economic and social conditions to shift, which could change the distribution of offenses. The system should be regularly evaluated and revised to adapt to these changes.\n\n**Deployment/Evaluation Design:**\n\n- **Deployment:** Use the system's predictions as one input among others in deciding whether to impose restrictive supervision. Ensure that the predictions are not the sole basis for decisions, and consider the potential costs of false positives and false negatives.\n\n- **Evaluation:** Regularly evaluate the system's performance within demographic groups, considering base rates and asymmetric errors. Monitor for feedback loops and distribution shifts, updating the system as necessary.\n\n- **Safeguards:** Implement a human review process for high-risk predictions to ensure due process and rights are respected. Regularly audit the system for fairness and accuracy, updating it as necessary.\n\n- **Conditions for stopping or revising:** Stop or revise the system if the proportion of false positives exceeds a predetermined threshold, or if feedback loops or distribution shifts are detected that bias the system. Regularly update the system to adapt to changing economic and social conditions.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}

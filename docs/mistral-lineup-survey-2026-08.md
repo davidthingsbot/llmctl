@@ -236,30 +236,107 @@ quality number quietly wrong.
   `--reasoning-parser qwen3`. A benchmark counting only `content` records zero
   tokens for it and silently reports nothing generated.
 
+## RESULT — Mistral-Small-4-119B tested 2026-08-09 (David authorised the run)
+
+**Two findings that point opposite ways.**
+
+### 1. The hardware claim is CONFIRMED — this is the durable result
+
+**A 119B model holds four 128K slots on two RTX 3090s.** It loaded in 28 seconds
+and served at 44,363 MiB of 48 GiB. The conclusion recorded on 2026-08-05 — that
+large-at-long-context needs ~86 GiB and is unreachable on consumer hardware —
+applies to **dense attention only**. MLA breaks it.
+
+### 2. But the KV prediction was WRONG BY 35%, and that matters more than the win
+
+Predicted 11.25 KiB/token. **Measured 15.22.** Measured properly, by differencing
+VRAM across three context sizes rather than trusting a log line (this llama.cpp
+build does not print the buffer breakdown at verbosity 3):
+
+| Context | Tokens | VRAM |
+|---|---:|---:|
+| 4 x 131072 | 524,288 | 44,363 MiB |
+| 4 x 65536 | 262,144 | 40,465 MiB |
+| 4 x 32768 | 131,072 | 38,519 MiB |
+
+Two independent intervals agree to 0.2% (15.23 and 15.20 KiB/token); the linear
+fit gives slope 15.22 with intercept 36,570 MiB against 35,834 MiB of weights,
+leaving ~736 MiB of fixed buffers. This is a measurement, not an estimate.
+
+**Why the prediction missed.** Re-running at `-ctk f16` gave 24.25 KiB/token, a
+9.03 KiB/token delta. So the cache is not uniformly quantised: only the 256-wide
+compressed latent is, while **the 64 RoPE dimensions stay f16 either way**. Add
+that q8_0 is 1.0625 B/elem rather than 1.0, and ~8% allocation overhead
+(independently 8.2% at q8_0 and 7.8% at f16), and it resolves:
+
+```
+KV/token = n_layer x (kv_lora_rank x 1.0625 + qk_rope_head_dim x 2) x 1.08
+         = 36 x (256 x 1.0625 + 64 x 2) x 1.08 = 15.19 KiB/token   (measured 15.22)
+```
+
+**Use that for MLA models, not the naive latent-width formula.** The pre-download
+check remains exact for standard GQA — Devstral predicted 80.0 and measured 80.0
+— but it *underestimates* MLA. The conclusion survives (15.22 is still 11.6x
+cheaper than Medium 3.5's 176 and cheaper than the hybrid Qwens' ~24), but the
+margin is smaller than claimed and a config sized on 11.25 would not have fit.
+
+### 3. Quality: rejected
+
+| | Small 4 | Devstral | 27b-fp8 |
+|---|---:|---:|---:|
+| Work quality | 70/100 | 73/100 | **83/100** |
+| Deep reasoning | 53/100 | 51/100 | **70/100** |
+| Blind open-response (mean /20) | **7.63 (last)** | 10.60 | **17.27** |
+
+Blind review was unanimous 3-0-0 with Small 4 **last**, despite the rubric scoring
+it 12/14 and 12/14 on those two tasks. All three judges independently caught the
+same defect: it asserts the ledger is "consistent with the claim of diversion"
+while concluding the opposite, an internal contradiction a keyword rubric cannot
+see. This is the second time the rubric has overstated a challenger on open tasks.
+
+**One genuine and surprising strength:** a perfect **18/18 on protocol
+architecture**, the open design task no model had ever beaten (previous best
+anywhere 12/18). Set against **10/16 on long-context retrieval**, where both other
+models scored 16/16 — awkward for a model whose entire argument is cheap long
+context, and at only ~35K depth, well inside its window. The 2-bit quant is the
+obvious suspect. BOM consolidation was 1/10.
+
+### 4. Speed
+
+Single-stream **124.1 tok/s**, 2.6x the incumbent — what ~6.6B active buys. But it
+scales only 2.08x to 8 streams (241.4 aggregate against Devstral's 419.1) and
+TTFT at 8 concurrent is **6.70 s** against 0.10 s, because eight clients queue
+against four fixed llama.cpp slots. Prefill 3057 tok/s.
+
+### 5. Fit
+
+44,363 of 47.1 GiB leaves only ~2.7 GiB free across both cards. It balanced on
+the first try at `--tensor-split 0.5,0.5`, but per the SPLIT-TUNING RULE that is
+tight and there is no room to raise context or slots. Note llmctl passes its own
+`--tensor-split 1,1`, so llama.cpp logs a DEPRECATED warning about the argument
+appearing twice; the last value wins, which is ours.
+
 ## What to measure next
 
-Items 1 and 2 are DONE — see the RESULT section above.
+Items 1 and 2 are DONE — see the RESULT sections above. Remaining:
 
-> **HOLD — DO NOT RUN ITEMS 1 AND 2 BELOW UNPROMPTED.** David asked on 2026-08-09
-> that Mistral-Small-4-119B **not** be loaded or tested when its download
-> completes; he wants to direct that himself. The weights may finish arriving at
-> `models/gguf/mistral-small-4-119b/` — leave them alone. Loading it requires
-> taking `27b-fp8` off the GPUs, which is the model in daily use by the `hermes`
-> and `mr-c` agents. Verifying the downloaded byte counts is fine; loading is not.
-
-Remaining, when asked:
-
-1. **Small 4 on llama.cpp: confirm the predicted 11.25 KiB/token empirically**
-   from the KV allocation printed at load. That single number is the finding;
-   the quality score is secondary and is expected to lose at ~6.6B active.
-   Devstral's prediction landed exactly (80.0 vs 80.0), which raises confidence
-   but does not substitute for the measurement — MLA is a different code path.
-2. If Small 4 loads with room to spare, retest at UD-IQ3_XXS (39.86 GiB), which
-   the arithmetic says fits single-slot at 41.3 GiB.
-3. OPTIONAL, only if Devstral is ever wanted for a throughput-bound job: raise
+1. If Small 4 is ever wanted seriously, retest at UD-IQ3_XXS (39.86 GiB) — but
+   note the corrected KV figure: 4 x 128K now costs 7.6 GiB, not 5.6, so
+   39.86 + 7.6 = 47.5 GiB does NOT fit. Single-slot 128K at 1.9 GiB would.
+   The 2-bit quant is the leading suspect for the retrieval and BOM failures,
+   so this is the one experiment that could change the quality verdict.
+2. OPTIONAL, only if Devstral is ever wanted for a throughput-bound job: raise
    `--gpu-memory-utilization` from 0.94 to 0.9625 to recover the KV the
    CUDA-graph profiler reserves, and re-measure the pool. Recorded finding is
    that a bigger pool measured FASTER, so there is no tradeoff to balance.
-4. Consider making `llmctl bench` force a minimum generation length, or flag
+3. Consider making `llmctl bench` force a minimum generation length, or flag
    runs where the model stopped early. As it stands it understated Devstral by
    more than 2x, and any terse model will be misreported the same way.
+4. The `logic_grid` task scores 0-3/12 for every model ever run and is graded by
+   exact row match, so it rewards partial luck: 27b-fp8 scored 0 with a
+   well-formed permutation while both challengers scored 3 by getting the one
+   row that follows directly from a single clue, one of them while putting two
+   researchers on the same day. The suite disables thinking and demands JSON
+   only, which removes the sequential search the puzzle needs. Either allow
+   thinking on that task or drop it — but doing so breaks comparability with
+   every result recorded so far, so it is a deliberate choice, not a fix.

@@ -4,8 +4,9 @@
  "date": "2026-08-09",
  "does_not_modify_objective_score": true,
  "labels": {
-  "A": "devstral-small-2-24b-fp8",
-  "B": "qwen3.6-27b-fp8"
+  "A": "qwen3.6-27b-fp8",
+  "B": "mistral-small-4-119b-iq2m",
+  "C": "devstral-small-2-24b-fp8"
  },
  "tasks": [
   "adversarial_epistemology",
@@ -16,63 +17,83 @@
   {
    "judge": 1,
    "A": {
-    "adversarial_epistemology": 6.0,
-    "complex_policy_reasoning": 4.2,
-    "total": 10.2
+    "adversarial_epistemology": 8.7,
+    "complex_policy_reasoning": 8.8,
+    "total": 17.5
    },
    "B": {
-    "adversarial_epistemology": 8.6,
-    "complex_policy_reasoning": 8.3,
-    "total": 16.9
+    "adversarial_epistemology": 3.4,
+    "complex_policy_reasoning": 5.0,
+    "total": 8.4
+   },
+   "C": {
+    "adversarial_epistemology": 6.0,
+    "complex_policy_reasoning": 4.7,
+    "total": 10.7
    },
    "rank": [
-    "B",
-    "A"
+    "A",
+    "C",
+    "B"
    ],
-   "rationale": "B covers every required element, states a calibrated belief update, and proposes the highest-value next evidence (independent proof of grain delivery); A misclassifies the contemporaneous diary as secondary, offers a circular next-evidence request, wrongly claims calibration equalizes error rates across groups, injects invented thresholds, and truncates mid-sentence with distribution shift, strategic adaptation and stopping conditions never delivered."
+   "rationale": "A is the only candidate complete on both tasks with correct evidence handling (S3 shows payment not delivery; S2/S4 add no independent weight) and a full policy design with stop conditions. C mislabels S1 as secondary, gives a near-circular recommendation, invents illustrative thresholds, misstates calibration as error-rate balance, and truncates. B truncates mid-conclusion, confuses S3 with S4, asserts the ledger is 'consistent with the claim of diversion' while concluding the opposite, and its policy answer paraphrases the prompt 20% over the limit."
   },
   {
    "judge": 2,
    "A": {
-    "adversarial_epistemology": 5.2,
-    "complex_policy_reasoning": 3.6,
-    "total": 8.8
+    "adversarial_epistemology": 9.0,
+    "complex_policy_reasoning": 8.6,
+    "total": 17.6
    },
    "B": {
-    "adversarial_epistemology": 8.2,
-    "complex_policy_reasoning": 7.8,
-    "total": 16.0
+    "adversarial_epistemology": 3.0,
+    "complex_policy_reasoning": 4.8,
+    "total": 7.8
+   },
+   "C": {
+    "adversarial_epistemology": 5.2,
+    "complex_policy_reasoning": 6.1,
+    "total": 11.3
    },
    "rank": [
-    "B",
-    "A"
+    "A",
+    "C",
+    "B"
    ],
-   "rationale": "B commits to a directional conclusion on both tasks and names the evidence that would move it; A never states how belief should change, miscalls the contemporaneous diary a secondary source, asserts calibration balances error rates across groups, invents unmoored thresholds, and truncates mid-sentence. B's weaknesses are slight over-length and an evaluation design lacking randomization."
+   "rationale": "A commits to a defensible verdict on both tasks and names the evidence that would move it, with no invented numbers. C is structurally sound with a genuine RCT design but never states how belief should change and truncates before its stop conditions. B is weakest: reads the ledger as consistent with diversion while concluding the opposite, misattributes a fact to S4, restates the prompt's bullets as analysis, and breaks off mid-conclusion."
   },
   {
    "judge": 3,
    "A": {
-    "adversarial_epistemology": 6.0,
-    "complex_policy_reasoning": 4.0,
-    "total": 10.0
+    "adversarial_epistemology": 8.7,
+    "complex_policy_reasoning": 8.0,
+    "total": 16.7
    },
    "B": {
-    "adversarial_epistemology": 8.5,
-    "complex_policy_reasoning": 7.5,
-    "total": 16.0
+    "adversarial_epistemology": 2.9,
+    "complex_policy_reasoning": 3.8,
+    "total": 6.7
+   },
+   "C": {
+    "adversarial_epistemology": 4.4,
+    "complex_policy_reasoning": 5.4,
+    "total": 9.8
    },
    "rank": [
-    "B",
-    "A"
+    "A",
+    "C",
+    "B"
    ],
-   "rationale": "B identifies the decisive point that the reconciling ledger proves payment but not delivery and names the right next evidence; A proposes near-circular next evidence, inverts the calibration-vs-equal-error-rates point, and runs over the word limit yet still truncates. A's RCT proposal is its one substantive edge."
+   "rationale": "A finds the decisive moves \u2014 S1/S2/S4 are one motivated source, S3 proves payment not delivery, and automation rather than the model is what to refuse \u2014 with concrete next evidence and real stop conditions. C has two genuine insights but calls a primary diary secondary and truncates. B misreads the ledger, cuts off before stating how belief should change, and its policy answer is prompt-restatement with no design or thresholds."
   }
  ],
  "means": {
-  "devstral-small-2-24b-fp8": 9.67,
-  "qwen3.6-27b-fp8": 16.3
+  "qwen3.6-27b-fp8": 17.27,
+  "mistral-small-4-119b-iq2m": 7.63,
+  "devstral-small-2-24b-fp8": 10.6
  },
- "verdict": "Unanimous 3-0 for qwen3.6-27b-fp8. Mean 16.30 vs 9.67 of 20.",
- "method_note": "Judges were blind to model identity and to the key. A first pass was DISCARDED because the extracted PROMPT files were 0 bytes (the results JSON does not retain prompts) and judges reconstructed the tasks from the answers; prompts were then pulled from deep_reasoning_suite.py and all three judges re-ran. Both passes returned the same unanimous ranking with near-identical scores.",
- "significance": "The deterministic rubric OVERSTATED Devstral on exactly these two tasks: it scored 12/14 and 12/14 there, its best showing on the reasoning suite, while blind review puts it at 9.67/20 against 16.30/20. Rubric scores on open-ended tasks are directional only, as evals/README.md already cautions."
+ "verdict": "Unanimous 3-0-0: qwen3.6-27b-fp8 first, devstral second, mistral-small-4 LAST.",
+ "supersedes": "the earlier two-way review of devstral vs 27b-fp8 on 2026-08-09; same ranking between those two, now with Small 4 added",
+ "significance": "The rubric OVERSTATES both challengers on these two tasks and overstates Small 4 most. Small 4 scored 12/14 and 12/14 (24/28) \u2014 level with Devstral and only two points under the incumbent \u2014 yet blind review puts it LAST at 7.63/20 against 17.27. Judges independently found the same defect: it asserts the ledger is 'consistent with the claim of diversion' while concluding the opposite, an internal contradiction the keyword rubric cannot see. Treat rubric scores on open tasks as directional only.",
+ "method_note": "Judges blind to model identity and to the key; labels deliberately non-alphabetical and different from the earlier two-way run. Prompts supplied from deep_reasoning_suite.py."
 }
