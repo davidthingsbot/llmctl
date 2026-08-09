@@ -32,7 +32,10 @@ def extract_code(text: str) -> str:
     return (match.group(1) if match else text).strip()
 
 
-def request(url: str, key: str, model: str, prompt: str, max_tokens: int):
+def request(
+    url: str, key: str, model: str, prompt: str, max_tokens: int,
+    template_kwargs: bool = True,
+):
     payload = {
         "model": model,
         "messages": [
@@ -48,8 +51,13 @@ def request(url: str, key: str, model: str, prompt: str, max_tokens: int):
         ],
         "temperature": 0,
         "max_tokens": max_tokens,
-        "chat_template_kwargs": {"enable_thinking": False},
     }
+    # Mistral-tokenizer models reject this outright ("chat_template is not
+    # supported for Mistral tokenizers", HTTP 400). They have no thinking mode
+    # to disable, so omitting it is a no-op for them — but it is NOT a no-op for
+    # the Qwen models, so it stays on by default to keep results comparable.
+    if template_kwargs:
+        payload["chat_template_kwargs"] = {"enable_thinking": False}
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
@@ -384,6 +392,11 @@ def main():
     parser.add_argument("--model", required=True)
     parser.add_argument("--key-file", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument(
+        "--no-template-kwargs", action="store_true",
+        help="omit chat_template_kwargs; required for Mistral-tokenizer models, "
+             "which reject it with HTTP 400",
+    )
     args = parser.parse_args()
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     tasks = [
@@ -395,7 +408,10 @@ def main():
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
         try:
-            text, usage, elapsed = request(args.url, key, args.model, prompt, max_tokens)
+            text, usage, elapsed = request(
+                args.url, key, args.model, prompt, max_tokens,
+                template_kwargs=not args.no_template_kwargs,
+            )
             score, maximum, details = grader(text)
             row = {
                 "task": name,

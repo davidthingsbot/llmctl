@@ -145,16 +145,112 @@ specialist models, not as a replacement for 27b-fp8.
 `max_position_embeddings` is 131,072 — exactly the floor, zero headroom.
 `Mistral-Large-3-675B` is far out of range. Mixtral and Mistral-7B are legacy.
 
+## RESULT — Devstral-Small-2-24B tested 2026-08-09: REJECTED
+
+**Verdict: faster than the incumbent on every speed axis, decisively worse on
+quality. Do not adopt as a replacement for 27b-fp8.**
+
+Both models measured on THIS box with the same harness, thinking disabled on
+both, so this is a true paired comparison — unlike the dw-x1pro table in
+`evals/README.md`, which is different hardware at different quantisations.
+
+| Suite | Devstral-24B FP8 | 27b-fp8 |
+|---|---:|---:|
+| work_quality_suite | **73/100** | **83/100** |
+| deep_reasoning_suite | **51/100** | **70/100** |
+
+| Work task | Devstral | 27b-fp8 |
+|---|---:|---:|
+| Strict protocol JSON | 12/12 | 12/12 |
+| BOM consolidation | 6/10 | **10/10** |
+| Executable code repair | 17/20 | **20/20** |
+| Embedded C review | **10/12** | 8/12 |
+| Protocol architecture | 6/18 | **10/18** |
+| 35K-token retrieval | 16/16 | 16/16 |
+| Scope control | 6/6 | 6/6 |
+| Acquisition timing | 0/6 | 1/6 |
+
+It won exactly one work task. The damning one is **executable code repair, 17/20
+against 20/20** — graded by running the code against a hidden harness, and the
+task a coding-specialised model should own. On reasoning it lost seven of eight,
+including wason_selection 4/10 vs 9/10 and bayesian_reasoning 4/12 vs 8/12.
+
+### Speed, where it genuinely wins
+
+| Concurrency | Devstral aggregate / per-stream | 27b-fp8 aggregate / per-stream |
+|---|---|---|
+| 1 | 57.0 / 57.8 | 46.6 / 47.9 |
+| 2 | 113.9 / 57.3 | 85.8 / 44.3 |
+| 4 | 221.5 / 55.9 | 161.3 / 42.2 |
+| 8 | **419.1** / 52.9 | 295.1 / 38.8 |
+
+21-42% faster at every level, scaling 7.35x vs 6.3x, per-stream decaying only 8%
+vs 19%, TTFT at 8 concurrent 0.10 s vs 0.64 s, and load 117 s vs 282 s. If a
+future task is throughput-bound rather than judgement-bound, this is the profile
+to come back to — but nothing measured here is judgement-bound in its favour.
+
+### The pre-download arithmetic was exactly right
+
+Predicted 80 KiB/token; vLLM allocated 9.07 GiB/card, reporting **GPU KV cache
+size: 237,728 tokens**, which is **80.0 KiB/token**. That is 1.81x the 128K
+floor, though still below 27b-fp8's tuned ~401K pool. **fp8 KV works on sm_86 for
+this architecture** — the Ampere E4M3 risk did not materialise, so Mistral3
+behaves like 27b-fp8, not like GLM-4.7-Flash. Headroom remains: vLLM reports that
+`--gpu-memory-utilization 0.94` is effectively 0.9175 once CUDA-graph profiling
+is counted, and 0.9625 would restore the difference.
+
+### Three toolchain incompatibilities, none about the model
+
+Worth weighing as real adoption cost — a Qwen model hits none of these:
+
+1. **Tokenizer.** Load dies in seconds with `AttributeError:
+   CachedMistralCommonBackend has no attribute is_fast`. vLLM decides "is this a
+   Mistral repo?" by looking for `consolidated*.safetensors`; this FP8 build
+   ships `model-0000N-of-00006.safetensors`, so it falls back to the HF path —
+   but transformers 5.12.1 picks `MistralCommonBackend` anyway off `tekken.json`,
+   and that class lacks `is_fast`. Fix: `--tokenizer-mode mistral`, which uses
+   vLLM's own MistralTokenizer that implements it.
+2. **Multimodal profiling.** `ValueError: Mismatch in image token count between
+   text and input_ids` — vLLM's Mistral tokenizer and the HF PixtralProcessor
+   disagree about `[IMG]`, so the dummy-image profile can never match. Fix:
+   `--limit-mm-per-prompt '{"image":0}'`, correct here anyway.
+3. **Eval harness.** Both suites hardcoded `chat_template_kwargs`, which vLLM
+   rejects with HTTP 400 for Mistral tokenizers. Added a `--no-template-kwargs`
+   opt-out rather than changing the default, since dropping it is a no-op for
+   Mistral but NOT for the Qwen models.
+
+**A trap recorded so it is not repeated:** deleting `tekken.json` makes both
+auto-detectors agree and clears problems 1 and 2 at once. Do not do it —
+transformers then warns this repo's `tokenizer.json` has an incorrect regex
+pattern that "will lead to incorrect tokenization" unless loaded with
+`fix_mistral_regex=True`. That would not crash anything; it would just make every
+quality number quietly wrong.
+
+### Two measurement traps
+
+- **`llmctl bench` is wrong for terse models.** It reported 24-33 tok/s for
+  Devstral because the model stops after ~11 tokens on the bench prompt, so fixed
+  overhead dominates the average. Forced-length generation measures 57.9 tok/s —
+  more than double. Any model that answers briefly will be understated this way.
+- **27b-fp8 streams into `reasoning_content`, not `content`,** because of
+  `--reasoning-parser qwen3`. A benchmark counting only `content` records zero
+  tokens for it and silently reports nothing generated.
+
 ## What to measure next
 
-1. Devstral-24B-FP8 on vLLM at 128K: does `--kv-cache-dtype fp8` load on sm_86?
-   Actual KV pool size in tokens vs 27b-fp8's ~401K. Single-stream and 8-concurrent
-   throughput, TTFT.
-2. Run both new models through `evals/work_quality_suite.py` and
-   `evals/deep_reasoning_suite.py` for a like-for-like comparison against the
-   existing results.
-3. Small 4 on llama.cpp: confirm the **predicted 11.25 KiB/token empirically** from
-   the KV allocation printed at load. That single number is the finding; the
-   quality score is secondary.
-4. If Small 4 loads with room to spare, retest at UD-IQ3_XXS (39.86 GiB), which
+Items 1 and 2 are DONE — see the RESULT section above. Remaining:
+
+1. **Small 4 on llama.cpp: confirm the predicted 11.25 KiB/token empirically**
+   from the KV allocation printed at load. That single number is the finding;
+   the quality score is secondary and is expected to lose at ~6.6B active.
+   Devstral's prediction landed exactly (80.0 vs 80.0), which raises confidence
+   but does not substitute for the measurement — MLA is a different code path.
+2. If Small 4 loads with room to spare, retest at UD-IQ3_XXS (39.86 GiB), which
    the arithmetic says fits single-slot at 41.3 GiB.
+3. OPTIONAL, only if Devstral is ever wanted for a throughput-bound job: raise
+   `--gpu-memory-utilization` from 0.94 to 0.9625 to recover the KV the
+   CUDA-graph profiler reserves, and re-measure the pool. Recorded finding is
+   that a bigger pool measured FASTER, so there is no tradeoff to balance.
+4. Consider making `llmctl bench` force a minimum generation length, or flag
+   runs where the model stopped early. As it stands it understated Devstral by
+   more than 2x, and any terse model will be misreported the same way.

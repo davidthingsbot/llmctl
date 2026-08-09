@@ -1,0 +1,179 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "devstral-small-2-24b-fp8",
+  "endpoint": "http://127.0.0.1:19446/v1/chat/completions",
+  "score": 51,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 3,
+      "max_score": 12,
+      "elapsed_s": 1.8089,
+      "usage": {
+        "prompt_tokens": 145,
+        "total_tokens": 242,
+        "completion_tokens": 97,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"Ada\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Dion\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Logic\"\n  }\n}\n```",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 3,
+      "max_score": 14,
+      "elapsed_s": 3.5279,
+      "usage": {
+        "prompt_tokens": 186,
+        "total_tokens": 385,
+        "completion_tokens": 199,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"None\",\n  \"estimand\": \"The causal effect of the job-training program on employment for individuals just above the cutoff score of 70, compared to those just below the cutoff.\",\n  \"global_generalization\": \"No, the causal effect identified by RDD is local to the cutoff and does not automatically generalize to everyone.\",\n  \"assumptions\": [\n    \"The score cutoff at 70 is the only threshold where treatment assignment changes.\",\n    \"The score is a valid running variable that can be used to create exogenous treatment variation.\",\n    \"The score is not precisely manipulated, meaning there is no perfect sorting around the cutoff.\",\n    \"The potential outcomes for employment vary smoothly through the cutoff score of 70 in the absence of treatment.\",\n    \"The function linking the score to potential outcomes is continuous at the cutoff.\"\n  ]\n}\n```",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": false,
+        "late_compliers": false,
+        "not_global": false,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 1.4701,
+      "usage": {
+        "prompt_tokens": 148,
+        "total_tokens": 229,
+        "completion_tokens": 81,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"one_positive_percent\": 13.9,\n  \"two_positive_percent\": 99.9,\n  \"independence_caveat\": \"The assumption of conditional independence between the two test errors given the true condition status may not hold in real life, as the errors of two tests could be correlated even after knowing the true condition status.\"\n}\n```",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 1.7258,
+      "usage": {
+        "prompt_tokens": 219,
+        "total_tokens": 313,
+        "completion_tokens": 94,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"R protein falls after X treatment, but R mRNA is unchanged\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome inhibitor does not prevent the signaling effect, then H3 would be supported.\"\n}\n```",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": false,
+        "occupancy_against_direct": false,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": false
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 7.9632,
+      "usage": {
+        "prompt_tokens": 224,
+        "total_tokens": 678,
+        "completion_tokens": 454,
+        "prompt_tokens_details": null
+      },
+      "response": "The claim that the mayor secretly diverted famine relief in 1892 is initially supported by **S1**, an authenticated contemporaneous diary by a political rival, which provides a direct accusation but lacks transaction details. This suggests the claim is plausible but unproven, as **S1** is a secondary source with potential bias due to the rival's incentives to discredit the mayor.\n\n**S2**, a 1920 newspaper article citing only **S1**, introduces **source dependence**\u2014it does not add independent evidence but relies on **S1**'s credibility. Without new information, **S2** does not strengthen the claim but may amplify its reach.\n\n**S3**, a treasury ledger showing payments to grain suppliers, including the mayor's cousin, is a **primary source** with high evidentiary value. Its totals reconcile, indicating accuracy, and the cousin's listed price matches others, suggesting no obvious favoritism. However, **S3** does not **establish** diversion; it only shows funds were paid to suppliers. The cousin's involvement could be coincidental or part of a legitimate distribution network.\n\n**S4**, five modern websites citing **S2** or one another, adds **source dependence** and further removes the claim from primary evidence. These sources are tertiary and lack independent verification, reducing their reliability.\n\n**Assumptions vs. Deductions**:\n- **Assumption**: The mayor had control over the funds and acted maliciously.\n- **Deduction**: **S3** shows payments were made, but not necessarily diverted, and the cousin's price matches others, reducing suspicion of personal gain.\n\n**Incentives**: The political rival (**S1**) had a clear motive to accuse the mayor, while the treasury ledger (**S3**) is likely neutral, focusing on financial records.\n\n**Next Evidence**: The highest-value next evidence would be **S3's transaction details**\u2014specific entries showing how the funds were allocated, whether the cousin's payment was unusual, and if other suppliers were legitimate. Additionally, **S1's full context** (e.g., other entries, the rival's relationship with the mayor) could clarify the accusation's basis.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": false,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 5,
+      "max_score": 12,
+      "elapsed_s": 2.1251,
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 327,
+        "completion_tokens": 117,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"launch_now_ev\": 0.0,\n  \"positive_probability\": 0.8,\n  \"good_given_positive\": 0.8,\n  \"launch_ev_given_positive\": 120.0,\n  \"launch_ev_given_negative\": -60.0,\n  \"test_policy_ev_after_cost\": 0.0,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"decline\"\n}\n```",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": false,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": false
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 4,
+      "max_score": 10,
+      "elapsed_s": 4.57,
+      "usage": {
+        "prompt_tokens": 133,
+        "total_tokens": 393,
+        "completion_tokens": 260,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"D\", \"4\"],\n  \"reason\": {\n    \"A\": {\n      \"deduction\": \"The card with 'A' must be turned to check if the number on the other side is even, as the rule states that if a card has a vowel on one side, then it must have an even number on the other side.\",\n      \"assumption\": \"None\"\n    },\n    \"D\": {\n      \"deduction\": \"The card with 'D' must be turned to check if the number on the other side is even, as 'D' is a vowel and the rule applies to all vowels.\",\n      \"assumption\": \"None\"\n    },\n    \"4\": {\n      \"deduction\": \"The card with '4' must be turned to check if the letter on the other side is a vowel, as the rule implies that if a card has an even number on one side, the letter on the other side must not violate the rule.\",\n      \"assumption\": \"None\"\n    },\n    \"7\": {\n      \"deduction\": \"The card with '7' does not need to be turned because '7' is an odd number, and the rule does not specify any",
+      "grade_details": {
+        "exact_cards": false,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": false
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 10.8421,
+      "usage": {
+        "prompt_tokens": 204,
+        "total_tokens": 824,
+        "completion_tokens": 620,
+        "prompt_tokens_details": null
+      },
+      "response": "**Policy Recommendation: Cautious and Transparent Use of Predictive Risk Supervision**\n\nGiven the rare occurrence of severe violent offenses and the potential for harm from predictive systems, the city should adopt a **restricted, transparent, and continuously monitored use** of the machine-learning system rather than automatic imposition of restrictive supervision. Here\u2019s the analysis and design:\n\n### **Calibration**\n- **What it justifies**: Calibration ensures the system\u2019s predictions are accurate within demographic groups, meaning false positives and false negatives are balanced across subgroups. This reduces disparate impact in prediction error rates.\n- **What it does not justify**: Calibration does not address the **base rate fallacy**\u2014if severe offenses are rare (e.g., 1% of defendants), even a well-calibrated system will predict many more false positives than true positives at any reasonable threshold. It also does not guarantee fairness in outcomes (e.g., supervision rates may still differ by group if risk distributions vary).\n\n### **Base Rates and Asymmetric Errors**\n- The system\u2019s predictions should be **interpreted probabilistically**, not deterministically. Officials must weigh the costs of false positives (e.g., unnecessary supervision, erosion of trust) against false negatives (e.g., missed prevention opportunities).\n- **Threshold setting**: The fixed threshold should be **low enough to capture most true positives** but **high enough to minimize false positives**. For example, if the system predicts 5% of defendants will reoffend, setting a threshold at 10% may miss many high-risk individuals, while 1% may impose supervision on too many low-risk ones. The city should **pilot multiple thresholds** and evaluate their trade-offs.\n\n### **Causation vs. Prediction**\n- The system **predicts risk**, not causation. It cannot prove that supervision reduces reoffending, only that certain features correlate with higher risk.\n- **Evaluation design**: Before full deployment, the city should run a **randomized controlled trial (RCT)** where defendants above the threshold are randomly assigned to supervision or no supervision. This tests whether supervision actually reduces reoffending without confounding variables.\n\n### **Rights and Due Process**\n- **Safeguards**: Supervision should not be imposed without **human review** and **clear appeal processes**. Defendants should have the right to challenge predictions based on errors in input data or biased feature selection.\n- **Legal limits**: The system should comply with constitutional protections (e.g., no excessive pretrial detention) and avoid creating a **perpetual surveillance state** by setting a **maximum duration** for supervision (e.g., 6 months).\n\n### **Selective Labels and Feedback Loops**\n- **Avoiding bias**: If police focus enforcement on predicted high-risk defendants, the system may **overpredict risk for those groups**, creating a self-fulfilling feedback loop.\n- **Safeguard**: Police should **continue random patrols** to ensure the system\u2019s predictions are not the sole basis for observation. Additionally, the",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": false,
+        "reversible_evaluation": true
+      }
+    }
+  ]
+}

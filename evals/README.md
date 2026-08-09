@@ -83,9 +83,60 @@ Three independent judges scored only the raw historical-evidence and policy resp
 
 Two judges ranked dense 27B first and one ranked 35B first; all three ranked Coder last. Coder's historical-evidence answer opened by increasing belief, then concluded that personal diversion remained weak, creating an internal directional inconsistency. Judges also penalized unsupported numerical policy thresholds and truncation. Dense 27B gave the best average open argument but remains impractically slow; 35B is therefore the practical choice for open-ended local analysis. Coder remains the strongest measured option for structured causal, conditional and constrained reasoning.
 
+## DW-ASUS-LINUX results — 2026-08-09 (Devstral vs the incumbent)
+
+The first paired run on the dual-3090 box. **These are not comparable to the
+DW-X1Pro tables above** — different hardware, different quantisations. They are
+comparable to each other: same machine, same harness, thinking disabled on both.
+
+| | Devstral-Small-2-24B FP8 | Qwen3.6-27B FP8 (`27b-fp8`) |
+|---|---:|---:|
+| Work quality | **73/100** | **83/100** |
+| Deep reasoning | **51/100** | **70/100** |
+| Work suite wall time | 44.4 s | 57.0 s |
+| Reasoning suite wall time | 34.0 s | 41.6 s |
+
+| Work task | Devstral | 27b-fp8 | | Reasoning task | Devstral | 27b-fp8 |
+|---|---:|---:|---|---|---:|---:|
+| Strict protocol JSON | 12/12 | 12/12 | | Logic grid | 3/12 | 0/12 |
+| BOM consolidation | 6/10 | 10/10 | | Causal inference | 3/14 | 6/14 |
+| Executable code repair | 17/20 | 20/20 | | Bayesian updating | 4/12 | 8/12 |
+| Embedded C review | 10/12 | 8/12 | | Hypothesis discrim. | 8/12 | 12/12 |
+| Protocol architecture | 6/18 | 10/18 | | Adversarial epist. | 12/14 | 14/14 |
+| 35K retrieval | 16/16 | 16/16 | | Value of information | 5/12 | 9/12 |
+| Scope control | 6/6 | 6/6 | | Wason selection | 4/10 | 9/10 |
+| Acquisition timing | 0/6 | 1/6 | | Complex policy | 12/14 | 12/14 |
+
+**Devstral was rejected as a replacement.** It is 21-42% faster at every
+concurrency level with far better TTFT, but it won one work task out of eight and
+one reasoning task out of eight. The result that decided it is executable code
+repair, 17/20 against 20/20 — the executed-against-hidden-harness task a
+coding-specialised model should own. Full analysis and the throughput tables are
+in `docs/mistral-lineup-survey-2026-08.md`.
+
+Note the logic grid: 27b-fp8 scores 0/12 here as it did on DW-X1Pro, so that task
+still fails to separate anything at the top and Devstral's 3/12 is not a win worth
+counting.
+
+### `--no-template-kwargs`
+
+Both suites send `chat_template_kwargs: {enable_thinking: false}` by default.
+vLLM rejects that outright for **Mistral-tokenizer models** with HTTP 400
+(`chat_template is not supported for Mistral tokenizers`), so those runs need
+`--no-template-kwargs`. It is left ON by default because omitting it is a no-op
+for Mistral (no thinking mode to disable) but is **not** a no-op for the Qwen
+models — flipping the default would silently break comparability with every
+result recorded above.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.
+- **Do not benchmark throughput with `llmctl bench` for terse models.** It
+  reported 24-33 tok/s for Devstral, which stops after ~11 tokens on the bench
+  prompt so fixed overhead dominates; forced-length generation measured 57.9.
+- **Models served with `--reasoning-parser` stream into `reasoning_content`, not
+  `content`.** A throughput script counting only `content` records zero tokens
+  for `27b-fp8` and reports, wrongly, that nothing was generated.
 - The suite is intentionally tailored to current work and is not comparable to MMLU, HumanEval or public leaderboard scores.
 - Exact and executable grading is reliable; keyword-rubric task totals are directional. The raw responses must remain available for manual review.
 - The 35B code response was regraded after fixing an evaluator sandbox defect: the sandbox initially omitted `bytes` and did not expose the provided `crc16` function in candidate globals. The saved candidate itself was correct, and final-grader consistency was verified across all three result files.

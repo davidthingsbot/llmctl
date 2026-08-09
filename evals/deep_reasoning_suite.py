@@ -26,7 +26,10 @@ def extract_json(text: str):
             return None
 
 
-def request(url: str, key: str, model: str, prompt: str, max_tokens: int):
+def request(
+    url: str, key: str, model: str, prompt: str, max_tokens: int,
+    template_kwargs: bool = True,
+):
     payload = {
         "model": model,
         "messages": [
@@ -41,8 +44,11 @@ def request(url: str, key: str, model: str, prompt: str, max_tokens: int):
         ],
         "temperature": 0,
         "max_tokens": max_tokens,
-        "chat_template_kwargs": {"enable_thinking": False},
     }
+    # See work_quality_suite.py: Mistral-tokenizer models reject this with HTTP
+    # 400. Default stays on so the existing Qwen results remain comparable.
+    if template_kwargs:
+        payload["chat_template_kwargs"] = {"enable_thinking": False}
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
@@ -295,6 +301,11 @@ def main():
     parser.add_argument("--model", required=True)
     parser.add_argument("--key-file", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument(
+        "--no-template-kwargs", action="store_true",
+        help="omit chat_template_kwargs; required for Mistral-tokenizer models, "
+             "which reject it with HTTP 400",
+    )
     args = parser.parse_args()
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     results = []
@@ -302,7 +313,10 @@ def main():
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
         try:
-            text, usage, elapsed = request(args.url, key, args.model, prompt, max_tokens)
+            text, usage, elapsed = request(
+                args.url, key, args.model, prompt, max_tokens,
+                template_kwargs=not args.no_template_kwargs,
+            )
             score, maximum, details = grader(text)
             row = {"task": name, "score": score, "max_score": maximum,
                    "elapsed_s": round(elapsed, 4), "usage": usage,
