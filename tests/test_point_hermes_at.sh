@@ -65,7 +65,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 model = config["model"]
 expected = {
     "default": "qwen3.6-27b-fp8",
-    "provider": "openai",
+    "provider": "custom",
     "base_url": "http://127.0.0.1:19434/v1",
     "api_key": "llmctl-local-test-key",
     "context_length": 200000,

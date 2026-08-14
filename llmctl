@@ -858,7 +858,7 @@ point_hermes_at() { # point_hermes_at <agent> <model>
   awk -v id="$id" -v url="$url" -v key="$key" '
     function emit_missing() {
       if (!saw_default)  print "  default: " id
-      if (!saw_provider) print "  provider: openai"
+      if (!saw_provider) print "  provider: custom"
       if (!saw_base_url) print "  base_url: " url
       if (!saw_api_key)  print "  api_key: " key
     }
@@ -873,7 +873,7 @@ point_hermes_at() { # point_hermes_at <agent> <model>
       inblk=0
     }
     inblk && /^  default:/  { print "  default: " id;       saw_default=1;  next }
-    inblk && /^  provider:/ { print "  provider: openai";   saw_provider=1; next }
+    inblk && /^  provider:/ { print "  provider: custom";   saw_provider=1; next }
     inblk && /^  base_url:/ { print "  base_url: " url;     saw_base_url=1; next }
     inblk && /^  api_key:/  { print "  api_key: " key;      saw_api_key=1;  next }
     { print }
