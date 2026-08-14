@@ -1,0 +1,179 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "qwen3.8-27b-fp8",
+  "endpoint": "http://127.0.0.1:19448/v1/chat/completions",
+  "score": 71,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 3,
+      "max_score": 12,
+      "elapsed_s": 2.4619,
+      "usage": {
+        "prompt_tokens": 164,
+        "total_tokens": 271,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 9,
+      "max_score": 14,
+      "elapsed_s": 3.2677,
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 342,
+        "completion_tokens": 147,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"The eligibility score relative to the cutoff of 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for the compliers (individuals near the cutoff)\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: Potential outcomes and covariates vary smoothly around the cutoff in the absence of treatment.\",\n    \"No manipulation: The running variable (score) cannot be precisely manipulated to cross the threshold.\",\n    \"SUTVA: No interference between units and no other policy changes occur at the threshold.\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": false,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 1.91,
+      "usage": {
+        "prompt_tokens": 157,
+        "total_tokens": 239,
+        "completion_tokens": 82,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"one_positive_percent\": 16.4,\n  \"two_positive_percent\": 76.9,\n  \"independence_caveat\": \"The assumption of conditional independence ignores potential correlations in test errors, such as shared biological factors, systematic biases, or lab conditions, which can cause both tests to fail similarly, making the actual probability lower than calculated.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 4.7091,
+      "usage": {
+        "prompt_tokens": 240,
+        "total_tokens": 456,
+        "completion_tokens": 216,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The observation that X has the same effect in an orthogonal signaling assay rules out H3 (assay_artifact).\",\n    \"The validated occupancy assay detects no binding of X to R, which strongly contradicts H1 (direct_block).\",\n    \"R protein levels decrease while R mRNA remains unchanged, indicating post-transcriptional regulation, consistent with protein degradation.\",\n    \"The proteasome inhibitor prevents both the decline in R protein and the reduction in signaling, providing a causal link between proteasomal activity and the observed phenotype, supporting H2 (proteasomal_degradation).\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome inhibitor fails to prevent the reduction in signaling or the decline in R protein levels, or if X is shown to bind R in a high-affinity context despite negative occupancy assays, the proteasomal degradation hypothesis would be undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 9.8175,
+      "usage": {
+        "prompt_tokens": 238,
+        "total_tokens": 698,
+        "completion_tokens": 460,
+        "prompt_tokens_details": null
+      },
+      "response": "The claim that the mayor secretly diverted famine relief in 1892 should be assessed with significant skepticism, though not dismissed entirely. The evidentiary weight currently favors the innocence of the mayor regarding the specific transaction, but the absence of absolute proof leaves a narrow margin for doubt.\n\nSource dependence is the primary weakness of the accusation. S1, the rival\u2019s diary, is a single, interested source lacking transactional specifics. S2 and S4 are derivative, creating a circular citation chain that adds no independent corroboration. This \"telephone game\" effect means the accusation rests entirely on the credibility of S1, which is compromised by the author\u2019s political incentive to discredit the mayor.\n\nS3, the treasury ledger, is the strongest counter-evidence. As an independently preserved document with reconciled totals, it demonstrates that the funds were disbursed to named grain suppliers. This directly contradicts the core mechanism of \"diversion\" if diversion implies embezzlement or non-payment. However, S3 does not establish that the grain was actually delivered to the famine victims. It proves the money left the treasury for a legitimate-looking purpose, but it does not verify the final outcome of the supply chain.\n\nThe detail that one supplier was the mayor\u2019s cousin introduces a potential conflict of interest, suggesting nepotism. Yet, the fact that the price matched other suppliers that month weakens the argument of financial fraud. It suggests the transaction was commercially standard, even if ethically questionable. This shifts the potential wrongdoing from \"secret diversion\" (fraud) to \"conflict of interest\" (impropriety), which is a distinct and less severe charge.\n\nTherefore, belief in the specific claim of secret diversion should decrease substantially. The evidence supports a narrative of standard, albeit potentially nepotistic, procurement rather than theft.\n\nThe highest-value next evidence to seek would be the grain suppliers\u2019 delivery receipts or the receiving records from the famine relief distribution centers. If these documents confirm that the grain arrived and was distributed, the claim of diversion collapses entirely. If they show the grain was never delivered, the accusation gains significant traction, as it would imply the suppliers were shills. Without this final link in the chain, the claim remains unproven, but the burden",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 2.5819,
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 325,
+        "completion_tokens": 115,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"launch_now_ev\": 36.0,\n  \"positive_probability\": 0.52,\n  \"good_given_positive\": 0.769,\n  \"launch_ev_given_positive\": 60.0,\n  \"launch_ev_given_negative\": -12.0,\n  \"test_policy_ev_after_cost\": 20.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 5.103,
+      "usage": {
+        "prompt_tokens": 143,
+        "total_tokens": 378,
+        "completion_tokens": 235,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"The rule is 'If vowel, then even number'. To test this, we must look for a counterexample: a card with a vowel on one side and an odd number on the other. \\n1. 'A' is a vowel. We must turn it to ensure the other side is an even number. If it is odd, the rule is false.\\n2. '7' is an odd number. We must turn it to ensure the other side is NOT a vowel. If it is a vowel, the rule is false.\\n3. 'D' is a consonant. The rule does not specify what must be on the other side of a consonant (it could be even or odd). Therefore, turning it does not help test the rule.\\n4. '4' is an even number. The rule does not specify what must be on the other side of an even number (it could be a vowel or a consonant). Therefore, turning it does not help test the rule.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 13.1639,
+      "usage": {
+        "prompt_tokens": 211,
+        "total_tokens": 831,
+        "completion_tokens": 620,
+        "prompt_tokens_details": null
+      },
+      "response": "**Policy Recommendation: Constrained, Human-Overseen Deployment with Mandatory Auditing**\n\nThe city should **not** implement automatic restrictive supervision based solely on a fixed risk threshold. Instead, it should adopt a **constrained, human-in-the-loop decision support system** with strict procedural safeguards, continuous auditing, and explicit stopping rules.\n\n**Calibration, Base Rates, and Asymmetric Errors**\nCalibration ensures that a predicted probability of 20% corresponds to an actual 20% incidence rate *within* demographic groups. However, calibration does not justify automatic action for three reasons. First, severe offenses are rare (low base rate). Even a highly calibrated model with a 90% true positive rate will generate a massive number of false positives if the base rate is 1%. If the threshold is set to capture most offenders, the majority of those flagged will be innocent. Second, the costs of errors are asymmetric. A false positive (restricting an innocent person\u2019s liberty) causes immediate, concrete harm to an individual, while a false negative (missing an offense) results in diffuse societal harm. Automatic thresholds often ignore this asymmetry, treating statistical accuracy as equivalent to moral justification.\n\n**Causation vs. Prediction and Feedback Loops**\nThe model predicts *risk*, not *causation*. It may flag individuals based on proxies for poverty, neighborhood, or prior minor offenses rather than inherent dangerousness. This creates a **selective label/feedback loop**: police deploy resources based on predictions, leading to more arrests in flagged areas. This increases the observed crime rate in those areas, which the model then uses to reinforce its predictions, creating a self-fulfilling prophecy that entrenches bias. Furthermore, **strategic adaptation** occurs when defendants learn which features trigger flags (e.g., avoiding certain locations or associations), rendering the model\u2019s inputs obsolete or misleading. **Distribution shift** due to changing economic or social conditions further degrades performance, as historical data no longer represents current reality.\n\n**Rights and Due Process**\nAutomatic imposition of restrictive supervision violates due process principles. It denies individuals the right to be heard, to contest the evidence, and to have a human judge weigh mitigating circumstances. It effectively criminalizes statistical probability rather than individual conduct.\n\n**Concrete Deployment and Evaluation Design**\n1.  **Role:** The model serves only as a *decision support tool* for judges or parole boards, not an automatic trigger.\n2.  **Thresholds:** Use dynamic, cost-sensitive thresholds that explicitly weigh the social cost of false positives against false negatives, rather than a fixed probability cutoff.\n3.  **Safeguards:**\n    *   **Human Review:** Every case flagged for restrictive supervision must be reviewed by a human officer who can override the model.\n    *   **Transparency:** Defendants must be informed of the model\u2019s use and given access to the specific features driving the prediction.\n    *   **Appeals:** A dedicated legal channel for challenging model-based decisions.\n4",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}
