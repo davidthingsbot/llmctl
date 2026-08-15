@@ -2351,6 +2351,7 @@ class LogTail:  # incremental reader surviving rotation/truncation
 # T in the lane, silently swallows every tool tick.
 TOOL_RE = re.compile(
     r"tool_executor: tool \S+ (?:completed|failed|cancelled) \((\d+(?:\.\d+)?)s")
+MIN_TOOL_CELLS = 3  # floor on the width of a T mark, in lane cells
 COMPACT_END_RE = re.compile(
     r"context compression done|compression attempt telemetry")
 OVERFLOW_RE = re.compile(
@@ -2361,11 +2362,16 @@ def agent_events():
     ev = {}
     for name, port, path in AGENTS:
         t = tails.setdefault(path, LogTail(path))
-        s = ev.setdefault(port, {"T": 0.0, "C": False, "O": False})
+        s = ev.setdefault(port, {"T": 0.0, "t": False, "C": False, "O": False})
         data = t.read_new()
         for line in data.splitlines():
             mo = TOOL_RE.search(line)
             if mo:
+                # "t" is the ran-at-all flag, "T" only the longest runtime.
+                # They must stay separate: instant tools log 0.00s (the todo
+                # tool always does), and a bare truth test on the duration
+                # makes every one of them invisible.
+                s["t"] = True
                 s["T"] = max(s["T"], float(mo.group(1)))
             if "context compression started" in line:
                 compacting[path] = True
@@ -2632,16 +2638,23 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
                  .append(100.0 * s["used"] / max(1, s["ctx"]))
         if "kv_pct" in m and "slots" not in m:
             hists.setdefault(f"M{m['name']}kv", []).append(m["kv_pct"])
-        e = ev.get(m["port"], {"T": 0.0, "C": False, "O": False})
+        e = ev.get(m["port"], {"T": 0.0, "t": False, "C": False, "O": False})
         # require a prior sample: on the first tick the counter's whole
         # history since server start would read as a fresh overflow
         prev_fin = models_prev.get(m["name"], {}).get("len_fin")
         over = e["O"] or (prev_fin is not None
                           and m.get("len_fin", 0.0) > prev_fin)
         lane = hists.setdefault(f"Mev{m['name']}", [])
-        lane.append("O" if over else "C" if e["C"] else "T" if e["T"] else "")
-        if e["T"] and dt > 0:  # tools log on completion: backfill the runtime
-            for i in range(2, min(len(lane), int(e["T"] / dt) + 1) + 1):
+        lane.append("O" if over else "C" if e["C"] else "T" if e["t"] else "")
+        # Tools log on completion, so paint backwards over the runtime. Most
+        # tools finish well inside one tick (0.03-0.3s is typical), which used
+        # to round the span to a single cell — a 1-second blip that is
+        # unreadable in a sparse lane and easy to miss entirely. Floor the span
+        # at MIN_TOOL_CELLS so a burst is actually visible; the lane marks THAT
+        # a tool ran, not how long, so widening a sub-tick tool is honest here.
+        if e["t"] and dt > 0:
+            span = max(MIN_TOOL_CELLS, int(e["T"] / dt) + 1)
+            for i in range(2, min(len(lane), span) + 1):
                 if lane[-i] == "":
                     lane[-i] = "T"
     if not up:
