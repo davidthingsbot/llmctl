@@ -2066,6 +2066,8 @@ GUT = 5  # left gutter: axis labels like " 100┤"
 
 def c(code, s): return f"{ESC}[{code}m{s}{ESC}[0m"
 def color_class(p): return "31" if p >= 85 else ("38;5;208" if p >= 75 else "32")
+def temp_class(t):  # quiet until it matters — Ryzen idles in the 80s by design
+    return "31" if t >= 90 else ("33" if t >= 80 else "2")
 
 def spark_row(series, width):  # one-line full-width trace, colored per sample
     pts = list(series)[-width:]
@@ -2167,6 +2169,65 @@ def _sysnum(path):
         return float(_sysfs(path))
     except (TypeError, ValueError):
         return None
+
+def core_ids():  # {logical cpu: physical core_id} — SMT siblings share one
+    out = {}
+    for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/topology/core_id"):
+        cid = _sysnum(p)
+        if cid is not None:
+            out[int(re.search(r"cpu(\d+)", p).group(1))] = int(cid)
+    return out
+
+def ccd_cpus():  # [[logical cpus]] per die, ordered — cores on a CCD share an L3
+    groups = {}
+    for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cache/index3/shared_cpu_list"):
+        s = _sysfs(p)
+        if s:
+            groups.setdefault(s, []).append(int(re.search(r"cpu(\d+)", p).group(1)))
+    return [cpus for _, cpus in sorted(groups.items(), key=lambda kv: min(kv[1]))]
+
+def cpu_temps():
+    # (package °C, {logical cpu: °C}, "core"|"die"|"") from hwmon sysfs, so no
+    # lm-sensors dependency. The driver name is whitelisted because scanning
+    # hwmon blindly finds junk: acpitz reads 16°C on DW-AMD-LINUX and
+    # gigabyte_wmi exposes five unlabelled board sensors, neither the CPU.
+    # hwmonN numbering is not stable across boots, hence matching on name.
+    for h in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+        if (_sysfs(h + "/name") or "") not in ("coretemp", "k10temp", "zenpower"):
+            continue
+        tctl = tdie = pkg = None
+        by_core, ccd = {}, {}
+        for lbl in sorted(glob.glob(h + "/temp*_label")):
+            label = _sysfs(lbl) or ""
+            v = _sysnum(lbl[:-6] + "_input")
+            if v is None:
+                continue
+            v /= 1000.0
+            if label == "Tdie":                  tdie = v
+            elif label == "Tctl":                tctl = v
+            elif label.startswith("Package id"): pkg = v
+            elif label.startswith("Core "):      by_core[int(label[5:])] = v
+            elif label.startswith("Tccd"):       ccd[int(label[4:])] = v
+        # Tdie is the true die temp; Tctl can carry a vendor offset
+        total = tdie if tdie is not None else (pkg if pkg is not None else tctl)
+        # intel gives one sensor per physical core, keyed by topology core_id.
+        # amd gives one per CCD and NONE per core, so a core reports its die --
+        # flagged "die" rather than "core" since it is shared, not per-core.
+        per, kind = {}, ""
+        if by_core:
+            per = {cpu: by_core[cid] for cpu, cid in core_ids().items()
+                   if cid in by_core}
+            kind = "core"
+        elif ccd:
+            for n, cpus in enumerate(ccd_cpus(), 1):
+                for cpu in (cpus if n in ccd else []):
+                    per[cpu] = ccd[n]
+            kind = "die" if per else ""
+        if total is None and per:
+            total = max(per.values())
+        if total is not None or per:
+            return total, per, kind
+    return None, {}, ""
 
 def gpu_read_sysfs():  # amdgpu via /sys — no rocm-smi needed (Vulkan / iGPU boxes)
     gpus = []
@@ -2617,20 +2678,30 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
 
     la = os.getloadavg()
     clks = cpu_clocks()
+    ctotal, ctemps, _ = cpu_temps()   # kind: amd's per-core value is a shared die temp
     ck = f" · {sum(clks.values())/len(clks)/1000:.2f}GHz" if clks else ""
-    L.append(c("1;35", " CPU") + f"    {ncores} cores{ck}"
+    tm = f" · {ctotal:.0f}°C" if ctotal is not None else ""
+    L.append(c("1;35", " CPU") + f"    {ncores} cores{ck}{tm}"
              + f" · load {la[0]:.2f} {la[1]:.2f} {la[2]:.2f}")
+    # right-hand column: "100% 62°" is 10 of the 11 reserved, so the clock on
+    # the row below is right-aligned to the same edge instead of its bare 8
+    tw = 10 if ctemps else 5
     if core_rows == 1:
         for i in sorted(core_pct):
-            L.append(f" c{i:<3d}" + spark_row(hists[f"c{i}"], cw)
-                     + " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%"))
+            row = (f" c{i:<3d}" + spark_row(hists[f"c{i}"], cw)
+                   + " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%"))
+            if i in ctemps:
+                row += " " + c(temp_class(ctemps[i]), f"{ctemps[i]:3.0f}°")
+            L.append(row)
     elif core_rows > 1:
         for i in sorted(core_pct):
             labels = [f" c{i:<3d}"] + ["     "] * (core_rows - 1)
             block = chart_block(hists[f"c{i}"], None, core_rows, cw, labels)
             block[0] += " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%")
+            if i in ctemps:
+                block[0] += " " + c(temp_class(ctemps[i]), f"{ctemps[i]:3.0f}°")
             if i in clks:
-                block[1] += " " + c("2", f"{clks[i]/1000:.2f}GHz")
+                block[1] += c("2", (" " + f"{clks[i]/1000:.2f}GHz").rjust(tw))
             L.extend(block)
     # total-cpu chart: labelled when it sits under the per-core rows, on the
     # axis gutter when it stands alone
