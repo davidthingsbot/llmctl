@@ -2487,10 +2487,13 @@ def model_block(m, hists, cw):
         pts = lane[-cw:]
         MARK = {"T": c("36", "T"), "C": c("33", "C"), "O": c("1;31", "O")}
         row = "".join(MARK.get(ch, c("2", "·")) for ch in pts)
-        cnt = (f"{sum(x == 'T' for x in lane)}T "
-               f"{sum(x == 'C' for x in lane)}C "
-               f"{sum(x == 'O' for x in lane)}O")
-        L.append("  ev " + " " * (cw - len(pts)) + row + c("2", f"{cnt:>9}"))
+        # counts describe the drawn window, like every other right-hand
+        # value; summing `lane` instead reported events already scrolled off
+        # and outgrew the 11-column budget, wrapping the row (see clamp)
+        cnt = (f"{sum(x == 'T' for x in pts)}T "
+               f"{sum(x == 'C' for x in pts)}C "
+               f"{sum(x == 'O' for x in pts)}O")
+        L.append("  ev " + " " * (cw - len(pts)) + row + c("2", f"{cnt:>10}"))
     return L
 
 def chart_block(series, line, rows, width, labels=None, colors=None):
@@ -2498,6 +2501,19 @@ def chart_block(series, line, rows, width, labels=None, colors=None):
     chart = area_chart(series, line, rows, width, colors)
     pre = labels if labels is not None else [" " + g for g in gutter(rows)]
     return [p + row for p, row in zip(pre, chart)]
+
+def clamp(s, w):
+    # truncate to w printable columns, leaving ANSI codes intact. draw() maps
+    # one list entry to one terminal row, so an over-wide line wraps, pushes
+    # the frame past H rows and scrolls the header away
+    out, n = [], 0
+    for part in re.split(r"(\x1b\[[0-9;]*m)", s):
+        if part.startswith(ESC):
+            out.append(part); continue
+        if n + len(part) > w:
+            out.append(part[:w - n]); break
+        out.append(part); n += len(part)
+    return "".join(out) + RESET
 
 def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     W, H = shutil.get_terminal_size()
@@ -2642,7 +2658,7 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     foot = " q quit · +/- speed"
     L.append(c("2", foot + (f"⏴ {fmt_t(min(cw, len(hists['cpu'])) * TICK)}"
                             f" @{fmt_t(TICK)}").rjust(W - len(foot) - 1)))
-    return L[:H]
+    return [clamp(l, W) for l in L[:H]]
 
 def draw(lines):
     sys.stdout.write(ESC + "[H" + (ESC + "[K\n").join(lines) + ESC + "[K" + ESC + "[J")
