@@ -470,8 +470,21 @@ def sample(phase, delay):
                 capture_output=True, text=True, timeout=5).stdout
             for line in out.strip().splitlines():
                 i, u, m, p = [x.strip() for x in line.split(",")]
-                gpu.append({"phase": phase, "gpu": int(i), "util_pct": float(u),
-                            "mem_mib": float(m), "power_w": float(p)})
+                def fnum(x):
+                    try:
+                        return float(x)
+                    except ValueError:
+                        return None
+                mem = fnum(m)
+                if mem is None:
+                    # unified memory (GB10/DGX Spark): nvidia-smi reports [N/A]
+                    # — the GPU pool is system RAM, so report RAM in use
+                    with open("/proc/meminfo") as f:
+                        mi = {ln.split(":")[0]: float(ln.split(":")[1].split()[0])
+                              for ln in f}
+                    mem = round((mi["MemTotal"] - mi["MemAvailable"]) / 1024, 1)
+                gpu.append({"phase": phase, "gpu": int(i), "util_pct": fnum(u),
+                            "mem_mib": mem, "power_w": fnum(p)})
     except Exception:
         pass
     if len(gpu) == before:            # no smi output (e.g. Vulkan iGPU): use sysfs
@@ -598,6 +611,11 @@ vram_ok() { # free VRAM per GPU >= VRAM[name], unless FORCE=1 (CUDA only)
   command -v nvidia-smi >/dev/null || return 0
   while IFS=, read -r idx free; do
     free="${free// /}"; free="${free%MiB}"
+    if [[ ! "$free" =~ ^[0-9]+$ ]]; then
+      # unified-memory boards (GB10/DGX Spark) report [N/A] — the GPU draws
+      # from system RAM, so MemAvailable is the real free budget
+      free=$(( $(awk '/^MemAvailable/{print $2}' /proc/meminfo) / 1024 ))
+    fi
     if (( free < need )); then
       err "GPU $idx has ${free} MiB free, '$name' needs ~${need} MiB per GPU"
       bad=1
@@ -1597,6 +1615,10 @@ machine_init() {
       | sort -n | head -1)"
     [[ -n "$vram_min" ]] && vram_min=$(( vram_min / 1048576 ))   # bytes -> MiB
   fi
+  if [[ -n "$vram_min" && ! "$vram_min" =~ ^[0-9]+$ ]]; then
+    # unified-memory boards (GB10/DGX Spark) report [N/A] — use system RAM
+    vram_min=$(( $(awk '/^MemTotal/{print $2}' /proc/meminfo) / 1024 ))
+  fi
   if (( gpu_count > 0 )); then
     gpus="$(seq -s, 0 $((gpu_count-1)))"
     tp="$gpu_count"
@@ -2311,9 +2333,20 @@ def gpu_read():  # [{i, util, used_mib, total_mib, power, temp, clock}]
             def num(x): return float(x) if x.replace(".", "").isdigit() else None
             for line in out.strip().splitlines():
                 i, u, m, t, p, pl, tc, ck, tr = [x.strip() for x in line.split(",")]
-                gpus.append({"i": int(i), "util": float(u), "used": float(m),
-                             "total": float(t), "power": float(p), "plimit": num(pl),
-                             "temp": float(tc), "clock": num(ck),
+                used, total = num(m), num(t)
+                if used is None or total is None:
+                    # unified-memory boards (GB10/DGX Spark) report [N/A] for
+                    # memory — the GPU pool IS system RAM, so read /proc/meminfo
+                    mi = {}
+                    with open("/proc/meminfo") as f:
+                        for ln in f:
+                            k, v = ln.split(":", 1)
+                            mi[k] = float(v.split()[0]) / 1024  # kB -> MiB
+                    total = mi.get("MemTotal", 0.0)
+                    used = total - mi.get("MemAvailable", 0.0)
+                gpus.append({"i": int(i), "util": num(u) or 0.0, "used": used,
+                             "total": total, "power": num(p), "plimit": num(pl),
+                             "temp": num(tc), "clock": num(ck),
                              "throttle": int(tr, 16) if tr.startswith("0x") else None})
     except Exception:
         pass
