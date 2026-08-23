@@ -1,0 +1,182 @@
+{
+  "suite": "work_quality_v1",
+  "model": "deepseek-v4-flash-ream-120b",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 69,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 3.9914,
+      "usage": {
+        "prompt_tokens": 188,
+        "total_tokens": 264,
+        "completion_tokens": 76,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 1,
+      "max_score": 10,
+      "elapsed_s": 3.3759,
+      "usage": {
+        "prompt_tokens": 240,
+        "total_tokens": 302,
+        "completion_tokens": 62,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71E104KA01L\",\n  \"add_new_sku\": true,\n  \"voltage_valid\": true,\n  \"annual_unit_savings_usd\": 80,\n  \"setup_cost_usd\": 40\n}",
+      "grade_details": {
+        "selected": false,
+        "no_new_sku": false,
+        "voltage_invalid": false,
+        "savings_16": false,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 6.4111,
+      "usage": {
+        "prompt_tokens": 257,
+        "total_tokens": 381,
+        "completion_tokens": 124,
+        "prompt_tokens_details": null
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"length mismatch\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[0:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 20.8748,
+      "usage": {
+        "prompt_tokens": 238,
+        "total_tokens": 658,
+        "completion_tokens": 420,
+        "prompt_tokens_details": null
+      },
+      "response": "Here are the six most important concrete defects in the provided C `receive` function, with required corrections:\n\n1. **Unchecked array indexing**  \n   - `rx[1]` and `rx[2 + len]` access array elements without verifying `rx_len` is sufficient.  \n   - **Correction:** Add bounds checking:  \n   ```c  \n   if (rx_len < 3 + len) return;  \n   ```\n\n2. **Uninitialized `len`**  \n   - `len` is declared as `uint8_t` but not initialized; if `rx[1]` is not set, it may contain garbage.  \n   - **Correction:** Initialize `len = 0;` before assignment.\n\n3. **Incorrect CRC calculation**  \n   - `crc16` is called with only `payload` and `len`, but the CRC should cover `rx[0]` (command), `rx[1]` (length), and `payload`.  \n   - **Correction:** Compute CRC over the full data:  \n   ```c  \n   uint16_t calc = crc16(rx, 2 + len);  \n   ```\n\n4. **Assignment instead of comparison**  \n   - `if (calc = got)` assigns `got` to `calc`, always true, bypassing authentication.  \n   - **Correction:** Use `==`:  \n   ```c  \n   if (calc == got)  \n   ```\n\n5. **Authentication after state change**  \n   - `sequence++` and `parse_command` run before authentication, violating the requirement that authentication must precede state changes.  \n   - **Correction:** Move authentication before `sequence++` and `parse_command`.\n\n6. **Missing CRC failure handling**  \n   - No `else` branch or return statement is present for CRC mismatch, leaving the function without explicit error handling.  \n   - **Correction:** Add an `else` block:  \n   ```c  \n   else {  \n       // Handle CRC mismatch",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 8,
+      "max_score": 18,
+      "elapsed_s": 25.4985,
+      "usage": {
+        "prompt_tokens": 155,
+        "total_tokens": 675,
+        "completion_tokens": 520,
+        "prompt_tokens_details": null
+      },
+      "response": "# Protocol: Sensor Data Acquisition and Processing\n## Version: 1.0\n\n## Overview\nThis protocol defines a single `SCAN` command that acquires a sensor frame, applies the current shear transform, updates all filters, stores only the transformed frame, and emits changes if event mode is enabled. It is designed for embedded systems with limited memory and deterministic behavior.\n\n## Command: `SCAN`\n### Purpose\nAcire a new sensor frame, process it through the current shear transform and all active filters, store the resulting frame, and optionally emit change events.\n\n### Request\n| Field | Type | Description |\n|---|---|---\n| `mode` | `enum` | `continuous` or `on-demand` |\n| `event_enabled` | `bool` | If `true`, emit change events after processing |\n\n### Behavior\n- **Continuous mode**: The command runs indefinitely, acquiring and processing frames as they become available.\n- **On-demand mode**: The command runs once, acquiring and processing a single frame.\n- **Event reporting**: If `event_enabled` is `true`, the system emits a `FrameProcessed` event after each frame is processed and stored.\n\n### Response\n| Field | Type | Description |\n|---|---|---\n| `status` | `enum` | `ok` or `error` |\n| `frame_id` | `uint64` | Unique identifier of the stored frame |\n| `timestamp` | `uint64` | Unix timestamp (milliseconds) of the frame acquisition |\n\n### Errors\n| Code | Description |\n|---|------ \n| `400` | Invalid request |\n| `500` | Processing or storage failure |\n\n## Frame and Source Identity\n- **Frame ID**: A unique `uint64` assigned by the system upon frame acquisition.\n- **Source ID**: A `uint64` identifying the sensor that produced the frame.\n- **Frame Data**: The processed sensor data, stored as a byte array.\n\n## Continuous vs On-Demand Behavior\n- **Continuous**: The system acquires and processes frames as they arrive, storing only the latest transformed frame.\n- **On-Demand**: The system acquires and processes a single frame upon request.\n\n## Event Reporting\n- **Event Mode**: When enabled, the system emits a `FrameProcessed` event after each frame is processed and stored.\n- **Event Data**: Includes the `frame_id` and `timestamp` of the processed frame.\n\n## Responsibility Boundaries\n- **Acquisition**: The system is responsible for acquiring raw sensor data.\n- **Processing**: The system applies the current",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": false,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": false,
+        "acquisition_ownership": false,
+        "event_independent": false,
+        "conflict_rejected_or_queued": false
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 33.0683,
+      "usage": {
+        "prompt_tokens": 30521,
+        "total_tokens": 30613,
+        "completion_tokens": 92,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 2,
+      "max_score": 6,
+      "elapsed_s": 8.9653,
+      "usage": {
+        "prompt_tokens": 156,
+        "total_tokens": 333,
+        "completion_tokens": 177,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"files_to_modify\": [\n    {\n      \"path\": \"src/validator.py\",\n      \"change\": \"Replace the string literal \\\"invaild frame\\\" with \\\"invalid frame\\\" in the `validate_frame` function.\"\n    },\n    {\n      \"path\": \"tests/test_validator.py\",\n      \"change\": \"Add a regression assertion that verifies the corrected error message contains \\\"invalid frame\\\".\"\n    }\n  ],\n  \"approved_change\": \"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in `src/validator.py` and add a regression assertion in `tests/test_validator.py`.\",\n  \"deferred_items\": [\n    \"Refract the parser\",\n    \"Add telemetry\",\n    \"Change error codes\",\n    \"Update every documentation page\",\n    \"Rename the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": false,
+        "typo_only": true,
+        "defers_expansion": false
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "elapsed_s": 4.2064,
+      "usage": {
+        "prompt_tokens": 169,
+        "total_tokens": 249,
+        "completion_tokens": 80,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"data_bits_per_sample\": 24,\n  \"payload_bit_rate\": 9600000,\n  \"wire_time_ms_per_second\": 0.048,\n  \"chip_select_overhead_ms_per_second\": 0.048,\n  \"total_bus_utilization_percent\": 100,\n  \"remaining_margin_percent\": 0\n}",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": false,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}

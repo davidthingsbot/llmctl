@@ -1,0 +1,179 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "deepseek-v4-flash-ream-120b",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 52,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 4.625,
+      "usage": {
+        "prompt_tokens": 142,
+        "total_tokens": 231,
+        "completion_tokens": 89,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Ben\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 6,
+      "max_score": 14,
+      "elapsed_s": 9.8161,
+      "usage": {
+        "prompt_tokens": 174,
+        "total_tokens": 369,
+        "completion_tokens": 195,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"design\": \"Quasi-experimental design\",\n  \"instrument\": \"Score cutoff at 70\",\n  \"estimand\": \"Effect of job-training program on employment\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"The score cutoff at 70 is the only policy change at that threshold\",\n    \"The score cannot be precisely manipulated\",\n    \"Potential outcomes vary smoothly through 70 absent treatment\",\n    \"Participation is not universal above the cutoff and some below it still participate\",\n    \"The observed association between higher employment and program enrollment is not due to selection bias\",\n    \"The program has a causal effect on employment\",\n    \"The score cutoff is not the only factor influencing participation\",\n    \"The observed increase in participation at 70 is not due to random variation\",\n    \"The program is not the only factor influencing employment\",\n    \"The score cutoff is not the only factor influencing employment\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": true,
+        "continuity": false,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 5.6876,
+      "usage": {
+        "prompt_tokens": 145,
+        "total_tokens": 254,
+        "completion_tokens": 109,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"one_positive_percent\": 0.1,\n  \"two_positive_percent\": 0.0001,\n  \"independence_caveat\": \"The second calculation assumes conditional independence of test errors given the true condition status, which may not hold in real life. For example, if the test is prone to systematic errors (e.g., a specific type of interference), the probability of a second positive result may be higher than the product of the individual probabilities, leading to overconfidence in the result.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 6.9291,
+      "usage": {
+        "prompt_tokens": 214,
+        "total_tokens": 345,
+        "completion_tokens": 131,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X has the same effect in an orthogonal signaling assay\",\n    \"R protein falls after X treatment, but R mRNA is unchanged\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect\"\n  ],\n  \"decisive_falsifier\": \"If a validated occupancy assay detects no binding of X to R, and the R-protein decline is not accompanied by a corresponding decrease in R mRNA, then the hypothesis that X causes R protein to be degraded through the proteasome would be undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": false,
+        "occupancy_against_direct": false,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": false
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 23.0437,
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 670,
+        "completion_tokens": 460,
+        "prompt_tokens_details": null
+      },
+      "response": "Based on the evidence, the claim that the mayor secretly diverted famine relief in 1892 is **not supported** by the available sources, and belief in it should be **significantly reduced**. Here is the reasoning:\n\n- **S1** is an accusation from the mayor\u2019s political rival, with no transaction details. This is a primary source, but it is **incentivized**\u2014the rival has a motive to discredit the mayor. It does not prove the claim, but it raises a hypothesis that requires corroboration.\n\n- **S2** is a 1920 newspaper article that **cites only S1**. It is not independent evidence; it merely repeats the accusation without adding new information. This makes it **dependent** on S1 and of limited evidentiary value.\n\n- **S3** is an **independently preserved treasury ledger** whose totals reconcile and show the disputed funds paid to **named grain suppliers**. This is strong primary evidence that the funds were **legitimately spent on grain**, not diverted. It does not prove the claim is false, but it **contradicts** the accusation by showing the money went to a plausible, lawful purpose. It does not establish the mayor\u2019s innocence, but it undermines the claim by providing a credible alternative explanation.\n\n- **S4** consists of five modern websites that **cite S2 or one another**. These are **secondary sources** with no new primary material. They add no evidentiary weight; they are merely repetitions of the earlier accusation.\n\n- **The cousin evidence**: The supplier named in S3 was the mayor\u2019s cousin, but the **listed price matches other suppliers that month**. This suggests the transaction was **market-based**, not a form of favoritism. It does not prove the claim is false, but it weakens the implication of personal gain and supports the idea that the payment was legitimate.\n\n**Conclusion**: The claim is **unsupported** by the evidence. S1 and S2 are dependent and incentivized; S3 contradicts the accusation; S4 is non-primary. The highest-value next evidence to seek would be **additional primary sources**\u2014such as **personal letters, government records, or court documents**\u2014that either **confirm or refute",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 6.0909,
+      "usage": {
+        "prompt_tokens": 209,
+        "total_tokens": 327,
+        "completion_tokens": 118,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"launch_now_ev\": 0.0,\n  \"positive_probability\": 0.8,\n  \"good_given_positive\": 0.4,\n  \"launch_ev_given_positive\": 0.2,\n  \"launch_ev_given_negative\": -0.2,\n  \"test_policy_ev_after_cost\": -0.1,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"decline\"\n}",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": false,
+        "good_given_positive": false,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": false
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 2,
+      "max_score": 10,
+      "elapsed_s": 8.3313,
+      "usage": {
+        "prompt_tokens": 130,
+        "total_tokens": 294,
+        "completion_tokens": 164,
+        "prompt_tokens_details": null
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"4\"],\n  \"reason\": \"The rule states that if a card has a vowel on one side, then it must have an even number on the other side. To test this rule, we need to check all cards that have a vowel on one side. Among the given cards, only 'A' is a vowel. The other cards are 'D', '4', and '7', which are not vowels. Therefore, we only need to turn over the card with 'A' to see if the number on the other side is even. The other cards are not logically required because they do not have a vowel on one side, so the rule does not apply to them. Thus, the only card that must be turned is 'A'.\"\n}",
+      "grade_details": {
+        "exact_cards": false,
+        "a_can_falsify": false,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": false
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 30.1207,
+      "usage": {
+        "prompt_tokens": 192,
+        "total_tokens": 812,
+        "completion_tokens": 620,
+        "prompt_tokens_details": null
+      },
+      "response": "## Policy Recommendation: Implement a **Temporary, Evaluated, and Rights-Respecting Risk-Based Supervision Program** with strict safeguards and a clear sunset clause.\n\n### What Calibration Does and Does Not Justify\n- **Justifies:** Calibration within demographic groups ensures that risk predictions are tailored to the specific characteristics of each group, reducing false positives and negatives. This is essential for fairness and accuracy.\n- **Does Not Justify:** Calibration alone does not account for changes in behavior due to police deployment, adaptation by offenders, or shifts in economic and social conditions. These factors require ongoing evaluation and adjustment.\n\n### Base Rates and Asymmetric Errors\n- **Base Rates:** Severe violent offenses are rare, meaning the base rate is low. This makes it critical to minimize false positives (unnecessary supervision) while maintaining sensitivity to genuine risks.\n- **Asymmetric Errors:** False positives (unnecessary supervision) are preferable to false negatives (missed severe offenses), as they protect public safety without unduly restricting rights. However, this asymmetry must be balanced against the risk of over-reinterpreting predictions.\n\n### Causation vs Prediction\n- **Prediction:** The system predicts risk, not causation. It does not explain why an offense occurs, but identifies patterns that correlate with future offenses. This is sufficient for risk assessment, but it does not justify punitive measures.\n\n### Rights and Due Process\n- **Rights:** Restrictive supervision is a significant limitation on personal freedom. It must be applied only when there is a clear, evidence-based risk, and with transparent justification.\n- **Due Process:** The decision to impose supervision must be subject to independent review and appeal mechanisms to prevent misuse.\n\n### Selective Labels and Feedback Loops\n- **Selective Labels:** Risk labels can lead to unintended consequences, such as stigmatization or changes in behavior. This must be monitored to prevent negative outcomes.\n- **Feedback Loops:** Changes in police deployment and offender adaptation can create feedback loops that alter the system's accuracy. This requires continuous evaluation and recalibration.\n\n### Distribution Shift and Strategic Adaptation\n- **Distribution Shift:** Changes in economic and social conditions can shift the risk distribution, making current thresholds less effective. This necessitates regular recalibration.\n- **Strategic Adaptation:** Offenders may adapt to known features, reducing the system's predictive power. This requires ongoing monitoring and adjustment.\n\n### Concrete Deployment and Evaluation Design\n1. **Pilot Phase:** Implement the program in a controlled environment with a small, diverse sample of high-risk individuals.\n2. **Evaluation:** Conduct a rigorous, independent evaluation of the program's effectiveness, including:\n   - **Accuracy:** Measure the rate of false positives and negatives.\n   - **Impact:** Assess the effects on public safety and individual rights.\n   - **Adaptation:** Monitor changes in offender behavior and police deployment.\n3. **Safeguards:**\n   - **Independent Review:** Establish a panel to review all decisions to impose supervision.\n   - **Appeal Process:** Allow individuals to appeal decisions they believe are unjustified.\n   - **Transparency:** Ensure all",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    }
+  ]
+}
