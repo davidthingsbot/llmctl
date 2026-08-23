@@ -198,8 +198,13 @@ load_machine_profile() {
   done
   v="$(conf_get ACCEL "$MACHINE_CONF")"
   [[ -n "$v" ]] && ACCEL="$v"
-  v="$(conf_get LEGACY_UNITS "$MACHINE_CONF")"
-  [[ -n "$v" ]] && read -ra LEGACY_UNITS <<< "$v"
+  # LEGACY_UNITS="" present in the file means "none" (the built-in default
+  # describes the dual-3090 box and must not leak onto other machines)
+  if grep -q '^LEGACY_UNITS=' "$MACHINE_CONF"; then
+    v="$(conf_get LEGACY_UNITS "$MACHINE_CONF")"
+    LEGACY_UNITS=()
+    [[ -n "$v" ]] && read -ra LEGACY_UNITS <<< "$v"
+  fi
 
   if [[ "$ENABLE_BUILTIN_MODELS" != 1 ]]; then
     for n in "${MODELS[@]}"; do
