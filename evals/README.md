@@ -194,6 +194,85 @@ for Mistral (no thinking mode to disable) but is **not** a no-op for the Qwen
 models — flipping the default would silently break comparability with every
 result recorded above.
 
+## dw-bee-linux results — 2026-08-28
+
+The first run on the Ryzen 7 255 / Radeon 780M mini box. **Not comparable to
+either table above** — different hardware, different quantisations, and the only
+machine here where the model shares one DDR5 bus with the CPU through a 17.59 GiB
+Vulkan heap. The two models are comparable to each other: same machine, same
+harness, thinking disabled on both, llama.cpp Vulkan in both cases.
+
+| | Qwen3.5-35B-A3B IQ4_NL (`qwen35b`) | Qwen3.5-9B Q4_K_M (`qwen9b`) |
+|---|---:|---:|
+| Work quality | **85/100** | 77/100 |
+| Deep reasoning | **71/100** | 57/100 |
+| Work suite wall time | 545.10 s | **389.35 s** |
+| Reasoning suite wall time | 240.48 s | **172.31 s** |
+
+| Work task | 35B | 9B | | Reasoning task | 35B | 9B |
+|---|---:|---:|---|---|---:|---:|
+| Strict protocol JSON | 12/12 | 12/12 | | Logic grid | 0/12 | 3/12 |
+| BOM consolidation | 9/10 | **2/10** | | Causal inference | 6/14 | 4/14 |
+| Executable code repair | 20/20 | 17/20 | | Bayesian updating | 8/12 | 4/12 |
+| Embedded C review | 8/12 | **10/12** | | Hypothesis discrim. | 12/12 | 9/12 |
+| Protocol architecture | 14/18 | 14/18 | | Adversarial epist. | 14/14 | 12/14 |
+| 35K retrieval | 16/16 | 16/16 | | Value of information | 8/12 | 4/12 |
+| Scope control | 6/6 | 6/6 | | Wason selection | 9/10 | 9/10 |
+| Acquisition timing | 0/6 | 0/6 | | Complex policy | 14/14 | 12/14 |
+
+### Interpretation
+
+- **35B-A3B is the better model on both suites and should stay the default**, as
+  it already is. It wins work quality by 8 and deep reasoning by 14, at roughly
+  1.4x the wall time — a far better trade than the 4.29x and 7.40x penalties the
+  dense 27B carried on DW-X1Pro.
+- **`qwen9b`'s 2/10 on BOM consolidation is the lowest score that task has ever
+  recorded, and it is not an arithmetic failure.** The task offers a cheaper 25 V
+  capacitor for a rail with a verified 36 V transient. The 9B computed both
+  numbers correctly — $16.00 annual saving and $40 setup, the two points it
+  earned — then selected the 25 V part and returned `voltage_valid: true` and
+  `add_new_sku: true`. It got the economics right and the derating wrong. Mistral
+  Small 4 scored 1/10 here but missed the arithmetic too; this is a cleaner and
+  more worrying failure, because the model looks confident and numerate while
+  choosing a part that fails in service. Do not let a 9B make component
+  selections unreviewed.
+- **`qwen35b` scored 14/18 on protocol architecture**, the second-highest result
+  ever recorded on that task and the best by any Qwen — DW-X1Pro's ceiling was
+  12/18 and `27b-fp8` managed 10/18. It also took 14/14 on complex policy
+  reasoning, which previously only Coder-Next had reached. The open-task rubric
+  is directional only (see Caveats), so this warrants a blind review before it is
+  treated as a real capability gain.
+- **The 9B beat the 35B on embedded C review, 10/12 against 8/12.** Small enough
+  to be noise on a single deterministic run, but it is the one work task where
+  the smaller model led.
+- **The 35K retrieval task still separates nothing.** Both models scored 16/16,
+  as every Qwen has on every machine — now including a 9B dense model at Q4_K_M.
+  The task needs to get longer or be retired.
+- **Acquisition timing remains unbeaten at 0/6 for both.** Across every machine
+  and every model in this repo, no result has exceeded 1/6. The recommendation
+  stands: compute link budgets with a tool, then ask the model to interpret
+  checked numbers.
+- **No blind open-response review was run for this machine.** The DW-X1Pro and
+  DW-ASUS-LINUX sections both show the deterministic rubric overstating models on
+  the two open tasks, twice. The 35B's 14/14 and 14/14 on adversarial
+  epistemology and complex policy should be read with that history in mind.
+
+### Long-context prerequisite — `qwen9b` served context raised 16K -> 64K
+
+`long_context_retrieval` is a 37,271-token prompt. `qwen9b` was configured
+`SERVER_CTX=16384`, so those 16 points were structurally unreachable and the
+suite could not be run comparably at all. Its GGUF reports
+`n_ctx_train = 262144`, so 16K was a conservative config choice rather than a
+model limit; it was raised to 65536 for this run and kept there.
+
+The cost is real and specific to this box. The 780M's 17.59 GiB Vulkan heap is
+4.00 GiB of carved-out VRAM plus 13.59 GiB of GTT, and GTT is drawn from the
+27.18 GiB `MemTotal` — so the roughly 2.2 GiB of extra KV comes mostly out of
+system RAM, not out of a separate pool. Start-bench generation fell from
+13.2 tok/s at 16K to 10.3-12.5 tok/s at 64K. The 16/16 retrieval result was
+worth it, but note that unlike a discrete-GPU box, raising context here competes
+directly with CPU memory.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.

@@ -1,0 +1,171 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "qwen3.5-9b",
+  "endpoint": "http://127.0.0.1:19438/v1/chat/completions",
+  "score": 57,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 3,
+      "max_score": 12,
+      "elapsed_s": 11.2954,
+      "usage": {
+        "completion_tokens": 107,
+        "prompt_tokens": 164,
+        "total_tokens": 271
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Biology\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 4,
+      "max_score": 14,
+      "elapsed_s": 15.6131,
+      "usage": {
+        "completion_tokens": 152,
+        "prompt_tokens": 195,
+        "total_tokens": 347
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"Eligibility status determined by a score cutoff at 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) at the cutoff of 70\",\n  \"global_generalization\": \"No, it does not automatically generalize to everyone\",\n  \"assumptions\": [\n    \"Continuity of potential outcomes at the cutoff\",\n    \"No manipulation of the running variable (score) around the cutoff\",\n    \"No other policies or confounders change at the cutoff\",\n    \"Smoothness of the relationship between the score and outcomes in the absence of treatment\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": false,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": false,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 8.8507,
+      "usage": {
+        "completion_tokens": 82,
+        "prompt_tokens": 157,
+        "total_tokens": 239
+      },
+      "response": "{\n  \"one_positive_percent\": 1.0,\n  \"two_positive_percent\": 0.9,\n  \"independence_caveat\": \"The second calculation assumes conditional independence of test errors, which may be overconfident in real life because repeated testing often introduces systematic biases (e.g., calibration drift, environmental factors) or shared error sources that violate independence.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 9,
+      "max_score": 12,
+      "elapsed_s": 17.8019,
+      "usage": {
+        "completion_tokens": 174,
+        "prompt_tokens": 240,
+        "total_tokens": 414
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The effect persists in an orthogonal assay, ruling out H3 (assay artifact).\",\n    \"No binding is detected in the occupancy assay, ruling out H1 (direct block).\",\n    \"R protein levels decrease while mRNA remains constant, indicating post-translational degradation.\",\n    \"A proteasome inhibitor stops both the protein decline and the signaling effect, confirming the mechanism involves proteasomal degradation (H2).\"\n  ],\n  \"decisive_falsifier\": \"Demonstration that the R-protein decline and signaling effect occur in the presence of a functional proteasome but are blocked by a specific inhibitor of the ubiquitin ligase responsible for tagging R for degradation.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": false,
+        "valid_falsifier": false
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 34.3168,
+      "usage": {
+        "completion_tokens": 344,
+        "prompt_tokens": 238,
+        "total_tokens": 582
+      },
+      "response": "Belief in the claim that the mayor secretly diverted famine relief should increase significantly, though absolute certainty remains unattainable without further corroboration.\n\nThe initial evidence (S1, S2, S4) suffers from severe source dependence and weak incentives. S1 is an accusation by a rival with no transactional proof, creating a motive for fabrication. S2 and S4 merely propagate this unverified claim without adding independent value. Consequently, these sources establish a narrative but not a fact.\n\nS3 represents the highest-value evidence currently available. As an independently preserved treasury ledger with reconciled totals, it provides objective proof that the disputed funds were indeed paid to specific grain suppliers. This directly contradicts the implication that the money was lost or unaccounted for. However, S3 does not establish *who* authorized the payment or the *intent* behind it. It confirms the flow of funds, not the diversion.\n\nThe evidence regarding the mayor's cousin is neutral. While the familial connection might suggest a conflict of interest, the fact that the listed price matches other suppliers that month indicates the transaction was conducted at fair market value. This weakens the argument that the diversion was a blatant theft for personal enrichment, but it does not rule out a politically motivated allocation of resources.\n\nThe highest-value next evidence to seek is documentation of the mayor's authorization for these specific payments. A signed order, a city council meeting minute approving the grain purchase, or a contemporaneous note from the mayor would definitively link the funds to his actions. Without such a link, the claim remains a strong probability based on financial records, but the ultimate \"secret\" nature of the diversion cannot be fully proven.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": false,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 12.3382,
+      "usage": {
+        "completion_tokens": 117,
+        "prompt_tokens": 210,
+        "total_tokens": 327
+      },
+      "response": "{\n  \"launch_now_ev\": 48.0,\n  \"positive_probability\": 0.8,\n  \"good_given_positive\": 0.8889,\n  \"launch_ev_given_positive\": 102.0,\n  \"launch_ev_given_negative\": -60.0,\n  \"test_policy_ev_after_cost\": 38.0,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"decline\"\n}",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": false,
+        "good_given_positive": false,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": false
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 19.1689,
+      "usage": {
+        "completion_tokens": 189,
+        "prompt_tokens": 143,
+        "total_tokens": 332
+      },
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side,' we must check for cases that could falsify the rule. The card 'A' shows a vowel, so we must turn it to verify the other side has an even number. The card '7' shows an odd number, so we must turn it to verify the other side does not have a vowel (since a vowel would require an even number). The card 'D' shows a consonant, so it does not trigger the rule's condition. The card '4' shows an even number, but since the rule only specifies what happens if there is a vowel, an even number could have either a vowel or a consonant on the other side without violating the rule.\"\n}\n```",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 52.9225,
+      "usage": {
+        "completion_tokens": 540,
+        "prompt_tokens": 211,
+        "total_tokens": 751
+      },
+      "response": "**Policy Recommendation: Constrained Use with Mandatory Human Review**\n\nThe proposed policy of automatically imposing restrictive supervision based solely on a risk threshold is unjustified. While the system is calibrated within demographic groups, calibration only ensures that false positive rates are equal across groups; it does not justify the overall accuracy or the societal cost of those errors. Given that severe offenses are rare, even a well-calibrated system will generate a high volume of false positives, leading to disproportionate restrictions on low-risk individuals.\n\n**Base Rates and Asymmetric Errors:** The asymmetry between Type I (false positive) and Type II (false negative) errors is critical. Automatically restricting a defendant based on a prediction imposes liberty without due process. Conversely, failing to restrict a high-risk individual may allow harm. However, the current proposal prioritizes restriction over liberty, violating the presumption of innocence. The policy must shift from automatic restriction to a framework where high-risk predictions trigger *enhanced scrutiny* rather than immediate punitive measures.\n\n**Causation vs. Prediction:** The system predicts correlation, not causation. A defendant's risk score may reflect historical policing patterns rather than inherent dangerousness. Relying on prediction for deprivation of liberty ignores the causal mechanisms of recidivism and risks entrenching bias.\n\n**Feedback Loops and Distribution Shift:** Police deployment alters who is observed, creating selective labeling. If high-risk predictions lead to more arrests, the data becomes skewed, reinforcing the model's biases. Furthermore, economic and social conditions will shift, causing distribution drift that renders historical calibration obsolete. Defendants may also adapt their behavior to known features, further distorting the model.\n\n**Rights and Due Process:** Automatic restriction violates procedural due process. Defendants must have the right to contest the evidence against them.\n\n**Deployment and Evaluation Design:**\n1.  **Safeguards:** Implement a \"human-in-the-loop\" requirement. Predictions above the threshold must be reviewed by a neutral officer or judge who can access mitigating factors.\n2.  **Evaluation:** Conduct continuous monitoring for disparate impact and calibration drift. Use synthetic data to test robustness against distribution shifts.\n3.  **Stopping Conditions:** Halt deployment if the false positive rate exceeds a pre-defined ethical threshold or if significant distribution drift is detected that cannot be corrected.\n4.  **Revision:** Regularly retrain the model with fresh data and audit for strategic adaptation by defendants.\n\n**Conclusion:** The system should not be used for automatic restriction. It may serve as one input among many in a broader, rights-respecting assessment process, subject to rigorous oversight and the ability to stop or revise based on performance and equity metrics.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}

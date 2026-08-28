@@ -1,0 +1,171 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "qwen3.5-35b-a3b",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 71,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 14.8927,
+      "usage": {
+        "completion_tokens": 107,
+        "prompt_tokens": 164,
+        "total_tokens": 271
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 6,
+      "max_score": 14,
+      "elapsed_s": 19.8093,
+      "usage": {
+        "completion_tokens": 148,
+        "prompt_tokens": 195,
+        "total_tokens": 343
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"Score relative to the 70 cutoff\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) at the 70 cutoff\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"No precise manipulation of the running variable (score) around the cutoff\",\n    \"Potential outcomes vary smoothly through the cutoff in the absence of treatment\",\n    \"No other policy changes or confounding factors occur exactly at the cutoff\",\n    \"Monotonicity: The probability of participation does not decrease as the score increases across the cutoff\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": true,
+        "continuity": false,
+        "no_manipulation": true,
+        "exclusion": false,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 14.2397,
+      "usage": {
+        "completion_tokens": 101,
+        "prompt_tokens": 157,
+        "total_tokens": 258
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 64.3,\n  \"independence_caveat\": \"The calculation assumes that the errors of the two tests are conditionally independent given the true condition status, but in real life, systematic errors (such as cross-reactivity to a specific substance or operator bias) often cause test results to be correlated, making the second positive result less informative than the model predicts.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 24.082,
+      "usage": {
+        "completion_tokens": 184,
+        "prompt_tokens": 240,
+        "total_tokens": 424
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The orthogonal assay confirms the signaling reduction is a real biological effect, ruling out the assay artifact hypothesis (H3).\",\n    \"The occupancy assay shows no direct binding of X to R, ruling out the direct block hypothesis (H1).\",\n    \"The observation that R protein levels decrease while mRNA levels remain unchanged indicates post-translational regulation, consistent with protein degradation.\",\n    \"The proteasome inhibitor prevents both the loss of R protein and the signaling reduction, directly linking the effect to proteasomal activity.\"\n  ],\n  \"decisive_falsifier\": \"Treatment with X in cells lacking the proteasome (or using a proteasome-deficient mutant) still results in reduced signaling and decreased R protein levels.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 44.0422,
+      "usage": {
+        "completion_tokens": 354,
+        "prompt_tokens": 238,
+        "total_tokens": 592
+      },
+      "response": "Belief in the claim of secret diversion should remain low but slightly more plausible than before, as the evidence is mixed and heavily dependent on unverified assertions.\n\nSource dependence is critical here. S1, the primary accusation, lacks transactional detail. S2 relies entirely on S1, and S4 merely recycles S2 or S4, creating a circular chain of secondary reporting with no independent verification of the theft. Consequently, the accusation rests solely on the rival's uncorroborated diary entry.\n\nRegarding incentives, S1's author is a political rival, introducing a clear bias to discredit the mayor. While this does not prove the diary is false, it necessitates independent corroboration, which S2 and S4 fail to provide.\n\nS3 is the strongest evidence but does not establish diversion. It confirms funds were paid to named suppliers, including the cousin, and that the ledger balances. However, a balanced ledger only proves the money left the treasury; it does not prove the grain was delivered or that the cousin received a kickback. The fact that the cousin's price matched market rates weakens the inference of fraud but does not eliminate the possibility of collusion or inflated quality assessments.\n\nThe cousin relationship is an assumption of conflict of interest, not proof of guilt. While it raises the stakes for scrutiny, the matching price suggests the transaction was at least arm's length regarding cost.\n\nTo significantly alter the assessment, the highest-value next evidence would be independent delivery receipts or grain inventory logs from 1892. These would verify if the named suppliers actually delivered the grain quantities recorded in S3. Without proof of non-delivery, the claim of diversion remains an unproven allegation supported only by a biased source.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 16.2789,
+      "usage": {
+        "completion_tokens": 118,
+        "prompt_tokens": 210,
+        "total_tokens": 328
+      },
+      "response": "{\n  \"launch_now_ev\": 36.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 72.73,\n  \"launch_ev_given_negative\": -10.91,\n  \"test_policy_ev_after_cost\": 42.3,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 32.4788,
+      "usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 143,
+        "total_tokens": 403
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side' (P -> Q), we must check for cases that could falsify it (P and not-Q). \\n1. Card 'A': This is a vowel (P is true). We must turn it to verify the other side is an even number (Q). If it is odd, the rule is false.\\n2. Card '7': This is an odd number (not-Q). We must turn it to verify the other side is not a vowel (not-P). If it is a vowel, the rule is false.\\n3. Card 'D': This is a consonant (not-P). The rule only specifies what happens if there is a vowel; it says nothing about consonants. Therefore, the number on the other side does not affect the truth of the rule.\\n4. Card '4': This is an even number (Q). The rule states that vowels must have even numbers, but it does not state that even numbers must have vowels. The other side could be a vowel or a consonant without violating the rule. Thus,",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 74.653,
+      "usage": {
+        "completion_tokens": 620,
+        "prompt_tokens": 211,
+        "total_tokens": 831
+      },
+      "response": "**Policy Recommendation: Constrained Pilot with Human-in-the-Loop Oversight**\n\nThe city should **reject** the proposal to automatically impose restrictive supervision based solely on a fixed risk threshold. While the system is calibrated within demographic groups, calibration alone does not justify automated deprivation of liberty. Calibration ensures that among those predicted to be high-risk, the observed rate of reoffense matches that probability. However, it does not guarantee that the model has identified the *causes* of risk, nor does it account for the fact that severe offenses are rare (low base rates). In such contexts, even a well-calibrated model can generate a high volume of false positives, leading to the unjustified restriction of rights for many innocent individuals.\n\n**Analysis of Key Factors**\n\n*   **Causation vs. Prediction:** The model predicts correlation, not causation. Restrictive supervision based on prediction rather than proven dangerousness violates due process principles.\n*   **Selective Labels & Feedback Loops:** Police deployment changes who is observed. If the model directs more police to high-risk areas, those areas generate more arrests, reinforcing the model's belief that those areas are high-risk, regardless of actual crime rates. This creates a self-fulfilling prophecy.\n*   **Strategic Adaptation:** If defendants know the features used for prediction, they may alter their behavior to game the system, rendering the model obsolete or biased against those unable to adapt.\n*   **Distribution Shift:** Economic and social shifts will alter the relationship between historical features and future risk. A model trained on past data may fail catastrophically in a new environment.\n*   **Asymmetric Errors:** The cost of a false negative (missing a violent offender) is high, but the cost of a false positive (unnecessary restriction of liberty) is a fundamental rights violation. Automated systems cannot weigh these moral costs appropriately.\n\n**Deployment and Evaluation Design**\n\nInstead of automation, the system should be deployed as a **decision-support tool** under strict constraints:\n\n1.  **Human-in-the-Loop:** Predictions can inform, but a human officer or judge must make the final supervision decision, considering context the model cannot see.\n2.  **Dynamic Thresholds:** Risk thresholds must be adjusted based on the specific consequences of the decision, not a fixed universal number.\n3.  **Continuous Monitoring:**\n    *   **Fairness Audits:** Regularly test for disparate impact across demographics, even if the model is calibrated, to detect drift in error rates.\n    *   **Feedback Loop Detection:** Monitor arrest rates in high-prediction zones to detect if police deployment is skewing the data.\n    *   **Performance Drift:** Track prediction accuracy against actual outcomes as economic conditions shift.\n4.  **Stop Conditions:** The pilot must be immediately paused and revised if:\n    *   False positive rates exceed a pre-defined ethical limit.\n    *   Evidence emerges that the model is driving increased policing in specific communities without a corresponding drop in crime",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    }
+  ]
+}

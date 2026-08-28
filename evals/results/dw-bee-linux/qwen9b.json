@@ -1,0 +1,174 @@
+{
+  "suite": "work_quality_v1",
+  "model": "qwen3.5-9b",
+  "endpoint": "http://127.0.0.1:19438/v1/chat/completions",
+  "score": 77,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 8.0786,
+      "usage": {
+        "completion_tokens": 72,
+        "prompt_tokens": 195,
+        "total_tokens": 267
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 2,
+      "max_score": 10,
+      "elapsed_s": 8.7057,
+      "usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 287,
+        "total_tokens": 362
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71E104KA01L\",\n  \"add_new_sku\": true,\n  \"voltage_valid\": true,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 40.0\n}",
+      "grade_details": {
+        "selected": false,
+        "no_new_sku": false,
+        "voltage_invalid": false,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 17,
+      "max_score": 20,
+      "elapsed_s": 14.2032,
+      "usage": {
+        "completion_tokens": 132,
+        "prompt_tokens": 282,
+        "total_tokens": 414
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 6:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"short\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[0:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": false,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 37.882,
+      "usage": {
+        "completion_tokens": 379,
+        "prompt_tokens": 263,
+        "total_tokens": 642
+      },
+      "response": "1. **Incorrect CRC calculation scope**: The code calculates CRC only over the payload (`crc16(payload, len)`), but the protocol requires CRC to cover command + length + payload.  \n   *Correction*: Compute CRC over `rx[0]`, `rx[1]`, and the payload.\n\n2. **Unsafe memory access for CRC extraction**: The code reads CRC bytes at `rx[2 + len]` and `rx[3 + len]` without verifying that `rx_len` is sufficient to hold these bytes.  \n   *Correction*: Add a bounds check: `if (rx_len >= 2 + len + 2)`.\n\n3. **Missing authentication before state changes**: The code increments `sequence` and calls `parse_command` before verifying CRC or authentication.  \n   *Correction*: Move `sequence++` and `parse_command` to after successful CRC match and authentication.\n\n4. **Assignment instead of comparison in conditional**: The line `if (calc = got)` assigns `got` to `calc` instead of comparing them.  \n   *Correction*: Change to `if (calc == got)`.\n\n5. **Unsafe string printing of binary payload**: The code uses `printf(\"payload=%s\\n\", payload)` to print binary data as a string, which is incorrect and may cause undefined behavior.  \n   *Correction*: Print payload as hex bytes, e.g., `printf(\"payload=%02x%02x...\", payload[0], payload[1], ...)`.\n\n6. **Incomplete authentication function call**: The `authenticate` function is called with `payload` and `len`, but the protocol requires authentication to complete before any command parsing or state changes.  \n   *Correction*: Ensure `authenticate` is called before `parse_command` and `sequence++`, and verify it returns success.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 14,
+      "max_score": 18,
+      "elapsed_s": 50.9488,
+      "usage": {
+        "completion_tokens": 520,
+        "prompt_tokens": 167,
+        "total_tokens": 687
+      },
+      "response": "### Embedded Protocol Specification: Acquisition & Event Reporting\n\n#### 1. Core Design Principles\n*   **Reproducibility:** Every `SCAN` operation must include a deterministic seed and transform state snapshot to ensure identical output across runs without re-acquiring raw sensor data.\n*   **Auditability:** The protocol stores the *processed* frame (post-shear, post-filter) as the canonical record. Raw sensor data is not re-scanned; the processed artifact serves as the audit trail.\n*   **Race Avoidance:** Strict separation of concerns between the acquisition engine (producer) and the event dispatcher (consumer) prevents ownership conflicts.\n\n#### 2. Command & Responsibility Boundaries\n\n| Component | Responsibility | Input/Output |\n| :--- | :--- | :--- |\n| **Acquisition Engine** | Executes shear transform, applies filter chain, generates frame ID. | `SCAN_CMD` \u2192 `Frame_ID`, `Processed_Frame`, `State_Snapshot` |\n| **Event Dispatcher** | Monitors state changes; emits notifications only if `Event_Mode` is active. | `State_Change` \u2192 `Event_Packet` (if enabled) |\n| **Storage Layer** | Persists `Processed_Frame` and `State_Snapshot`. | `Write_Frame` \u2192 `Disk/Buffer` |\n\n#### 3. Frame & Source Identity\n*   **Frame ID:** Unique identifier generated per `SCAN` execution, incorporating timestamp and seed hash.\n*   **Source Identity:** Explicitly tagged as `Processed_Artifact` (not `Raw_Sensor`).\n*   **State Snapshot:** Includes current shear parameters and filter coefficients at the moment of processing, enabling exact reproduction.\n\n#### 4. Behavioral Modes\n\n**A. Continuous Acquisition**\n*   **Trigger:** Auto-initiated by system timer or external start command.\n*   **Loop:** `SCAN` \u2192 `Process` \u2192 `Store` \u2192 `Wait`.\n*   **Constraint:** Cannot be interrupted mid-cycle; new cycles begin only after previous frame is fully stored.\n\n**B. On-Demand SCAN**\n*   **Trigger:** Explicit `SCAN_CMD` issued while continuous acquisition is active.\n*   **Behavior:** Inserts a high-priority cycle into the continuous stream.\n*   **Guarantee:** Ensures immediate processing of the requested frame without waiting for the next continuous cycle.\n\n#### 5. Event Reporting Relationship\n*   **Dependency:** Event emission is conditional on `Event_Mode` flag.\n*",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": false,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": true,
+        "event_independent": false,
+        "conflict_rejected_or_queued": true
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 246.5828,
+      "usage": {
+        "completion_tokens": 101,
+        "prompt_tokens": 35416,
+        "total_tokens": 35517
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 13.0133,
+      "usage": {
+        "completion_tokens": 117,
+        "prompt_tokens": 167,
+        "total_tokens": 284
+      },
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "elapsed_s": 9.9313,
+      "usage": {
+        "completion_tokens": 93,
+        "prompt_tokens": 186,
+        "total_tokens": 279
+      },
+      "response": "```json\n{\n  \"data_bits_per_sample\": 24,\n  \"payload_bit_rate\": 48000,\n  \"wire_time_ms_per_second\": 0.3,\n  \"chip_select_overhead_ms_per_second\": 12.0,\n  \"total_bus_utilization_percent\": 15.0,\n  \"remaining_margin_percent\": 85.0\n}\n```",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": false,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}
