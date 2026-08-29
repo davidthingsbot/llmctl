@@ -1,0 +1,195 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "gpt-oss-20b",
+  "endpoint": "http://127.0.0.1:19440/v1/chat/completions",
+  "score": 55,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 11.7156,
+      "usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 212,
+        "total_tokens": 472,
+        "prompt_tokens_details": {
+          "cached_tokens": 60
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 14.2892,
+      "usage": {
+        "completion_tokens": 334,
+        "prompt_tokens": 246,
+        "total_tokens": 580,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "```json\n{\n  \"design\": \"Fuzzy Regression Discontinuity Design (RD)\",\n  \"instrument\": \"Eligibility score at the cutoff of 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for individuals whose participation is induced by being just above the cutoff (compliers)\",\n  \"global_generalization\": \"No \u2013 the identified effect applies only to the local population of compliers near the cutoff and does not automatically generalize to all participants or non\u2011participants.\",\n  \"assumptions\": [\n    \"Continuity of the expected potential outcomes (both treated and untreated) in the score around the cutoff (no jump in outcomes absent treatment).\",\n    \"No precise manipulation of the eligibility score around the cutoff (the score distribution is smooth).\",\n    \"The cutoff is the only policy change affecting participation at that threshold.\",\n    \"Exclusion restriction: the cutoff affects employment only through its effect on program participation.\",\n    \"Monotonicity: individuals cannot be induced to participate by being below the cutoff (no defiers).\"\n  ]\n}\n```",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": false,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 12.0889,
+      "usage": {
+        "completion_tokens": 280,
+        "prompt_tokens": 212,
+        "total_tokens": 492,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 77.3",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": false,
+        "correlated_errors": false
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 10.0256,
+      "usage": {
+        "completion_tokens": 225,
+        "prompt_tokens": 288,
+        "total_tokens": 513,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reduces signaling in an orthogonal assay, ruling out assay artifact (H3).\",\n    \"A validated occupancy assay shows no binding of X to R, making direct blocking (H1) unlikely.\",\n    \"R protein levels fall after X treatment while R mRNA remains unchanged, indicating post\u2011translational loss.\",\n    \"A proteasome inhibitor prevents both the decline in R protein and the loss of signaling, directly linking the effect to proteasomal degradation.\"\n  ],\n  \"decisive_falsifier\": \"If treatment with a proteasome inhibitor fails to restore R protein levels and signaling activity in the presence of X, the proteasomal degradation hypothesis would be decisively undermined.\"\n}\n```",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 19.3086,
+      "usage": {
+        "completion_tokens": 460,
+        "prompt_tokens": 280,
+        "total_tokens": 740,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "**Assessment of the claim that the mayor secretly diverted famine relief in 1892**\n\n| Source | Type | Reliability | Dependence | What it shows |\n|--------|------|-------------|------------|---------------|\n| **S1** | Authenticated contemporaneous diary by a political rival | High (authentic, contemporaneous) | Independent of other sources | Accuses the mayor but gives no transaction details |\n| **S2** | 1920 newspaper article citing only S1 | Medium (secondary, 28\u202fyears later) | Dependent on S1 | Repeats the accusation, adds no new evidence |\n| **S3** | Treasury ledger (independently preserved) | Very high (official, reconciled totals) | Independent of S1/S2 | Shows all relief funds were paid to named grain suppliers; no evidence of diversion |\n| **S4** | Modern websites citing S2 or each other | Low (no primary material) | Dependent on S2 | No new information |\n| **Cousin evidence** | One supplier in S3 is the mayor\u2019s cousin; price matches other suppliers | Neutral | Independent of S1/S2 | Does not indicate misallocation; price parity suggests normal transaction |\n\n**Reasoning**\n\n1. **Source dependence**  \n   - S2 and S4 are entirely derivative of S1; they cannot independently confirm the accusation.  \n   - S3 is independent and authoritative; it directly records the flow of funds.\n\n2. **Incentives**  \n   - S1\u2019s author had a political motive to tarnish the mayor, potentially biasing the accusation.  \n   - S3, being an official ledger, has no incentive to misrepresent the mayor\u2019s actions.\n\n3. **What S3 establishes**  \n   - The ledger\u2019s totals reconcile, indicating no missing funds.  \n   - All relief money was paid to named grain suppliers; no entry shows diversion to the mayor or his associates.  \n   - Therefore, S3 does **not** support the claim of diversion.\n\n4. **Cousin evidence**  \n   - The cousin\u2019s inclusion as a supplier is neutral; the price parity with other suppliers suggests a standard",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": false,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": false,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 14.6001,
+      "usage": {
+        "completion_tokens": 340,
+        "prompt_tokens": 260,
+        "total_tokens": 600,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": false,
+        "good_given_positive": false,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": false,
+        "negative_action": false,
+        "best_policy": false
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 11.2293,
+      "usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 198,
+        "total_tokens": 458,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule \\\"If a card has a vowel on one side, then it has an even number on the other side,\\\" we must check cards that could potentially violate it. The card showing \\\"A\\\" is a vowel; turning it verifies whether the opposite side is an even number, as required. The card showing \\\"7\\\" is an odd number; turning it checks whether the opposite side is a vowel, which would falsify the rule. The card showing \\\"D\\\" is a consonant, so its opposite side can be any number without affecting the rule. The card showing \\\"4\\\" is an even number, and the rule imposes no restriction on what letter can be on its other",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 25.6868,
+      "usage": {
+        "completion_tokens": 620,
+        "prompt_tokens": 263,
+        "total_tokens": 883,
+        "prompt_tokens_details": {
+          "cached_tokens": 93
+        }
+      },
+      "response": "**Policy Recommendation (\u2264400\u202fwords)**  \n\n**1.  Calibration is a *statistical* property, not a *causal* guarantee.**  \nA model that is calibrated within demographic groups means that, among defendants who the model labels \u201chigh\u2011risk,\u201d the observed proportion of severe offenses matches the predicted probability *within each group*.  Calibration does **not** imply that the model\u2019s predictions are accurate for any individual, nor that the features it uses are causally linked to future violence.  Because severe offenses are rare, even a well\u2011calibrated model can have a high false\u2011positive rate, especially when the base rate of violence is low or fluctuates.\n\n**2.  Base\u2011rate and asymmetric\u2011error considerations.**  \nThe cost of a false negative (missing a future violent offender) is far higher than a false positive (unnecessarily restrictive supervision).  However, the policy must also respect civil\u2011rights and avoid disproportionate impact on minority groups.  A fixed threshold that maximizes overall accuracy will likely raise false\u2011positive rates for groups with lower base rates, even if calibration holds.  Therefore, the threshold should be *group\u2011specific* and tuned to balance the two error types while respecting legal standards for equal protection.\n\n**3.  Causation vs. prediction.**  \nFeatures that are predictive but not causal (e.g., prior arrests, neighborhood crime rates) can be manipulated by defendants or by policing practices.  Relying on such features risks creating a *feedback loop*: increased surveillance of a group inflates its observed risk, which the model then uses to justify further surveillance.  The policy must therefore restrict the model\u2019s use to *non\u2011strategic* features (e.g., demographic data, prior convictions that are hard to game) and exclude features that are likely to be altered by defendants or by policing decisions.\n\n**4.  Rights, due process, and transparency.**  \nAutomatic restrictive supervision without human review violates procedural due\u2011process rights.  The policy requires a *human\u2011in\u2011the\u2011loop* review for every case where the model\u2019s risk exceeds the threshold.  Reviewers must have access to the model\u2019s decision rationale, the evidence used, and the option to override the recommendation.  An independent audit board should monitor the system\u2019s impact on different demographic groups.\n\n**5.  Selective labels, feedback loops, and distribution shift.**  \nBecause only those who are observed and arrested contribute to the training data, the model learns from a biased sample.  To mitigate this, the city should periodically re\u2011train the model on *augmented* data that includes unobserved defendants (e.g., from court records) and use *inverse\u2011propensity weighting* to correct for selection bias.  Continuous monitoring of key metrics (base rate, false\u2011positive/negative rates, demographic parity) will detect distribution shift and trigger retraining or policy adjustment.\n\n**Concrete Deployment & Saf",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}

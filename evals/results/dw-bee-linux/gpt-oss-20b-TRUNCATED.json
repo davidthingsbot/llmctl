@@ -1,0 +1,183 @@
+{
+  "suite": "work_quality_v1",
+  "model": "gpt-oss-20b",
+  "endpoint": "http://127.0.0.1:19440/v1/chat/completions",
+  "score": 66,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 6.5988,
+      "usage": {
+        "completion_tokens": 130,
+        "prompt_tokens": 247,
+        "total_tokens": 377,
+        "prompt_tokens_details": {
+          "cached_tokens": 60
+        }
+      },
+      "response": "{\"scan_action\":\"transduce_only\",\"transform_command\":\"APPLY_TRANSFORM\",\"retained_read_command\":\"READ_FRAME\",\"crc_scope\":\"outer_packet\",\"acquisition_conflict\":\"reject_on_demand_scan\",\"event_mode_relation\":\"independent\"}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 6,
+      "max_score": 10,
+      "elapsed_s": 5.728,
+      "usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 302,
+        "total_tokens": 417,
+        "prompt_tokens_details": {
+          "cached_tokens": 95
+        }
+      },
+      "response": "{\"selected_mpn\":\"GRM21BR71H104KA01L\",\"add_new_sku\":false,\"voltage_valid\":true,\"annual_unit_savings_usd\":0,\"setup_cost_usd\":0}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": false,
+        "savings_16": false,
+        "setup_40": false
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 9.1303,
+      "usage": {
+        "completion_tokens": 200,
+        "prompt_tokens": 321,
+        "total_tokens": 521,
+        "prompt_tokens_details": {
+          "cached_tokens": 95
+        }
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"frame too short\")\n    frame_type = frame[0]\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_len = 5 + payload_len\n    if len(frame) != expected_len:\n        raise ValueError(\"invalid frame length\")\n    payload = frame[3:3 + payload_len]\n    expected_crc = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual_crc = crc16(frame[:3 + payload_len])\n    if actual_crc != expected_crc:\n        raise ValueError(\"crc mismatch\")\n    return frame_type, payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 13.8336,
+      "usage": {
+        "completion_tokens": 319,
+        "prompt_tokens": 301,
+        "total_tokens": 620,
+        "prompt_tokens_details": {
+          "cached_tokens": 95
+        }
+      },
+      "response": "1. **Incorrect CRC calculation** \u2013 `crc16` is called on `payload` only, but the CRC must cover the command, length, and payload.  \n   *Fix:* `uint16_t calc = crc16(rx, 2 + len);`\n\n2. **Wrong CRC comparison operator** \u2013 `if (calc = got)` assigns `got` to `calc` instead of comparing.  \n   *Fix:* `if (calc == got)`\n\n3. **Authentication performed after command parsing** \u2013 The spec requires authentication before any command is parsed or state changes.  \n   *Fix:* Move `authenticate(payload, len);` before `parse_command(...)` and guard the parse with the authentication result.\n\n4. **Unbounded payload copy** \u2013 `payload` is 32 bytes but `len` can be larger, causing a buffer overflow.  \n   *Fix:* `if (len > sizeof(payload)) return;` or use a dynamic buffer.\n\n5. **Missing bounds check on `rx_len`** \u2013 The function assumes `rx_len` is at least `2 + len + 2`.  \n   *Fix:* `if (rx_len < 2 + len + 2) return;`\n\n6. **Unnecessary global `sequence++`** \u2013 Incrementing `sequence` before verifying the packet can lead to sequence drift on corrupted packets.  \n   *Fix:* Increment `sequence` only after successful CRC check and authentication.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 12,
+      "max_score": 18,
+      "elapsed_s": 21.7263,
+      "usage": {
+        "completion_tokens": 520,
+        "prompt_tokens": 224,
+        "total_tokens": 744,
+        "prompt_tokens_details": {
+          "cached_tokens": 95
+        }
+      },
+      "response": "**Embedded Acquisition Protocol \u2013 Revised Design**\n\n| Element | Specification |\n|---------|---------------|\n| **Command Set** | 1. `START_ACQ` \u2013 begin continuous acquisition. 2. `STOP_ACQ` \u2013 halt continuous acquisition. 3. `SCAN_FRAME` \u2013 acquire a single frame (on\u2011demand). 4. `GET_FRAME <id>` \u2013 retrieve a stored frame. 5. `SET_MODE <mode>` \u2013 set acquisition mode (continuous / on\u2011demand). 6. `SET_EVENT <enable>` \u2013 enable/disable event reporting. |\n| **Frame Identity** | Each frame is assigned a monotonically increasing **Frame ID** (`FID`) at acquisition time. The frame payload contains: <br>\u2022 `FID` <br>\u2022 `Timestamp` (system time) <br>\u2022 `SensorData` (raw) <br>\u2022 `ShearParams` (current transform) <br>\u2022 `Checksum` |\n| **Acquisition Flow** | 1. **Continuous Mode** (`SET_MODE continuous`):<br>\u2003\u2022 `START_ACQ` triggers a background task that: <br>\u2003\u2003a. Polls sensor \u2192 raw frame. <br>\u2003\u2003b. Applies current shear transform \u2192 `TransformedData`. <br>\u2003\u2003c. Stores **both** raw and transformed frames in non\u2011volatile memory, indexed by `FID`. <br>\u2003\u2003d. If `EVENT` enabled, emits `FRAME_READY(FID)` event. <br>\u2003\u2022 `STOP_ACQ` stops the background task. <br>2. **On\u2011Demand Mode** (`SET_MODE on\u2011demand`):<br>\u2003\u2022 `SCAN_FRAME` performs the same steps as above but only for the requested frame, without altering continuous acquisition state. <br>\u2003\u2022 If continuous acquisition is active, `SCAN_FRAME` runs in a separate priority\u2011lower task to avoid blocking the acquisition loop. |\n| **Event Reporting** | - `FRAME_READY(FID)` is sent only when `SET_EVENT enable` is active. <br>- Event payload includes `FID` and a flag indicating whether the frame was captured in continuous or on\u2011demand mode. <br>- No events are generated for `GET_FRAME` requests. |\n| **Ownership & Races** | - The acquisition task holds exclusive write access to the frame buffer. <br>- `SCAN_FRAME` obtains a",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": false,
+        "acquisition_ownership": false,
+        "event_independent": true,
+        "conflict_rejected_or_queued": false
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 0,
+      "max_score": 16,
+      "elapsed_s": 229.6338,
+      "usage": {
+        "completion_tokens": 220,
+        "prompt_tokens": 30575,
+        "total_tokens": 30795,
+        "prompt_tokens_details": {
+          "cached_tokens": 95
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "project": false,
+        "revision": false,
+        "connector": false,
+        "pullup_ohms": false,
+        "max_retries": false,
+        "crc_polynomial": false,
+        "calibration_temperature_c": false,
+        "owner": false
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 7.6563,
+      "usage": {
+        "completion_tokens": 159,
+        "prompt_tokens": 220,
+        "total_tokens": 379,
+        "prompt_tokens_details": {
+          "cached_tokens": 95
+        }
+      },
+      "response": "```json\n{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactor the parser\",\n    \"Add telemetry\",\n    \"Change error codes\",\n    \"Update every documentation page\",\n    \"Rename the validation API\"\n  ]\n}\n```",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "error": "HTTPError: HTTP Error 500: Internal Server Error",
+      "response": "",
+      "grade_details": {}
+    }
+  ]
+}

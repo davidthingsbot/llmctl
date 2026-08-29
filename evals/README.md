@@ -273,6 +273,119 @@ system RAM, not out of a separate pool. Start-bench generation fell from
 worth it, but note that unlike a discrete-GPU box, raising context here competes
 directly with CPU memory.
 
+## dw-bee-linux — llama.cpp rebuild, 2026-08-29
+
+The March build (`451ef08`) was replaced with **b10276 / commit
+`6ea215d171fd31df943bf1ac8227129f2b963160`** — the same commit dw-x1pro-linux
+validated — built Release + Vulkan + `GGML_NATIVE` + OpenMP at
+`/home/david/work/llama.cpp/build-vk`. **16617/16617 Vulkan backend tests
+passed**, matching x1pro's figure exactly.
+
+**A claim in the earlier survey was wrong and is corrected here.** The March
+build was said to be unable to load Qwen3.6 or GLM-4.7. It was not: b10276 has
+no `qwen36` architecture either. Qwen GGUFs reuse architecture ids — the local
+Qwen3.5-35B-A3B file declares `general.architecture = qwen35moe` — and
+`glm4moe` was already present in March. Architecture strings are a poor proxy
+for model support. What the rebuild genuinely adds is `deepseek4`,
+`deepseek32`, `gemma4`, `mistral4`, `minimax-m3`, `granite-4.0/4.1`,
+`hunyuan-vl`, `glm-dsa` and `step35`. The DeepSeek-V4 gate was real; the
+Qwen3.6 gate was not.
+
+**Build trap.** `find_package(SPIRV-Headers CONFIG REQUIRED)` succeeds but never
+propagates its include directory, so `ggml-vulkan.cpp` fails with 36
+`'spv' has not been declared` errors on any machine without distro SPIR-V
+headers in `/usr/include`. With no passwordless sudo here, SPIRV-Headers
+`vulkan-sdk-1.4.309.0` is vendored at `/home/david/work/.local-deps` and the
+build needs `CPLUS_INCLUDE_PATH` pointing at it.
+
+### `-ngl` must be tuned at production context, not benchmark context
+
+Same model, same settings, old build vs new at `-ngl 30`:
+
+| | old `451ef08` | new `b10276` |
+|---|---:|---:|
+| pp2048 | 197.63 | 171.27 |
+| tg128 | 8.87 | **13.11** |
+
+That prefill loss is not a regression, it is a stale tuning. Sweeping `-ngl` on
+the new build rises monotonically on **both** axes:
+
+| `-ngl` | 0 | 20 | 30 | 36 | 38 |
+|---|---:|---:|---:|---:|---:|
+| pp2048 | 66.14 | 132.80 | 170.87 | 214.25 | **230.08** |
+| tg128 | 8.57 | 11.14 | 13.09 | 17.93 | **18.99** |
+
+At `-ngl 38` the new build beats the old on prefill *and* more than doubles
+generation. **`-ngl 30` is nonetheless still shipped**, because that sweep ran
+at pp2048 where KV is negligible. At the production 131072 context KV costs
+2.5 GiB, so 38 of 40 layers plus KV plus compute needs ~18.3 GiB against a
+17.59 GiB heap and will not fit. The re-tune has to be done at real context.
+
+## dw-bee-linux — gpt-oss-20b evaluated and rejected as default, 2026-08-29
+
+Selected as the size-down candidate on a single criterion: it is the only model
+in its class that fits the 17.59 GiB Vulkan heap **whole**. Its MoE weights are
+natively MXFP4 and barely re-quantize, so every quant from Q2_K to Q8_0 lands
+between 10.68 and 11.27 GiB — Q8_0 is taken because there is no reason to take
+less. Only 12 of its 24 layers carry real KV (24 KiB/token), so 131072 context
+costs 3.00 GiB at f16. Measured resident: **14.18 GiB, nothing spilled**.
+
+| | qwen35b (35B-A3B IQ4_NL) | gpt-oss-20b (Q8_0) |
+|---|---:|---:|
+| Prefill | 179.0 t/s | **341-345 t/s** |
+| Generation | 10.5 t/s | **25.4-28.2 t/s** |
+| Weights | 16.59 GiB, partial offload | **11.27 GiB, full offload** |
+
+### The recorded scores are artifacts — see `*-TRUNCATED.json`
+
+gpt-oss **always** emits a harmony analysis channel. There is no off switch:
+`--reasoning off` is a no-op (it governs extraction, not generation) and
+`reasoning_effort: "none"` behaves as `"low"`. Server-side
+`--chat-template-kwargs '{"reasoning_effort":"low"}'` halves the overhead and is
+not overridden by a request-level `enable_thinking`, so the suites ran
+unmodified — but their per-task `max_tokens` are sized for thinking-disabled
+models. Reasoning consumed the budget and the answer was never written.
+
+| Task | Budget | Recorded | At budget 1500 | Tokens used |
+|---|---:|---:|---:|---:|
+| `long_context_retrieval` | 220 | 0/16 | **16/16** | 311 |
+| `value_of_information` | 340 | 0/12 | **9/12** | 449 |
+| `bayesian_reasoning` | 280 | 0/12 | **8/12** | 309 |
+
+`acquisition_timing`'s HTTP 500 is the same cause: truncation mid-channel makes
+llama.cpp's harmony parser reject the output with *"does not match the expected
+peg-native format"*. Corrected totals are roughly **82/100 work and 72/100
+reasoning** against qwen35b's 85/71 — but stitched from per-task reruns, not a
+recorded single pass. **This is a harness limitation, not a model defect:** any
+reasoning model hits it, and the suites need a documented max-tokens multiplier
+before one can be scored.
+
+### Two real tasks found what the rubric could not
+
+Given an actual sizing question from this box — does a 16.59 GiB model fit a
+17.59 GiB heap at 131072 context — it **inverted the meaning of `-ngl`**, read
+"offload" as *away from* the GPU, omitted the weights from the GPU budget
+entirely, concluded 3.50 GiB, and answered **yes to both questions**, explicitly
+recommending in production the `-ngl 38` setting that cannot fit. It invented a
+supporting mechanism about streaming 16.6 GiB of weights per forward pass.
+
+On a review of `conf_is_safe`, the credential guard in `llmctl`, it found two
+real gaps (`bearer` and `private_key` are absent from the keyword list;
+`user:pass` with no `@` evades the URL pattern) but claimed `access_token`,
+`client_secret`, `api-key-file` and `password_file` were all missed when the
+regex catches every one — the pattern anchors on `[^[:alnum:]]` before the
+keyword and carries an explicit `([-_]?file)?` group. It also reported a syntax
+error in a function that was merely truncated in the prompt.
+
+**Verdict: keep, do not promote.** Excellent for bounded checkable work — 20/20
+on executable code repair, 16/16 on retrieval, at 2.5x the incumbent's
+generation speed in two thirds of the memory. Not trustworthy for unsupervised
+engineering judgement. This is the deterministic-rubric overstatement the
+DW-X1Pro and DW-ASUS-LINUX sections both document, for a third time: the rubric
+put it level with the 35B, and two real tasks did not. It is also the strongest
+argument yet for giving this machine the blind open-response review the other
+two have.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.
