@@ -386,6 +386,66 @@ put it level with the 35B, and two real tasks did not. It is also the strongest
 argument yet for giving this machine the blind open-response review the other
 two have.
 
+## dw-bee-linux — Qwen3.6-35B-A3B tested and rejected, 2026-08-29
+
+The generational upgrade, tested at the one quant this box can actually run.
+Every variable except the model generation is held equal: same architecture
+family (35B total / 3B active), same quant format (UD-IQ4_NL), same size class
+(16.81 vs 16.59 GiB), same `-ngl 30`, same 131072 context, same b10276 build,
+same day.
+
+| | Qwen3.**5** IQ4_NL (incumbent) | Qwen3.**6** IQ4_NL | Qwen3.6 Q5_K_M on x1pro |
+|---|---:|---:|---:|
+| Work quality | **85/100** | 81/100 | 88/100 |
+| Deep reasoning | **71/100** | 61/100 | 69/100 |
+| Prefill | 169-179 t/s | 150.6 t/s | — |
+| Generation | 11-12.3 t/s | 12.2 t/s | — |
+
+Only the middle column is a valid comparison; the x1pro figure is a different
+machine, quant and offload regime, per the rule stated for the tables above.
+
+| Work task | 3.5 | 3.6 | | Reasoning task | 3.5 | 3.6 |
+|---|---:|---:|---|---|---:|---:|
+| Strict protocol JSON | 12/12 | 12/12 | | Logic grid | 0/12 | 0/12 |
+| BOM consolidation | **9/10** | **3/10** | | Causal inference | 6/14 | 6/14 |
+| Executable code repair | 20/20 | 20/20 | | Bayesian updating | **8/12** | **4/12** |
+| Embedded C review | 8/12 | **10/12** | | Hypothesis discrim. | **12/12** | 10/12 |
+| Protocol architecture | 14/18 | 14/18 | | Adversarial epist. | 14/14 | 14/14 |
+| 35K retrieval | 16/16 | 16/16 | | Value of information | **8/12** | 6/12 |
+| Scope control | 6/6 | 6/6 | | Wason selection | 9/10 | 9/10 |
+| Acquisition timing | 0/6 | 0/6 | | Complex policy | **14/14** | 12/14 |
+
+### Interpretation
+
+- **The newer generation is worse here, on both suites.** Reasoning loses four
+  tasks and wins none. Work loses one task and wins one.
+- **The work loss is a self-contradiction, not ignorance.** On
+  `bom_consolidation` Qwen3.6 returned `voltage_valid: false` — correctly
+  judging the 25 V candidate invalid for a rail with a verified 36 V transient
+  — and then selected that exact part anyway with `add_new_sku: true`, while
+  reporting `annual_unit_savings_usd` as 16000 instead of 16.00, a 1000x error.
+  This is the internal-inconsistency failure the blind judges caught in
+  Mistral-Small-4; here the deterministic rubric happened to catch it.
+- **The incumbent's 9/10 understates it.** Its lost point was
+  `setup_cost_usd: 0.0`, which is defensible: it declined the new SKU, so the
+  $40 qualification cost is never incurred. The rubric wants 40 regardless.
+  Worth fixing if that task is ever revised.
+- **The likely cause is quant sensitivity, not a weak model.** The same
+  Qwen3.6-35B-A3B scores 88/69 at UD-Q5_K_M on dw-x1pro-linux, fully offloaded
+  with q8_0 KV. It drops 7 points of work quality across the Q5 -> IQ4_NL gap
+  while Qwen3.5 holds 85 at IQ4_NL. **This box cannot close that gap:** Q5_K_M
+  is 24.64 GiB against a 17.59 GiB Vulkan heap and 27.18 GiB MemTotal, and does
+  not fit at any `-ngl`.
+- **`general.architecture = qwen35moe`.** Qwen reuses architecture ids across
+  generations, confirming the correction recorded above: the March build would
+  have loaded this model all along, and there never was a Qwen3.6 arch gate.
+- Speed is indistinguishable from the incumbent at matched quant and `-ngl`, as
+  expected for identical active-parameter count.
+
+**Qwen3.5-35B-A3B IQ4_NL remains the default.** Three candidates have now been
+measured against it on this box — the 9B, gpt-oss-20b and Qwen3.6 — and none
+displaced it.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.

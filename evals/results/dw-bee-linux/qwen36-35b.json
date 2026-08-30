@@ -1,0 +1,198 @@
+{
+  "suite": "work_quality_v1",
+  "model": "qwen3.6-35b-a3b",
+  "endpoint": "http://127.0.0.1:19441/v1/chat/completions",
+  "score": 81,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 9.9983,
+      "usage": {
+        "completion_tokens": 72,
+        "prompt_tokens": 195,
+        "total_tokens": 267,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 3,
+      "max_score": 10,
+      "elapsed_s": 9.1341,
+      "usage": {
+        "completion_tokens": 74,
+        "prompt_tokens": 287,
+        "total_tokens": 361,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71E104KA01L\",\n  \"add_new_sku\": true,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16000,\n  \"setup_cost_usd\": 40\n}",
+      "grade_details": {
+        "selected": false,
+        "no_new_sku": false,
+        "voltage_invalid": true,
+        "savings_16": false,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 14.739,
+      "usage": {
+        "completion_tokens": 147,
+        "prompt_tokens": 282,
+        "total_tokens": 429,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_len = 5 + payload_len\n    if len(frame) != expected_len:\n        raise ValueError(\"invalid length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(bytes([frame[0]]) + frame[1:3] + payload)\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 35.9797,
+      "usage": {
+        "completion_tokens": 420,
+        "prompt_tokens": 263,
+        "total_tokens": 683,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "1. **Missing Bounds Checking**: The function does not verify that `rx_len` is sufficient to contain the header (2 bytes), payload (`len` bytes), and CRC (2 bytes). This leads to out-of-bounds memory reads if the input is truncated.\n   *Correction*: Add a check: `if (rx_len < 2 + len + 2) return;` at the start of the function.\n\n2. **Incorrect CRC Calculation Scope**: The CRC is calculated only over the payload (`crc16(payload, len)`), but the protocol states the CRC covers \"command + length + payload\".\n   *Correction*: Calculate the CRC over the command byte, length byte, and payload: `crc16(rx, 2 + len)`.\n\n3. **Assignment Instead of Comparison**: The condition `if (calc = got)` uses the assignment operator `=` instead of the equality operator `==`. This always assigns `got` to `calc` and evaluates to true (unless `got` is 0), causing incorrect logic flow.\n   *Correction*: Change to `if (calc == got)`.\n\n4. **Missing Authentication Check Before Parsing**: The function calls `parse_command` before verifying the CRC and completing authentication. The protocol requires authentication to complete before command parsing or state changes.\n   *Correction*: Move `parse_command` inside the `if (calc == got)` block, after CRC verification and before or after `authenticate`.\n\n5. **Missing Authentication Result Check**: The function calls `authenticate` but does not check its return value (or side effects) before proceeding. If authentication fails, the payload should not be processed or printed.\n   *Correction*: Check the return value of `authenticate` and only print/process the payload if authentication succeeds.\n\n6. **Unsafe String Printing**: `printf(\"payload=%s\\n\", payload)` treats the payload as a null-terminated string. The payload is a raw byte array of length `len` and may contain non-printable characters or lack a null terminator",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": false,
+        "parse_before_auth": true,
+        "unsafe_string_print": true
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 14,
+      "max_score": 18,
+      "elapsed_s": 43.2579,
+      "usage": {
+        "completion_tokens": 520,
+        "prompt_tokens": 167,
+        "total_tokens": 687,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "### Revised Embedded Protocol Specification: Sensor Acquisition & Processing\n\n#### 1. Architectural Principle: Separation of Concerns\nThe proposed monolithic `SCAN` command violates the Single Responsibility Principle and introduces non-deterministic state coupling. The revised design separates **Acquisition** (hardware interaction) from **Processing** (algorithmic transformation) and **Reporting** (event emission).\n\n*   **Acquisition Layer**: Responsible for deterministic frame capture and storage.\n*   **Processing Layer**: Applies transforms and filters as a post-processing step.\n*   **Event Layer**: Decoupled from acquisition; triggered by state changes in processed data.\n\n#### 2. Command/Responsibility Boundaries\n\n| Command | Responsibility | Atomicity | Side Effects |\n| :--- | :--- | :--- | :--- |\n| `ACQUIRE` | Triggers sensor hardware, captures raw frame, stores raw frame in persistent buffer. | Atomic | None (except internal sensor state). |\n| `PROCESS` | Applies shear transform, runs filters on specified frame ID, updates internal state. | Deterministic | Updates internal filter state; does **not** overwrite raw data. |\n| `REPORT` | Emits event packets if filter state changed since last `REPORT`. | Idempotent | Clears \"dirty\" flag for processed frame. |\n| `DOWNLOAD` | Retrieves raw frame data for audit. | Read-only | No state change. |\n\n#### 3. Frame & Source Identity\n*   **Frame ID**: Each acquired frame is assigned a monotonically increasing, unique 64-bit `FrameID`.\n*   **Source Identity**: Each sensor module has a fixed `SensorID`.\n*   **Metadata**: Every frame includes `Timestamp`, `SensorID`, `FrameID`, and `RawChecksum`.\n*   **Transform State**: The current shear transform parameters are stored in a separate `TransformConfig` register, not embedded in the frame. This allows re-processing with different transforms without re-acquiring.\n\n#### 4. Continuous vs. On-Demand Behavior\n\n**Continuous Acquisition Mode:**\n*   The sensor hardware operates in a streaming mode, writing raw frames to a circular buffer.\n*   `ACQUIRE` is implicit and periodic.\n*   **No processing occurs during acquisition.** Processing is triggered explicitly via `PROCESS` commands or a background task triggered by a \"frame available\" interrupt.\n*   **Auditability**: Raw frames are always preserved in the circular buffer until overwritten or explicitly downloaded.\n\n",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": false,
+        "event_independent": true,
+        "conflict_rejected_or_queued": false
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 322.0948,
+      "usage": {
+        "completion_tokens": 101,
+        "prompt_tokens": 35416,
+        "total_tokens": 35517,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 11.9579,
+      "usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 167,
+        "total_tokens": 282,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Fix typo 'invaild frame' to 'invalid frame' in src/validator.py and add regression assertion in tests/test_validator.py\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "elapsed_s": 9.4008,
+      "usage": {
+        "completion_tokens": 85,
+        "prompt_tokens": 186,
+        "total_tokens": 271,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n\"data_bits_per_sample\": 24,\n\"payload_bit_rate\": 384000,\n\"wire_time_ms_per_second\": 1.68,\n\"chip_select_overhead_ms_per_second\": 19.2,\n\"total_bus_utilization_percent\": 12.96,\n\"remaining_margin_percent\": 87.04\n}",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": false,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}
