@@ -337,6 +337,15 @@ def main():
              "message.reasoning_content. Off by default so recorded results stay "
              "comparable",
     )
+    parser.add_argument(
+        "--token-budget-scale", type=float, default=1.0, metavar="N",
+        help="multiply every task's max_tokens by N. The budgets are sized for a "
+             "direct answer; a model that thinks first spends them on the thinking "
+             "and is cut off before answering, scoring 0 for a mechanical reason. "
+             "Raising them makes results incomparable with those recorded at 1.0, "
+             "so a thinking-on run must be paired with a thinking-off run at the "
+             "same scale",
+    )
     args = parser.parse_args()
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     results = []
@@ -345,7 +354,8 @@ def main():
         _score, maximum, _details = grader("")
         try:
             text, usage, elapsed = request(
-                args.url, key, args.model, prompt, max_tokens,
+                args.url, key, args.model, prompt,
+                max(1, round(max_tokens * args.token_budget_scale)),
                 template_kwargs=not args.no_template_kwargs,
                 strip_reasoning=args.strip_reasoning,
             )

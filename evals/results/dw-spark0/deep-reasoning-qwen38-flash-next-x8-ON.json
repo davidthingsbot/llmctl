@@ -1,0 +1,195 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "qwen38-flash-next",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 85,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 31.8053,
+      "usage": {
+        "completion_tokens": 769,
+        "prompt_tokens": 200,
+        "total_tokens": 969,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": true,
+        "Ben": true,
+        "Cara": true,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 0,
+      "max_score": 14,
+      "elapsed_s": 116.5829,
+      "usage": {
+        "completion_tokens": 2880,
+        "prompt_tokens": 231,
+        "total_tokens": 3111,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": false,
+        "late_compliers": false,
+        "not_global": false,
+        "continuity": false,
+        "no_manipulation": false,
+        "exclusion": false,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 35.1837,
+      "usage": {
+        "completion_tokens": 884,
+        "prompt_tokens": 193,
+        "total_tokens": 1077,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The second calculation assumes the two test errors are conditionally independent given true condition status. In real life, repeated tests may share common causes of error, such as the same specimen, assay, operator, or patient factors, so the second positive may provide less independent evidence than assumed, making the result overconfident.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": true,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 102.2744,
+      "usage": {
+        "completion_tokens": 2673,
+        "prompt_tokens": 276,
+        "total_tokens": 2949,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"Assumption: the orthogonal assay and occupancy assay are valid and specific.\",\n    \"Deduction: X's effect is not an assay artifact because it is reproduced in an orthogonal assay.\",\n    \"Deduction: X does not directly bind and block R because a validated occupancy assay detects no X-R binding.\",\n    \"Deduction: R protein loss is post-transcriptional because R protein declines while R mRNA is unchanged.\",\n    \"Deduction: proteasomal degradation of R explains the signaling effect because proteasome inhibition prevents both R-protein decline and signaling reduction.\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome-resistant R mutant maintained R protein levels during X treatment but X still reduced signaling, proteasomal degradation of R would not explain the effect.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 20.4009,
+      "usage": {
+        "completion_tokens": 556,
+        "prompt_tokens": 274,
+        "total_tokens": 830,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "Belief in the claim should decrease, but not be eliminated.\n\nS1 is contemporaneous and authenticated, but it comes from a political rival and gives no transaction details. Its incentive to damage the mayor is strong, so it is weak evidence of actual diversion. S2 and S4 add little: S2 merely repeats S1, and S4 websites repeat S2 or each other. They are source-dependent, not independent confirmation.\n\nS3 is more probative. An independently preserved treasury ledger with reconciled totals showing payments to named grain suppliers makes diversion at the treasury level less likely. However, S3 does not prove the grain was actually delivered, that the suppliers were legitimate, that the mayor did not receive kickbacks, or that no diversion occurred elsewhere. Reconciled totals show internal accounting consistency, not necessarily honest outcomes.\n\nThe cousin supplier creates a conflict of interest, but the listed price matching other suppliers weakens the inference of favoritism or overcharging. It leaves open less visible forms of collusion, such as non-price benefits, fictitious deliveries, or diversion after payment.\n\nThe highest-value next evidence would be independent records linking payments to actual grain delivery and distribution: supplier contracts, delivery receipts, warehouse logs, grain distribution records, bank records showing payments to the mayor or cousin, or contemporaneous non-rival administrative documents. Such evidence would test whether the ledger entries corresponded to real relief and whether any funds returned to the mayor.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 63.8634,
+      "usage": {
+        "completion_tokens": 1735,
+        "prompt_tokens": 246,
+        "total_tokens": 1981,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": true,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 8.047,
+      "usage": {
+        "completion_tokens": 211,
+        "prompt_tokens": 179,
+        "total_tokens": 390,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"Turn A because it is a vowel and must have an even number on the other side. Turn 7 because it is odd and must not have a vowel on the other side. D is not required because the rule only applies to vowels, and 4 is not required because the rule does not require even numbers to have vowels on the other side.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": false
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 59.2934,
+      "usage": {
+        "completion_tokens": 1647,
+        "prompt_tokens": 247,
+        "total_tokens": 1894,
+        "prompt_tokens_details": {
+          "cached_tokens": 70
+        }
+      },
+      "response": "Recommendation: Reject automatic threshold-based restrictive supervision. Permit the model only as advisory input to individualized judicial/parole decisions, with safeguards.\n\nAssumptions: historical calibration reflects outcomes under past policing; severe offenses are rare; deployment changes observation; defendants adapt; conditions shift. Deduction: calibration alone does not justify coercive action.\n\nCalibration means predicted probabilities match observed outcomes within groups. It does not prove the score causes risk, that supervision reduces violence, or that false positives are acceptable. With rare events, even calibrated high-risk scores can produce many false positives. Asymmetric errors\u2014liberty harm from false positives, safety harm from false negatives\u2014require explicit, contestable tradeoffs.\n\nCausation versus prediction: risk factors may correlate with outcomes, but supervision can increase detection/arrests rather than reduce harm. Causal evidence is needed that imposed supervision changes outcomes.\n\nRights and due process: restrictive supervision limits liberty. It requires individualized, explainable, contestable reasons, counsel, appeal, and periodic review. Group-calibrated predictions and historical bias are insufficient.\n\nFeedback and shift: police deployment changes who is arrested (selective labels); defendants may adapt to known features; economic/social shifts degrade calibration.\n\nDeployment design:\n1. Shadow mode 6\u201312 months: record predictions without action. Measure calibration by group, base rates, false positives/negatives, disparities, and drift.\n2. Limited pilot: human decision-makers may consider scores only after individualized assessment; automatic imposition prohibited. Use randomized or stepped-wedge assignment among discretionary borderline cases, with legal authority.\n3. Safeguards: least-restrictive alternatives; explainable factors; right to challenge; independent monitor; data minimization; no use for detention solely; uncertainty bands; human override.\n4. Evaluation: primary outcomes severe offenses and victim harm; secondary outcomes arrests, supervision burden, false positives, disparities, feedback effects, and strategic adaptation. Use causal methods and counterfactual audits.\n\nStop or revise if calibration error exceeds pre-specified tolerance; disparate impact or rights violations occur; arrests/harms rise without safety benefit; feedback loops or gaming are detected; or distribution shift undermines validity. Revise with updated data, causal modeling, and stakeholder input; sunset unless evidence shows net benefit.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    }
+  ]
+}

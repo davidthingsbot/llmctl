@@ -1,0 +1,198 @@
+{
+  "suite": "work_quality_v1",
+  "model": "qwen38-flash-next",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 93,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 3.5143,
+      "usage": {
+        "completion_tokens": 72,
+        "prompt_tokens": 195,
+        "total_tokens": 267,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 3.4005,
+      "usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 287,
+        "total_tokens": 362,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 40.0\n}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 6.1538,
+      "usage": {
+        "completion_tokens": 151,
+        "prompt_tokens": 282,
+        "total_tokens": 433,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_total = 5 + payload_len\n    if len(frame) != expected_total:\n        raise ValueError(\"length\")\n    payload = frame[3:3 + payload_len]\n    expected_crc = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual_crc = crc16(frame[0:3 + payload_len])\n    if actual_crc != expected_crc:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 16.5235,
+      "usage": {
+        "completion_tokens": 438,
+        "prompt_tokens": 263,
+        "total_tokens": 701,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "1. **Missing Input Length Validation**: The code accesses `rx[1]`, `rx[2+len]`, and `rx[3+len]` without verifying `rx_len` is sufficient, leading to out-of-bounds reads.\n   *Correction*: Add a check at the start: `if (rx_len < 4 || rx_len < 2 + rx[1] + 2) return;`\n\n2. **Buffer Overflow in `memcpy`**: `len` is taken directly from untrusted input (`rx[1]`) and used to copy into a fixed 32-byte stack buffer, allowing stack corruption if `len > 32`.\n   *Correction*: Validate `len` before copying: `if (len > sizeof(payload)) return;`\n\n3. **Incorrect CRC Calculation Scope**: The protocol states CRC covers command + length + payload, but `crc16` is called only on `payload`.\n   *Correction*: Calculate CRC over the correct range: `uint16_t calc = crc16(rx, 2 + len);`\n\n4. **Assignment Instead of Comparison**: The condition `if (calc = got)` assigns `got` to `calc` and evaluates to true if `got` is non-zero, bypassing integrity checks.\n   *Correction*: Use equality operator: `if (calc == got)`\n\n5. **Authentication Bypass / Logic Error**: `authenticate()` is called *after* `parse_command()` and `sequence++`. The protocol requires authentication *before* parsing or state changes.\n   *Correction*: Move `authenticate()` and the CRC check to the beginning, before `sequence++` and `parse_command()`.\n\n6. **Unsafe String Printing**: `printf(\"payload=%s\\n\", payload)` treats the binary payload as a null-terminated string, causing potential information leaks or crashes if no null terminator exists within the copied data.\n   *Correction*: Print as hex bytes or ensure null-termination: `printf(\"payload=%.*s\\n\", len, payload);` (if text) or use a hex dump function.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": true
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 16,
+      "max_score": 18,
+      "elapsed_s": 48.9099,
+      "usage": {
+        "completion_tokens": 1262,
+        "prompt_tokens": 167,
+        "total_tokens": 1429,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "### Replacement Design: Decoupled Acquisition and Processing Pipeline\n\nTo ensure reproducibility, auditability, and thread safety, the monolithic `SCAN` command is replaced by a **Producer-Consumer architecture** with explicit state separation. Raw data is immutable; processing is stateful and decoupled.\n\n#### 1. Core Principles\n*   **Immutability:** Raw sensor frames are stored exactly as acquired. No transforms are applied at acquisition time.\n*   **Deterministic Replay:** Any processed output can be regenerated from raw data + metadata (timestamp, transform version, filter state).\n*   **Single-Writer, Multi-Reader:** Acquisition owns the raw buffer. Processing owns the filter state. Event reporting is a read-only consumer.\n\n#### 2. Command & Responsibility Boundaries\n\n| Command | Responsibility | Input | Output | Side Effects |\n| :--- | :--- | :--- | :--- | :--- |\n| `ACQUIRE_START` | Initiates continuous raw data capture. | `source_id`, `rate_hz` | `session_id` | Allocates ring buffer; starts hardware timer. |\n| `ACQUIRE_STOP` | Halts raw data capture. | `session_id` | `frame_count`, `checksum` | Flushes buffer to persistent storage; closes session. |\n| `PROCESS_FRAME` | Applies transforms/filters to a specific raw frame. | `frame_id`, `transform_id`, `filter_state_id` | `processed_frame_id` | Updates filter state; stores processed frame in cache. |\n| `EVENT_SUBSCRIBE` | Registers interest in processed frame changes. | `event_type`, `threshold` | `subscription_id` | None (passive listener). |\n| `EVENT_POLL` | Retrieves pending events from processed stream. | `subscription_id`, `timeout_ms` | `event_list` | None (read-only). |\n\n#### 3. Frame & Source Identity\n*   **Raw Frame ID:** `UUIDv7` (time-ordered) + `source_id` + `hardware_timestamp`.\n*   **Processed Frame ID:** `UUIDv7` + `raw_frame_id` + `transform_version` + `filter_state_hash`.\n*   **Source Identity:** Each sensor has a unique, immutable `source_id` assigned at boot. All raw frames carry this ID.\n\n#### 4. Continuous vs. On-Demand Behavior\n\n**Continuous Acquisition Mode:**\n1.  `ACQUIRE_START` begins capturing raw frames into a high-speed ring buffer.\n2.  A background **Processing Worker** consumes raw frames from the buffer.\n3.  For each raw frame, the worker:\n    *   Applies the current `transform_id` and `filter_state_id`.\n    *   Stores the **raw frame** in persistent storage (for audit).\n    *   Stores the **processed frame** in a volatile cache (for events).\n    *   Checks event thresholds against the processed frame.\n4.  If an event threshold is crossed, an event is queued for `EVENT_POLL`.\n\n**On-Demand SCAN (While Continuous is Active):**\n1.  `SCAN_ON_DEMAND` does **not** trigger new hardware acquisition.\n2.  It requests the **latest processed frame** from the cache.\n3.  If the cache is stale (e.g., processing lag > threshold), it returns `STATUS_STALE` with the last valid `processed_frame_id`.\n4.  **No race condition:** The on-demand request is a read-only operation on the processed cache. It does not interact with the raw buffer or hardware.\n\n#### 5. Relationship Between Acquisition Mode and Event Reporting\n*   **Events are derived from processed data, not raw data.**\n*   Event reporting is **independent** of acquisition mode.\n    *   If `ACQUIRE_START` is active, events are generated continuously.\n    *   If `ACQUIRE_STOP` is called, no new raw frames are acquired, so no new events are generated.\n    *   `EVENT_POLL` can still retrieve historical events from the queue until cleared.\n*   **Audit/Download:** To audit, download the raw frames (`session_id`) and the `transform_version`/`filter_state_id` used at the time. Re-run `PROCESS_FRAME` offline to reproduce any processed frame or event.\n\n#### 6. Avoiding Ownership Races\n*   **Raw Buffer:** Owned exclusively by the Acquisition Task. Processing Task reads via a lock-free ring buffer (single producer, single consumer).\n*   **Filter State:** Owned exclusively by the Processing Task. On-demand requests do not modify filter state.\n*   **Event Queue:** Owned by the Processing Task. `EVENT_POLL` is a non-blocking read.\n*   **Transform/Filter Config:** Immutable once applied to a frame. Changing config creates a new `transform_id`/`filter_state_id`, ensuring old frames remain reproducible.\n\n#### 7. Example Workflow\n1.  `ACQUIRE_START(source_id=1, rate_hz=100)` \u2192 `session_id=abc123`\n2.  Background: Raw frame `raw_001` acquired.\n3.  Background: `PROCESS_FRAME(raw_001, transform_v1, filter_v1)` \u2192 `processed_001` stored in cache.\n4.  Background: Event threshold crossed \u2192 Event queued.\n5.  User calls `SCAN_ON_DEMAND()` \u2192 Returns `processed_001` (or `STATUS_STALE` if newer frame not ready).\n6.  User calls `EVENT_POLL(sub_id=1)` \u2192 Returns event for `processed_001`.\n7.  `ACQUIRE_STOP(session_id=abc123)` \u2192 Raw frames `raw_001...raw_N` saved to disk.\n\nThis design ensures that on-demand requests never interfere with continuous acquisition, raw data is always available for audit, and all processed outputs are reproducible from raw data + metadata.",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": false,
+        "acquisition_ownership": true,
+        "event_independent": true,
+        "conflict_rejected_or_queued": true
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 67.3088,
+      "usage": {
+        "completion_tokens": 101,
+        "prompt_tokens": 35416,
+        "total_tokens": 35517,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 5.1363,
+      "usage": {
+        "completion_tokens": 117,
+        "prompt_tokens": 167,
+        "total_tokens": 284,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 1,
+      "max_score": 6,
+      "elapsed_s": 3.8128,
+      "usage": {
+        "completion_tokens": 91,
+        "prompt_tokens": 186,
+        "total_tokens": 277,
+        "prompt_tokens_details": {
+          "cached_tokens": 33
+        }
+      },
+      "response": "{\n  \"data_bits_per_sample\": 24,\n  \"payload_bit_rate\": 384000,\n  \"wire_time_ms_per_second\": 48.0,\n  \"chip_select_overhead_ms_per_second\": 192.0,\n  \"total_bus_utilization_percent\": 24.0,\n  \"remaining_margin_percent\": 76.0\n}",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}

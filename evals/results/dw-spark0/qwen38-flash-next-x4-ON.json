@@ -1,0 +1,198 @@
+{
+  "suite": "work_quality_v1",
+  "model": "qwen38-flash-next",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 54,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 6.7615,
+      "usage": {
+        "completion_tokens": 169,
+        "prompt_tokens": 231,
+        "total_tokens": 400,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 0,
+      "max_score": 10,
+      "elapsed_s": 25.2982,
+      "usage": {
+        "completion_tokens": 640,
+        "prompt_tokens": 323,
+        "total_tokens": 963,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "selected": false,
+        "no_new_sku": false,
+        "voltage_invalid": false,
+        "savings_16": false,
+        "setup_40": false
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 35.33,
+      "usage": {
+        "completion_tokens": 916,
+        "prompt_tokens": 318,
+        "total_tokens": 1234,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "def decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"invalid length\")\n\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"invalid length\")\n\n    payload = frame[3:3 + payload_len]\n    expected_crc = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual_crc = crc16(frame[:3 + payload_len])\n\n    if actual_crc != expected_crc:\n        raise ValueError(\"invalid crc\")\n\n    return frame[0], payload",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 66.6546,
+      "usage": {
+        "completion_tokens": 1680,
+        "prompt_tokens": 299,
+        "total_tokens": 1979,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "bounds_and_minimum_length": false,
+        "crc_scope": false,
+        "assignment_vs_comparison": false,
+        "state_before_validation": false,
+        "parse_before_auth": false,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 0,
+      "max_score": 18,
+      "elapsed_s": 83.4138,
+      "usage": {
+        "completion_tokens": 2080,
+        "prompt_tokens": 203,
+        "total_tokens": 2283,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "scan_transduces_only": false,
+        "transform_separate": false,
+        "retained_read_separate": false,
+        "physical_frame_id": false,
+        "derived_source_identity": false,
+        "download_without_rescan": false,
+        "acquisition_ownership": false,
+        "event_independent": false,
+        "conflict_rejected_or_queued": false
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 78.9736,
+      "usage": {
+        "completion_tokens": 357,
+        "prompt_tokens": 35452,
+        "total_tokens": 35809,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 8.578,
+      "usage": {
+        "completion_tokens": 212,
+        "prompt_tokens": 203,
+        "total_tokens": 415,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactor the parser\",\n    \"Add telemetry\",\n    \"Change error codes\",\n    \"Update every documentation page\",\n    \"Rename the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "elapsed_s": 28.1804,
+      "usage": {
+        "completion_tokens": 720,
+        "prompt_tokens": 222,
+        "total_tokens": 942,
+        "prompt_tokens_details": {
+          "cached_tokens": 71
+        }
+      },
+      "response": "",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": false,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}

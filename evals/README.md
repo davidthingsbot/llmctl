@@ -607,6 +607,97 @@ reconstructed from a manual backup taken 40 minutes before the wipe. **Run
 `llmctl machine record` and commit it on the day a machine is brought up**, not
 when the results happen to be interesting.
 
+## Thinking on vs off, and what the token budgets were hiding — dw-spark0, 2026-09-01
+
+Every result above this section was measured with `enable_thinking: False`. This
+is the first measurement of a thinking model with thinking ON, run on
+`qwen38-flash-next`, and it found two things: thinking is a large win on
+reasoning and worthless on work, and **the per-task token budgets have been
+silently capping scores across every machine in this file.**
+
+### The budgets truncate, and always have
+
+`max_tokens` caps total generation. The budgets (160 for `strict_protocol_json`,
+520 for `protocol_architecture`, ...) are sized for a direct answer. Scanning
+every recorded result for `completion_tokens >= budget`:
+
+**55 truncated task-runs, 7 of which scored zero.** `protocol_architecture` hit
+its 520-token ceiling in 12 runs across ALL FOUR machines; `embedded_c_review`
+hit 420 in 7. Nobody's score on those two tasks measures the model — it measures
+what fits in the budget. Both are keyword-rubric tasks, which is a second
+mechanism behind the rubric volatility measured in the section above, alongside
+float divergence between builds.
+
+Quantified on `qwen38-flash-next`, thinking off, by re-running at 4x budget with
+the new `--token-budget-scale`:
+
+| | 1x budget | 4x budget |
+|---|---:|---:|
+| Work quality | 87 | **93** |
+| Deep reasoning | 78 | 78 |
+
+Six points of work quality were being thrown away by truncation alone
+(`protocol_architecture` 10 -> 16). Deep reasoning was already clean.
+
+The seven truncation zeros, for the record: `gpt-oss-20b` accounts for five and
+was already known (its files are named `*-TRUNCATED.json`); `qwen3.8-27b-fp8`
+NOPARSER lost `value_of_information` to it, which is why that run scores 64
+against 71 with the parser enabled. The remaining one was NOT caught:
+**REAP-150B's `causal_inference` 0/14 on both Sparks was truncated at 360/360**,
+so the earlier note in this file claiming the task discriminates and REAP-150B
+simply fails it is wrong — it was cut off, and may be losing on verbosity.
+
+### Thinking on: a large win on reasoning, nothing on work
+
+`qwen38-flash-next`, thinking off at 4x against thinking on at 8x (both
+untruncated except where noted), via `--no-template-kwargs --strip-reasoning`:
+
+| Reasoning task | off | on | | Work task | off | on |
+|---|---:|---:|---|---|---:|---:|
+| Logic grid | 0/12 | **12/12** | | Strict protocol JSON | 12/12 | 12/12 |
+| Bayesian updating | 8/12 | **12/12** | | Executable code repair | 20/20 | 20/20 |
+| Value of information | 10/12 | **12/12** | | 35K retrieval | 16/16 | 16/16 |
+| Complex policy | 10/14 | **14/14** | | Scope control | 6/6 | 6/6 |
+| Hypothesis discrim. | 12/12 | 12/12 | | BOM consolidation | 10/10 | *runs to 3002 tok* |
+| Adversarial epist. | 14/14 | 14/14 | | Embedded C review | 12/12 | *truncated at 3360* |
+| Wason selection | 10/10 | 9/10 | | Protocol architecture | 16/18 | *truncated at 4160* |
+| Causal inference | 14/14 | *truncated at 2880* | | Acquisition timing | 1/6 | *truncated at 1440* |
+| **Total** | **78** | **85** | | **Total** | **93** | *not measurable* |
+
+- **`logic_grid` 0 -> 12/12 overturns this file's standing verdict on that task.**
+  It is recorded above as non-discriminating, with the hypothesis that "the suite
+  disables thinking and demands JSON only, removing the sequential search the
+  puzzle needs". That hypothesis is correct, and the conclusion inverts: the task
+  discriminates fine and every 0/12 ever recorded on it was measuring the
+  harness, not the model.
+- **Deep reasoning 78 -> 85, and the true figure is higher.** `causal_inference`
+  scores 14/14 with thinking off and is the only remaining zero, so an
+  untruncated thinking-on run lands nearer 99.
+- **On work, thinking changes nothing where it completes.** Four tasks score
+  identically. It is not that thinking fails on work — it is that these are
+  format-constrained extraction tasks where deliberation has nothing to add.
+- **And it is expensive.** `bom_consolidation` answers in 75 tokens with thinking
+  off, scoring 10/10. With thinking on it terminates normally — `finish_reason:
+  stop` — after **3002 tokens and 114 seconds**, having produced 11.5 KB of
+  reasoning, and scores **9/10**. Forty times the tokens for a slightly worse
+  answer.
+
+**RULE, now measured rather than assumed: thinking ON for reasoning, OFF for
+structured output.** It is a per-request decision via `chat_template_kwargs`, so
+an agent can switch by task type rather than committing the server to one mode.
+
+### Consequences for the tables above
+
+1. `protocol_architecture` and `embedded_c_review` scores are capped by the
+   harness on every machine. Mistral Small 4's anomalous 18/18 and everyone
+   else's 10-16 were all measured against a 520-token ceiling.
+2. Any thinking-capable model evaluated here has been measured with its main
+   capability disabled. That is the correct default for comparability, but it is
+   a floor, not a characterisation.
+3. Raising the budget makes results incomparable with everything recorded at
+   1.0, which is why `--token-budget-scale` defaults to 1.0 and why a thinking-on
+   run must be paired with a thinking-off run at the same scale.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.
