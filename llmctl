@@ -1547,6 +1547,22 @@ machine_record() {
     record_project_conf "$f" "$stage/models.d/$name" "${RECORD_MODEL_KEYS[@]}"
   done
   record_stats "$STATS_FILE" "$stage/stats.jsonl"
+  # Carry across anything already recorded that this command does not itself
+  # generate — a patched chat template, a README, whatever else a machine needs
+  # to be rebuilt. The staging directory is built from scratch and then swapped
+  # in atomically, so without this the swap silently destroys those files.
+  # machine.conf, stats.jsonl and models.d/ are excluded because they are
+  # regenerated here: models.d/ in particular must be able to LOSE a conf when
+  # a model is unregistered locally.
+  if [[ -d "$target" && ! -L "$target" ]]; then
+    for f in "$target"/* "$target"/.[!.]*; do
+      [[ -e "$f" || -L "$f" ]] || continue
+      case "$(basename -- "$f")" in
+        machine.conf|stats.jsonl|models.d) continue ;;
+      esac
+      cp -a -- "$f" "$stage/" || die "could not preserve recorded file $f"
+    done
+  fi
   if [[ -e "$target" ]]; then
     backup="$machines/.previous-${machine_id}-$$"
     mv -- "$target" "$backup"

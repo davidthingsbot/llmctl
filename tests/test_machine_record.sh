@@ -398,4 +398,41 @@ if run_llmctl machine record >/dev/null 2>&1; then
   exit 1
 fi
 
+# Files a previous record left behind that `machine record` does not itself
+# generate — a patched chat template, notes, anything else needed to rebuild the
+# machine — must survive a re-record. The staging directory is built from
+# scratch and swapped in atomically, so without explicit preservation the swap
+# silently destroys them. models.d/ is deliberately NOT preserved this way: it
+# must be able to lose a conf when a model is unregistered locally.
+sed -i 's/MACHINE_NAME="bad-box"/MACHINE_NAME="keepsake-box"/' "$CONF_DIR/machine.conf"
+cat > "$CONF_DIR/stats.jsonl" <<'EOF'
+{"model":"demo","ts":"2026-07-02T12:00:00","load_s":1.5,"tok_s":20.0,"bench_tokens":5,"bench_time_s":0.4,"gpu":[{"power_w":null,"mem_mib":12.5,"util_pct":75.0,"gpu":0}]}
+EOF
+run_llmctl machine record >/dev/null || { echo "machine record failed before preservation check" >&2; exit 1; }
+KEEP="$REPO/inventory/machines/keepsake-box"
+mkdir -p "$KEEP/chat-templates"
+printf 'PATCHED TEMPLATE\n' > "$KEEP/chat-templates/custom.jinja"
+printf 'hand-written notes\n' > "$KEEP/NOTES.md"
+printf 'STALE=1\n' > "$KEEP/models.d/removed-model.conf"
+if ! run_llmctl machine record >/dev/null; then
+  echo "machine record failed on re-record" >&2
+  exit 1
+fi
+if [[ "$(cat "$KEEP/chat-templates/custom.jinja" 2>/dev/null)" != "PATCHED TEMPLATE" ]]; then
+  echo "machine record destroyed a recorded subdirectory it does not generate" >&2
+  exit 1
+fi
+if [[ "$(cat "$KEEP/NOTES.md" 2>/dev/null)" != "hand-written notes" ]]; then
+  echo "machine record destroyed a recorded file it does not generate" >&2
+  exit 1
+fi
+if [[ -e "$KEEP/models.d/removed-model.conf" ]]; then
+  echo "machine record preserved a stale model conf; models.d must mirror the machine" >&2
+  exit 1
+fi
+if [[ ! -f "$KEEP/machine.conf" || ! -f "$KEEP/stats.jsonl" ]]; then
+  echo "machine record lost its own generated files" >&2
+  exit 1
+fi
+
 echo "PASS: machine record happy path"
