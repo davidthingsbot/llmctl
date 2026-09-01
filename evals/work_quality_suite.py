@@ -480,8 +480,12 @@ files_to_modify, approved_change, deferred_items.
 
 def task_timing():
     prompt = '''Return ONLY JSON with exactly these numeric keys:
-data_bits_per_sample, payload_bit_rate, wire_time_ms_per_second,
+bits_per_transaction, bus_bit_rate, wire_time_ms_per_second,
 chip_select_overhead_ms_per_second, total_bus_utilization_percent, remaining_margin_percent.
+
+bits_per_transaction is EVERY bit clocked out for one sample: data, status and framing
+together. bus_bit_rate is bits_per_transaction times the total samples per second across
+all channels.
 
 An acquisition system has 8 channels. Every channel is sampled 2,000 times/second.
 Each sample transaction carries 24 data bits, 8 status bits, and 16 framing bits.
@@ -489,8 +493,8 @@ SPI clock is 8,000,000 bits/second. Every sample is one transaction and adds 12 
 of chip-select/setup overhead beyond wire time. Ignore all other costs. Do not round to an integer.'''
 
     expected = {
-        "data_bits_per_sample": 48.0,
-        "payload_bit_rate": 768000.0,
+        "bits_per_transaction": 48.0,
+        "bus_bit_rate": 768000.0,
         "wire_time_ms_per_second": 96.0,
         "chip_select_overhead_ms_per_second": 192.0,
         "total_bus_utilization_percent": 28.8,
@@ -1312,7 +1316,9 @@ features. Keep the initial weights small.
             details["numpy"] = "absent"
             return 3, 26, details
 
-        env = {"__name__": "candidate"}
+        # numpy is permitted, not required: "return ONLY the two functions" is
+        # reasonably read as omitting the import line, so provide np ourselves.
+        env = {"__name__": "candidate", "np": np, "numpy": np}
         try:
             exec(compile(tree, "candidate", "exec"), env)
             init, lag = env["init_params"], env["loss_and_grads"]
@@ -1597,7 +1603,9 @@ Requirements:
         except ImportError:
             details["numpy"] = "absent"
             return 3, 16, details
-        env = {"__name__": "candidate"}
+        # numpy is permitted, not required: "return ONLY the two functions" is
+        # reasonably read as omitting the import line, so provide np ourselves.
+        env = {"__name__": "candidate", "np": np, "numpy": np}
         try:
             exec(compile(tree, "candidate", "exec"), env)
             sm, ce = env["softmax"], env["cross_entropy"]
@@ -2136,7 +2144,9 @@ Requirements:
         except ImportError:
             details["numpy"] = "absent"
             return 4, 30, details
-        env = {"__name__": "candidate"}
+        # numpy is permitted, not required: "return ONLY the two functions" is
+        # reasonably read as omitting the import line, so provide np ourselves.
+        env = {"__name__": "candidate", "np": np, "numpy": np}
         try:
             exec(compile(tree, "candidate", "exec"), env)
             fwd, bwd = env["attention_forward"], env["attention_backward"]
