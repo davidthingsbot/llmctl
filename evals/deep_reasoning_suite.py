@@ -12,18 +12,56 @@ import urllib.request
 from pathlib import Path
 
 
+# Chatty and thinking models need room. A cap only costs anything when it BINDS —
+# a model that answers in 200 tokens uses 200 whether the ceiling is 160 or
+# 12000 — but when it binds it produces a ZERO that looks like a model failure
+# and is not. Three separate instances of that were found on 2026-09-01:
+# thinking tokens consuming the whole budget, protocol_architecture capped at 520
+# in every run ever recorded, and cobs_codec truncated at 700. The per-task
+# numbers below are kept as documentation of what each task actually needs; this
+# floor is what is enforced.
+MIN_TOKEN_BUDGET = 12000
+
+# 12000 tokens at ~10 tok/s is 20 minutes; the old 900s timeout would abort it.
+REQUEST_TIMEOUT_S = 2400
+
+
 def extract_json(text: str):
+    """Pull the answer object out of a reply that may also contain prose.
+
+    The previous implementation used a greedy \\{.*\\} span, so a single brace
+    anywhere in the model's commentary swallowed the real answer and scored a
+    CORRECT reply zero — observed 2026-09-01 when qwen38-27b-nvfp4 returned the
+    exact optimum for resource_optimization inside a ```json fence, after
+    bullet-point prose, and was graded 0/16 with parsed=False.
+
+    Order: fenced json blocks (last first), the whole reply, then each balanced
+    object scanning from the END, because models put the final answer last.
+    """
     text = text.strip()
+    for candidate in reversed(re.findall(r"```(?:json)?\s*(\{.*?\})\s*```",
+                                         text, re.S | re.I)):
+        try:
+            return json.loads(candidate)
+        except Exception:
+            pass
     try:
         return json.loads(text)
     except Exception:
-        match = re.search(r"\{.*\}", text, re.S)
-        if not match:
-            return None
-        try:
-            return json.loads(match.group(0))
-        except Exception:
-            return None
+        pass
+    for start in reversed([i for i, ch in enumerate(text) if ch == "{"]):
+        depth = 0
+        for end in range(start, len(text)):
+            if text[end] == "{":
+                depth += 1
+            elif text[end] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start:end + 1])
+                    except Exception:
+                        break
+    return None
 
 
 def _visible_answer(message, strip_reasoning):
@@ -74,7 +112,7 @@ def request(
         headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
     )
     started = time.monotonic()
-    with urllib.request.urlopen(req, timeout=900) as response:
+    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_S) as response:
         data = json.load(response)
     message = data["choices"][0]["message"]
     return (
@@ -549,6 +587,64 @@ def tasks(extended=False):
           task_resource_optimization(), task_thermal_physics()] if extended else [])
 
 
+
+
+def _cost_summary(results, wall_s):
+    """Token and time totals for the run.
+
+    Score alone does not say what a model costs to reach it. A model that scores
+    two points higher while generating four times the tokens at a third the
+    speed is not obviously the better choice, and on a bandwidth-bound box that
+    difference is minutes per task. Recorded per suite so it can be compared
+    across models and machines.
+    """
+    prompt = completion = 0
+    task_seconds = 0.0
+    truncated = []
+    for row in results:
+        usage = row.get("usage") or {}
+        prompt += usage.get("prompt_tokens") or 0
+        completion += usage.get("completion_tokens") or 0
+        task_seconds += row.get("elapsed_s") or 0.0
+        if usage.get("completion_tokens") and row.get("max_tokens") \
+                and usage["completion_tokens"] >= row["max_tokens"]:
+            truncated.append(row["task"])
+    return {
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "total_tokens": prompt + completion,
+        "task_seconds": round(task_seconds, 2),
+        "wall_seconds": round(wall_s, 2),
+        "generation_tok_s": round(completion / task_seconds, 2) if task_seconds else None,
+        # A task that hit its ceiling did not finish its answer, so its score is a
+        # measurement of the budget rather than of the model.
+        "truncated_tasks": truncated,
+    }
+
+
+def _json_safe(value):
+    """Coerce grader details into JSON-serialisable types.
+
+    numpy_backprop's grader compares numpy scalars, so a detail can end up as
+    np.bool_ or np.float64. Neither is JSON-serialisable, and because the results
+    are written only after every task has run, one such value discards the whole
+    suite at the final step — 14 tasks of work lost to the last line.
+    """
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    item = getattr(value, "item", None)
+    if callable(item):
+        try:
+            return _json_safe(item())
+        except Exception:
+            pass
+    return str(value)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
@@ -577,6 +673,13 @@ def main():
              "are comparable only with other extended results",
     )
     parser.add_argument(
+        "--min-tokens", type=int, default=MIN_TOKEN_BUDGET, metavar="N",
+        help=f"floor on every task's max_tokens (default {MIN_TOKEN_BUDGET}). The "
+             "per-task budgets are sized for a direct answer and truncate chatty "
+             "or thinking models, turning a good answer into a zero. Lower it only "
+             "to reproduce an older run",
+    )
+    parser.add_argument(
         "--token-budget-scale", type=float, default=1.0, metavar="N",
         help="multiply every task's max_tokens by N. The budgets are sized for a "
              "direct answer; a model that thinks first spends them on the thinking "
@@ -588,19 +691,21 @@ def main():
     args = parser.parse_args()
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     results = []
+    suite_started = time.monotonic()
     for name, prompt, max_tokens, grader in tasks(args.extended):
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
+        budget = max(args.min_tokens, round(max_tokens * args.token_budget_scale))
         try:
             text, usage, elapsed = request(
-                args.url, key, args.model, prompt,
-                max(1, round(max_tokens * args.token_budget_scale)),
+                args.url, key, args.model, prompt, budget,
                 template_kwargs=not args.no_template_kwargs,
                 strip_reasoning=args.strip_reasoning,
             )
             score, maximum, details = grader(text)
             row = {"task": name, "score": score, "max_score": maximum,
-                   "elapsed_s": round(elapsed, 4), "usage": usage,
+                   "elapsed_s": round(elapsed, 4), "max_tokens": budget,
+                   "usage": usage,
                    "response": text, "grade_details": details}
         except Exception as exc:
             row = {"task": name, "score": 0, "max_score": maximum,
@@ -609,9 +714,11 @@ def main():
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
     output = {"suite": "deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1", "model": args.model, "endpoint": args.url,
               "score": sum(x["score"] for x in results),
-              "max_score": sum(x["max_score"] for x in results), "tasks": results}
+              "max_score": sum(x["max_score"] for x in results),
+              "cost": _cost_summary(results, time.monotonic() - suite_started),
+              "tasks": results}
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(output, indent=2) + "\n")
+    Path(args.output).write_text(json.dumps(_json_safe(output), indent=2) + "\n")
     print(json.dumps({"model": args.model, "score": output["score"],
                       "max_score": output["max_score"], "output": args.output}))
 

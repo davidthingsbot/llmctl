@@ -228,14 +228,14 @@ class DomainTaskTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "iverilog not installed")
     def test_verilog_reference_scores_full(self):
-        _, _, _, grade = suite.task_verilog_fifo()
+        _, _, _, grade = suite.task_verilog_medium()
         score, maximum, details = grade(FIFO_REFERENCE)
         self.assertEqual(score, maximum, details)
 
     @unittest.skipUnless(shutil.which("iverilog") and shutil.which("vvp"),
                          "iverilog not installed")
     def test_verilog_missing_full_flag_loses_behaviour_points(self):
-        _, _, _, grade = suite.task_verilog_fifo()
+        _, _, _, grade = suite.task_verilog_medium()
         broken = FIFO_REFERENCE.replace(
             "assign full  = (wptr[AW] != rptr[AW]) && (wptr[AW-1:0] == rptr[AW-1:0]);",
             "assign full  = 1'b0;")
@@ -246,14 +246,14 @@ class DomainTaskTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which("verilator"), "verilator not installed")
     def test_verilog_blocking_assignment_is_caught_by_lint_only(self):
         # It simulates correctly and would still be broken silicon.
-        _, _, _, grade = suite.task_verilog_fifo()
+        _, _, _, grade = suite.task_verilog_medium()
         broken = FIFO_REFERENCE.replace("wptr <= wptr + 1'b1;", "wptr = wptr + 1'b1;")
         _, _, details = grade(broken)
         self.assertFalse(details["lint_clean"])
 
     @unittest.skipUnless(shutil.which("nvcc"), "nvcc not installed")
     def test_cuda_reference_compiles_and_scores_full(self):
-        _, _, _, grade = suite.task_cuda_reduction()
+        _, _, _, grade = suite.task_cuda_medium()
         score, maximum, details = grade(KERNEL_REFERENCE)
         if details.get("gpu") == "unavailable":
             self.skipTest("GPU busy serving a model")
@@ -261,7 +261,7 @@ class DomainTaskTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("nvcc"), "nvcc not installed")
     def test_cuda_missing_bounds_guard_is_caught(self):
-        _, _, _, grade = suite.task_cuda_reduction()
+        _, _, _, grade = suite.task_cuda_medium()
         broken = KERNEL_REFERENCE.replace("sdata[tid] = (i < n) ? in[i] : 0.0f;",
                                           "sdata[tid] = in[i];")
         score, maximum, details = grade(broken)
@@ -319,14 +319,14 @@ def loss_and_grads(params, X, y):
     def test_numpy_reference_scores_full(self):
         if not self._numpy_available():
             self.skipTest("numpy not installed")
-        _, _, _, grade = suite.task_numpy_backprop()
+        _, _, _, grade = suite.task_ml_medium()
         score, maximum, details = grade(self.NUMPY_REFERENCE)
         self.assertEqual(score, maximum, details)
 
     def test_numpy_missing_activation_derivative_fails_gradcheck(self):
         if not self._numpy_available():
             self.skipTest("numpy not installed")
-        _, _, _, grade = suite.task_numpy_backprop()
+        _, _, _, grade = suite.task_ml_medium()
         broken = self.NUMPY_REFERENCE.replace("* (1 - H ** 2)", "")
         score, maximum, details = grade(broken)
         self.assertLess(score, maximum)
@@ -337,7 +337,7 @@ def loss_and_grads(params, X, y):
         # that cannot learn — the grader must separate those two failures.
         if not self._numpy_available():
             self.skipTest("numpy not installed")
-        _, _, _, grade = suite.task_numpy_backprop()
+        _, _, _, grade = suite.task_ml_medium()
         broken = (self.NUMPY_REFERENCE
                   .replace("rng.randn(n_hidden, n_in) * 0.5", "np.zeros((n_hidden, n_in))")
                   .replace("rng.randn(n_hidden) * 0.5", "np.zeros(n_hidden)"))
@@ -347,7 +347,7 @@ def loss_and_grads(params, X, y):
         self.assertFalse(details["learns_circle"])
 
     def test_numpy_task_rejects_non_numpy_imports(self):
-        _, _, _, grade = suite.task_numpy_backprop()
+        _, _, _, grade = suite.task_ml_medium()
         score, _, details = grade("```python\nimport sklearn\ndef init_params(a,b,c): pass\n"
                                   "def loss_and_grads(p,X,y): pass\n```")
         self.assertEqual(score, 0)

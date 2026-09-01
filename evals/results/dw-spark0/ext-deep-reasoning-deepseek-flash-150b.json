@@ -1,0 +1,311 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "deepseek-flash-150b",
+  "endpoint": "http://127.0.0.1:19438/v1/chat/completions",
+  "score": 94,
+  "max_score": 166,
+  "cost": {
+    "prompt_tokens": 2438,
+    "completion_tokens": 2435,
+    "total_tokens": 4873,
+    "task_seconds": 177.65,
+    "wall_seconds": 177.66,
+    "generation_tok_s": 13.71,
+    "truncated_tasks": []
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 6,
+      "max_score": 12,
+      "elapsed_s": 5.5758,
+      "usage": {
+        "completion_tokens": 69,
+        "prompt_tokens": 142,
+        "total_tokens": 211,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"Ada\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 4,
+      "max_score": 14,
+      "elapsed_s": 23.7829,
+      "usage": {
+        "completion_tokens": 334,
+        "prompt_tokens": 174,
+        "total_tokens": 508,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"design\": \"The voluntary job-training program with eligibility determined by a score cutoff at 70 creates a sharp discontinuity in participation at that threshold, providing a natural experiment comparing individuals just below and just above the cutoff.\",\n  \"instrument\": \"The exogenous variation is the score itself, which cannot be precisely manipulated by individuals and varies smoothly through the cutoff absent treatment, so the cutoff acts as an exogenous threshold that separates participants from non-participants without allowing precise manipulation.\",\n  \"estimand\": \"The causal quantity is the effect of the job-training program on employment, specifically the causal impact of participation on employment, as identified by the sharp jump in participation at the score cutoff of 70.\",\n  \"global_generalization\": \"The identified causal effect does not automatically generalize to everyone because participation is not universal above the cutoff and some below it still participate, so the causal effect is only directly identified for the subpopulations near the threshold and may not extend to all individuals.\",\n  \"assumptions\": [\n    \"The score cutoff at 70 is exogenous and cannot be precisely manipulated by individuals.\",\n    \"Potential outcomes vary smoothly through the score of 70 absent treatment, so any sharp change in participation at 70 is attributable to the treatment rather than to the score itself.\",\n    \"No other policy changes occur at the score threshold of 70, so the only relevant change at that point is the job-training program's eligibility rule.\",\n    \"The sharp jump in participation at 70 provides a local causal signal, but because participation is not universal above the cutoff and some below still participate, the effect is not uniform across all individuals.\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": false,
+        "continuity": false,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 11.3204,
+      "usage": {
+        "completion_tokens": 155,
+        "prompt_tokens": 145,
+        "total_tokens": 300,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 8.5,\n  \"two_positive_percent\": 0.8,\n  \"independence_caveat\": \"The second calculation assumes conditional independence of test errors given the true condition status, meaning the probability of a second positive given a true positive is the same (90%) regardless of the first positive. In real life, repeated tests of the same type often have correlated errors (e.g., systematic biases, shared environmental factors, or similar methodological limitations), so the second positive would be less informative than an independent test, and the posterior probability of 0.8% may be overconfident (too low) because it underestimates the chance of a true positive when errors are positively correlated.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 12.3672,
+      "usage": {
+        "completion_tokens": 168,
+        "prompt_tokens": 214,
+        "total_tokens": 382,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X has the same effect in an orthogonal signaling assay, ruling out assay-specific artifact (H3).\",\n    \"A validated occupancy assay detects no binding of X to R, ruling out direct blocking (H1).\",\n    \"R protein falls after X treatment while R mRNA is unchanged, indicating degradation of the protein representation.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect, confirming proteasomal degradation as the mechanism.\"\n  ],\n  \"decisive_falsifier\": \"If a future experiment shows that the proteasome inhibitor does not prevent the signaling effect while still preventing R-protein decline, then proteasomal degradation would be falsified as the sole cause.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 29.6567,
+      "usage": {
+        "completion_tokens": 417,
+        "prompt_tokens": 210,
+        "total_tokens": 627,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "The evidence does not support the claim that the mayor secretly diverted famine relief in 1892.  \n\n- S1 is an accusation from a political rival, but it is a contemporaneous diary entry, so it is a primary source from the time. However, it provides no transaction details, so it cannot establish what actually happened\u2014only that the rival believed the accusation.  \n- S2 (1920 article) cites only S1, adding no independent verification.  \n- S3 is the strongest evidence: an independently preserved treasury ledger whose totals reconcile and show the disputed funds were paid to named grain suppliers. This directly contradicts the accusation of diversion, because the funds went to legitimate suppliers, not to a secret diversion. S3 does not, however, prove the mayor never diverted other funds or that no diversion occurred in some other form\u2014it only shows that the specific funds in question were accounted for and paid to suppliers.  \n- S4 (five modern websites) cites S2 or each other, so it is derivative and adds no new evidentiary weight.  \n\nThe cousin evidence: one supplier named in S3 was the mayor\u2019s cousin, but the listed price matches other suppliers that month. This is a minor red flag\u2014a possible conflict of interest\u2014but it does not establish diversion. It could suggest favoritism, but the price consistency and ledger reconciliation undercut any claim of secret diversion.  \n\nBelief should shift toward skepticism of the claim. The accusation is weakly sourced (S1, S2, S4), while the ledger (S3) contradicts it for the specific funds. The cousin detail is a caution but not proof of wrongdoing.  \n\nHighest-value next evidence to seek: original bank or treasury records from 1892 (e.g., cancelled checks, bank statements, or the mayor\u2019s own correspondence) that would show whether funds were paid to suppliers or diverted. Also, any contemporaneous independent record of famine relief allocations would help. Without such primary financial records, the claim remains unproven and likely false based on S3.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": false,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 9.2592,
+      "usage": {
+        "completion_tokens": 123,
+        "prompt_tokens": 209,
+        "total_tokens": 332,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7272727273,\n  \"launch_ev_given_positive\": 70.9090909091,\n  \"launch_ev_given_negative\": -60.0,\n  \"test_policy_ev_after_cost\": 7.6,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 14.0086,
+      "usage": {
+        "completion_tokens": 193,
+        "prompt_tokens": 130,
+        "total_tokens": 323,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is 'If vowel on one side, then even number on the other side.' This is a conditional statement of the form 'if P then Q'. To test it, we need to check for any violation: a card with a vowel on one side and an odd number on the other. The card showing 'A' must be turned to see if the other side is even (if odd, rule violated). The card showing '7' must be turned to see if the other side is a vowel (if vowel, rule violated). The card showing 'D' is a consonant, so the antecedent is false; the rule does not constrain its number, so turning it is not logically required. The card showing '4' is even, so the consequent is true; the rule is satisfied regardless of the letter, so turning it is not logically required.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 52.6549,
+      "usage": {
+        "completion_tokens": 745,
+        "prompt_tokens": 192,
+        "total_tokens": 937,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "## Policy Recommendation: Constrained Use with Strict Safeguards\n\n**Recommendation:** Do **not** deploy automatic restrictive supervision based solely on a fixed risk threshold. Instead, implement a **human-in-the-loop, continuously validated system** that uses predictions only to flag candidates for review, with mandatory periodic recalibration and explicit opt-out mechanisms.\n\n---\n\n### What Calibration Does and Does Not Justify\n\nCalibration within demographic groups means the predicted probabilities match observed frequencies *in historical data*. This justifies: using the model to **rank-order** individuals within groups, and estimating precision/recall trade-offs under stationary conditions.\n\nIt does **not** justify: assuming the model generalizes across time, deployment context, or policy changes. Severe offenses are rare, so calibration is dominated by non-events; the model may be poorly constrained for the very cases that matter most. Base rates are low, so even a well-calibrated model yields high false-positive rates relative to true positives.\n\n### Asymmetric Errors and Rights\n\nFalse positives (restricting someone who would not commit offense) impose costs on individuals\u2014loss of autonomy, potential denial of lawful rights. False negatives (missing offenders) impose costs on society. The asymmetry is not merely monetary; it involves rights violations and due-process concerns. Automatic thresholding converts a probabilistic prediction into a binary decision without adjudication, which is a rights violation even when accurate.\n\n### Causation vs. Prediction\n\nThe model predicts correlation with future offense, not causation. It cannot distinguish whether offense follows from the individual's conduct or from external conditions (economic shifts, social changes). Using it to justify supervision conflates prediction with causation and may misattribute blame.\n\n### Selective Labels and Feedback Loops\n\nDeployment changes who is observed and arrested. If supervision alters behavior, future labels reflect the supervised population, not the original one\u2014creating a feedback loop. Defendants who learn their features are monitored may adapt, shifting distributions further. The model's own outputs become inputs to future training, compounding drift.\n\n### Distribution Shift and Strategic Adaptation\n\nEconomic/social shifts change offense rates and patterns. Strategic adaptation means defendants may change behavior specifically to avoid triggering the threshold, making the model's features less predictive over time.\n\n---\n\n### Concrete Deployment/Evaluation Design\n\n1. **Phase 1 (Shadow mode):** Run model in parallel, no enforcement. Log predictions, track calibration drift, compare against held-out data quarterly.\n2. **Phase 2 (Human review):** Flag candidates above threshold for human adjudication. Track precision/recall, false-positive rates, and adjudication outcomes. Require periodic recalibration at least quarterly.\n3. **Phase 3 (Constrained enforcement):** Only after Phase 2 shows stable calibration (drift < X%, false-positive rate < Y) and human adjudication confirms accuracy, apply supervision\u2014but with:\n   - **Opt-out mechanism** for individuals who can demonstrate lawful justification.\n   - **Transparency**: individuals must be told why they are flagged and how to contest it.\n   - **Periodic audits** and automatic rollback if drift exceeds thresholds.\n\n**Stopping/revising conditions:** Halt Phase 3 immediately if (a) calibration drift exceeds 10% relative error, (b) false-positive rate exceeds predefined societal tolerance, (c) adjudication outcomes diverge from model predictions, or (d) any evidence of strategic adaptation emerges. Revise model only with fresh data from the deployed environment, not historical data.\n\n---\n\n**Conclusion:** The evidence supports using the model as a screening tool, not as an autonomous decision-maker. Automatic threshold enforcement is unjustified given rare events, feedback loops, and rights implications.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    },
+    {
+      "task": "kv_sizing",
+      "score": 3,
+      "max_score": 16,
+      "elapsed_s": 5.6756,
+      "usage": {
+        "completion_tokens": 68,
+        "prompt_tokens": 311,
+        "total_tokens": 379,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"kv_bytes_per_token\": 13056,\n  \"kv_gib_at_262144\": 3.1875,\n  \"max_context_tokens_in_25gib\": 2011595,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": false,
+        "gib_at_262144": false,
+        "max_context": false,
+        "fits": true,
+        "counted_all_48_layers": false
+      }
+    },
+    {
+      "task": "causal_identification",
+      "score": 9,
+      "max_score": 18,
+      "elapsed_s": 4.4388,
+      "usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 251,
+        "total_tokens": 305,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"adjustment_set\": [\"M\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"removes_bias\",\n  \"i_is_instrument\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": false,
+        "included_mediator_or_collider": true,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": false,
+        "i_is_instrument": true
+      }
+    },
+    {
+      "task": "resource_optimization",
+      "score": 0,
+      "max_score": 16,
+      "elapsed_s": 4.2602,
+      "usage": {
+        "completion_tokens": 52,
+        "prompt_tokens": 220,
+        "total_tokens": 272,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"selection\": [\"atlas\", \"borealis\", \"dunlin\"],\n  \"total_value\": 155,\n  \"total_size_gib\": 144,\n  \"greedy_by_value_density_total\": 155\n}",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": false,
+        "total_value": false,
+        "total_size_gib": false,
+        "greedy_total": false,
+        "reported_greedy_as_optimal": false
+      }
+    },
+    {
+      "task": "thermal_physics",
+      "score": 13,
+      "max_score": 16,
+      "elapsed_s": 4.6536,
+      "usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 240,
+        "total_tokens": 297,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 66.8\n}",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": false,
+        "gave_rise_not_temperature": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,303 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "qwen38-27b-nvfp4",
+  "endpoint": "http://127.0.0.1:19435/v1/chat/completions",
+  "score": 126,
+  "max_score": 166,
+  "cost": {
+    "prompt_tokens": 2715,
+    "completion_tokens": 6628,
+    "total_tokens": 9343,
+    "task_seconds": 566.84,
+    "wall_seconds": 566.85,
+    "generation_tok_s": 11.69,
+    "truncated_tasks": []
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 6,
+      "max_score": 12,
+      "elapsed_s": 9.1807,
+      "usage": {
+        "prompt_tokens": 164,
+        "total_tokens": 271,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": true,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 15.9852,
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 381,
+        "completion_tokens": 186,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"The eligibility score relative to the cutoff of 70 (specifically, the indicator for being above the cutoff)\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for the complier population at the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity of potential outcomes: In the absence of treatment, the expected outcomes (employment) vary smoothly as a function of the score around the cutoff of 70.\",\n    \"No precise manipulation: Individuals cannot precisely manipulate their score to just above or below the cutoff to influence eligibility.\",\n    \"Exclusivity: The score cutoff is the only policy change or discontinuity at the threshold of 70; no other variables jump at this point.\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 7.4505,
+      "usage": {
+        "prompt_tokens": 157,
+        "total_tokens": 243,
+        "completion_tokens": 86,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"one_positive_percent\": 16.4,\n  \"two_positive_percent\": 76.9,\n  \"independence_caveat\": \"The assumption of conditional independence ignores potential correlations in test errors (e.g., systematic bias, shared biological markers, or lab errors) that can make repeated positive results less informative than calculated, leading to overconfidence in the posterior probability.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 17.7914,
+      "usage": {
+        "prompt_tokens": 240,
+        "total_tokens": 447,
+        "completion_tokens": 207,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The observation that X has the same effect in an orthogonal signaling assay rules out H3 (assay_artifact).\",\n    \"The validated occupancy assay detecting no binding of X to R rules out H1 (direct_block).\",\n    \"R protein levels fall while R mRNA remains unchanged, indicating post-transcriptional regulation of the protein.\",\n    \"The proteasome inhibitor prevents both the R-protein decline and the signaling effect, confirming that proteasomal degradation of R is the mechanism responsible for the reduced signaling.\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome inhibitor fails to prevent the decline in R protein levels or the reduction in signaling, or if X is shown to inhibit the proteasome directly without affecting R protein stability in the absence of the inhibitor, the proteasomal degradation hypothesis would be undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 41.1622,
+      "usage": {
+        "prompt_tokens": 238,
+        "total_tokens": 719,
+        "completion_tokens": 481,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "The claim that the mayor diverted famine relief in 1892 should be assessed with significant skepticism, though not dismissed entirely. The evidentiary weight shifts heavily against the accusation due to source dependence and the nature of the primary financial records.\n\nS1, the rival\u2019s diary, is the origin of the claim. As a political rival, the author has a clear incentive to damage the mayor\u2019s reputation. Crucially, S1 provides no transactional details, making it a pure allegation rather than evidence of specific acts. S2 and S4 are derivative sources; they add no independent information and merely amplify S1\u2019s unverified assertion. Their existence does not strengthen the claim, as they rely entirely on the initial, motivated source.\n\nThe most critical evidence is S3, the independently preserved treasury ledger. This document establishes that the disputed funds were indeed paid to named grain suppliers. This directly contradicts the core mechanism of \"diversion\" if diversion implies the money never reached the intended relief channel. However, S3 does not establish that the grain was actually delivered to the famine victims. It proves the money left the treasury for the stated purpose, but it does not prove the final outcome. The ledger reconciles, suggesting internal consistency, but it cannot verify the physical distribution of goods.\n\nThe detail that one supplier was the mayor\u2019s cousin introduces a potential conflict of interest, which is a common vector for corruption. However, the fact that the price paid to the cousin matched other suppliers that month significantly weakens this point. If the mayor had diverted funds for personal gain, one would expect inflated prices or kickbacks. The market-rate pricing suggests the transaction was commercially normal, even if nepotistic. Nepotism is an ethical failing, but it is distinct from the specific crime of diverting relief funds.\n\nTherefore, belief in the claim should decrease substantially. The evidence supports a narrative of nepotistic procurement rather than fraudulent diversion. The highest-value next evidence to seek would be independent, contemporaneous records of grain delivery and distribution in the affected regions. Specifically, looking for municipal or charitable organization logs confirming that the grain from these suppliers actually arrived and was distributed to the populace would resolve the gap between payment (S3) and impact. Without such records, the claim remains an unsupported allegation from a motivated rival, contradicted by financial records showing proper payment for goods.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 11,
+      "max_score": 12,
+      "elapsed_s": 170.9748,
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 2213,
+        "completion_tokens": 2003,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To solve this problem, we need to calculate the expected values (EV) for different decision paths and compare them to determine the optimal strategy.\n\n**1. Calculate `launch_now_ev`**\nThis is the expected value of launching the project immediately without any test.\n*   $P(\\text{Good}) = 0.4$\n*   $P(\\text{Bad}) = 0.6$\n*   Payoff(Good) = $120$\n*   Payoff(Bad) = $-60$\n\n$$ \\text{EV}_{\\text{launch\\_now}} = (0.4 \\times 120) + (0.6 \\times -60) $$\n$$ \\text{EV}_{\\text{launch\\_now}} = 48 - 36 = 12 $$\n\n**2. Calculate `positive_probability`**\nThis is the total probability of receiving a positive test result, denoted as $P(+)$, using the Law of Total Probability.\n*   $P(+ | \\text{Good}) = 0.8$\n*   $P(+ | \\text{Bad}) = 0.2$\n\n$$ P(+) = P(+ | \\text{Good})P(\\text{Good}) + P(+ | \\text{Bad})P(\\text{Bad}) $$\n$$ P(+) = (0.8 \\times 0.4) + (0.2 \\times 0.6) $$\n$$ P(+) = 0.32 + 0.12 = 0.44 $$\n\n**3. Calculate `good_given_positive`**\nThis is the posterior probability that the state is Good given a positive test result, $P(\\text{Good} | +)$, using Bayes' Theorem.\n\n$$ P(\\text{Good} | +) = \\frac{P(+ | \\text{Good})P(\\text{Good})}{P(+)} $$\n$$ P(\\text{Good} | +) = \\frac{0.32}{0.44} = \\frac{32}{44} = \\frac{8}{11} \\approx 0.72727... $$\n\n**4. Calculate `launch_ev_given_positive`**\nThis is the expected value of launching the project if the test result is positive.\n*   $P(\\text{Good} | +) = 8/11$\n*   $P(\\text{Bad} | +) = 1 - 8/11 = 3/11$\n\n$$ \\text{EV}_{\\text{launch} | +} = (P(\\text{Good} | +) \\times 120) + (P(\\text{Bad} | +) \\times -60) $$\n$$ \\text{EV}_{\\text{launch} | +} = \\left(\\frac{8}{11} \\times 120\\right) + \\left(\\frac{3}{11} \\times -60\\right) $$\n$$ \\text{EV}_{\\text{launch} | +} = \\frac{960}{11} - \\frac{180}{11} = \\frac{780}{11} \\approx 70.909... $$\n\n**5. Determine `positive_action`**\nCompare $\\text{EV}_{\\text{launch} | +}$ with the payoff of declining (0).\n*   $\\text{EV}_{\\text{launch} | +} \\approx 70.9$\n*   $\\text{EV}_{\\text{decline}} = 0$\nSince $70.9 > 0$, the optimal action is to **Launch**.\n\n**6. Calculate `launch_ev_given_negative`**\nFirst, find the posterior probability of Good given a negative result, $P(\\text{Good} | -)$.\n*   $P(-) = 1 - P(+) = 1 - 0.44 = 0.56$\n*   $P(- | \\text{Good}) = 1 - 0.8 = 0.2$\n*   $P(- | \\text{Bad}) = 1 - 0.2 = 0.8$\n\n$$ P(\\text{Good} | -) = \\frac{P(- | \\text{Good})P(\\text{Good})}{P(-)} = \\frac{0.2 \\times 0.4}{0.56} = \\frac{0.08}{0.56} = \\frac{8}{56} = \\frac{1}{7} \\approx 0.1428... $$\n$$ P(\\text{Bad} | -) = 1 - \\frac{1}{7} = \\frac{6}{7} \\approx 0.8571... $$\n\nNow, calculate the EV of launching given a negative result:\n$$ \\text{EV}_{\\text{launch} | -} = \\left(\\frac{1}{7} \\times 120\\right) + \\left(\\frac{6}{7} \\times -60\\right) $$\n$$ \\text{EV}_{\\text{launch} | -} = \\frac{120}{7} - \\frac{360}{7} = -\\frac{240}{7} \\approx -34.285... $$\n\n**7. Determine `negative_action`**\nCompare $\\text{EV}_{\\text{launch} | -}$ with the payoff of declining (0).\n*   $\\text{EV}_{\\text{launch} | -} \\approx -34.3$\n*   $\\text{EV}_{\\text{decline}} = 0$\nSince $-34.3 < 0$, the optimal action is to **Decline**.\n\n**8. Calculate `test_policy_ev_after_cost`**\nThis is the expected value of the strategy \"Take the test, then act optimally based on the result,\" minus the cost of the test.\nFirst, calculate the expected value *before* subtracting the test cost:\n$$ \\text{EV}_{\\text{test\\_strategy}} = P(+) \\times \\text{EV}_{\\text{action} | +} + P(-) \\times \\text{EV}_{\\text{action} | -} $$\nSince the optimal actions are Launch for + and Decline for -:\n$$ \\text{EV}_{\\text{test\\_strategy}} = (0.44 \\times 70.909...) + (0.56 \\times 0) $$\n$$ \\text{EV}_{\\text{test\\_strategy}} = 0.44 \\times \\frac{780}{11} = \\frac{44}{100} \\times \\frac{780}{11} = \\frac{4}{10} \\times \\frac{780}{11} = \\frac{3120}{110} = \\frac{312}{11} \\approx 28.3636... $$\n\nNow, subtract the test cost of 10:\n$$ \\text{EV}_{\\text{test\\_policy}} = 28.3636... - 10 = 18.3636... $$\nRounding to one decimal place: $18.4$.\n\n**9. Determine `best_initial_policy`**\nCompare the EV of the two initial options:\n*   Option 1: Launch Now. $\\text{EV} = 12$.\n*   Option 2: Test Then Decide. $\\text{EV} = 18.4$.\n\nSince $18.4 > 12$, the best initial policy is to **Test**.\n\n**Summary of Values:**\n*   `launch_now_ev`: 12.0\n*   `positive_probability`: 0.44\n*   `good_given_positive`: 0.73 (rounded from 0.7272...)\n*   `launch_ev_given_positive`: 70.9 (rounded from 70.909...)\n*   `launch_ev_given_negative`: -34.3 (rounded from -34.285...)\n*   `test_policy_ev_after_cost`: 18.4 (rounded from 18.3636...)\n*   `positive_action`: \"Launch\"\n*   `negative_action`: \"Decline\"\n*   `best_initial_policy`: \"Test\"\n\n```json\n{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.73,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 18.4,\n  \"positive_action\": \"Launch\",\n  \"negative_action\": \"Decline\",\n  \"best_initial_policy\": \"Test\"\n}\n```",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      },
+      "score_original": 0
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 26.2116,
+      "usage": {
+        "prompt_tokens": 143,
+        "total_tokens": 449,
+        "completion_tokens": 306,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side,' we must look for potential counterexamples. A counterexample would be a card with a vowel on one side and an odd number on the other. \\n\\n1. **Card A**: 'A' is a vowel. We must turn this card to ensure the other side is not an odd number. If it were an odd number, the rule would be false.\\n2. **Card 7**: '7' is an odd number. We must turn this card to ensure the other side is not a vowel. If it were a vowel, the rule would be false.\\n\\nThe other cards are not logically required:\\n- **Card D**: 'D' is a consonant. The rule only applies to vowels. Whether the other side is even or odd does not affect the validity of the rule for consonants.\\n- **Card 4**: '4' is an even number. The rule states that vowels imply even numbers, but it does not state that even numbers imply vowels. Therefore, if the other side is a vowel or a consonant, the rule remains valid in either case (a vowel with an even number satisfies the rule; a consonant with an even number is irrelevant to the rule's condition).\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 63.2616,
+      "usage": {
+        "prompt_tokens": 211,
+        "total_tokens": 952,
+        "completion_tokens": 741,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "**Recommendation: Do Not Implement Automatic Restrictive Supervision. Adopt a Constrained, Human-in-the-Loop Decision Support System with Rigorous Auditing.**\n\nThe proposal to automatically impose restrictive supervision based on a fixed risk threshold is fundamentally flawed and should be rejected. While the model is calibrated within demographic groups, calibration only ensures that predicted probabilities match observed frequencies in historical data. It does not justify the *utility* of acting on those predictions, nor does it account for the severe asymmetry of errors.\n\n**Base Rates and Asymmetric Errors**\nSevere violent offenses are rare. Even a highly accurate model will generate a high number of false positives relative to true positives due to the low base rate. Automatically restricting liberty for a \"high risk\" prediction imposes a severe cost (loss of freedom, stigma, economic harm) on individuals who may never commit a crime. The cost of a false positive (wrongful restriction) likely outweighs the benefit of preventing a single future offense, especially when the predicted probability is not 100%. A fixed threshold ignores this trade-off; it treats a 20% risk and a 90% risk as equally actionable if both exceed the threshold, which is ethically and legally unsound.\n\n**Causation vs. Prediction and Feedback Loops**\nThe model predicts *risk*, not *causation*. It likely relies on proxies for socioeconomic disadvantage (e.g., zip code, prior arrests) rather than criminal intent. Police deployment changes who is observed; if police focus on high-risk predictions, they arrest more people from those groups, creating a feedback loop where the model\u2019s inputs are contaminated by its own outputs. This \"selective labeling\" ensures the model learns to predict police activity, not crime. Furthermore, defendants can adapt strategically. If features are known, individuals may alter behavior to avoid detection, rendering the model\u2019s inputs obsolete or misleading.\n\n**Distribution Shift and Rights**\nHistorical calibration is invalid under distribution shift. Economic and social conditions change, altering the relationship between features and outcomes. More critically, automatic restriction violates due process. Due process requires individualized assessment, notice, and an opportunity to be heard. An algorithmic black box cannot provide the contextual nuance required for liberty-depriving decisions. It also risks disparate impact, as \"calibration within groups\" does not ensure equal accuracy or fairness across groups if the underlying data reflects historical biases.\n\n**Concrete Deployment and Evaluation Design**\n1.  **Role:** The model should serve only as a *decision support tool* for human officers, not an automatic trigger.\n2.  **Thresholds:** Use dynamic, cost-sensitive thresholds that account for the base rate and the severity of the error.\n3.  **Safeguards:**\n    *   **Human Review:** Every high-risk flag must be reviewed by a human officer who can consider mitigating factors.\n    *   **Transparency:** Provide defendants with the specific factors contributing to the risk score and a mechanism to contest them.\n    *   **Audit:** Independent auditors must regularly evaluate the model for disparate impact, feedback loops, and drift.\n4.  **Stopping Conditions:**\n    *   If the false positive rate exceeds a pre-defined ethical limit.\n    *   If audits reveal significant disparate impact across demographic groups.\n    *   If evidence shows the model is driving police bias (feedback loop) rather than reflecting crime.\n    *   If distribution shift renders the model\u2019s predictions statistically unreliable.\n\nThis approach respects rights, acknowledges uncertainty, and allows for continuous improvement without the dangers of automated liberty deprivation.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    },
+    {
+      "task": "kv_sizing",
+      "score": 0,
+      "max_score": 16,
+      "elapsed_s": 8.4423,
+      "usage": {
+        "prompt_tokens": 366,
+        "total_tokens": 463,
+        "completion_tokens": 97,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 12582912,\n  \"kv_gib_at_262144\": 3072.0,\n  \"max_context_tokens_in_25gib\": 2048,\n  \"weights_87gib_and_262144_fits_in_112gib\": false\n}\n```",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": false,
+        "gib_at_262144": false,
+        "max_context": false,
+        "fits": false,
+        "counted_all_48_layers": false
+      }
+    },
+    {
+      "task": "causal_identification",
+      "score": 18,
+      "max_score": 18,
+      "elapsed_s": 5.606,
+      "usage": {
+        "prompt_tokens": 264,
+        "total_tokens": 328,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"adjustment_set\": [\n    \"C\"\n  ],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": true,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      }
+    },
+    {
+      "task": "resource_optimization",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 195.0001,
+      "usage": {
+        "prompt_tokens": 261,
+        "total_tokens": 2545,
+        "completion_tokens": 2284,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To maximize the total value within the 112 GiB limit, we evaluate all possible combinations of the models.\n\n**Models:**\n1.  **atlas**: 61 GiB, Value 67\n2.  **borealis**: 56 GiB, Value 60\n3.  **cinder**: 56 GiB, Value 60\n4.  **dunlin**: 27 GiB, Value 28\n5.  **ember**: 19 GiB, Value 19\n6.  **fennec**: 13 GiB, Value 12\n\n**Step 1: Analyze High-Value Combinations**\n\nLet's look at combinations involving the largest models, as they contribute significantly to the value.\n\n*   **Case A: Include `atlas` (61 GiB, 67 Val)**\n    *   Remaining capacity: $112 - 61 = 51$ GiB.\n    *   We need to fill 51 GiB with the remaining models: `borealis` (56), `cinder` (56), `dunlin` (27), `ember` (19), `fennec` (13).\n    *   `borealis` and `cinder` are too big (56 > 51).\n    *   Possible subsets from `{dunlin, ember, fennec}`:\n        *   `dunlin` + `ember` + `fennec`: Size $27 + 19 + 13 = 59$ GiB. (Too big, $59 > 51$)\n        *   `dunlin` + `ember`: Size $27 + 19 = 46$ GiB. Fits. Value $28 + 19 = 47$. Total Value: $67 + 47 = 114$. Total Size: $61 + 46 = 107$.\n        *   `dunlin` + `fennec`: Size $27 + 13 = 40$ GiB. Fits. Value $28 + 12 = 40$. Total Value: $67 + 40 = 107$.\n        *   `ember` + `fennec`: Size $19 + 13 = 32$ GiB. Fits. Value $19 + 12 = 31$. Total Value: $67 + 31 = 98$.\n        *   `dunlin` only: Value 28. Total 95.\n        *   `ember` only: Value 19. Total 86.\n        *   `fennec` only: Value 12. Total 79.\n    *   Best with `atlas`: **114** (atlas, dunlin, ember).\n\n*   **Case B: Include `borealis` (56 GiB, 60 Val) but NOT `atlas`**\n    *   Remaining capacity: $112 - 56 = 56$ GiB.\n    *   Remaining models: `cinder` (56), `dunlin` (27), `ember` (19), `fennec` (13).\n    *   Sub-option B1: Include `cinder` (56 GiB, 60 Val).\n        *   Size so far: $56 + 56 = 112$ GiB.\n        *   Remaining capacity: 0 GiB.\n        *   Total Value: $60 + 60 = 120$.\n        *   Total Size: 112.\n        *   This is a valid candidate. **Value: 120**.\n    *   Sub-option B2: Do NOT include `cinder`.\n        *   Remaining capacity: 56 GiB.\n        *   Models: `dunlin` (27), `ember` (19), `fennec` (13).\n        *   Max value subset from these fitting in 56 GiB:\n            *   `dunlin` + `ember` + `fennec`: Size $27+19+13=59$ (Too big).\n            *   `dunlin` + `ember`: Size 46. Value $28+19=47$. Total Value: $60+47=107$.\n            *   `dunlin` + `fennec`: Size 40. Value $28+12=40$. Total Value: $60+40=100$.\n            *   `ember` + `fennec`: Size 32. Value $19+12=31$. Total Value: $60+31=91$.\n        *   Best here is 107, which is less than 120.\n\n*   **Case C: Include `cinder` (56 GiB, 60 Val) but NOT `atlas` or `borealis`**\n    *   Symmetric to Case B2.\n    *   Remaining capacity: 56 GiB.\n    *   Models: `dunlin`, `ember`, `fennec`.\n    *   Best subset value is 47 (`dunlin`+`ember`).\n    *   Total Value: $60 + 47 = 107$.\n\n*   **Case D: No `atlas`, `borealis`, or `cinder`**\n    *   Models: `dunlin` (27), `ember` (19), `fennec` (13).\n    *   Total Size: $27+19+13 = 59$ GiB. Fits in 112.\n    *   Total Value: $28+19+12 = 59$.\n    *   Much lower than 120.\n\n**Comparison of Best Candidates:**\n1.  `atlas` + `dunlin` + `ember`: Value 114, Size 107.\n2.  `borealis` + `cinder`: Value 120, Size 112.\n3.  `atlas` + `dunlin` + `fennec`: Value 107.\n4.  `borealis` + `dunlin` + `ember`: Value 107.\n\nThe maximum value is **120**, achieved by selecting **borealis** and **cinder**.\n\n**Step 2: Calculate Greedy by Value Density**\n\nValue Density = Value / Size.\n1.  `atlas`: $67 / 61 \\approx 1.098$\n2.  `borealis`: $60 / 56 \\approx 1.071$\n3.  `cinder`: $60 / 56 \\approx 1.071$\n4.  `dunlin`: $28 / 27 \\approx 1.037$\n5.  `ember`: $19 / 19 = 1.000$\n6.  `fennec`: $12 / 13 \\approx 0.923$\n\n**Greedy Algorithm Execution:**\n1.  **Pick highest density that fits:**\n    *   `atlas` (1.098) fits in 112.\n    *   Select `atlas`.\n    *   Current Size: 61. Current Value: 67.\n    *   Remaining Capacity: $112 - 61 = 51$.\n\n2.  **Pick next highest density that fits in 51 GiB:**\n    *   `borealis` (1.071): Size 56. Does not fit ($56 > 51$).\n    *   `cinder` (1.071): Size 56. Does not fit ($56 > 51$).\n    *   `dunlin` (1.037): Size 27. Fits.\n    *   Select `dunlin`.\n    *   Current Size: $61 + 27 = 88$. Current Value: $67 + 28 = 95$.\n    *   Remaining Capacity: $112 - 88 = 24$.\n\n3.  **Pick next highest density that fits in 24 GiB:**\n    *   `borealis` (1.071): Size 56. No.\n    *   `cinder` (1.071): Size 56. No.\n    *   `ember` (1.000): Size 19. Fits.\n    *   Select `ember`.\n    *   Current Size: $88 + 19 = 107$. Current Value: $95 + 19 = 114$.\n    *   Remaining Capacity: $112 - 107 = 5$.\n\n4.  **Pick next highest density that fits in 5 GiB:**\n    *   `borealis` (1.071): No.\n    *   `cinder` (1.071): No.\n    *   `fennec` (0.923): Size 13. No.\n    *   No more models fit.\n\n**Greedy Total Value:** 114.\n\n**Final Check:**\n*   Optimal Selection: `borealis`, `cinder`.\n*   Total Value: 120.\n*   Total Size: 112.\n*   Greedy Total Value: 114.\n\n```json\n{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}\n```",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      },
+      "score_original": 0
+    },
+    {
+      "task": "thermal_physics",
+      "score": 13,
+      "max_score": 16,
+      "elapsed_s": 5.7778,
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 332,
+        "completion_tokens": 66,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 67.92\n}",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": false,
+        "gave_rise_not_temperature": false
+      }
+    }
+  ],
+  "score_original": 99,
+  "regraded": "2026-09-01: extract_json and extract_code fixes applied to saved responses"
+}

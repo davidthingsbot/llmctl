@@ -17,18 +17,56 @@ import urllib.request
 from pathlib import Path
 
 
+# Chatty and thinking models need room. A cap only costs anything when it BINDS —
+# a model that answers in 200 tokens uses 200 whether the ceiling is 160 or
+# 12000 — but when it binds it produces a ZERO that looks like a model failure
+# and is not. Three separate instances of that were found on 2026-09-01:
+# thinking tokens consuming the whole budget, protocol_architecture capped at 520
+# in every run ever recorded, and cobs_codec truncated at 700. The per-task
+# numbers below are kept as documentation of what each task actually needs; this
+# floor is what is enforced.
+MIN_TOKEN_BUDGET = 12000
+
+# 12000 tokens at ~10 tok/s is 20 minutes; the old 900s timeout would abort it.
+REQUEST_TIMEOUT_S = 2400
+
+
 def extract_json(text: str):
+    """Pull the answer object out of a reply that may also contain prose.
+
+    The previous implementation used a greedy \\{.*\\} span, so a single brace
+    anywhere in the model's commentary swallowed the real answer and scored a
+    CORRECT reply zero — observed 2026-09-01 when qwen38-27b-nvfp4 returned the
+    exact optimum for resource_optimization inside a ```json fence, after
+    bullet-point prose, and was graded 0/16 with parsed=False.
+
+    Order: fenced json blocks (last first), the whole reply, then each balanced
+    object scanning from the END, because models put the final answer last.
+    """
     text = text.strip()
+    for candidate in reversed(re.findall(r"```(?:json)?\s*(\{.*?\})\s*```",
+                                         text, re.S | re.I)):
+        try:
+            return json.loads(candidate)
+        except Exception:
+            pass
     try:
         return json.loads(text)
     except Exception:
-        match = re.search(r"\{.*\}", text, re.S)
-        if not match:
-            return None
-        try:
-            return json.loads(match.group(0))
-        except Exception:
-            return None
+        pass
+    for start in reversed([i for i, ch in enumerate(text) if ch == "{"]):
+        depth = 0
+        for end in range(start, len(text)):
+            if text[end] == "{":
+                depth += 1
+            elif text[end] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start:end + 1])
+                    except Exception:
+                        break
+    return None
 
 
 def extract_code(text: str) -> str:
@@ -90,7 +128,7 @@ def request(
         headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
     )
     started = time.monotonic()
-    with urllib.request.urlopen(req, timeout=900) as response:
+    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_S) as response:
         data = json.load(response)
     elapsed = time.monotonic() - started
     message = data["choices"][0]["message"]
@@ -538,7 +576,7 @@ Worked examples:
         rej = sum(1 for k in ("decode_rejects_zero_byte", "decode_rejects_overrun") if details.get(k))
         return min(24, vec + boundary + rest + rej + (2 if details.get("functions_only") else 0)), 24, details
 
-    return "cobs_codec", prompt, 700, grade
+    return "cobs_codec", prompt, 1300, grade
 
 
 def task_stream_reassembler():
@@ -712,7 +750,7 @@ endmodule
 """
 
 
-def task_verilog_fifo():
+def task_verilog_medium():
     prompt = '''Write a synchronous FIFO in Verilog-2001. Return ONLY the complete module,
 no testbench, no explanation.
 
@@ -813,7 +851,7 @@ Requirements:
             + (6 if behaviour == 14 else 0)
         return min(26, score), 26, details
 
-    return "verilog_fifo", prompt, 900, grade
+    return "verilog_medium", prompt, 900, grade
 
 
 CUDA_HARNESS = r"""
@@ -889,7 +927,7 @@ def _barrier_inside_thread_conditional(code):
     return False
 
 
-def task_cuda_reduction():
+def task_cuda_medium():
     prompt = '''Write a CUDA kernel that reduces an array of floats to one partial sum per
 block. Return ONLY the kernel, no host code, no main, no includes, no explanation.
 
@@ -986,7 +1024,7 @@ Contract:
             + (2 if not details["barrier_in_thread_conditional"] else 0)
         return min(26, 2 + cases + ragged + barrier), 26, details
 
-    return "cuda_reduction", prompt, 700, grade
+    return "cuda_medium", prompt, 700, grade
 
 
 
@@ -1074,7 +1112,7 @@ int main() {
 """
 
 
-def task_cpp_mlp():
+def task_cpp_medium():
     prompt = '''Implement the forward pass, loss and analytic gradients of a small neural
 network in C++, from scratch. Return ONLY the function, no main, no includes, no
 explanation. You may not use any library beyond <cmath>.
@@ -1161,10 +1199,10 @@ Requirements:
         score += 7 if details.get("xor_learned") else 0
         return min(28, score), 28, details
 
-    return "cpp_mlp", prompt, 1100, grade
+    return "cpp_medium", prompt, 1500, grade
 
 
-def task_numpy_backprop():
+def task_ml_medium():
     prompt = '''Implement a two-layer neural network's forward pass, loss and analytic
 gradients with numpy. Return ONLY the two functions, no training loop, no
 explanation. `import numpy as np` is the only import permitted.
@@ -1302,7 +1340,441 @@ features. Keep the initial weights small.
         score += 4 if details.get("learns_circle") else 0
         return min(26, score), 26, details
 
-    return "numpy_backprop", prompt, 900, grade
+    return "ml_medium", prompt, 900, grade
+
+
+
+
+def _cost_summary(results, wall_s):
+    """Token and time totals for the run.
+
+    Score alone does not say what a model costs to reach it. A model that scores
+    two points higher while generating four times the tokens at a third the
+    speed is not obviously the better choice, and on a bandwidth-bound box that
+    difference is minutes per task. Recorded per suite so it can be compared
+    across models and machines.
+    """
+    prompt = completion = 0
+    task_seconds = 0.0
+    truncated = []
+    for row in results:
+        usage = row.get("usage") or {}
+        prompt += usage.get("prompt_tokens") or 0
+        completion += usage.get("completion_tokens") or 0
+        task_seconds += row.get("elapsed_s") or 0.0
+        if usage.get("completion_tokens") and row.get("max_tokens") \
+                and usage["completion_tokens"] >= row["max_tokens"]:
+            truncated.append(row["task"])
+    return {
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "total_tokens": prompt + completion,
+        "task_seconds": round(task_seconds, 2),
+        "wall_seconds": round(wall_s, 2),
+        "generation_tok_s": round(completion / task_seconds, 2) if task_seconds else None,
+        # A task that hit its ceiling did not finish its answer, so its score is a
+        # measurement of the budget rather than of the model.
+        "truncated_tasks": truncated,
+    }
+
+
+def _json_safe(value):
+    """Coerce grader details into JSON-serialisable types.
+
+    numpy_backprop's grader compares numpy scalars, so a detail can end up as
+    np.bool_ or np.float64. Neither is JSON-serialisable, and because the results
+    are written only after every task has run, one such value discards the whole
+    suite at the final step — 14 tasks of work lost to the last line.
+    """
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    item = getattr(value, "item", None)
+    if callable(item):
+        try:
+            return _json_safe(item())
+        except Exception:
+            pass
+    return str(value)
+
+
+
+def task_cpp_easy():
+    prompt = '''Implement a fixed-capacity circular buffer in C++. Return ONLY the struct,
+no main, no includes, no explanation. You may use nothing beyond <cstddef>.
+
+    struct RingBuffer {
+        RingBuffer(int capacity);      // capacity >= 1
+        bool push(int value);          // false if full, buffer unchanged
+        bool pop(int& out);            // false if empty, out untouched
+        int  size() const;
+        bool empty() const;
+        bool full() const;
+    };
+
+Requirements:
+- Fixed capacity given at construction. Store up to 1024 elements; you may use a
+  plain member array sized 1024.
+- FIFO order: the first value pushed is the first popped.
+- Pushing when full returns false and does not overwrite or lose data.
+- Popping when empty returns false and leaves `out` alone.
+- The buffer must wrap: after filling and draining repeatedly it keeps working.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "RingBuffer" not in code:
+            details["struct_present"] = False
+            return 0, 16, details
+        details["struct_present"] = True
+        if not shutil.which("g++"):
+            details["compiler"] = "absent"
+            return 3, 16, details
+        harness = r"""
+#include <cstdio>
+#include <cstddef>
+__CANDIDATE__
+static int p=0,f=0;
+static void chk(const char* n, bool ok){ if(ok){p++;printf("CHECK %s PASS\n",n);} else {f++;printf("CHECK %s FAIL\n",n);} }
+int main(){
+    { RingBuffer b(4); int v=0;
+      chk("starts_empty", b.empty() && b.size()==0 && !b.full());
+      chk("pop_empty_false", !b.pop(v));
+      chk("push_then_size", b.push(1) && b.size()==1 && !b.empty());
+      chk("fifo_order", b.push(2)&&b.push(3)&&b.pop(v)&&v==1&&b.pop(v)&&v==2&&b.pop(v)&&v==3);
+      chk("empty_after_drain", b.empty()); }
+    { RingBuffer b(3);
+      chk("fills_to_capacity", b.push(1)&&b.push(2)&&b.push(3)&&b.full()&&b.size()==3);
+      chk("push_when_full_false", !b.push(4));
+      int v=0; b.pop(v);
+      chk("full_push_did_not_corrupt", v==1); }
+    { RingBuffer b(3); int v=0; bool ok=true;
+      for(int round=0; round<50 && ok; ++round){
+          for(int i=0;i<3;++i) ok = ok && b.push(round*10+i);
+          for(int i=0;i<3;++i){ ok = ok && b.pop(v) && v==round*10+i; } }
+      chk("wraps_repeatedly", ok); }
+    { RingBuffer b(1); int v=0;
+      chk("capacity_one", b.push(7)&&b.full()&&!b.push(8)&&b.pop(v)&&v==7&&b.empty()); }
+    printf("SUMMARY pass=%d fail=%d\n",p,f); return 0; }
+"""
+        workdir = tempfile.mkdtemp(prefix="cppring-")
+        src, binary = os.path.join(workdir, "c.cpp"), os.path.join(workdir, "c")
+        try:
+            open(src, "w").write(harness.replace("__CANDIDATE__", code))
+            build = subprocess.run(["g++", "-O1", "-o", binary, src],
+                                   capture_output=True, text=True, timeout=120)
+            details["compiles"] = build.returncode == 0
+            if not details["compiles"]:
+                details["compile_error"] = [l for l in build.stderr.splitlines() if "error" in l.lower()][:3]
+                return 0, 16, details
+            run = subprocess.run([binary], capture_output=True, text=True, timeout=60)
+            for line in run.stdout.splitlines():
+                if line.startswith("CHECK "):
+                    _, n, verdict = line.split()
+                    details[n] = verdict == "PASS"
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 16, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        passed = sum(1 for k in ("starts_empty","pop_empty_false","push_then_size","fifo_order",
+                                 "empty_after_drain","fills_to_capacity","push_when_full_false",
+                                 "full_push_did_not_corrupt","wraps_repeatedly","capacity_one")
+                     if details.get(k))
+        return min(16, 2 + passed + (4 if passed == 10 else 0)), 16, details
+
+    return "cpp_easy", prompt, 700, grade
+
+
+def task_ml_easy():
+    prompt = '''Implement a numerically stable softmax and cross-entropy with numpy. Return
+ONLY the two functions, no explanation. `import numpy as np` is the only import
+permitted.
+
+    def softmax(Z):
+        """Z is (n_samples, n_classes). Return row-wise softmax, same shape."""
+
+    def cross_entropy(Z, y):
+        """Z is (n_samples, n_classes) LOGITS, y is (n_samples,) integer labels.
+        Return the mean cross-entropy loss as a float."""
+
+Requirements:
+- Rows of softmax(Z) must sum to 1 and contain no NaN.
+- It must be numerically stable: logits of +1000 or -1000 must not overflow or
+  produce NaN. Subtract the row maximum before exponentiating.
+- cross_entropy takes LOGITS, not probabilities, and must also be stable.
+- Both must work for a single row.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as exc:
+            details["parse_error"] = str(exc)
+            return 0, 16, details
+        ok_imports = all((isinstance(n, ast.Import) and all(a.name == "numpy" for a in n.names))
+                         or (isinstance(n, ast.ImportFrom) and n.module == "numpy")
+                         for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom)))
+        details["only_numpy_imported"] = ok_imports
+        names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+        details["both_functions"] = {"softmax", "cross_entropy"} <= names
+        if not (ok_imports and details["both_functions"]):
+            return 0, 16, details
+        try:
+            import numpy as np
+        except ImportError:
+            details["numpy"] = "absent"
+            return 3, 16, details
+        env = {"__name__": "candidate"}
+        try:
+            exec(compile(tree, "candidate", "exec"), env)
+            sm, ce = env["softmax"], env["cross_entropy"]
+            rng = np.random.RandomState(0)
+            Z = rng.randn(6, 4) * 2
+            P = np.asarray(sm(Z), dtype=float)
+            details["shape"] = P.shape == (6, 4)
+            details["rows_sum_to_one"] = bool(np.allclose(P.sum(axis=1), 1.0))
+            details["matches_reference"] = bool(np.allclose(
+                P, np.exp(Z - Z.max(axis=1, keepdims=True))
+                / np.exp(Z - Z.max(axis=1, keepdims=True)).sum(axis=1, keepdims=True)))
+            big = np.array([[1000.0, 999.0, 998.0], [-1000.0, -1001.0, -1002.0]])
+            Pb = np.asarray(sm(big), dtype=float)
+            details["stable_large_logits"] = bool(np.all(np.isfinite(Pb))
+                                                  and np.allclose(Pb.sum(axis=1), 1.0))
+            single = np.asarray(sm(np.array([[1.0, 2.0, 3.0]])), dtype=float)
+            details["single_row"] = single.shape == (1, 3) and bool(np.allclose(single.sum(), 1.0))
+            y = np.array([0, 1, 2, 3, 0, 1])
+            loss = float(ce(Z, y))
+            ref = float(np.mean(-(Z[np.arange(6), y]
+                                  - (Z.max(axis=1) + np.log(np.exp(Z - Z.max(axis=1, keepdims=True)).sum(axis=1))))))
+            details["cross_entropy_value"] = abs(loss - ref) < 1e-6
+            big_loss = float(ce(big, np.array([0, 0])))
+            details["cross_entropy_stable"] = bool(np.isfinite(big_loss))
+        except Exception as exc:
+            details["run_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 16, details
+        weights = {"shape": 1, "rows_sum_to_one": 2, "matches_reference": 3,
+                   "stable_large_logits": 4, "single_row": 1,
+                   "cross_entropy_value": 3, "cross_entropy_stable": 2}
+        return sum(w for k, w in weights.items() if details.get(k)), 16, details
+
+    return "ml_easy", prompt, 700, grade
+
+
+VERILOG_EASY_TB = r"""
+module tb;
+  reg clk = 0, rst_n = 0, sig = 0;
+  wire pulse;
+  integer pass = 0, fail = 0, seen = 0;
+  edge_detect dut(.clk(clk), .rst_n(rst_n), .sig(sig), .pulse(pulse));
+  always #5 clk = ~clk;
+
+  task check(input integer id, input cond);
+    begin
+      if (cond) begin pass = pass + 1; $display("CHECK %0d PASS", id); end
+      else      begin fail = fail + 1; $display("CHECK %0d FAIL", id); end
+    end
+  endtask
+
+  // count cycles where pulse is high
+  always @(posedge clk) if (rst_n && pulse) seen = seen + 1;
+
+  initial begin
+    #12 rst_n = 1;
+    @(negedge clk);
+    check(0, pulse === 1'b0);              // idle low
+
+    seen = 0;
+    @(negedge clk) sig = 1;                // rising edge
+    repeat (4) @(negedge clk);
+    check(1, seen == 1);                   // exactly one cycle, not a level
+
+    seen = 0;
+    repeat (4) @(negedge clk);
+    check(2, seen == 0);                   // stays low while sig held high
+
+    seen = 0;
+    @(negedge clk) sig = 0;                // falling edge
+    repeat (4) @(negedge clk);
+    check(3, seen == 0);                   // no pulse on falling edge
+
+    seen = 0;
+    @(negedge clk) sig = 1;
+    repeat (2) @(negedge clk);
+    @(negedge clk) sig = 0;
+    @(negedge clk) sig = 1;
+    repeat (3) @(negedge clk);
+    check(4, seen == 2);                   // two separate rising edges
+
+    rst_n = 0; @(negedge clk);
+    check(5, pulse === 1'b0);              // reset clears the output
+
+    $display("SUMMARY pass=%0d fail=%0d", pass, fail);
+    $finish;
+  end
+endmodule
+"""
+
+
+def task_verilog_easy():
+    prompt = '''Write a rising-edge detector in Verilog-2001. Return ONLY the module, no
+testbench, no explanation.
+
+module edge_detect(input clk, input rst_n, input sig, output reg pulse);
+
+Requirements:
+- `pulse` is high for EXACTLY ONE clock cycle after `sig` goes from 0 to 1.
+  It is a pulse, not a level: holding `sig` high must not hold `pulse` high.
+- No pulse on a falling edge of `sig`.
+- `rst_n` is asynchronous, active low, and clears `pulse`.
+- Synthesisable RTL: non-blocking assignments in the sequential block, no
+  inferred latches.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "edge_detect" not in code:
+            details["module_present"] = False
+            return 0, 16, details
+        details["module_present"] = True
+        labels = ["idle_low", "one_cycle_pulse", "not_a_level", "no_pulse_on_falling",
+                  "two_separate_edges", "reset_clears"]
+        workdir = tempfile.mkdtemp(prefix="vlog-easy-")
+        design = os.path.join(workdir, "edge_detect.v")
+        bench = os.path.join(workdir, "tb.v")
+        try:
+            open(design, "w").write(code + "\n")
+            open(bench, "w").write(VERILOG_EASY_TB)
+            if shutil.which("iverilog") and shutil.which("vvp"):
+                details["simulator"] = "iverilog"
+                build = subprocess.run(["iverilog", "-g2001", "-o", os.path.join(workdir, "sim"),
+                                        design, bench], capture_output=True, text=True, timeout=60)
+                details["compiles"] = build.returncode == 0
+                if details["compiles"]:
+                    run = subprocess.run(["vvp", os.path.join(workdir, "sim")],
+                                         capture_output=True, text=True, timeout=60)
+                    for line in run.stdout.splitlines():
+                        if line.startswith("CHECK "):
+                            _, ident, verdict = line.split()
+                            if ident.isdigit() and int(ident) < len(labels):
+                                details[labels[int(ident)]] = verdict == "PASS"
+                else:
+                    details["compile_error"] = build.stderr.strip().splitlines()[:2]
+            else:
+                details["simulator"] = "absent"
+                return 6, 16, details
+            if shutil.which("verilator"):
+                lint = subprocess.run(["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME",
+                                       "-Wno-EOFNEWLINE", "-Wno-UNUSEDSIGNAL", design],
+                                      capture_output=True, text=True, timeout=60)
+                details["lint_clean"] = lint.returncode == 0
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 16, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        behaviour = sum(2 for k in labels if details.get(k))
+        return min(16, (1 if details.get("compiles") else 0) + behaviour
+                   + (3 if details.get("lint_clean") else 0)), 16, details
+
+    return "verilog_easy", prompt, 600, grade
+
+
+CUDA_EASY_HARNESS = r"""
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+__CANDIDATE__
+int main(){
+    const int sizes[] = {1, 33, 256, 1000, 100000};
+    int fails = 0;
+    for (int c = 0; c < 5; ++c) {
+        int n = sizes[c];
+        float a = 2.5f;
+        float *hx = (float*)malloc(n*sizeof(float)), *hy = (float*)malloc(n*sizeof(float));
+        for (int i=0;i<n;++i){ hx[i]=(float)(i%13); hy[i]=(float)(i%7); }
+        float *dx=0,*dy=0;
+        if (cudaMalloc(&dx,n*sizeof(float))!=cudaSuccess || cudaMalloc(&dy,n*sizeof(float))!=cudaSuccess){
+            printf("GPU_UNAVAILABLE\n"); return 3; }
+        cudaMemcpy(dx,hx,n*sizeof(float),cudaMemcpyHostToDevice);
+        cudaMemcpy(dy,hy,n*sizeof(float),cudaMemcpyHostToDevice);
+        // Deliberately FEWER blocks than elements: a kernel without a grid-stride
+        // loop (or without a bounds guard) gets this wrong.
+        int threads = 128, blocks = 4;
+        saxpy<<<blocks, threads>>>(n, a, dx, dy);
+        if (cudaDeviceSynchronize()!=cudaSuccess){ printf("GPU_UNAVAILABLE\n"); return 3; }
+        float* out = (float*)malloc(n*sizeof(float));
+        cudaMemcpy(out,dy,n*sizeof(float),cudaMemcpyDeviceToHost);
+        int bad = 0;
+        for (int i=0;i<n;++i){ float want = a*hx[i]+hy[i]; if (fabs(out[i]-want) > 1e-4f) bad++; }
+        printf("CASE %d %s\n", n, bad==0 ? "PASS" : "FAIL");
+        if (bad) fails++;
+        cudaFree(dx); cudaFree(dy); free(hx); free(hy); free(out);
+    }
+    printf("SUMMARY failures=%d\n", fails);
+    return 0; }
+"""
+
+
+def task_cuda_easy():
+    prompt = '''Write a CUDA kernel computing y = a*x + y over n floats. Return ONLY the
+kernel, no host code, no main, no includes, no explanation.
+
+    __global__ void saxpy(int n, float a, const float* x, float* y)
+
+Contract:
+- It is launched with FEWER total threads than there are elements, so each thread
+  must handle several elements. Use a grid-stride loop.
+- `n` may be smaller than one block. No thread may read or write past n - 1.
+- y[i] becomes a * x[i] + y[i] for every i in 0..n-1, exactly once.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "saxpy" not in code or "__global__" not in code:
+            details["kernel_present"] = False
+            return 0, 16, details
+        details["kernel_present"] = True
+        if not shutil.which("nvcc"):
+            details["nvcc"] = "absent"
+            return 4, 16, details
+        workdir = tempfile.mkdtemp(prefix="cuda-easy-")
+        src, binary = os.path.join(workdir, "c.cu"), os.path.join(workdir, "c")
+        try:
+            open(src, "w").write(CUDA_EASY_HARNESS.replace("__CANDIDATE__", code))
+            build = subprocess.run(["nvcc", "-o", binary, src], capture_output=True,
+                                   text=True, timeout=300)
+            details["compiles"] = build.returncode == 0
+            if not details["compiles"]:
+                details["compile_error"] = [l for l in build.stderr.splitlines()
+                                            if "error" in l.lower()][:3]
+                return 0, 16, details
+            run = subprocess.run([binary], capture_output=True, text=True, timeout=300)
+            if "GPU_UNAVAILABLE" in run.stdout or run.returncode == 3:
+                details["gpu"] = "unavailable"
+                return 6, 16, details
+            details["gpu"] = "used"
+            for line in run.stdout.splitlines():
+                if line.startswith("CASE "):
+                    parts = line.split()
+                    details[f"n_{parts[1]}"] = parts[2] == "PASS"
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 16, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        cases = sum(2 for k in ("n_1", "n_33", "n_256", "n_1000", "n_100000") if details.get(k))
+        return min(16, 2 + cases + (4 if cases == 10 else 0)), 16, details
+
+    return "cuda_easy", prompt, 500, grade
 
 
 def main():
@@ -1333,6 +1805,13 @@ def main():
              "are comparable only with other extended results",
     )
     parser.add_argument(
+        "--min-tokens", type=int, default=MIN_TOKEN_BUDGET, metavar="N",
+        help=f"floor on every task's max_tokens (default {MIN_TOKEN_BUDGET}). The "
+             "per-task budgets are sized for a direct answer and truncate chatty "
+             "or thinking models, turning a good answer into a zero. Lower it only "
+             "to reproduce an older run",
+    )
+    parser.add_argument(
         "--token-budget-scale", type=float, default=1.0, metavar="N",
         help="multiply every task's max_tokens by N. The budgets are sized for a "
              "direct answer; a model that thinks first spends them on the thinking "
@@ -1348,17 +1827,25 @@ def main():
         task_protocol_design(), task_long_context(), task_scope_control(), task_timing(),
     ]
     if args.extended:
-        tasks += [task_cobs_codec(), task_stream_reassembler(),
-                  task_verilog_fifo(), task_cuda_reduction(),
-                  task_cpp_mlp(), task_numpy_backprop()]
+        tasks += [
+            # easy: journeyman competence. A suite of only hard tasks says who is
+            # in the top bracket and nothing about who is employable.
+            task_cpp_easy(), task_verilog_easy(), task_cuda_easy(), task_ml_easy(),
+            # medium: the original extended set, repositioned after two models
+            # scored 100% on cpp and cuda
+            task_cobs_codec(), task_stream_reassembler(),
+            task_verilog_medium(), task_cuda_medium(),
+            task_cpp_medium(), task_ml_medium(),
+        ]
     results = []
+    suite_started = time.monotonic()
     for name, prompt, max_tokens, grader in tasks:
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
+        budget = max(args.min_tokens, round(max_tokens * args.token_budget_scale))
         try:
             text, usage, elapsed = request(
-                args.url, key, args.model, prompt,
-                max(1, round(max_tokens * args.token_budget_scale)),
+                args.url, key, args.model, prompt, budget,
                 template_kwargs=not args.no_template_kwargs,
                 strip_reasoning=args.strip_reasoning,
             )
@@ -1368,6 +1855,7 @@ def main():
                 "score": score,
                 "max_score": maximum,
                 "elapsed_s": round(elapsed, 4),
+                "max_tokens": budget,
                 "usage": usage,
                 "response": text,
                 "grade_details": details,
@@ -1385,10 +1873,11 @@ def main():
         "endpoint": args.url,
         "score": sum(row["score"] for row in results),
         "max_score": sum(row["max_score"] for row in results),
+        "cost": _cost_summary(results, time.monotonic() - suite_started),
         "tasks": results,
     }
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(output, indent=2) + "\n")
+    Path(args.output).write_text(json.dumps(_json_safe(output), indent=2) + "\n")
     print(json.dumps({"model": args.model, "score": output["score"], "max_score": output["max_score"], "output": args.output}))
 
 

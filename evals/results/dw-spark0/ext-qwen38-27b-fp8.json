@@ -1,0 +1,390 @@
+{
+  "suite": "work_quality_v1+hard",
+  "model": "qwen38-27b-fp8",
+  "endpoint": "http://127.0.0.1:19434/v1/chat/completions",
+  "score": 209,
+  "max_score": 254,
+  "cost": {
+    "prompt_tokens": 39188,
+    "completion_tokens": 5953,
+    "total_tokens": 45141,
+    "task_seconds": 738.07,
+    "wall_seconds": 739.83,
+    "generation_tok_s": 8.07,
+    "truncated_tasks": []
+  },
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 8.6889,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 267,
+        "completion_tokens": 72,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 8.724,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 287,
+        "total_tokens": 359,
+        "completion_tokens": 72,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 0\n}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": false
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 16.571,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 282,
+        "total_tokens": 420,
+        "completion_tokens": 138,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_total = 5 + payload_len\n    if len(frame) != expected_total:\n        raise ValueError(\"invalid length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 42.7993,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 263,
+        "total_tokens": 620,
+        "completion_tokens": 357,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "1. **Missing bounds check for `rx_len`**: The code accesses `rx[1]`, `rx[2]`, and `rx[3+len]` without verifying that `rx_len` is sufficient, leading to out-of-bounds reads.\n   **Correction**: Validate `rx_len >= 4 + len` (or equivalent) before accessing payload and CRC bytes.\n\n2. **Unbounded `memcpy` into fixed-size buffer**: `len` is taken directly from `rx[1]` without checking if it exceeds the size of `payload` (32 bytes), causing a buffer overflow.\n   **Correction**: Ensure `len <= sizeof(payload)` before copying.\n\n3. **Incorrect CRC calculation scope**: `crc16` is called only on `payload`, but the protocol requires CRC to cover command, length, and payload.\n   **Correction**: Compute CRC over `rx[0]` through `rx[1+len]` (command + length + payload).\n\n4. **Assignment instead of comparison in CRC check**: `if (calc = got)` assigns `got` to `calc` instead of comparing them, always evaluating to true if `got` is non-zero.\n   **Correction**: Use `if (calc == got)`.\n\n5. **Command parsed before authentication**: `parse_command` is called before `authenticate`, violating the requirement that authentication must complete before command parsing.\n   **Correction**: Move `parse_command` to after successful authentication.\n\n6. **Sequence increment before validation**: `sequence++` occurs before CRC and authentication checks, allowing invalid or unauthenticated frames to alter state.\n   **Correction**: Move `sequence++` to after successful CRC and authentication.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 18,
+      "max_score": 18,
+      "elapsed_s": 184.9091,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 167,
+        "total_tokens": 1682,
+        "completion_tokens": 1515,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "**Design: Decoupled Acquisition and Processing Pipeline**\n\n**1. Core Principle**\nSeparate **Acquisition** (hardware interaction, frame capture, timestamping) from **Processing** (transformation, filtering, event detection). The `SCAN` command is replaced by two distinct command classes: `ACQUIRE` and `PROCESS`.\n\n**2. Command Boundaries**\n\n*   **`ACQUIRE` (Hardware Layer)**\n    *   **Responsibility:** Trigger sensor readout, capture raw frame, assign unique `FrameID` and `SourceID`, record `CaptureTimestamp`.\n    *   **Output:** Raw frame stored in a ring buffer or persistent store. No transformation or filtering occurs here.\n    *   **Modes:**\n        *   `CONTINUOUS`: Daemonized loop. Acquires frames at fixed rate.\n        *   `ON_DEMAND`: Single-shot acquisition.\n    *   **Constraint:** `ON_DEMAND` is **blocked** if `CONTINUOUS` is active. To perform on-demand acquisition, the system must first issue `STOP_CONTINUOUS`, then `ACQUIRE ON_DEMAND`, then optionally `START_CONTINUOUS`. This prevents ownership races and ensures deterministic frame ordering.\n\n*   **`PROCESS` (Software Layer)**\n    *   **Responsibility:** Fetches a specific `FrameID` (or range), applies current shear transform, updates filters, detects events, and stores the **transformed** frame.\n    *   **Input:** `FrameID`, `TransformParams` (optional, defaults to current), `EventMode` (boolean).\n    *   **Output:** Transformed frame stored in a separate \"Processed\" store. If `EventMode` is true, emits change events.\n    *   **Idempotency:** Processing the same `FrameID` with the same `TransformParams` yields identical results. Re-processing is allowed for audit but does not alter the raw frame.\n\n**3. Frame and Source Identity**\n\n*   **`SourceID`**: Unique identifier for the sensor instance (e.g., `CAM_01`).\n*   **`FrameID`**: Monotonically increasing, unique identifier per `SourceID`. Assigned at acquisition time.\n*   **`CaptureTimestamp`**: Hardware timestamp recorded at the moment of exposure.\n*   **`ProcessTimestamp`**: Software timestamp recorded when `PROCESS` completes.\n*   **`TransformVersion`**: Hash or version number of the shear transform parameters used during processing.\n\n**4. Continuous vs. On-Demand Behavior**\n\n*   **Continuous Mode:**\n    *   `ACQUIRE CONTINUOUS` starts a background thread.\n    *   Frames are acquired and stored as raw.\n    *   **Processing is decoupled:** A separate `PROCESS` worker can consume frames from the raw buffer. If processing lags, raw frames are retained (up to buffer limit) to prevent data loss.\n    *   **Event Reporting:** Events are generated only when `PROCESS` is invoked with `EventMode=true`. Continuous acquisition does **not** automatically emit events. This allows the system to acquire data silently and process it later for audit.\n\n*   **On-Demand Mode:**\n    *   `ACQUIRE ON_DEMAND` is a blocking call that returns a `FrameID` upon completion.\n    *   **Mutual Exclusion:** The system enforces that only one acquisition mode is active per `SourceID`. Attempting `ACQUIRE ON_DEMAND` while `CONTINUOUS` is active returns `ERROR_MODE_CONFLICT`.\n    *   **Use Case:** Calibration, manual inspection, or low-power burst capture.\n\n**5. Relationship Between Acquisition Mode and Event Reporting**\n\n*   **Decoupling:** Event reporting is **not** tied to acquisition mode. It is tied to the `PROCESS` command.\n*   **Scenario 1 (Real-time Events):** `ACQUIRE CONTINUOUS` + `PROCESS` worker running with `EventMode=true`. Events are emitted as frames are processed.\n*   **Scenario 2 (Audit/Download):** `ACQUIRE CONTINUOUS` + `PROCESS` worker running with `EventMode=false`. Frames are stored but no events are emitted. Later, an operator can issue `PROCESS` on specific `FrameID`s with `EventMode=true` to re-evaluate events for audit purposes.\n*   **Scenario 3 (On-Demand Event Check):** `ACQUIRE ON_DEMAND` returns `FrameID`. Operator issues `PROCESS` with `EventMode=true` to check for events in that specific frame.\n\n**6. Audit and Download**\n\n*   **Raw Store:** Contains all acquired frames with `FrameID`, `SourceID`, `CaptureTimestamp`.\n*   **Processed Store:** Contains transformed frames with `FrameID`, `TransformVersion`, `ProcessTimestamp`.\n*   **Audit Trail:** The `Processed Store` allows reconstruction of any event by re-processing the raw frame with the recorded `TransformVersion`. No rescanning of the sensor is required.\n*   **Download:** Clients can request raw or processed frames by `FrameID` range.\n\n**7. Ownership and Race Conditions**\n\n*   **Acquisition Ownership:** The `ACQUIRE` command holds exclusive access to the sensor hardware. Only one `ACQUIRE` operation (continuous or on-demand) can be active per `SourceID` at a time.\n*   **Processing Ownership:** The `PROCESS` command operates on the raw frame store. Multiple `PROCESS` commands can run concurrently on different `FrameID`s. If the same `FrameID` is processed concurrently, the system uses a lock or versioning to ensure consistency (e.g., last-write-wins for the processed store, but raw frame is immutable).\n*   **No Shared Mutable State:** The raw frame is immutable after acquisition. The transformed frame is a separate entity. This eliminates races between acquisition and processing.\n\n**8. Command Summary**\n\n| Command | Parameters | Returns | Notes |\n| :--- | :--- | :--- | :--- |\n| `ACQUIRE` | `SourceID`, `Mode` (CONTINUOUS/ON_DEMAND) | `Status` or `FrameID` | `ON_DEMAND` blocks until frame is captured. `CONTINUOUS` starts background loop. |\n| `STOP_ACQUIRE` | `SourceID` | `Status` | Stops continuous acquisition. |\n| `PROCESS` | `FrameID`, `TransformParams` (opt), `EventMode` (bool) | `ProcessedFrameID`, `Events` (if enabled) | Applies transform, updates filters, stores result. |\n| `GET_FRAME` | `FrameID`, `Type` (RAW/PROCESSED) | `FrameData` | Retrieves frame for download/audit. |\n| `LIST_FRAMES` | `SourceID`, `Range` | `List<FrameID>` | Lists available frames for audit. |\n\nThis design ensures reproducibility (raw frames are immutable, transforms are versioned), enables audit without rescanning (processed frames are stored, raw frames are available for re-processing), and avoids ownership races (strict separation of hardware access and software processing).",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": true,
+        "event_independent": true,
+        "conflict_rejected_or_queued": true
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 33.6188,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 35416,
+        "total_tokens": 35517,
+        "completion_tokens": 101,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 14.117,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 167,
+        "total_tokens": 284,
+        "completion_tokens": 117,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 0,
+      "max_score": 6,
+      "elapsed_s": 10.8868,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 186,
+        "total_tokens": 276,
+        "completion_tokens": 90,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"data_bits_per_sample\": 24,\n  \"payload_bit_rate\": 384000,\n  \"wire_time_ms_per_second\": 19.2,\n  \"chip_select_overhead_ms_per_second\": 19.2,\n  \"total_bus_utilization_percent\": 48.0,\n  \"remaining_margin_percent\": 52.0\n}",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": false,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    },
+    {
+      "task": "cobs_codec",
+      "score": 14,
+      "max_score": 24,
+      "elapsed_s": 72.4078,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 455,
+        "total_tokens": 1058,
+        "completion_tokens": 603,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```python\ndef cobs_encode(data: bytes) -> bytes:\n    if not data:\n        return b'\\x01'\n    \n    result = bytearray()\n    i = 0\n    n = len(data)\n    \n    while i < n:\n        # Find the next zero byte\n        zero_pos = data.find(b'\\x00', i)\n        if zero_pos == -1:\n            zero_pos = n\n        \n        # Number of non-zero bytes from i to zero_pos\n        block_len = zero_pos - i\n        \n        # We need to encode this block\n        # The code byte is min(block_len + 1, 255)\n        # But if block_len + 1 == 255, we can only include 254 bytes in this group\n        # and the rest must be in the next group\n        \n        if block_len + 1 <= 255:\n            # This entire block fits in one group\n            code = block_len + 1\n            result.append(code)\n            result.extend(data[i:zero_pos])\n            i = zero_pos + 1  # Skip the zero byte (or end of data)\n        else:\n            # block_len >= 254, so we need to split\n            # First group: code 255, 254 data bytes\n            result.append(255)\n            result.extend(data[i:i + 254])\n            i += 254\n            # Continue with the remaining bytes (which may include the zero)\n            # The loop will handle the rest\n    \n    return bytes(result)\n\n\ndef cobs_decode(data: bytes) -> bytes:\n    if not data:\n        raise ValueError(\"Empty input\")\n    \n    result = bytearray()\n    i = 0\n    n = len(data)\n    \n    while i < n:\n        code = data[i]\n        if code == 0:\n            raise ValueError(\"Zero byte in encoded data\")\n        \n        i += 1\n        \n        # Number of data bytes in this group\n        num_data = code - 1\n        \n        # Check if there are enough bytes remaining\n        if i + num_data > n:\n            raise ValueError(\"Group data runs past end of input\")\n        \n        # Append the data bytes\n        result.extend(data[i:i + num_data])\n        i += num_data\n        \n        # If code < 255, a zero byte was consumed\n        if code < 255:\n            # Check if we're at the end of the input\n            if i < n:\n                result.append(0)\n            # If i == n, no trailing zero is added (it was the last zero in the original)\n    \n    return bytes(result)\n```",
+      "grade_details": {
+        "functions_only": true,
+        "vec_empty": true,
+        "vec_single_zero": false,
+        "vec_embedded_zero": true,
+        "vec_no_zero": true,
+        "vec_leading_trailing_zero": false,
+        "encode_never_emits_zero": true,
+        "overhead_bound": true,
+        "boundary_roundtrip": false,
+        "roundtrip": false,
+        "decode_rejects_zero_byte": false,
+        "decode_rejects_overrun": true
+      }
+    },
+    {
+      "task": "stream_reassembler",
+      "score": 24,
+      "max_score": 24,
+      "elapsed_s": 84.1461,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 340,
+        "total_tokens": 1044,
+        "completion_tokens": 704,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```python\nclass Reassembler:\n    def __init__(self):\n        self._buf = bytearray()\n        self._state = 'SYNC'  # SYNC, LEN, PAYLOAD, CHECK\n        self._len = 0\n        self._payload = bytearray()\n        self._sync_count = 0\n\n    def feed(self, chunk: bytes) -> list[bytes]:\n        results = []\n        self._buf.extend(chunk)\n        i = 0\n        n = len(self._buf)\n\n        while i < n:\n            if self._state == 'SYNC':\n                # Look for 0xAA 0x55\n                if self._buf[i] == 0xAA:\n                    if i + 1 < n:\n                        if self._buf[i + 1] == 0x55:\n                            self._state = 'LEN'\n                            self._len = 0\n                            self._payload = bytearray()\n                            i += 2\n                            continue\n                        else:\n                            i += 1\n                            continue\n                    else:\n                        # Only 0xAA at end of buffer, wait for more\n                        break\n                else:\n                    i += 1\n            elif self._state == 'LEN':\n                if i + 1 < n:\n                    self._len = self._buf[i] | (self._buf[i + 1] << 8)\n                    i += 2\n                    if self._len > 4096:\n                        # Invalid length, discard and resync\n                        self._state = 'SYNC'\n                        continue\n                    else:\n                        self._state = 'PAYLOAD'\n                        self._payload = bytearray()\n                        continue\n                else:\n                    # Only one byte of length available\n                    self._len = self._buf[i]\n                    i += 1\n                    self._state = 'LEN_HI'\n                    continue\n            elif self._state == 'LEN_HI':\n                self._len |= (self._buf[i] << 8)\n                i += 1\n                if self._len > 4096:\n                    self._state = 'SYNC'\n                    continue\n                else:\n                    self._state = 'PAYLOAD'\n                    self._payload = bytearray()\n                    continue\n            elif self._state == 'PAYLOAD':\n                remaining = self._len - len(self._payload)\n                if remaining <= 0:\n                    self._state = 'CHECK'\n                    continue\n                take = min(remaining, n - i)\n                self._payload.extend(self._buf[i:i + take])\n                i += take\n                if len(self._payload) == self._len:\n                    self._state = 'CHECK'\n                continue\n            elif self._state == 'CHECK':\n                expected = 0\n                for b in self._payload:\n                    expected ^= b\n                if self._buf[i] == expected:\n                    results.append(bytes(self._payload))\n                # Whether valid or not, resync\n                self._state = 'SYNC'\n                i += 1\n                continue\n            else:\n                i += 1\n\n        self._buf = self._buf[i:]\n        return results\n```",
+      "grade_details": {
+        "class_only": true,
+        "single_frame": true,
+        "empty_payload": true,
+        "two_frames_one_chunk": true,
+        "split_byte_by_byte": true,
+        "split_across_two_chunks": true,
+        "garbage_before_sync": true,
+        "resync_after_bad_check": true,
+        "oversize_length_rejected": true,
+        "payload_containing_sync": true,
+        "no_frame_no_output": true,
+        "stateful_across_calls": true
+      }
+    },
+    {
+      "task": "verilog_fifo",
+      "score": 26,
+      "max_score": 26,
+      "elapsed_s": 54.0633,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 327,
+        "total_tokens": 773,
+        "completion_tokens": 446,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```verilog\nmodule sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\n  localparam ADDR_WIDTH = $clog2(DEPTH);\n  localparam CNT_WIDTH  = ADDR_WIDTH + 1;\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n  reg [ADDR_WIDTH-1:0] wr_ptr, rd_ptr;\n  reg [CNT_WIDTH-1:0] count;\n\n  wire do_write = wr_en & ~full;\n  wire do_read  = rd_en & ~empty;\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      wr_ptr <= {ADDR_WIDTH{1'b0}};\n      rd_ptr <= {ADDR_WIDTH{1'b0}};\n      count  <= {CNT_WIDTH{1'b0}};\n    end else begin\n      if (do_write) begin\n        mem[wr_ptr] <= din;\n        wr_ptr <= wr_ptr + 1'b1;\n      end\n      if (do_read) begin\n        rd_ptr <= rd_ptr + 1'b1;\n      end\n      case ({do_write, do_read})\n        2'b10:   count <= count + 1'b1;\n        2'b01:   count <= count - 1'b1;\n        default: count <= count;\n      endcase\n    end\n  end\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n)\n      dout <= {WIDTH{1'b0}};\n    else if (do_read)\n      dout <= mem[rd_ptr];\n  end\n\n  assign full  = (count == DEPTH);\n  assign empty = (count == 0);\n\nendmodule\n```",
+      "grade_details": {
+        "module_present": true,
+        "simulator": "iverilog",
+        "compiles": true,
+        "empty_after_reset": true,
+        "not_full_at_three": true,
+        "full_at_depth": true,
+        "write_while_full_ignored": true,
+        "first_out_is_first_in": true,
+        "second_out": true,
+        "not_full_after_reads": true,
+        "third_out": true,
+        "fourth_out": true,
+        "empty_after_draining": true,
+        "read_while_empty_ignored": true,
+        "full_after_wrap": true,
+        "wrap_first_out": true,
+        "empty_after_wrap_drain": true,
+        "ran_to_completion": true,
+        "lint_clean": true
+      }
+    },
+    {
+      "task": "cuda_reduction",
+      "score": 26,
+      "max_score": 26,
+      "elapsed_s": 21.2176,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 267,
+        "total_tokens": 441,
+        "completion_tokens": 174,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```cuda\n__global__ void block_sum(const float* in, float* out, int n) {\n    extern __shared__ float sdata[];\n    int tid = threadIdx.x;\n    int idx = blockIdx.x * blockDim.x + tid;\n\n    sdata[tid] = (idx < n) ? in[idx] : 0.0f;\n    __syncthreads();\n\n    for (int s = blockDim.x / 2; s > 0; s >>= 1) {\n        if (tid < s) {\n            sdata[tid] += sdata[tid + s];\n        }\n        __syncthreads();\n    }\n\n    if (tid == 0) {\n        out[blockIdx.x] = sdata[0];\n    }\n}\n```",
+      "grade_details": {
+        "kernel_present": true,
+        "compiles": true,
+        "gpu": "used",
+        "n_1": true,
+        "n_31": true,
+        "n_32": true,
+        "n_33": true,
+        "n_255": true,
+        "n_256": true,
+        "n_257": true,
+        "n_1000": true,
+        "n_4096": true,
+        "n_100000": true,
+        "all_cases_pass": true,
+        "barrier_divergence_clean": true,
+        "barrier_in_thread_conditional": false
+      }
+    },
+    {
+      "task": "cpp_mlp",
+      "score": 28,
+      "max_score": 28,
+      "elapsed_s": 112.2445,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 441,
+        "total_tokens": 1385,
+        "completion_tokens": 944,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```cpp\ndouble mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    // Layout:\n    // W1: n_hidden * n_in, row-major: W1[j][k] = params[j*n_in + k]\n    // b1: n_hidden, starts at params[n_hidden * n_in]\n    // W2: n_hidden, starts at params[n_hidden * n_in + n_hidden]\n    // b2: 1, starts at params[n_hidden * n_in + 2*n_hidden]\n\n    const int w1_size = n_hidden * n_in;\n    const int b1_offset = w1_size;\n    const int w2_offset = b1_offset + n_hidden;\n    const int b2_offset = w2_offset + n_hidden;\n\n    // Initialize grad to zero\n    for (int i = 0; i < w1_size + 2 * n_hidden + 1; ++i) {\n        grad[i] = 0.0;\n    }\n\n    double total_loss = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n\n        // Compute hidden layer activations h_j\n        double h[n_hidden];\n        for (int j = 0; j < n_hidden; ++j) {\n            double sum = 0.0;\n            for (int k = 0; k < n_in; ++k) {\n                sum += params[j * n_in + k] * x[k];\n            }\n            sum += params[b1_offset + j];\n            h[j] = tanh(sum);\n        }\n\n        // Compute z\n        double z = 0.0;\n        for (int j = 0; j < n_hidden; ++j) {\n            z += params[w2_offset + j] * h[j];\n        }\n        z += params[b2_offset];\n\n        // Compute p = sigmoid(z)\n        double p;\n        if (z >= 0) {\n            p = 1.0 / (1.0 + exp(-z));\n        } else {\n            double ez = exp(z);\n            p = ez / (1.0 + ez);\n        }\n\n        // Compute loss for this sample\n        double ys = y[s];\n        double loss_s;\n        if (ys > 0.5) {\n            loss_s = -log(p);\n        } else {\n            loss_s = -log(1.0 - p);\n        }\n        total_loss += loss_s;\n\n        // d(loss_s)/d(z) = p - y\n        double dz = p - ys;\n\n        // Gradient for b2\n        grad[b2_offset] += dz;\n\n        // Gradient for W2[j] and hidden layer\n        for (int j = 0; j < n_hidden; ++j) {\n            // d(loss_s)/d(W2[j]) = dz * h[j]\n            grad[w2_offset + j] += dz * h[j];\n\n            // d(loss_s)/d(h[j]) = dz * W2[j]\n            double dh_j = dz * params[w2_offset + j];\n\n            // d(h[j])/d(pre-activation) = 1 - h[j]^2\n            double dpre = dh_j * (1.0 - h[j] * h[j]);\n\n            // Gradient for b1[j]\n            grad[b1_offset + j] += dpre;\n\n            // Gradient for W1[j][k]\n            for (int k = 0; k < n_in; ++k) {\n                grad[j * n_in + k] += dpre * x[k];\n            }\n        }\n    }\n\n    // Average loss and gradients\n    double inv_n = 1.0 / n_samples;\n    double avg_loss = total_loss * inv_n;\n\n    for (int i = 0; i < w1_size + 2 * n_hidden + 1; ++i) {\n        grad[i] *= inv_n;\n    }\n\n    return avg_loss;\n}\n```",
+      "grade_details": {
+        "function_present": true,
+        "compiles": true,
+        "loss_is_finite": true,
+        "loss_positive": true,
+        "gradient_matches_numeric": true,
+        "gradients_not_accumulated": true,
+        "single_sample_ok": true,
+        "loss_decreased": true,
+        "xor_learned": true,
+        "worst_relative_gradient_error": 1.013e-08,
+        "final_loss": 0.000116
+      }
+    },
+    {
+      "task": "numpy_backprop",
+      "score": 0,
+      "max_score": 26,
+      "elapsed_s": 73.671,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 395,
+        "total_tokens": 1015,
+        "completion_tokens": 620,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "```python\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    rng = np.random.default_rng(seed)\n    scale1 = np.sqrt(2.0 / n_in)\n    scale2 = np.sqrt(2.0 / n_hidden)\n    W1 = rng.normal(0.0, scale1, size=(n_hidden, n_in))\n    b1 = np.zeros(n_hidden)\n    W2 = rng.normal(0.0, scale2, size=(n_hidden,))\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\ndef loss_and_grads(params, X, y):\n    W1 = params[\"W1\"]\n    b1 = params[\"b1\"]\n    W2 = params[\"W2\"]\n    b2 = params[\"b2\"]\n\n    n_samples = X.shape[0]\n\n    # Forward pass\n    Z1 = X @ W1.T + b1\n    H = np.tanh(Z1)\n    z = H @ W2 + b2\n    # Numerically stable sigmoid\n    p = np.where(z >= 0, 1.0 / (1.0 + np.exp(-z)), np.exp(z) / (1.0 + np.exp(z)))\n    # Clip to avoid log(0)\n    eps = 1e-12\n    p_clipped = np.clip(p, eps, 1.0 - eps)\n    loss = np.mean(-(y * np.log(p_clipped) + (1.0 - y) * np.log(1.0 - p_clipped)))\n\n    # Backward pass\n    # dL/dz = (p - y) / n_samples\n    dz = (p - y) / n_samples\n\n    # dL/dW2 = H.T @ dz\n    dW2 = H.T @ dz\n\n    # dL/db2 = sum(dz)\n    db2 = np.sum(dz)\n\n    # dL/dH = dz @ W2.T\n    dH = np.outer(dz, W2)\n\n    # dL/dZ1 = dH * (1 - H^2)\n    dZ1 = dH * (1.0 - H ** 2)\n\n    # dL/dW1 = X.T @ dZ1\n    dW1 = X.T @ dZ1\n\n    # dL/db1 = sum(dZ1, axis=0)\n    db1 = np.sum(dZ1, axis=0)\n\n    grads = {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n    return loss, grads\n```",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": true,
+        "shapes": true,
+        "deterministic": true,
+        "seed_changes_init": true,
+        "symmetry_broken": true,
+        "loss_finite": true,
+        "grad_keys": true,
+        "worst_relative_gradient_error": 0.9999999930846513,
+        "gradient_matches_numeric": false,
+        "run_error": "ValueError: operands could not be broadcast together with shapes (8,2) (2,8) "
+      }
+    }
+  ]
+}
