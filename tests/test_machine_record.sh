@@ -236,8 +236,11 @@ run_llmctl machine record
 [[ -f "$TARGET/models.d/next.conf" ]]
 [[ ! -e "$TARGET/models.d/demo.conf" ]]
 [[ ! -e "$TARGET/models.d/stale.conf" ]]
-[[ "$(wc -l < "$TARGET/stats.jsonl")" -eq 1 ]]
+# models.d mirrors the machine, but benchmark history ACCUMULATES: the record
+# already in the repo is kept and the machine's own record added to it.
+[[ "$(wc -l < "$TARGET/stats.jsonl")" -eq 2 ]]
 grep -q '"model":"next"' "$TARGET/stats.jsonl"
+grep -q '"model":"demo"' "$TARGET/stats.jsonl"
 
 mv "$CONF_DIR/machine.conf" "$CONF_DIR/machine.real"
 mkfifo "$CONF_DIR/machine.pipe"
@@ -432,6 +435,46 @@ if [[ -e "$KEEP/models.d/removed-model.conf" ]]; then
 fi
 if [[ ! -f "$KEEP/machine.conf" || ! -f "$KEEP/stats.jsonl" ]]; then
   echo "machine record lost its own generated files" >&2
+  exit 1
+fi
+
+# Benchmark history already in the repo must survive a machine that has lost its
+# own. record_stats used to mirror the local stats.jsonl over the recorded one,
+# so a reinstalled box truncated the committed history — and with no local file
+# at all, truncated it to nothing. Those records are what "typical load time" is
+# estimated from, and git shows the loss as an ordinary modification.
+HIST="$REPO/inventory/machines/keepsake-box/stats.jsonl"
+cat > "$HIST" <<'EOF'
+{"bench_time_s":0.4,"bench_tokens":5,"gen_tps":null,"gpu":[],"load_s":9.0,"model":"ancient","prompt_tokens":null,"prompt_tps":null,"tok_s":1.0,"ts":"2026-01-01T00:00:00","ttft_s":null}
+EOF
+cat > "$CONF_DIR/stats.jsonl" <<'EOF'
+{"model":"demo","ts":"2026-07-02T12:00:00","load_s":1.5,"tok_s":20.0,"bench_tokens":5,"bench_time_s":0.4,"gpu":[{"power_w":null,"mem_mib":12.5,"util_pct":75.0,"gpu":0}]}
+EOF
+run_llmctl machine record >/dev/null || { echo "machine record failed merging history" >&2; exit 1; }
+if ! grep -q '"model":"ancient"' "$HIST"; then
+  echo "machine record discarded benchmark history already in the repo" >&2
+  exit 1
+fi
+if ! grep -q '"model":"demo"' "$HIST"; then
+  echo "machine record dropped the local benchmark record" >&2
+  exit 1
+fi
+if [[ "$(head -1 "$HIST")" != *'"ts":"2026-01-01T00:00:00"'* ]]; then
+  echo "merged benchmark history is not ordered by timestamp" >&2
+  exit 1
+fi
+# Idempotent: recording again must not duplicate anything.
+before="$(wc -l < "$HIST")"
+run_llmctl machine record >/dev/null || { echo "second record failed" >&2; exit 1; }
+if [[ "$(wc -l < "$HIST")" != "$before" ]]; then
+  echo "re-recording duplicated benchmark records" >&2
+  exit 1
+fi
+# A machine with no local history at all must not wipe what is recorded.
+rm -f "$CONF_DIR/stats.jsonl"
+run_llmctl machine record >/dev/null || { echo "machine record failed with no local history" >&2; exit 1; }
+if ! grep -q '"model":"ancient"' "$HIST"; then
+  echo "machine record wiped recorded history when the machine had none" >&2
   exit 1
 fi
 

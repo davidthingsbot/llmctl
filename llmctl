@@ -1392,11 +1392,17 @@ record_project_conf() { # record_project_conf <source> <destination> <allowed-ke
   done
 }
 
-record_stats() { # record_stats <source> <destination>
-  local source="$1" destination="$2"
-  [[ -f "$source" ]] || { : > "$destination"; return 0; }
-  python3 - "$source" "$destination" <<'PYEOF'
-import json, math, sys
+record_stats() { # record_stats <source> <destination> [already-recorded]
+  # MERGES rather than mirrors. The local stats.jsonl is only ever as long as
+  # this machine's own history, so a plain copy meant a reinstalled box silently
+  # truncated the benchmark history already in the repo — and with no local file
+  # at all it truncated it to nothing. Git shows that as an ordinary
+  # modification, and those records are what "typical load time" is estimated
+  # from. Records already recorded are therefore carried forward, the two sets
+  # unioned, exact duplicates dropped, and the result ordered by timestamp.
+  local source="$1" destination="$2" recorded="${3:-}"
+  python3 - "$destination" "$source" "$recorded" <<'PYEOF'
+import json, math, os, sys
 
 top = {"ts", "model", "load_s", "ttft_s", "prompt_tokens", "prompt_tps",
        "gen_tps", "tok_s", "bench_tokens", "bench_time_s", "gpu"}
@@ -1424,8 +1430,12 @@ def strict_object(pairs):
         result[key] = value
     return result
 
-with open(sys.argv[1], encoding="utf-8") as src, open(sys.argv[2], "w", encoding="utf-8") as dst:
-    for number, line in enumerate(src, 1):
+merged = []
+seen = set()
+for path in sys.argv[2:]:
+    if not path or not os.path.isfile(path):
+        continue
+    for number, line in enumerate(open(path, encoding="utf-8"), 1):
         if not line.strip():
             continue
         try:
@@ -1453,7 +1463,18 @@ with open(sys.argv[1], encoding="utf-8") as src, open(sys.argv[2], "w", encoding
                 raise SystemExit(f"stats.jsonl line {number}: invalid GPU sample identity")
             if any(not number_or_none(sample[key]) for key in ("util_pct", "mem_mib", "power_w")):
                 raise SystemExit(f"stats.jsonl line {number}: invalid numeric GPU sample field")
-        dst.write(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n")
+        serialised = json.dumps(record, sort_keys=True, separators=(",", ":"))
+        if serialised in seen:
+            continue
+        seen.add(serialised)
+        merged.append((record["ts"], serialised))
+
+# Stable sort on the timestamp alone: records sharing one keep the order they
+# were read in, which puts anything already recorded ahead of a local repeat.
+merged.sort(key=lambda item: item[0])
+with open(sys.argv[1], "w", encoding="utf-8") as dst:
+    for _ts, serialised in merged:
+        dst.write(serialised + "\n")
 PYEOF
 }
 
@@ -1546,7 +1567,7 @@ machine_record() {
     name="$(basename "$f")"
     record_project_conf "$f" "$stage/models.d/$name" "${RECORD_MODEL_KEYS[@]}"
   done
-  record_stats "$STATS_FILE" "$stage/stats.jsonl"
+  record_stats "$STATS_FILE" "$stage/stats.jsonl" "$target/stats.jsonl"
   # Carry across anything already recorded that this command does not itself
   # generate — a patched chat template, a README, whatever else a machine needs
   # to be rebuilt. The staging directory is built from scratch and then swapped
