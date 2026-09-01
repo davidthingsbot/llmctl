@@ -711,7 +711,15 @@ an agent can switch by task type rather than committing the server to one mode.
 - Exact and executable grading is reliable; keyword-rubric task totals are directional. The raw responses must remain available for manual review.
 - The 35B code response was regraded after fixing an evaluator sandbox defect: the sandbox initially omitted `bytes` and did not expose the provided `crc16` function in candidate globals. The saved candidate itself was correct, and final-grader consistency was verified across all three result files.
 
-## Run
+## Run — the three-part baseline
+
+**Every model gets all three: work quality, deep reasoning, and a concurrency
+sweep.** The first two measure whether the model is any good; the third measures
+whether it can back an agent rather than answer one question at a time, and it
+has decided adoption here as often as quality has. Concurrency numbers were
+measured this way from 2026-08-04 onwards but lived only as prose in machine and
+model NOTES until `concurrency_sweep.py` was committed on 2026-09-01 — the
+sweeps behind "every model peaks at FOUR concurrent" are not reproducible.
 
 With the desired model already active:
 
@@ -729,4 +737,43 @@ python3 evals/deep_reasoning_suite.py \
   --output evals/results/MACHINE/deep-reasoning-MODEL.json
 ```
 
+```bash
+python3 evals/concurrency_sweep.py \
+  --url http://127.0.0.1:PORT/v1/chat/completions \
+  --model SERVED_MODEL_ID \
+  --key-file ~/.config/llama.cpp/api-keys \
+  --output evals/results/MACHINE/concurrency-MODEL.json
+```
+
 The key is read for authentication and is never written to the result file.
+
+### Reading a concurrency sweep
+
+Aggregate tok/s is the number that matters; per-stream decay and TTFT say what
+it costs each client. A server can hold aggregate up while making everyone wait
+much longer, which is the failure mode that ruins interactive use — DW-ASUS-LINUX
+recorded TTFT reaching 64.8s at 8 concurrent on the 122B while aggregate still
+looked respectable.
+
+**Whether a model batches at all is a property of its architecture, not the
+box.** Measured on dw-spark0 (GB10, ~273 GB/s) 2026-09-01:
+
+| streams | 1 | 2 | 4 | 8 |
+|---|---:|---:|---:|---:|
+| `qwen38-27b-fp8` dense, vLLM — aggregate | 7.7 | 14.9 | 29.5 | **52.3** |
+| — per stream | 7.7 | 7.6 | 7.6 | 6.7 |
+| — TTFT | 0.18s | 0.30s | 0.29s | 2.38s |
+
+**6.79x from 1 to 8 streams, with per-stream barely moving.** Against REAP-150B
+on the same box, whose aggregate is FLAT at ~15.4 tok/s across 1/2/4 — per-stream
+simply divides. The difference is dense versus sparse: batching amortises weight
+reads across the batch, so a dense model reads its weights once and serves the
+whole batch from them, while a MoE routing each token to different experts has
+nothing to amortise. So "this box is bandwidth-bound and will not batch" is
+wrong as a general claim — it is true only of sparse MoE decode. A single-stream
+figure of 7.7 tok/s becomes 52.3 aggregate under load, which is a different
+machine for agent work than the single-stream number suggests.
+
+Note the suites themselves are strictly sequential and always have been, so
+their wall-clock times are single-stream figures and must not be read as
+throughput.
