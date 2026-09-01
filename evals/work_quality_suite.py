@@ -32,9 +32,28 @@ def extract_code(text: str) -> str:
     return (match.group(1) if match else text).strip()
 
 
+def _visible_answer(message, strip_reasoning):
+    """The answer to grade, with any chain-of-thought removed.
+
+    A server that splits thinking correctly returns it in `reasoning_content`
+    and leaves `content` clean, so nothing is needed. Some do not: the
+    DeepSeek-V4 templates put the opening `<think>` in the *prompt*, so the
+    model emits only the closing tag and llama.cpp's parser (as of master
+    458681e) leaves the whole monologue in `content`. Grading that scores the
+    deliberation instead of the answer — exact-match tasks collapse outright.
+    --strip-reasoning drops everything through the final `</think>`.
+    """
+    content = message.get("content") or ""
+    if strip_reasoning and "</think>" in content:
+        content = content.rsplit("</think>", 1)[1]
+        return content.lstrip()
+    return content
+
+
 def request(
     url: str, key: str, model: str, prompt: str, max_tokens: int,
     template_kwargs: bool = True,
+    strip_reasoning: bool = False,
 ):
     payload = {
         "model": model,
@@ -67,7 +86,12 @@ def request(
     with urllib.request.urlopen(req, timeout=900) as response:
         data = json.load(response)
     elapsed = time.monotonic() - started
-    return data["choices"][0]["message"]["content"], data.get("usage", {}), elapsed
+    message = data["choices"][0]["message"]
+    return (
+        _visible_answer(message, strip_reasoning),
+        data.get("usage", {}),
+        elapsed,
+    )
 
 
 def task_structured_protocol():
@@ -397,6 +421,13 @@ def main():
         help="omit chat_template_kwargs; required for Mistral-tokenizer models, "
              "which reject it with HTTP 400",
     )
+    parser.add_argument(
+        "--strip-reasoning", action="store_true",
+        help="drop everything through the final </think> before grading; for "
+             "servers that leave chain-of-thought in message.content instead of "
+             "message.reasoning_content. Off by default so recorded results stay "
+             "comparable",
+    )
     args = parser.parse_args()
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     tasks = [
@@ -411,6 +442,7 @@ def main():
             text, usage, elapsed = request(
                 args.url, key, args.model, prompt, max_tokens,
                 template_kwargs=not args.no_template_kwargs,
+                strip_reasoning=args.strip_reasoning,
             )
             score, maximum, details = grader(text)
             row = {
