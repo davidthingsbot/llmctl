@@ -1777,6 +1777,541 @@ Contract:
     return "cuda_easy", prompt, 500, grade
 
 
+
+CUDA_HARD_HARNESS = r"""
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+__CANDIDATE__
+static int fails = 0;
+static void run_case(int M, int N, int K) {
+    float *hA=(float*)malloc(M*K*sizeof(float)), *hB=(float*)malloc(K*N*sizeof(float));
+    float *hC=(float*)malloc(M*N*sizeof(float)), *ref=(float*)malloc(M*N*sizeof(float));
+    for(int i=0;i<M*K;++i) hA[i]=(float)((i%9)-4)*0.25f;
+    for(int i=0;i<K*N;++i) hB[i]=(float)((i%7)-3)*0.5f;
+    for(int m=0;m<M;++m) for(int n=0;n<N;++n){ double s=0; for(int k=0;k<K;++k) s+=(double)hA[m*K+k]*hB[k*N+n]; ref[m*N+n]=(float)s; }
+    // Over-allocate and POISON past the end. Without this an unguarded tile read
+    // lands in freshly-zeroed memory, contributes nothing, and a kernel with no
+    // bounds check passes by luck.
+    int padA = M*K + 4096, padB = K*N + 4096;
+    float *pA=(float*)malloc(padA*4), *pB=(float*)malloc(padB*4);
+    for(int i=0;i<padA;++i) pA[i] = (i<M*K)? hA[i] : 1.0e6f;
+    for(int i=0;i<padB;++i) pB[i] = (i<K*N)? hB[i] : 1.0e6f;
+    float *dA=0,*dB=0,*dC=0;
+    if(cudaMalloc(&dA,padA*4)!=cudaSuccess||cudaMalloc(&dB,padB*4)!=cudaSuccess||cudaMalloc(&dC,M*N*4)!=cudaSuccess){
+        printf("GPU_UNAVAILABLE\n"); exit(3); }
+    cudaMemcpy(dA,pA,padA*4,cudaMemcpyHostToDevice); cudaMemcpy(dB,pB,padB*4,cudaMemcpyHostToDevice);
+    free(pA); free(pB);
+    cudaMemset(dC,0,M*N*4);
+    dim3 threads(16,16), blocks((N+15)/16,(M+15)/16);
+    matmul<<<blocks,threads>>>(dA,dB,dC,M,N,K);
+    if(cudaDeviceSynchronize()!=cudaSuccess){ printf("GPU_UNAVAILABLE\n"); exit(3); }
+    cudaMemcpy(hC,dC,M*N*4,cudaMemcpyDeviceToHost);
+    int bad=0; for(int i=0;i<M*N;++i){ float t=fabs(ref[i])*1e-3f+1e-3f; if(fabs(hC[i]-ref[i])>t) bad++; }
+    printf("CASE %dx%dx%d %s\n",M,N,K, bad?"FAIL":"PASS"); if(bad) fails++;
+    cudaFree(dA);cudaFree(dB);cudaFree(dC);free(hA);free(hB);free(hC);free(ref);
+}
+int main(){
+    run_case(16,16,16);      // exactly one tile
+    run_case(64,64,64);      // several whole tiles
+    run_case(17,17,17);      // ragged in every dimension
+    run_case(1,1,1);         // degenerate
+    run_case(33,48,7);       // K smaller than the tile, non-square
+    run_case(100,60,80);     // large and ragged
+    printf("SUMMARY failures=%d\n",fails); return 0; }
+"""
+
+
+def task_cuda_hard():
+    prompt = '''Write a tiled matrix-multiply CUDA kernel using shared memory. Return ONLY
+the kernel, no host code, no main, no includes, no explanation.
+
+    __global__ void matmul(const float* A, const float* B, float* C,
+                           int M, int N, int K)
+
+Computes C = A * B where A is M x K, B is K x N, C is M x N, all row-major.
+
+Contract:
+- Launched with dim3 threads(16,16) and blocks((N+15)/16, (M+15)/16). Assume a
+  16 x 16 tile.
+- You must stage tiles of A and B in __shared__ memory and loop over K in tiles.
+  A naive kernel that reads global memory K times per output will be rejected on
+  inspection.
+- M, N and K are NOT necessarily multiples of 16, and may be as small as 1.
+  Threads whose tile element falls outside the matrix must contribute zero, and
+  no thread may read or write out of bounds.
+- Every thread in a block must reach every __syncthreads(). Guarding the barrier
+  behind an in-range test deadlocks or corrupts the tile.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "matmul" not in code or "__global__" not in code:
+            details["kernel_present"] = False
+            return 0, 30, details
+        details["kernel_present"] = True
+        details["uses_shared_memory"] = "__shared__" in code
+        details["barrier_in_thread_conditional"] = _barrier_inside_thread_conditional(code)
+        if not shutil.which("nvcc"):
+            details["nvcc"] = "absent"
+            return 5, 30, details
+        workdir = tempfile.mkdtemp(prefix="cuda-hard-")
+        src, binary = os.path.join(workdir, "c.cu"), os.path.join(workdir, "c")
+        try:
+            open(src, "w").write(CUDA_HARD_HARNESS.replace("__CANDIDATE__", code))
+            build = subprocess.run(["nvcc", "-o", binary, src], capture_output=True,
+                                   text=True, timeout=300)
+            details["compiles"] = build.returncode == 0
+            if not details["compiles"]:
+                details["compile_error"] = [l for l in build.stderr.splitlines()
+                                            if "error" in l.lower()][:3]
+                return 0, 30, details
+            run = subprocess.run([binary], capture_output=True, text=True, timeout=300)
+            if "GPU_UNAVAILABLE" in run.stdout or run.returncode == 3:
+                details["gpu"] = "unavailable"
+                return 8, 30, details
+            details["gpu"] = "used"
+            for line in run.stdout.splitlines():
+                if line.startswith("CASE "):
+                    parts = line.split()
+                    details[f"case_{parts[1]}"] = parts[2] == "PASS"
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            return 0, 30, details
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 30, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        whole = sum(2 for k in ("case_16x16x16", "case_64x64x64") if details.get(k))
+        # The ragged cases are the ones a tiled kernel gets wrong.
+        ragged = sum(4 for k in ("case_17x17x17", "case_1x1x1", "case_33x48x7",
+                                 "case_100x60x80") if details.get(k))
+        shared = 3 if details["uses_shared_memory"] else 0
+        barrier = 2 if not details["barrier_in_thread_conditional"] else 0
+        return min(30, 5 + whole + ragged + shared + barrier), 30, details
+
+    return "cuda_hard", prompt, 1400, grade
+
+
+CPP_HARD_HARNESS = r"""
+#include <cstdio>
+#include <cmath>
+#include <vector>
+__CANDIDATE__
+static int p=0,f=0;
+static void chk(const char* n, bool ok){ if(ok){p++;printf("CHECK %s PASS\n",n);} else {f++;printf("CHECK %s FAIL\n",n);} }
+
+// f(x,y) = (x*y + sin(x)) * exp(y)
+static double build(Tape& t, double xv, double yv, int& xi, int& yi) {
+    xi = t.input(xv); yi = t.input(yv);
+    int xy = t.mul(xi, yi);
+    int sx = t.sin_(xi);
+    int sum = t.add(xy, sx);
+    int ey = t.exp_(yi);
+    int root = t.mul(sum, ey);
+    t.backward(root);
+    return t.value(root);
+}
+int main(){
+    { Tape t; int xi,yi; double v = build(t, 0.7, -0.3, xi, yi);
+      double want = (0.7*-0.3 + sin(0.7)) * exp(-0.3);
+      chk("forward_value", fabs(v-want) < 1e-9);
+      // analytic: df/dx = (y + cos(x)) * exp(y);  df/dy = x*exp(y) + (x*y+sin(x))*exp(y)
+      double gx = (-0.3 + cos(0.7)) * exp(-0.3);
+      double gy = 0.7*exp(-0.3) + (0.7*-0.3 + sin(0.7))*exp(-0.3);
+      chk("grad_x", fabs(t.grad(xi)-gx) < 1e-6);
+      chk("grad_y", fabs(t.grad(yi)-gy) < 1e-6); }
+
+    // A node used twice must ACCUMULATE both paths: g = x*x + x  =>  dg/dx = 2x+1
+    { Tape t; int x = t.input(1.7);
+      int sq = t.mul(x,x); int g = t.add(sq,x); t.backward(g);
+      chk("reused_node_accumulates", fabs(t.grad(x) - (2*1.7+1.0)) < 1e-9); }
+
+    // Deep chain: exp(exp(sin(x))) — tests ordering of the reverse sweep
+    { Tape t; int x = t.input(0.35);
+      int a = t.sin_(x); int b = t.exp_(a); int c = t.exp_(b); t.backward(c);
+      double want = exp(exp(sin(0.35))) * exp(sin(0.35)) * cos(0.35);
+      chk("deep_chain", fabs(t.grad(x)-want) < 1e-6); }
+
+    // Constants carry no gradient and must not break the sweep
+    { Tape t; int x = t.input(2.0); int k = t.constant(3.0);
+      int m = t.mul(x,k); t.backward(m);
+      chk("constant_handled", fabs(t.grad(x)-3.0) < 1e-9); }
+
+    // Finite-difference check on a fresh expression
+    { double h=1e-6, xv=1.1, yv=0.4;
+      Tape t; int xi,yi; build(t, xv, yv, xi, yi);
+      double ga = t.grad(xi);
+      Tape tp; int a1,b1; double vp = build(tp, xv+h, yv, a1, b1);
+      Tape tm; int a2,b2; double vm = build(tm, xv-h, yv, a2, b2);
+      chk("matches_finite_difference", fabs(ga - (vp-vm)/(2*h)) < 1e-5); }
+
+    printf("SUMMARY pass=%d fail=%d\n",p,f); return 0; }
+"""
+
+
+def task_cpp_hard():
+    prompt = '''Implement reverse-mode automatic differentiation in C++. Return ONLY the
+struct, no main, no includes, no explanation. You may use <cmath> and <vector>.
+
+    struct Tape {
+        int constant(double v);   // a value with no gradient
+        int input(double v);      // a value you will want the gradient of
+        int add(int a, int b);    // returns the id of the new node
+        int mul(int a, int b);
+        int sin_(int a);
+        int exp_(int a);
+        double value(int node) const;
+        void backward(int root);  // seed d(root)/d(root) = 1 and sweep back
+        double grad(int node) const;
+    };
+
+Each call records a node and returns its integer id. `backward(root)` computes
+the derivative of `root` with respect to every node.
+
+Requirements:
+- Gradients are checked against finite differences to 1e-5.
+- A node used more than once must ACCUMULATE gradient from every path that uses
+  it: for g = x*x + x, dg/dx is 2x + 1, not 2x and not 1.
+- The reverse sweep must visit nodes in an order where every consumer is
+  processed before its inputs; recording order makes this easy.
+- Constants take part in the forward value but need no gradient.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "struct Tape" not in code and "class Tape" not in code:
+            details["tape_present"] = False
+            return 0, 30, details
+        details["tape_present"] = True
+        if not shutil.which("g++"):
+            details["compiler"] = "absent"
+            return 4, 30, details
+        workdir = tempfile.mkdtemp(prefix="cpp-hard-")
+        src, binary = os.path.join(workdir, "c.cpp"), os.path.join(workdir, "c")
+        try:
+            open(src, "w").write(CPP_HARD_HARNESS.replace("__CANDIDATE__", code))
+            build = subprocess.run(["g++", "-O1", "-o", binary, src],
+                                   capture_output=True, text=True, timeout=180)
+            details["compiles"] = build.returncode == 0
+            if not details["compiles"]:
+                details["compile_error"] = [l for l in build.stderr.splitlines()
+                                            if "error" in l.lower()][:3]
+                return 0, 30, details
+            run = subprocess.run([binary], capture_output=True, text=True, timeout=120)
+            for line in run.stdout.splitlines():
+                if line.startswith("CHECK "):
+                    _, n, verdict = line.split()
+                    details[n] = verdict == "PASS"
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            return 0, 30, details
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 30, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        basic = sum(2 for k in ("forward_value", "constant_handled") if details.get(k))
+        grads = sum(4 for k in ("grad_x", "grad_y", "deep_chain") if details.get(k))
+        # Accumulation across reuse is the thing people get wrong.
+        accum = 6 if details.get("reused_node_accumulates") else 0
+        fd = 6 if details.get("matches_finite_difference") else 0
+        return min(30, 2 + basic + grads + accum + fd), 30, details
+
+    return "cpp_hard", prompt, 2000, grade
+
+
+def task_ml_hard():
+    prompt = '''Implement scaled dot-product attention with its analytic gradients, using
+numpy. Return ONLY the two functions, no explanation. `import numpy as np` is the
+only import permitted.
+
+    def attention_forward(Q, K, V):
+        """Q, K, V are (T, d). Return (out, cache).
+        S    = Q @ K.T / sqrt(d)        (T, T)
+        P    = row-wise softmax of S    (T, T)
+        out  = P @ V                    (T, d)
+        `cache` is whatever you need for the backward pass."""
+
+    def attention_backward(dout, cache):
+        """dout is (T, d), the gradient of a scalar loss w.r.t. out.
+        Return (dQ, dK, dV), each the same shape as Q, K, V."""
+
+Requirements:
+- The softmax must be numerically stable (subtract the row max).
+- The gradients must be the true analytic derivatives. They are checked against
+  finite differences to a relative tolerance of 1e-5.
+- The softmax Jacobian is the hard part: for a row p, dS = P * (dP - sum(dP * P)),
+  and dropping the subtraction term is the classic error.
+- Do not forget the 1/sqrt(d) scale in the backward pass.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as exc:
+            details["parse_error"] = str(exc)
+            return 0, 30, details
+        ok_imports = all((isinstance(n, ast.Import) and all(a.name == "numpy" for a in n.names))
+                         or (isinstance(n, ast.ImportFrom) and n.module == "numpy")
+                         for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom)))
+        details["only_numpy_imported"] = ok_imports
+        names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+        details["both_functions"] = {"attention_forward", "attention_backward"} <= names
+        if not (ok_imports and details["both_functions"]):
+            return 0, 30, details
+        try:
+            import numpy as np
+        except ImportError:
+            details["numpy"] = "absent"
+            return 4, 30, details
+        env = {"__name__": "candidate"}
+        try:
+            exec(compile(tree, "candidate", "exec"), env)
+            fwd, bwd = env["attention_forward"], env["attention_backward"]
+            rng = np.random.RandomState(0)
+            T, d = 5, 4
+            Q, K, V = rng.randn(T, d), rng.randn(T, d), rng.randn(T, d)
+            out, cache = fwd(Q, K, V)
+            out = np.asarray(out, dtype=float)
+            details["output_shape"] = out.shape == (T, d)
+
+            S = Q @ K.T / np.sqrt(d)
+            P = np.exp(S - S.max(axis=1, keepdims=True))
+            P = P / P.sum(axis=1, keepdims=True)
+            details["forward_matches_reference"] = bool(np.allclose(out, P @ V, atol=1e-8))
+
+            big = Q * 1e3
+            out_big, _ = fwd(big, K, V)
+            details["stable_large_scores"] = bool(np.all(np.isfinite(np.asarray(out_big, float))))
+
+            dout = rng.randn(T, d)
+            dQ, dK, dV = bwd(dout, cache)
+            dQ, dK, dV = (np.asarray(x, dtype=float) for x in (dQ, dK, dV))
+            details["grad_shapes"] = (dQ.shape == Q.shape and dK.shape == K.shape
+                                      and dV.shape == V.shape)
+
+            def loss(q, k, v):
+                o, _ = fwd(q, k, v)
+                return float((np.asarray(o, dtype=float) * dout).sum())
+
+            worst = 0.0
+            for name, mat, analytic in (("Q", Q, dQ), ("K", K, dK), ("V", V, dV)):
+                flat = mat.reshape(-1)
+                for i in range(flat.size):
+                    h, save = 1e-6, flat[i]
+                    flat[i] = save + h
+                    lp = loss(Q, K, V)
+                    flat[i] = save - h
+                    lm = loss(Q, K, V)
+                    flat[i] = save
+                    numeric = (lp - lm) / (2 * h)
+                    a = analytic.reshape(-1)[i]
+                    worst = max(worst, abs(numeric - a) / (abs(numeric) + abs(a) + 1e-9))
+            details["worst_relative_gradient_error"] = float(worst)
+            details["gradients_match_numeric"] = worst < 1e-5
+        except Exception as exc:
+            details["run_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 30, details
+        score = sum(3 for k in ("output_shape", "grad_shapes") if details.get(k))
+        score += 6 if details.get("forward_matches_reference") else 0
+        score += 4 if details.get("stable_large_scores") else 0
+        score += 14 if details.get("gradients_match_numeric") else 0
+        return min(30, score), 30, details
+
+    return "ml_hard", prompt, 1600, grade
+
+
+VERILOG_HARD_TB = r"""
+module tb;
+  localparam WIDTH = 8, DEPTH = 8;
+  reg wclk = 0, rclk = 0, wrst_n = 0, rrst_n = 0, winc = 0, rinc = 0;
+  reg [WIDTH-1:0] wdata = 0;
+  wire [WIDTH-1:0] rdata;
+  wire wfull, rempty;
+  integer pass = 0, fail = 0, errors = 0, got = 0, i;
+  reg [WIDTH-1:0] seen;
+
+  async_fifo #(.WIDTH(WIDTH), .DEPTH(DEPTH)) dut (
+    .wclk(wclk), .wrst_n(wrst_n), .winc(winc), .wdata(wdata), .wfull(wfull),
+    .rclk(rclk), .rrst_n(rrst_n), .rinc(rinc), .rdata(rdata), .rempty(rempty));
+
+  always #5 wclk = ~wclk;   // unrelated clocks, deliberately not integer-related
+  always #7 rclk = ~rclk;
+
+  task check(input integer id, input cond);
+    begin
+      if (cond) begin pass = pass + 1; $display("CHECK %0d PASS", id); end
+      else      begin fail = fail + 1; $display("CHECK %0d FAIL", id); end
+    end
+  endtask
+
+  // one write, driven strictly from the write clock
+  task push(input [WIDTH-1:0] value);
+    begin
+      @(negedge wclk);
+      while (wfull) @(negedge wclk);
+      wdata = value; winc = 1;
+      @(negedge wclk);
+      winc = 0;
+    end
+  endtask
+
+  // one read, driven strictly from the read clock; rdata is sampled while the
+  // read pointer still addresses the entry being popped
+  task pop(output [WIDTH-1:0] value);
+    begin
+      @(negedge rclk);
+      while (rempty) @(negedge rclk);
+      value = rdata; rinc = 1;
+      @(negedge rclk);
+      rinc = 0;
+    end
+  endtask
+
+  initial begin
+    #23 wrst_n = 1; rrst_n = 1;
+    repeat (4) @(negedge rclk);
+    check(0, rempty === 1'b1);
+
+    // fill, drain, twice — the second pass exercises pointer wrap
+    for (i = 0; i < 2 * DEPTH; i = i + 1) begin
+      push(i[WIDTH-1:0]);
+      pop(seen);
+      if (seen !== i[WIDTH-1:0]) errors = errors + 1;
+      got = got + 1;
+    end
+    check(1, got == 2 * DEPTH);
+    check(2, errors == 0);
+
+    repeat (6) @(negedge rclk);
+    check(3, rempty === 1'b1);
+
+    $display("SUMMARY pass=%0d fail=%0d got=%0d errors=%0d", pass, fail, got, errors);
+    $finish;
+  end
+
+  initial begin
+    #200000;
+    $display("SUMMARY pass=%0d fail=%0d TIMEOUT", pass, fail);
+    $finish;
+  end
+endmodule
+"""
+
+
+def task_verilog_hard():
+    prompt = '''Write an asynchronous FIFO in Verilog-2001 — a FIFO whose write and read
+sides run on unrelated clocks. Return ONLY the module, no testbench, no
+explanation.
+
+module async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)
+  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,
+   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);
+
+Requirements:
+- DEPTH is a power of two. `wclk` and `rclk` have no fixed phase or frequency
+  relationship.
+- A write occurs on a `wclk` edge when `winc` is high and `wfull` is low; a read
+  on an `rclk` edge when `rinc` is high and `rempty` is low.
+- Pointers crossing between the domains MUST be Gray-coded and passed through a
+  two-flop synchroniser in the destination domain. A binary pointer crossed
+  directly can be sampled mid-transition with several bits changing at once,
+  which corrupts the count — it will usually still simulate correctly, so this is
+  about doing it right rather than about passing by luck.
+- `wfull` and `rempty` must be generated in their own clock domains.
+- No data may be lost, duplicated or reordered.
+- Synthesisable RTL: non-blocking assignments in sequential blocks, no latches.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "async_fifo" not in code:
+            details["module_present"] = False
+            return 0, 30, details
+        details["module_present"] = True
+        lowered = code.lower()
+        # A binary pointer crossed directly usually simulates fine, so structure
+        # is the only way to see it.
+        # Look for the actual binary-to-Gray conversion (x >> 1) ^ x, not the
+        # word "gray" — a variable NAMED wgray holding a binary pointer is
+        # exactly the bug this is meant to catch, and simulation cannot see it
+        # because binary crossings work fine without real metastability.
+        details["uses_gray_coding"] = bool(re.search(r">>\s*1\s*\)?\s*\^", code)
+                                           or re.search(r"\^\s*\(?\s*\w+\s*>>\s*1", code))
+        # two registers in series in the destination domain, under any naming
+        # Two registers genuinely in SERIES: b <= a following a <= src. Naming
+        # alone is not evidence — a pair called q1/q2 both fed from the source is
+        # a single-flop crossing wearing a two-flop name.
+        # LIMITATION: this finds a two-flop chain anywhere in the module, so a
+        # design with one correct crossing and one single-flop crossing still
+        # passes. It catches the absence of synchronisation, not a bad crossing
+        # among good ones.
+        details["has_two_flop_synchroniser"] = bool(
+            re.search(r"(\w+)\s*<=\s*[^;]+;\s*(\w+)\s*<=\s*\1\s*;", code))
+        labels = ["empty_at_reset", "all_data_arrived", "no_corruption_or_reorder", "drained"]
+        workdir = tempfile.mkdtemp(prefix="vlog-hard-")
+        design, bench = os.path.join(workdir, "async_fifo.v"), os.path.join(workdir, "tb.v")
+        try:
+            open(design, "w").write(code + "\n")
+            open(bench, "w").write(VERILOG_HARD_TB)
+            if shutil.which("iverilog") and shutil.which("vvp"):
+                details["simulator"] = "iverilog"
+                build = subprocess.run(["iverilog", "-g2001", "-o", os.path.join(workdir, "sim"),
+                                        design, bench], capture_output=True, text=True, timeout=90)
+                details["compiles"] = build.returncode == 0
+                if details["compiles"]:
+                    run = subprocess.run(["vvp", os.path.join(workdir, "sim")],
+                                         capture_output=True, text=True, timeout=180)
+                    for line in run.stdout.splitlines():
+                        if line.startswith("CHECK "):
+                            _, ident, verdict = line.split()
+                            if ident.isdigit() and int(ident) < len(labels):
+                                details[labels[int(ident)]] = verdict == "PASS"
+                    details["timed_out"] = "TIMEOUT" in run.stdout
+                    m = re.search(r"got=(\d+) errors=(\d+)", run.stdout)
+                    if m:
+                        details["items_read"] = int(m.group(1))
+                        details["order_errors"] = int(m.group(2))
+                else:
+                    details["compile_error"] = build.stderr.strip().splitlines()[:2]
+            else:
+                details["simulator"] = "absent"
+                return 8, 30, details
+            if shutil.which("verilator"):
+                lint = subprocess.run(["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME",
+                                       "-Wno-EOFNEWLINE", "-Wno-UNUSEDSIGNAL", "-Wno-UNUSEDPARAM",
+                                       "-Wno-MULTIDRIVEN", "-Wno-WIDTHEXPAND",
+                                       "-Wno-WIDTHTRUNC", design],
+                                      capture_output=True, text=True, timeout=90)
+                details["lint_clean"] = lint.returncode == 0
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            return 0, 30, details
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 30, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        score = 2 if details.get("compiles") else 0
+        score += 3 if details.get("empty_at_reset") else 0
+        score += 8 if details.get("all_data_arrived") else 0
+        score += 8 if details.get("no_corruption_or_reorder") else 0
+        score += 2 if details.get("drained") else 0
+        score += 3 if details.get("uses_gray_coding") else 0
+        score += 2 if details.get("has_two_flop_synchroniser") else 0
+        score += 2 if details.get("lint_clean") else 0
+        return min(30, score), 30, details
+
+    return "verilog_hard", prompt, 1600, grade
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
@@ -1836,6 +2371,9 @@ def main():
             task_cobs_codec(), task_stream_reassembler(),
             task_verilog_medium(), task_cuda_medium(),
             task_cpp_medium(), task_ml_medium(),
+            # hard: senior practitioner. Tiled matmul, reverse-mode autodiff,
+            # clock-domain crossing, attention with analytic gradients.
+            task_cpp_hard(), task_verilog_hard(), task_cuda_hard(), task_ml_hard(),
         ]
     results = []
     suite_started = time.monotonic()

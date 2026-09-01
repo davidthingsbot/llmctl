@@ -1,0 +1,311 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "qwen38-27b-fp8",
+  "endpoint": "http://127.0.0.1:19434/v1/chat/completions",
+  "score": 127,
+  "max_score": 166,
+  "cost": {
+    "prompt_tokens": 2715,
+    "completion_tokens": 5926,
+    "total_tokens": 8641,
+    "task_seconds": 712.9,
+    "wall_seconds": 712.91,
+    "generation_tok_s": 8.31,
+    "truncated_tasks": []
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 3,
+      "max_score": 12,
+      "elapsed_s": 12.7521,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 164,
+        "total_tokens": 271,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 21.1503,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 372,
+        "completion_tokens": 177,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"The eligibility score relative to the cutoff of 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for the compliers (individuals whose participation status is determined by crossing the score threshold)\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: The expected values of the potential outcomes (absent treatment) are continuous functions of the score at the cutoff.\",\n    \"No manipulation: The score cannot be precisely manipulated by agents to cross the threshold (density is continuous at the cutoff).\",\n    \"Exclusion Restriction: The score affects the outcome only through its effect on treatment eligibility/participation, and no other policy changes occur at the threshold.\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 9.7663,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 157,
+        "total_tokens": 238,
+        "completion_tokens": 81,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"one_positive_percent\": 16.4,\n  \"two_positive_percent\": 76.9,\n  \"independence_caveat\": \"The assumption of conditional independence ignores potential correlations in test errors, such as shared biological factors, systematic biases, or the same underlying pathology affecting both tests, which can make the second positive less informative than calculated.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 25.3406,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 240,
+        "total_tokens": 451,
+        "completion_tokens": 211,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The observation that X has the same effect in an orthogonal signaling assay rules out H3 (assay_artifact).\",\n    \"The validated occupancy assay detecting no binding of X to R rules out H1 (direct_block).\",\n    \"The decrease in R protein with unchanged R mRNA indicates post-transcriptional regulation, consistent with protein degradation.\",\n    \"The prevention of both R-protein decline and the signaling effect by a proteasome inhibitor confirms that the proteasome is required for the mechanism, supporting H2 (proteasomal_degradation).\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome inhibitor fails to prevent the decline in R protein levels or the reduction in signaling, or if X is shown to inhibit the proteasome directly rather than targeting R for degradation, the proteasomal_degradation hypothesis would be undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 62.5528,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 238,
+        "total_tokens": 759,
+        "completion_tokens": 521,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "The claim that the mayor diverted famine relief in 1892 should be assessed with significant skepticism, though not dismissed entirely. The evidentiary weight currently favors the innocence of the mayor regarding the specific transaction, but the historical context requires nuance.\n\nSource dependence is a critical weakness in the prosecution\u2019s case. S1, the primary source for the accusation, is authored by a political rival, introducing a clear incentive to fabricate or exaggerate misconduct. S2 and S4 are derivative; they add no independent verification, merely amplifying S1\u2019s unverified claims. This creates a circular citation loop where the accusation rests solely on a hostile witness with no corroborating transactional data.\n\nS3, the treasury ledger, is the most probative evidence. As an independently preserved document with reconciled totals, it demonstrates that the disputed funds were indeed disbursed to named grain suppliers. This directly contradicts the core mechanism of \"diversion\" if defined as embezzlement or misappropriation for personal gain. The ledger establishes that the money reached the intended sector (grain supply). However, S3 does not establish the *quality* or *timeliness* of the grain, nor does it prove the mayor did not collude with suppliers to inflate costs or delay delivery. It confirms the flow of funds, not the integrity of the procurement process.\n\nThe detail that one supplier was the mayor\u2019s cousin is a red flag for potential conflict of interest, but it is neutralized by the pricing data. Since the listed price matched other suppliers that month, there is no evidence of price gouging or financial benefit to the mayor through this specific transaction. This weakens the argument of self-dealing, though it does not rule out nepotistic favoritism in supplier selection, which is a different ethical violation than diversion.\n\nBelief in the claim should decrease significantly. The burden of proof for \"diversion\" requires evidence of misappropriation, which S3 refutes for the specific funds in question. The remaining doubt lies in whether the grain was actually delivered or was of sufficient quality to alleviate famine.\n\nThe highest-value next evidence to seek would be independent delivery receipts or warehouse logs from the grain suppliers, or contemporary reports from famine relief workers verifying the arrival and distribution of the grain. If the grain arrived and was distributed, the claim of diversion collapses. If the grain never arrived, S3\u2019s reconciliation might indicate a fraudulent entry, shifting the focus to accounting fraud rather than simple diversion. Until such evidence is found, the claim remains unsupported by material proof.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 13.9238,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 325,
+        "completion_tokens": 115,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"launch_now_ev\": 36.0,\n  \"positive_probability\": 0.52,\n  \"good_given_positive\": 0.769,\n  \"launch_ev_given_positive\": 60.0,\n  \"launch_ev_given_negative\": -12.0,\n  \"test_policy_ev_after_cost\": 20.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 29.752,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 143,
+        "total_tokens": 390,
+        "completion_tokens": 247,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"The rule is 'If vowel, then even number'. To test this, we must look for a counterexample: a card with a vowel on one side and an odd number on the other. \\n1. Card 'A': 'A' is a vowel. We must turn it to check if the other side is an even number. If it is odd, the rule is false.\\n2. Card '7': '7' is an odd number. We must turn it to check if the other side is a vowel. If it is a vowel, the rule is false (vowel with odd number).\\n3. Card 'D': 'D' is a consonant. The rule only applies to vowels. Whether the other side is even or odd does not violate the rule.\\n4. Card '4': '4' is an even number. The rule does not state that even numbers must have vowels on the other side (it is not a biconditional). Therefore, finding a consonant on the other side does not violate the rule.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 94.2253,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 211,
+        "total_tokens": 996,
+        "completion_tokens": 785,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "**Recommendation: Do Not Implement Automatic Restrictive Supervision. Adopt a Constrained, Human-in-the-Loop Decision Support System with Rigorous Auditing.**\n\nAutomatic imposition of restrictive supervision based solely on a fixed risk threshold is unjustified and dangerous. While the model is calibrated within demographic groups, calibration only ensures that predicted probabilities match observed frequencies in the historical data. It does not guarantee fairness, accuracy in individual cases, or robustness to future changes. Relying on it for automatic action ignores critical statistical, causal, and ethical failures.\n\n**Statistical and Causal Limitations**\nSevere violent offenses are rare events. Even a highly accurate model will produce a high number of false positives relative to true positives due to the base rate fallacy. If the base rate of severe violence is 1%, a model with 90% sensitivity and 95% specificity will still flag many non-offenders. Because the cost of a false positive (unjustified liberty deprivation) is severe, and the cost of a false negative (missed offense) is also high, a single fixed threshold is arbitrary. More critically, prediction is not causation. The model identifies correlation, not the causal mechanism of violence. Restrictive supervision may not prevent the specific offense predicted, or it may exacerbate risk factors (e.g., social isolation, economic hardship) that contribute to recidivism.\n\n**Feedback Loops and Distribution Shift**\nPolice deployment changes who is observed and arrested. If police focus on high-risk predictions, they will arrest more people from those groups, creating a feedback loop where the model\u2019s training data becomes biased toward over-policed demographics. This \"selective labels\" problem means the model learns to predict who is *arrested*, not who is *violent*. Furthermore, defendants can adapt strategically if features are known (e.g., hiding assets, changing behavior), rendering the model obsolete. Finally, economic and social shifts will cause distribution shift, meaning historical calibration will not hold in the future.\n\n**Rights and Due Process**\nAutomatic restriction violates due process by denying individualized assessment. It treats individuals as statistical aggregates, ignoring mitigating circumstances. It also raises equal protection concerns if the model\u2019s features proxy for race or socioeconomic status, even if calibrated within groups.\n\n**Proposed Deployment and Evaluation Design**\n1.  **Role:** Use the model only as a decision-support tool for human judges or parole boards. It must not trigger automatic action.\n2.  **Thresholds:** Use multiple thresholds with clear cost-benefit analysis. Require a high confidence level for restrictive measures.\n3.  **Safeguards:**\n    *   **Human Review:** Every case flagged for restriction must be reviewed by a human who can consider context, mitigating factors, and alternative interventions.\n    *   **Transparency:** Provide defendants with the specific factors driving the risk score and the right to contest them.\n    *   **Audit:** Independent, ongoing auditing for disparate impact, accuracy, and feedback loops.\n4.  **Evaluation:**\n    *   **Counterfactual Analysis:** Use synthetic control methods or randomized trials (where ethical) to measure the causal impact of supervision on recidivism.\n    *   **Monitoring:** Track false positive rates, especially for marginalized groups. Monitor for strategic adaptation by defendants.\n5.  **Stopping Conditions:**\n    *   If disparate impact exceeds a defined threshold.\n    *   If the model\u2019s predictive accuracy degrades significantly due to distribution shift.\n    *   If evidence shows that restrictive supervision increases recidivism or harms social outcomes.\n    *   If feedback loops are detected that bias police deployment.\n\nThis approach balances public safety with individual rights, acknowledging the model\u2019s limitations while leveraging its potential for targeted, human-oversight interventions.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    },
+    {
+      "task": "kv_sizing",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 143.9393,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 366,
+        "total_tokens": 1551,
+        "completion_tokens": 1185,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To calculate the KV cache cost, we follow these steps:\n\n1.  **Identify the layers contributing to the KV cache:**\n    *   Total layers: 48\n    *   Full attention layers: 12\n    *   Linear attention layers: 36 (contribute 0 to KV cache)\n    *   Only the 12 full attention layers contribute to the KV cache.\n\n2.  **Calculate the number of elements per token for one full-attention layer:**\n    *   Heads: 8\n    *   Head dimension: 128\n    *   K and V are cached separately.\n    *   Elements per token per layer = $2 \\times \\text{heads} \\times \\text{head\\_dim}$\n    *   Elements per token per layer = $2 \\times 8 \\times 128 = 2048$ elements.\n\n3.  **Calculate the total elements per token for the entire model:**\n    *   Total elements per token = $\\text{Full attention layers} \\times \\text{Elements per token per layer}$\n    *   Total elements per token = $12 \\times 2048 = 24,576$ elements.\n\n4.  **Calculate the bytes per token (`kv_bytes_per_token`):**\n    *   Quantization: q8_0\n    *   Cost per element: 1.0625 bytes\n    *   Bytes per token = $\\text{Total elements per token} \\times \\text{Cost per element}$\n    *   Bytes per token = $24,576 \\times 1.0625$\n    *   Calculation: $24,576 \\times 1 = 24,576$; $24,576 \\times 0.0625 = 24,576 / 16 = 1,536$.\n    *   Total = $24,576 + 1,536 = 26,112$ bytes.\n\n5.  **Calculate the KV cache size at 262,144 tokens (`kv_gib_at_262144`):**\n    *   Total bytes = $\\text{Bytes per token} \\times \\text{Number of tokens}$\n    *   Total bytes = $26,112 \\times 262,144$\n    *   Note: $262,144 = 2^{18}$.\n    *   Total bytes = $26,112 \\times 2^{18}$\n    *   Convert to GiB: Divide by $2^{30}$.\n    *   GiB = $\\frac{26,112 \\times 2^{18}}{2^{30}} = \\frac{26,112}{2^{12}} = \\frac{26,112}{4,096}$\n    *   Calculation: $26,112 / 4,096 = 6.375$ GiB.\n\n6.  **Calculate the maximum context tokens in 25 GiB (`max_context_tokens_in_25gib`):**\n    *   Available bytes = $25 \\text{ GiB} \\times 2^{30} \\text{ bytes/GiB}$\n    *   Available bytes = $25 \\times 1,073,741,824 = 26,843,545,600$ bytes.\n    *   Max tokens = $\\lfloor \\frac{\\text{Available bytes}}{\\text{Bytes per token}} \\rfloor$\n    *   Max tokens = $\\lfloor \\frac{26,843,545,600}{26,112} \\rfloor$\n    *   Calculation:\n        *   $26,843,545,600 / 26,112 \\approx 1,028,015.686$\n    *   Rounding down: 1,028,015 tokens.\n\n7.  **Check if weights + KV fits in 112 GiB (`weights_87gib_and_262144_fits_in_112gib`):**\n    *   Weights size: 87 GiB\n    *   KV size at 262,144 tokens: 6.375 GiB\n    *   Total size = $87 + 6.375 = 93.375$ GiB\n    *   Limit: 112 GiB\n    *   Is $93.375 \\le 112$? Yes.\n    *   Result: true.\n\n```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": true,
+        "gib_at_262144": true,
+        "max_context": true,
+        "fits": true,
+        "counted_all_48_layers": false
+      }
+    },
+    {
+      "task": "causal_identification",
+      "score": 13,
+      "max_score": 18,
+      "elapsed_s": 7.7019,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 264,
+        "total_tokens": 325,
+        "completion_tokens": 61,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"adjustment_set\": [\"C\", \"I\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": false,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      }
+    },
+    {
+      "task": "resource_optimization",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 283.6448,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 261,
+        "total_tokens": 2630,
+        "completion_tokens": 2369,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To find the optimal selection, we must solve a 0/1 Knapsack problem where the capacity is 112 GiB.\n\n**Models:**\n1.  **atlas**: 61 GiB, Value 67\n2.  **borealis**: 56 GiB, Value 60\n3.  **cinder**: 56 GiB, Value 60\n4.  **dunlin**: 27 GiB, Value 28\n5.  **ember**: 19 GiB, Value 19\n6.  **fennec**: 13 GiB, Value 12\n\n**Step 1: Calculate Value Density (Value / Size)**\n*   atlas: $67 / 61 \\approx 1.098$\n*   borealis: $60 / 56 \\approx 1.071$\n*   cinder: $60 / 56 \\approx 1.071$\n*   dunlin: $28 / 27 \\approx 1.037$\n*   ember: $19 / 19 = 1.000$\n*   fennec: $12 / 13 \\approx 0.923$\n\n**Step 2: Determine the Optimal Set (Maximise Total Value)**\n\nLet's evaluate combinations that fit within 112 GiB. Since the items are relatively large, we can check combinations of the largest items first.\n\n*   **Option A: Two large items**\n    *   atlas (61) + borealis (56) = 117 GiB (Too big)\n    *   atlas (61) + cinder (56) = 117 GiB (Too big)\n    *   borealis (56) + cinder (56) = 112 GiB.\n        *   Size: 112 GiB\n        *   Value: $60 + 60 = 120$\n        *   Remaining space: 0 GiB.\n        *   This is a valid candidate.\n\n*   **Option B: One large item + smaller items**\n    *   **atlas (61)**: Remaining capacity = $112 - 61 = 51$ GiB.\n        *   We need to maximize value from {borealis, cinder, dunlin, ember, fennec} within 51 GiB.\n        *   borealis (56) and cinder (56) don't fit.\n        *   Best fit from remaining:\n            *   dunlin (27) + ember (19) = 46 GiB. Value: $28 + 19 = 47$.\n            *   dunlin (27) + fennec (13) = 40 GiB. Value: $28 + 12 = 40$.\n            *   ember (19) + fennec (13) = 32 GiB. Value: $19 + 12 = 31$.\n            *   dunlin (27) alone = 27 GiB. Value: 28.\n            *   Can we fit anything else with dunlin+ember? $51 - 46 = 5$ GiB left. No other item fits.\n            *   So, best with atlas is: atlas + dunlin + ember.\n            *   Total Size: $61 + 27 + 19 = 107$ GiB.\n            *   Total Value: $67 + 28 + 19 = 114$.\n            *   This is less than 120.\n\n    *   **borealis (56)**: Remaining capacity = $112 - 56 = 56$ GiB.\n        *   We need to maximize value from {atlas, cinder, dunlin, ember, fennec} within 56 GiB.\n        *   atlas (61) doesn't fit.\n        *   cinder (56) fits exactly.\n            *   borealis + cinder = 112 GiB. Value: $60 + 60 = 120$. (Same as Option A).\n        *   If we don't take cinder, we look at {dunlin, ember, fennec} within 56 GiB.\n            *   dunlin (27) + ember (19) + fennec (13) = $27+19+13 = 59$ GiB (Too big).\n            *   dunlin (27) + ember (19) = 46 GiB. Value: $28+19=47$.\n            *   dunlin (27) + fennec (13) = 40 GiB. Value: $28+12=40$.\n            *   ember (19) + fennec (13) = 32 GiB. Value: $19+12=31$.\n            *   Best subset here is dunlin+ember (47).\n            *   Total Value: $60 (\\text{borealis}) + 47 = 107$.\n            *   This is less than 120.\n\n    *   **cinder (56)**: Symmetric to borealis. Best is cinder + borealis = 120.\n\n*   **Option C: No large items (atlas, borealis, cinder)**\n    *   Items: dunlin (27), ember (19), fennec (13).\n    *   Total Size: $27 + 19 + 13 = 59$ GiB.\n    *   Total Value: $28 + 19 + 12 = 59$.\n    *   This is much less than 120.\n\n**Conclusion for Optimal Selection:**\nThe set {borealis, cinder} yields a total value of 120 and uses exactly 112 GiB.\nThe set {atlas, dunlin, ember} yields a total value of 114 and uses 107 GiB.\n120 > 114.\n\nTherefore, the optimal selection is **borealis** and **cinder**.\n\n**Step 3: Calculate Greedy by Value Density Total**\n\nAlgorithm: Repeatedly pick the available model with the highest value-per-GiB that fits in the remaining capacity.\n\n1.  **Current Capacity**: 112 GiB.\n    *   Densities:\n        *   atlas: 1.098\n        *   borealis: 1.071\n        *   cinder: 1.071\n        *   dunlin: 1.037\n        *   ember: 1.000\n        *   fennec: 0.923\n    *   Highest density: **atlas** (1.098).\n    *   Does it fit? Yes (61 <= 112).\n    *   **Select atlas**.\n    *   Remaining Capacity: $112 - 61 = 51$ GiB.\n    *   Current Total Value: 67.\n\n2.  **Current Capacity**: 51 GiB.\n    *   Remaining Models: borealis, cinder, dunlin, ember, fennec.\n    *   Densities:\n        *   borealis: 1.071 (Size 56) -> Does not fit (56 > 51).\n        *   cinder: 1.071 (Size 56) -> Does not fit (56 > 51).\n        *   dunlin: 1.037 (Size 27) -> Fits.\n        *   ember: 1.000 (Size 19) -> Fits.\n        *   fennec: 0.923 (Size 13) -> Fits.\n    *   Highest density among those that fit: **dunlin** (1.037).\n    *   **Select dunlin**.\n    *   Remaining Capacity: $51 - 27 = 24$ GiB.\n    *   Current Total Value: $67 + 28 = 95$.\n\n3.  **Current Capacity**: 24 GiB.\n    *   Remaining Models: borealis, cinder, ember, fennec.\n    *   Densities:\n        *   borealis: 1.071 (Size 56) -> Does not fit.\n        *   cinder: 1.071 (Size 56) -> Does not fit.\n        *   ember: 1.000 (Size 19) -> Fits.\n        *   fennec: 0.923 (Size 13) -> Fits.\n    *   Highest density among those that fit: **ember** (1.000).\n    *   **Select ember**.\n    *   Remaining Capacity: $24 - 19 = 5$ GiB.\n    *   Current Total Value: $95 + 19 = 114$.\n\n4.  **Current Capacity**: 5 GiB.\n    *   Remaining Models: borealis, cinder, fennec.\n    *   Densities:\n        *   borealis: 1.071 (Size 56) -> Does not fit.\n        *   cinder: 1.071 (Size 56) -> Does not fit.\n        *   fennec: 0.923 (Size 13) -> Does not fit (13 > 5).\n    *   No models fit. Stop.\n\n**Greedy Total Value**: 114.\n\n**Final Check:**\n*   Optimal Selection: [\"borealis\", \"cinder\"]\n*   Total Value: 120\n*   Total Size: 112\n*   Greedy Total: 114\n\n```json\n{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}\n```",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      }
+    },
+    {
+      "task": "thermal_physics",
+      "score": 8,
+      "max_score": 16,
+      "elapsed_s": 8.152,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 333,
+        "completion_tokens": 67,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"steady_state_junction_c\": 299.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 219.2\n}",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": false,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": false,
+        "gave_rise_not_temperature": false
+      }
+    }
+  ]
+}

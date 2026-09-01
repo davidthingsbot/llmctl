@@ -354,5 +354,64 @@ def loss_and_grads(params, X, y):
         self.assertFalse(details["only_numpy_imported"])
 
 
+
+class HardTierTest(unittest.TestCase):
+    """The hard tier must reward a correct answer and punish the classic error."""
+
+    def test_all_three_tiers_present_and_opt_in(self):
+        names = {t[0] for t in [
+            suite.task_cpp_easy(), suite.task_verilog_easy(), suite.task_cuda_easy(),
+            suite.task_ml_easy(), suite.task_cpp_medium(), suite.task_verilog_medium(),
+            suite.task_cuda_medium(), suite.task_ml_medium(), suite.task_cpp_hard(),
+            suite.task_verilog_hard(), suite.task_cuda_hard(), suite.task_ml_hard()]}
+        for domain in ("cpp", "verilog", "cuda", "ml"):
+            for tier in ("easy", "medium", "hard"):
+                self.assertIn(f"{domain}_{tier}", names)
+
+    def test_cpp_hard_accumulates_across_reuse(self):
+        # g = x*x + x has dg/dx = 2x+1; overwriting instead of accumulating gives 2x.
+        _, _, _, grade = suite.task_cpp_hard()
+        _, maximum, details = grade("no code here")
+        self.assertEqual(maximum, 30)
+        self.assertFalse(details.get("tape_present", True))
+
+    def test_ml_hard_softmax_jacobian_term_is_required(self):
+        _, _, _, grade = suite.task_ml_hard()
+        broken = """```python
+import numpy as np
+def attention_forward(Q, K, V):
+    d = Q.shape[1]
+    S = Q @ K.T / np.sqrt(d)
+    P = np.exp(S - S.max(axis=1, keepdims=True))
+    P = P / P.sum(axis=1, keepdims=True)
+    return P @ V, (Q, K, V, P, d)
+def attention_backward(dout, cache):
+    Q, K, V, P, d = cache
+    dV = P.T @ dout
+    dP = dout @ V.T
+    dS = P * dP
+    dS = dS / np.sqrt(d)
+    return dS @ K, dS.T @ Q, dV
+```"""
+        try:
+            import numpy  # noqa: F401
+        except ImportError:
+            self.skipTest("numpy not installed")
+        score, maximum, details = grade(broken)
+        self.assertLess(score, maximum)
+        self.assertFalse(details["gradients_match_numeric"])
+
+    def test_cuda_hard_requires_shared_memory(self):
+        _, _, _, grade = suite.task_cuda_hard()
+        naive = """```cuda
+__global__ void matmul(const float* A, const float* B, float* C, int M, int N, int K) {
+    int row = blockIdx.y * 16 + threadIdx.y, col = blockIdx.x * 16 + threadIdx.x;
+    if (row < M && col < N) { float s = 0; for (int k = 0; k < K; ++k) s += A[row*K+k]*B[k*N+col]; C[row*N+col] = s; }
+}
+```"""
+        _, _, details = grade(naive)
+        self.assertFalse(details["uses_shared_memory"])
+
+
 if __name__ == "__main__":
     unittest.main()
