@@ -728,6 +728,8 @@ only with other extended results; the suite id becomes `work_quality_v1+hard` /
 | `stream_reassembler` | 24 | executed — split chunks, resync, false sync in payload |
 | `verilog_fifo` | 26 | **Icarus simulation + Verilator lint** |
 | `cuda_reduction` | 26 | **nvcc compile + GPU execution + compute-sanitizer** |
+| `cpp_mlp` | 28 | **g++ compile + run: finite-difference gradient check, XOR training** |
+| `numpy_backprop` | 26 | **executed: finite-difference gradient check, circle dataset** |
 | `kv_sizing` | 16 | exact numeric |
 | `causal_identification` | 18 | exact |
 | `resource_optimization` | 16 | exact, optimum brute-forced by the grader |
@@ -742,8 +744,39 @@ scores form a gradient rather than pass/fail:
 | `stream_reassembler` | 24 | 21 (loses frame after bad checksum) | |
 | `verilog_fifo` | 26 | 22 (blocking assignment) | 15 (`full` never asserts) |
 | `cuda_reduction` | 26 | 24 (barrier in divergent branch) | 8 (no bounds guard) |
+| `cpp_mlp` | 28 | 20 (forgets averaging) | 13 (missing tanh derivative) |
+| `numpy_backprop` | 26 | 18 (zero init) | 14 (missing tanh derivative) |
 | `resource_optimization` | 16 | 12 (right set, wrong greedy) | 4 (greedy as optimal) |
 | `thermal_physics` | 16 | 13 (rise reported as temperature) | |
+
+### The two ML tasks are graded by gradient checking
+
+Both ask for a two-layer network's forward pass, loss and ANALYTIC gradients —
+`cpp_mlp` from scratch in C++ with nothing but `<cmath>`, `numpy_backprop`
+vectorised with numpy. Neither is graded by "does it look like backprop": every
+parameter is perturbed and the analytic gradient compared against the finite
+difference, to 1e-4 (C++) and 1e-5 (numpy). A derivation that is plausible and
+wrong cannot pass, and the classic error — dropping the tanh derivative
+`(1 - h^2)` — lands at 13/28 and 14/26 respectively.
+
+Two failures the gradient check alone would miss, so both are tested separately:
+
+- **Symmetric initialisation.** Zero-initialised weights give perfectly CORRECT
+  gradients and a network that cannot learn, because every hidden unit stays
+  identical. `numpy_backprop` checks initialisation variance and training
+  accuracy independently of the gradient check; that variant scores 18/26 with
+  `gradient_matches_numeric` still true.
+- **Accumulating instead of overwriting gradients.** The C++ harness calls the
+  candidate TWICE INTO THE SAME BUFFER. Passing a fresh `std::vector` would not
+  test it — vectors zero-initialise, so accumulation silently gives the right
+  answer, and that variant scored 28/28 until the buffer was reused.
+
+`numpy_backprop` permits `import numpy` and nothing else; every other import
+scores zero, which closes the `from sklearn.linear_model import LogisticRegression`
+path. Training uses a dataset the GRADER generates (inside-vs-outside a circle),
+not the XOR in the prompt, so memorising the example does not help. Requires
+`sudo apt install -y python3-numpy` — the system interpreter is
+externally-managed, so pip cannot install into it.
 
 Three points worth keeping:
 

@@ -276,5 +276,83 @@ class DomainTaskTest(unittest.TestCase):
         self.assertFalse(suite._barrier_inside_thread_conditional(fine))
 
 
+
+class MLTaskTest(unittest.TestCase):
+    """Both ML tasks are graded by finite-difference gradient checking, which no
+    plausible-looking but wrong derivation survives."""
+
+    CPP_REFERENCE = open(str(Path(__file__).with_name("fixtures") / "mlp_reference.cpp")).read() \
+        if (Path(__file__).with_name("fixtures") / "mlp_reference.cpp").exists() else None
+
+    NUMPY_REFERENCE = """```python
+import numpy as np
+
+def init_params(n_in, n_hidden, seed):
+    rng = np.random.RandomState(seed)
+    return {"W1": rng.randn(n_hidden, n_in) * 0.5,
+            "b1": np.zeros(n_hidden),
+            "W2": rng.randn(n_hidden) * 0.5,
+            "b2": 0.0}
+
+def loss_and_grads(params, X, y):
+    X = np.asarray(X, dtype=float); y = np.asarray(y, dtype=float)
+    W1 = np.asarray(params["W1"]); b1 = np.asarray(params["b1"])
+    W2 = np.asarray(params["W2"]); b2 = float(params["b2"])
+    n = X.shape[0]
+    H = np.tanh(X @ W1.T + b1)
+    p = 1.0 / (1.0 + np.exp(-(H @ W2 + b2)))
+    eps = 1e-12
+    loss = float(np.mean(-(y * np.log(p + eps) + (1 - y) * np.log(1 - p + eps))))
+    dz = (p - y) / n
+    dH = np.outer(dz, W2) * (1 - H ** 2)
+    return loss, {"W1": dH.T @ X, "b1": dH.sum(axis=0),
+                  "W2": H.T @ dz, "b2": float(dz.sum())}
+```"""
+
+    def _numpy_available(self):
+        try:
+            import numpy  # noqa: F401
+            return True
+        except ImportError:
+            return False
+
+    def test_numpy_reference_scores_full(self):
+        if not self._numpy_available():
+            self.skipTest("numpy not installed")
+        _, _, _, grade = suite.task_numpy_backprop()
+        score, maximum, details = grade(self.NUMPY_REFERENCE)
+        self.assertEqual(score, maximum, details)
+
+    def test_numpy_missing_activation_derivative_fails_gradcheck(self):
+        if not self._numpy_available():
+            self.skipTest("numpy not installed")
+        _, _, _, grade = suite.task_numpy_backprop()
+        broken = self.NUMPY_REFERENCE.replace("* (1 - H ** 2)", "")
+        score, maximum, details = grade(broken)
+        self.assertLess(score, maximum)
+        self.assertFalse(details["gradient_matches_numeric"])
+
+    def test_numpy_zero_init_is_caught_though_gradients_are_correct(self):
+        # Symmetric initialisation gives perfectly correct gradients and a network
+        # that cannot learn — the grader must separate those two failures.
+        if not self._numpy_available():
+            self.skipTest("numpy not installed")
+        _, _, _, grade = suite.task_numpy_backprop()
+        broken = (self.NUMPY_REFERENCE
+                  .replace("rng.randn(n_hidden, n_in) * 0.5", "np.zeros((n_hidden, n_in))")
+                  .replace("rng.randn(n_hidden) * 0.5", "np.zeros(n_hidden)"))
+        _, _, details = grade(broken)
+        self.assertTrue(details["gradient_matches_numeric"])
+        self.assertFalse(details["symmetry_broken"])
+        self.assertFalse(details["learns_circle"])
+
+    def test_numpy_task_rejects_non_numpy_imports(self):
+        _, _, _, grade = suite.task_numpy_backprop()
+        score, _, details = grade("```python\nimport sklearn\ndef init_params(a,b,c): pass\n"
+                                  "def loss_and_grads(p,X,y): pass\n```")
+        self.assertEqual(score, 0)
+        self.assertFalse(details["only_numpy_imported"])
+
+
 if __name__ == "__main__":
     unittest.main()

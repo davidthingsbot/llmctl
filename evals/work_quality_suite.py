@@ -989,6 +989,322 @@ Contract:
     return "cuda_reduction", prompt, 700, grade
 
 
+
+CPP_ML_HARNESS = r"""
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+#include <vector>
+
+__CANDIDATE__
+
+static int checks_pass = 0, checks_fail = 0;
+static void check(const char* name, bool ok) {
+    if (ok) { checks_pass++; printf("CHECK %s PASS\n", name); }
+    else    { checks_fail++; printf("CHECK %s FAIL\n", name); }
+}
+
+int main() {
+    const int n_in = 2, n_hidden = 4;
+    const int n_params = n_hidden * n_in + n_hidden + n_hidden + 1;
+
+    // XOR: not linearly separable, so a working hidden layer is required.
+    double X[8] = {0,0, 0,1, 1,0, 1,1};
+    double Y[4] = {0, 1, 1, 0};
+
+    // Deterministic pseudo-random start, no library dependence.
+    std::vector<double> p(n_params), g(n_params);
+    unsigned s = 12345u;
+    for (int i = 0; i < n_params; ++i) {
+        s = s * 1664525u + 1013904223u;
+        p[i] = ((double)(s >> 8) / 16777216.0) * 2.0 - 1.0;
+    }
+
+    double l0 = mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, g.data());
+    check("loss_is_finite", std::isfinite(l0));
+    check("loss_positive", l0 > 0.0);
+
+    // Finite-difference gradient check: the unforgeable part. An analytic
+    // gradient that disagrees here is wrong, however plausible the code looks.
+    double worst = 0.0;
+    for (int i = 0; i < n_params; ++i) {
+        const double h = 1e-6;
+        double save = p[i];
+        std::vector<double> dummy(n_params);
+        p[i] = save + h;
+        double lp = mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, dummy.data());
+        p[i] = save - h;
+        double lm = mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, dummy.data());
+        p[i] = save;
+        double numeric = (lp - lm) / (2 * h);
+        double diff = fabs(numeric - g[i]) / (fabs(numeric) + fabs(g[i]) + 1e-9);
+        if (diff > worst) worst = diff;
+    }
+    printf("GRADCHECK worst_rel_err=%.3e\n", worst);
+    check("gradient_matches_numeric", worst < 1e-4);
+
+    // Gradients must be OVERWRITTEN, not accumulated. Passing a fresh vector
+    // would not test this — std::vector zero-initialises, so accumulating into
+    // it gives the right answer. Reuse the SAME buffer twice instead.
+    std::vector<double> g2(n_params);
+    mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, g2.data());
+    mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, g2.data());
+    bool same = true;
+    for (int i = 0; i < n_params; ++i) if (fabs(g2[i] - g[i]) > 1e-9) same = false;
+    check("gradients_not_accumulated", same);
+
+    // A single sample must work: n_samples is not assumed to be > 1.
+    std::vector<double> g1(n_params);
+    double one = mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 1, g1.data());
+    check("single_sample_ok", std::isfinite(one) && one > 0.0);
+
+    // Train by plain gradient descent using the candidate's own gradients.
+    for (int epoch = 0; epoch < 20000; ++epoch) {
+        mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, g.data());
+        for (int i = 0; i < n_params; ++i) p[i] -= 0.5 * g[i];
+    }
+    double lfinal = mlp_loss_and_grad(p.data(), n_in, n_hidden, X, Y, 4, g.data());
+    printf("TRAIN final_loss=%.6f initial_loss=%.6f\n", lfinal, l0);
+    check("loss_decreased", lfinal < l0);
+    check("xor_learned", lfinal < 0.05);
+
+    printf("SUMMARY pass=%d fail=%d\n", checks_pass, checks_fail);
+    return 0;
+}
+"""
+
+
+def task_cpp_mlp():
+    prompt = '''Implement the forward pass, loss and analytic gradients of a small neural
+network in C++, from scratch. Return ONLY the function, no main, no includes, no
+explanation. You may not use any library beyond <cmath>.
+
+    double mlp_loss_and_grad(const double* params, int n_in, int n_hidden,
+                             const double* X, const double* y, int n_samples,
+                             double* grad);
+
+Network, for one input vector x of length n_in:
+  h_j    = tanh( sum_k W1[j][k] * x[k] + b1[j] )      for j in 0..n_hidden-1
+  z      = sum_j W2[j] * h_j + b2
+  p      = 1 / (1 + exp(-z))
+  loss   = -( y*log(p) + (1-y)*log(1-p) )
+
+Return the loss AVERAGED over the n_samples, and write d(average loss)/d(param)
+into grad[], which the caller has sized correctly.
+
+`params` is one flat array in exactly this order:
+  W1  n_hidden * n_in doubles, row-major: W1[j][k] is params[j*n_in + k]
+  b1  n_hidden doubles
+  W2  n_hidden doubles
+  b2  1 double
+`grad` uses the identical layout. `X` is n_samples * n_in doubles, row-major;
+`y` is n_samples doubles, each 0.0 or 1.0.
+
+Requirements:
+- grad[] must be OVERWRITTEN each call, not accumulated across calls.
+- n_samples may be 1.
+- The gradients must be the true analytic derivatives: they are checked against
+  finite differences to a relative tolerance of 1e-4.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "mlp_loss_and_grad" not in code:
+            details["function_present"] = False
+            return 0, 28, details
+        details["function_present"] = True
+        if not shutil.which("g++"):
+            details["compiler"] = "absent"
+            return 4, 28, details
+        workdir = tempfile.mkdtemp(prefix="cppml-")
+        source = os.path.join(workdir, "candidate.cpp")
+        binary = os.path.join(workdir, "candidate")
+        try:
+            with open(source, "w") as handle:
+                handle.write(CPP_ML_HARNESS.replace("__CANDIDATE__", code))
+            build = subprocess.run(["g++", "-O2", "-o", binary, source],
+                                   capture_output=True, text=True, timeout=180)
+            details["compiles"] = build.returncode == 0
+            if not details["compiles"]:
+                details["compile_error"] = [l for l in build.stderr.splitlines()
+                                            if "error" in l.lower()][:3]
+                return 0, 28, details
+            run = subprocess.run([binary], capture_output=True, text=True, timeout=180)
+            out = run.stdout
+            for line in out.splitlines():
+                if line.startswith("CHECK "):
+                    _, name, verdict = line.split()
+                    details[name] = verdict == "PASS"
+            worst = re.search(r"GRADCHECK worst_rel_err=([0-9.e+-]+)", out)
+            if worst:
+                details["worst_relative_gradient_error"] = float(worst.group(1))
+            final = re.search(r"TRAIN final_loss=([0-9.e+-]+)", out)
+            if final:
+                details["final_loss"] = float(final.group(1))
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            return 0, 28, details
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 28, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+        score = 3 if details.get("compiles") else 0
+        score += sum(2 for k in ("loss_is_finite", "loss_positive",
+                                 "gradients_not_accumulated", "single_sample_ok",
+                                 "loss_decreased") if details.get(k))
+        # The gradient check and actually learning XOR are what separate a real
+        # derivation from code that merely runs.
+        score += 8 if details.get("gradient_matches_numeric") else 0
+        score += 7 if details.get("xor_learned") else 0
+        return min(28, score), 28, details
+
+    return "cpp_mlp", prompt, 1100, grade
+
+
+def task_numpy_backprop():
+    prompt = '''Implement a two-layer neural network's forward pass, loss and analytic
+gradients with numpy. Return ONLY the two functions, no training loop, no
+explanation. `import numpy as np` is the only import permitted.
+
+    def init_params(n_in, n_hidden, seed):
+        """Return a dict with keys W1, b1, W2, b2."""
+
+    def loss_and_grads(params, X, y):
+        """Return (loss, grads) where grads has the same keys as params."""
+
+Shapes:
+  W1 (n_hidden, n_in)   b1 (n_hidden,)   W2 (n_hidden,)   b2 scalar float
+  X  (n_samples, n_in)  y  (n_samples,) of 0.0 or 1.0
+
+Network:
+  H = tanh(X @ W1.T + b1)          shape (n_samples, n_hidden)
+  z = H @ W2 + b2                  shape (n_samples,)
+  p = sigmoid(z)
+  loss = mean over samples of -( y*log(p) + (1-y)*log(1-p) )
+
+`grads[k]` must be d(loss)/d(params[k]) with the same shape as params[k], and
+grads["b2"] a scalar. They are checked against finite differences to a relative
+tolerance of 1e-5, so they must be the true analytic derivatives.
+
+`init_params` must be deterministic for a given seed, and must NOT initialise
+every weight to the same value — identical hidden units cannot learn different
+features. Keep the initial weights small.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as exc:
+            details["parse_error"] = str(exc)
+            return 0, 26, details
+        allowed_import = True
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                allowed_import &= all(a.name == "numpy" for a in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                allowed_import &= node.module == "numpy"
+        details["only_numpy_imported"] = allowed_import
+        if not allowed_import:
+            return 0, 26, details
+        names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+        details["both_functions"] = {"init_params", "loss_and_grads"} <= names
+        if not details["both_functions"]:
+            return 0, 26, details
+        try:
+            import numpy as np
+        except ImportError:
+            details["numpy"] = "absent"
+            return 3, 26, details
+
+        env = {"__name__": "candidate"}
+        try:
+            exec(compile(tree, "candidate", "exec"), env)
+            init, lag = env["init_params"], env["loss_and_grads"]
+
+            rng = np.random.RandomState(0)
+            n_in, n_hidden, n = 3, 5, 12
+            X = rng.randn(n, n_in)
+            y = (rng.rand(n) > 0.5).astype(float)
+
+            p0 = init(n_in, n_hidden, 0)
+            p1 = init(n_in, n_hidden, 0)
+            p2 = init(n_in, n_hidden, 1)
+            details["shapes"] = (np.shape(p0["W1"]) == (n_hidden, n_in)
+                                 and np.shape(p0["b1"]) == (n_hidden,)
+                                 and np.shape(p0["W2"]) == (n_hidden,))
+            details["deterministic"] = all(
+                np.allclose(np.asarray(p0[k]), np.asarray(p1[k])) for k in ("W1", "b1", "W2"))
+            details["seed_changes_init"] = not np.allclose(np.asarray(p0["W1"]),
+                                                           np.asarray(p2["W1"]))
+            details["symmetry_broken"] = float(np.std(np.asarray(p0["W1"]))) > 1e-6
+
+            loss, grads = lag(p0, X, y)
+            details["loss_finite"] = bool(np.isfinite(loss)) and loss > 0
+            details["grad_keys"] = set(grads) == {"W1", "b1", "W2", "b2"}
+
+            # Finite differences over every parameter: an analytic gradient that
+            # disagrees is wrong, however reasonable the code reads.
+            worst = 0.0
+            for key in ("W1", "b1", "W2", "b2"):
+                arr = np.asarray(p0[key], dtype=float)
+                flat = arr.reshape(-1).copy()
+                ganalytic = np.asarray(grads[key], dtype=float).reshape(-1)
+                for i in range(flat.size):
+                    h = 1e-6
+                    save = flat[i]
+                    flat[i] = save + h
+                    p0[key] = flat.reshape(arr.shape) if arr.shape else float(flat[0])
+                    lp, _ = lag(p0, X, y)
+                    flat[i] = save - h
+                    p0[key] = flat.reshape(arr.shape) if arr.shape else float(flat[0])
+                    lm, _ = lag(p0, X, y)
+                    flat[i] = save
+                    p0[key] = flat.reshape(arr.shape) if arr.shape else float(flat[0])
+                    numeric = (lp - lm) / (2 * h)
+                    denom = abs(numeric) + abs(ganalytic[i]) + 1e-9
+                    worst = max(worst, abs(numeric - ganalytic[i]) / denom)
+            details["worst_relative_gradient_error"] = float(worst)
+            details["gradient_matches_numeric"] = worst < 1e-5
+
+            # Learn a genuinely non-linear boundary the grader generates, so
+            # memorising XOR does not help: inside-vs-outside a circle.
+            rng2 = np.random.RandomState(7)
+            Xc = rng2.randn(400, 2) * 1.2
+            yc = (np.sqrt((Xc ** 2).sum(axis=1)) < 1.3).astype(float)
+            params = init(2, 8, 3)
+            for _ in range(3000):
+                _, g = lag(params, Xc, yc)
+                for key in ("W1", "b1", "W2", "b2"):
+                    params[key] = np.asarray(params[key], dtype=float) - 0.5 * np.asarray(g[key], dtype=float)
+            final_loss, _ = lag(params, Xc, yc)
+            H = np.tanh(Xc @ np.asarray(params["W1"]).T + np.asarray(params["b1"]))
+            pred = (1 / (1 + np.exp(-(H @ np.asarray(params["W2"]) + float(params["b2"])))) > 0.5)
+            accuracy = float((pred == (yc > 0.5)).mean())
+            details["final_loss"] = float(final_loss)
+            details["accuracy"] = accuracy
+            details["learns_circle"] = accuracy >= 0.95
+
+            single_loss, single_g = lag(init(2, 8, 3), Xc[:1], yc[:1])
+            details["single_sample_ok"] = bool(np.isfinite(single_loss))
+        except Exception as exc:
+            details["run_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 26, details
+
+        score = sum(2 for k in ("shapes", "deterministic", "seed_changes_init",
+                                "symmetry_broken", "loss_finite", "grad_keys",
+                                "single_sample_ok") if details.get(k))
+        score += 8 if details.get("gradient_matches_numeric") else 0
+        score += 4 if details.get("learns_circle") else 0
+        return min(26, score), 26, details
+
+    return "numpy_backprop", prompt, 900, grade
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
@@ -1033,7 +1349,8 @@ def main():
     ]
     if args.extended:
         tasks += [task_cobs_codec(), task_stream_reassembler(),
-                  task_verilog_fifo(), task_cuda_reduction()]
+                  task_verilog_fifo(), task_cuda_reduction(),
+                  task_cpp_mlp(), task_numpy_backprop()]
     results = []
     for name, prompt, max_tokens, grader in tasks:
         print(f"running {name}...", flush=True)
