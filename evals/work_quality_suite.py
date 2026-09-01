@@ -2532,6 +2532,11 @@ def main():
         "endpoint": args.url,
         "score": sum(row["score"] for row in results),
         "max_score": sum(row["max_score"] for row in results),
+        # explicit, because a result file must state its own mode: a cold run
+        # made between the retry commit and the retry-default commit carried an
+        # id indistinguishable from a retry run
+        "retry_enabled": bool(args.retry),
+        "retry_credit": args.retry_credit if args.retry else None,
         "cost": _cost_summary(results, time.monotonic() - suite_started),
         "tasks": results,
     }

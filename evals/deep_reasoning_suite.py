@@ -1156,6 +1156,8 @@ def main():
               + ("" if args.retry else "+cold"), "model": args.model, "endpoint": args.url,
               "score": sum(x["score"] for x in results),
               "max_score": sum(x["max_score"] for x in results),
+              "retry_enabled": bool(args.retry),
+              "retry_credit": args.retry_credit if args.retry else None,
               "cost": _cost_summary(results, time.monotonic() - suite_started),
               "tasks": results}
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
