@@ -802,6 +802,9 @@ zero for any non-Python task.
 
 ## Frontier control — 740/740, 2026-09-01
 
+> Live standings for this machine, regenerated as each model completes: [`results/dw-spark0/LEADERBOARD.md`](results/dw-spark0/LEADERBOARD.md) (`python3 evals/leaderboard.py`).
+
+
 The full extended battery — 22 work tasks and 20 reasoning tasks across three
 tiers — was answered offline by a frontier model of the same family (Claude,
 Opus 5 then Fable 5.1) and graded with the identical graders the local models
