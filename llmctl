@@ -862,6 +862,12 @@ write_unit() { # write_unit <name>
 Description=llmctl: ${DESC[$name]} (:${PORT[$name]})
 After=network-online.target
 Wants=network-online.target
+# Restart=always with no start limit turns one out-of-memory kill into a death
+# spiral: on 2026-09-01 an over-sized model was OOM-killed, restarted 10s later,
+# allocated ~97GiB again, and repeated until dw-spark0 went down hard and needed
+# a reboot. Three failures inside ten minutes now stops the unit instead.
+StartLimitIntervalSec=600
+StartLimitBurst=3
 
 [Service]
 Type=simple
@@ -869,6 +875,10 @@ ExecStart=$RUN_DIR/run-$name.sh
 Restart=always
 RestartSec=10
 TimeoutStopSec=60
+# On unified memory the GPU allocation IS system memory, so a model that is too
+# big takes the machine with it rather than merely failing. Stop on OOM instead
+# of retrying into the same wall.
+OOMPolicy=stop
 
 [Install]
 WantedBy=default.target
