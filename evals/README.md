@@ -800,6 +800,69 @@ matched only ```` ```python ```` or a bare fence, so a ```` ```verilog ```` repl
 fell through and the backticks themselves were handed to the parser — a latent
 zero for any non-Python task.
 
+## Frontier control — 740/740, 2026-09-01
+
+The full extended battery — 22 work tasks and 20 reasoning tasks across three
+tiers — was answered offline by a frontier model of the same family (Claude,
+Opus 5 then Fable 5.1) and graded with the identical graders the local models
+face. The point is the inversion: a local model scoring low is ambiguous, but a
+frontier model scoring below full marks is a **harness suspect by default**.
+
+| | control | |
+|---|---:|---|
+| work (legacy + easy + medium + hard) | **438/438** | every task achievable at 100% |
+| reasoning (legacy + easy + medium + hard) | **302/302** | after three rubric fixes below |
+
+The 42 answers are committed under `results/frontier-control/answers/` as
+**validated reference solutions**. Every one scores full marks against the
+current graders, so any future grader change can be checked against them
+offline in seconds, without a model. That is how the bugs below should have
+been caught before any local model ran.
+
+### What the control found
+
+Two harness bugs, plus a systematic weakness in the legacy rubric:
+
+- **`acquisition_timing` had never been passed by any model on any machine**
+  (ceiling 1/6; the README recommended routing around it with a tool). The
+  control scored 4/6, failing exactly `data_bits_per_sample` and
+  `payload_bit_rate`. Its wire time was 96.0 ms/s — precisely right, meaning it
+  used all 48 bits per transaction in the physics — and it then answered the key
+  AS NAMED: 24 data bits. The grader wanted 48, data + status + framing. The
+  task was never hard; the key was mis-named, and every model that read it
+  literally was marked wrong for being correct. Renamed to
+  `bits_per_transaction` / `bus_bit_rate` with the definition in the prompt; the
+  control then scored 6/6.
+- **`ml_easy` failed with `NameError: name 'np' is not defined`.** The prompt
+  said "return ONLY the two functions" and also that `import numpy as np` was
+  the only import *permitted*. The control obeyed the first literally and
+  omitted the import; the grader's exec environment was bare. Permitted is not
+  required — all `ml_*` graders now supply `np` themselves.
+- **Three legacy keyword-rubric checks failed a demonstrably correct answer**,
+  and the control was then given one chance to defend each. All three verdicts
+  were "grader too narrow": `websites_not_independent` wanted "not
+  independent"/"copy"/"echo" and got *"one independent accusatory source, not
+  four ... counting them separately double-counts a single claim"*;
+  `four_not_converse` wanted one of four words and got a correct argument in
+  others; `asymmetric_errors` wanted the literal substring "false positive" and
+  the answer wrote **"false-positive"** — a hyphen. Hyphens are now normalised
+  before matching, and the control's phrasings added to the lists. Re-grading
+  every historical result with the new lists moves +3 points across 2 task-runs
+  in the whole repo, both legitimate.
+
+That is the third independent failure mode found for the same three rubric tasks
+in one day — run-to-run noise of +/-6 with the model held constant, truncation
+caps in every recorded run, and now vocabulary. Broadening keyword lists defers
+the problem rather than solving it. **Rank models on the exactly-graded and
+executed subtotal; report rubric tasks separately as directional.**
+
+### What the control settled
+
+`verilog_hard` — `qwen38-27b-nvfp4` scored 2/30, failing to compile because it
+drove `rdata` from an `always` block without declaring it `output reg`. The
+control scored 30/30 on the same prompt: Gray pointers via `(x >> 1) ^ x`,
+two-flop synchronisers, registered flags, lint clean. The 2 was the model.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.

@@ -292,7 +292,7 @@ In at most 300 words, assess how belief in the claim should change. Explicitly r
         s = re.sub(r"[*_`]", "", text.lower())
         checks = {
             "dependency_graph": ("s2" in s and "s1" in s and any(x in s for x in ("depend", "deriv", "cites only"))),
-            "websites_not_independent": "s4" in s and any(x in s for x in ("not independent", "copy", "echo", "derivative", "relies", "multiple sources")),
+            "websites_not_independent": "s4" in s and any(x in s for x in ("not independent", "copy", "echo", "derivative", "relies", "multiple sources", "double count", "each other", "cite s2", "repeat", "chain", "one independent")),
             "rival_incentive": "rival" in s and any(x in s for x in ("motive", "bias", "incentive", "hostil")),
             "ledger_updates_down": "s3" in s and any(x in s for x in ("weaken", "against", "downward", "reduce", "decrease", "diminish", "undercut")),
             "ledger_not_complete_exoneration": "s3" in s and any(x in s for x in ("does not", "cannot", "not prove", "not rule", "still")),
@@ -361,7 +361,7 @@ Return ONLY JSON with keys `turn_cards` and `reason`. `turn_cards` must be an ar
             "exact_cards": normalized == {"A", "7"} and exact_card_count,
             "a_can_falsify": "a" in reason and any(x in reason for x in ("odd", "fals", "violate")),
             "seven_contrapositive": "7" in reason and any(x in reason for x in ("vowel", "fals", "violate")),
-            "four_not_converse": "4" in reason and any(x in reason for x in ("converse", "not require", "may", "irrelevant")),
+            "four_not_converse": "4" in reason and any(x in reason for x in ("converse", "not require", "may", "irrelevant", "permitted", "does not claim", "only vowels", "cannot falsify", "nothing can falsify", "confirm")),
             "d_irrelevant": "d" in reason and any(x in reason for x in ("consonant", "not constrain", "irrelevant", "no requirement")),
         }
         weights = {"exact_cards": 4, "a_can_falsify": 2, "seven_contrapositive": 2, "four_not_converse": 1, "d_irrelevant": 1}
@@ -376,11 +376,13 @@ def task_complex_policy():
 In at most 400 words, recommend a policy. Analyze what calibration does and does not justify, base rates and asymmetric errors, causation versus prediction, rights and due process, selective labels/feedback loops, distribution shift and strategic adaptation. Give a concrete deployment/evaluation design with safeguards and conditions for stopping or revising it. A nuanced rejection or constrained use is acceptable; unsupported certainty is not.'''
 
     def grade(text):
-        s = text.lower()
+        # Normalise hyphens so "false-positive" matches "false positive": a frontier
+        # control lost 2 points to exactly that on 2026-09-01.
+        s = text.lower().replace("-", " ").replace("_", " ")
         checks = {
             "prediction_not_causation": "caus" in s and "predict" in s,
             "calibration_limits_base_rates": "calibrat" in s and "base rate" in s,
-            "asymmetric_errors": any(x in s for x in ("false positive", "false negative")) and any(x in s for x in ("asym", "cost", "harm", "trade")),
+            "asymmetric_errors": any(x in s for x in ("false positive", "false negative", "non offender", "would not have offended")) and any(x in s for x in ("asym", "cost", "harm", "trade")),
             "rights_due_process": any(x in s for x in ("due process", "appeal", "contest")) and any(x in s for x in ("right", "liberty", "punitive", "automatic")),
             "selective_labels_feedback": ("selective" in s or "feedback" in s) and any(x in s for x in ("observ", "arrest", "polic")),
             "shift_and_adaptation": ("shift" in s or "drift" in s) and any(x in s for x in ("adapt", "gaming", "strateg")),
