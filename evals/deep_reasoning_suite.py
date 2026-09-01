@@ -82,14 +82,51 @@ def _visible_answer(message, strip_reasoning):
     return content
 
 
+def failure_report(details):
+    """The raw failure signal to hand back on a retry — no analysis, no hints.
+
+    What a CI run would tell you: the compiler said this, these named checks
+    failed. Deliberately omits WHY anything failed and never names the trap a
+    task is testing for, so the retry measures whether the model can read an
+    error and repair its own work, not whether the harness explained the bug.
+    """
+    lines = []
+    for key in ("compile_error", "compile_errors", "parse_error", "run_error",
+                "harness_error", "lint_first", "sanitizer_first"):
+        value = details.get(key)
+        if not value:
+            continue
+        if isinstance(value, (list, tuple)):
+            lines.extend(str(v) for v in value)
+        else:
+            lines.append(str(value))
+    if details.get("parsed") is False:
+        lines.append("response did not parse as JSON")
+    if details.get("timed_out") or details.get("timeout"):
+        lines.append("execution timed out")
+    failed = sorted(k for k, v in details.items()
+                    if v is False and not k.startswith("expected_")
+                    and k not in ("parsed",))
+    if failed:
+        lines.append("failed checks: " + ", ".join(failed))
+    return "\n".join(lines) if lines else "the answer was not accepted"
+
+
+RETRY_INSTRUCTION = (
+    "Your previous answer did not pass. The output below is what the checker "
+    "reported. Return a corrected answer in exactly the same format as before, "
+    "with no explanation and no commentary.\n\n"
+)
+
+
+
 def request(
     url: str, key: str, model: str, prompt: str, max_tokens: int,
     template_kwargs: bool = True,
     strip_reasoning: bool = False,
+    history=None,
 ):
-    payload = {
-        "model": model,
-        "messages": [
+    messages = [
             {
                 "role": "system",
                 "content": (
@@ -98,7 +135,12 @@ def request(
                 ),
             },
             {"role": "user", "content": prompt},
-        ],
+        ]
+    if history:
+        messages.extend(history)
+    payload = {
+        "model": model,
+        "messages": messages,
         "temperature": 0,
         "max_tokens": max_tokens,
     }
@@ -952,11 +994,20 @@ def _cost_summary(results, wall_s):
     prompt = completion = 0
     task_seconds = 0.0
     truncated = []
+    retries = 0
+    retry_completion = 0
     for row in results:
         usage = row.get("usage") or {}
         prompt += usage.get("prompt_tokens") or 0
         completion += usage.get("completion_tokens") or 0
         task_seconds += row.get("elapsed_s") or 0.0
+        if "score_retry" in row:
+            retries += 1
+            retry_usage = row.get("retry_usage") or {}
+            prompt += retry_usage.get("prompt_tokens") or 0
+            completion += retry_usage.get("completion_tokens") or 0
+            retry_completion += retry_usage.get("completion_tokens") or 0
+            task_seconds += row.get("retry_elapsed_s") or 0.0
         if usage.get("completion_tokens") and row.get("max_tokens") \
                 and usage["completion_tokens"] >= row["max_tokens"]:
             truncated.append(row["task"])
@@ -970,6 +1021,10 @@ def _cost_summary(results, wall_s):
         # A task that hit its ceiling did not finish its answer, so its score is a
         # measurement of the budget rather than of the model.
         "truncated_tasks": truncated,
+        # what the do-overs cost, so the repair capability can be weighed
+        # against the tokens and seconds it takes
+        "retries": retries,
+        "retry_completion_tokens": retry_completion,
     }
 
 
@@ -1024,6 +1079,14 @@ def main():
              "are comparable only with other extended results",
     )
     parser.add_argument(
+        "--retry", action="store_true",
+        help="give every imperfect task ONE do-over with the raw checker output",
+    )
+    parser.add_argument(
+        "--retry-credit", type=float, default=0.7, metavar="F",
+        help="fraction of full marks a successful retry earns (default 0.7)",
+    )
+    parser.add_argument(
         "--min-tokens", type=int, default=MIN_TOKEN_BUDGET, metavar="N",
         help=f"floor on every task's max_tokens (default {MIN_TOKEN_BUDGET}). The "
              "per-task budgets are sized for a direct answer and truncate chatty "
@@ -1058,12 +1121,36 @@ def main():
                    "elapsed_s": round(elapsed, 4), "max_tokens": budget,
                    "usage": usage,
                    "response": text, "grade_details": details}
+            if args.retry and score < maximum:
+                row["score_first"] = score
+                row["retry_feedback"] = failure_report(details)
+                try:
+                    rt, ru, re_s = request(
+                        args.url, key, args.model, prompt, budget,
+                        template_kwargs=not args.no_template_kwargs,
+                        strip_reasoning=args.strip_reasoning,
+                        history=[{"role": "assistant", "content": text},
+                                 {"role": "user",
+                                  "content": RETRY_INSTRUCTION + row["retry_feedback"]}])
+                    rs, _, rd = grader(rt)
+                    row["score_retry"] = rs
+                    row["retry_usage"] = ru
+                    row["retry_elapsed_s"] = round(re_s, 4)
+                    row["retry_response"] = rt
+                    row["retry_grade_details"] = rd
+                    credited = int(round(rs * args.retry_credit))
+                    if credited > score:
+                        row["score"] = credited
+                        row["grade_details"] = rd
+                except Exception as exc:
+                    row["retry_error"] = f"{type(exc).__name__}: {exc}"
         except Exception as exc:
             row = {"task": name, "score": 0, "max_score": maximum,
                    "error": f"{type(exc).__name__}: {exc}", "response": "", "grade_details": {}}
         results.append(row)
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
-    output = {"suite": "deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1", "model": args.model, "endpoint": args.url,
+    output = {"suite": ("deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1")
+              + ("+retry" if args.retry else ""), "model": args.model, "endpoint": args.url,
               "score": sum(x["score"] for x in results),
               "max_score": sum(x["max_score"] for x in results),
               "cost": _cost_summary(results, time.monotonic() - suite_started),

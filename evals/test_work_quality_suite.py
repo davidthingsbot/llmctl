@@ -413,5 +413,42 @@ __global__ void matmul(const float* A, const float* B, float* C, int M, int N, i
         self.assertFalse(details["uses_shared_memory"])
 
 
+
+class RetryTest(unittest.TestCase):
+    """The do-over must report the raw failure and never leak analysis."""
+
+    def test_failure_report_gives_compiler_output_verbatim(self):
+        report = suite.failure_report({
+            "compiles": False,
+            "compile_error": ["foo.v:104: error: rdata is not a valid l-value",
+                              "foo.v:3: : rdata is declared here as wire"]})
+        self.assertIn("not a valid l-value", report)
+        self.assertIn("declared here as wire", report)
+
+    def test_failure_report_names_failed_checks_only(self):
+        report = suite.failure_report({
+            "compiles": True, "fifo_order": False, "wraps_repeatedly": False,
+            "empty_after_drain": True})
+        self.assertIn("fifo_order", report)
+        self.assertIn("wraps_repeatedly", report)
+        self.assertNotIn("empty_after_drain", report)
+
+    def test_failure_report_never_names_a_trap(self):
+        # Trap keys are True when the model fell for them, and only False values
+        # are reported — so a retry is never told which mistake to look for.
+        report = suite.failure_report({
+            "bytes_per_token": False, "counted_all_48_layers": True,
+            "expected_bytes_per_token": 26112})
+        self.assertIn("bytes_per_token", report)
+        self.assertNotIn("counted_all_48_layers", report)
+        self.assertNotIn("26112", report)
+
+    def test_failure_report_handles_unparsed_json(self):
+        self.assertIn("did not parse as JSON", suite.failure_report({"parsed": False}))
+
+    def test_failure_report_always_says_something(self):
+        self.assertTrue(suite.failure_report({}).strip())
+
+
 if __name__ == "__main__":
     unittest.main()
