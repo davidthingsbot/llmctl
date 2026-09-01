@@ -1,0 +1,71 @@
+struct Tape {
+    enum Op { CONST, INPUT, ADD, MUL, SIN, EXP };
+
+    struct Node {
+        Op op;
+        int a;
+        int b;
+        double val;
+    };
+
+    std::vector<Node> nodes;
+    std::vector<double> grads;
+
+    int push(Op op, int a, int b, double v) {
+        Node n;
+        n.op = op; n.a = a; n.b = b; n.val = v;
+        nodes.push_back(n);
+        return (int)nodes.size() - 1;
+    }
+
+    int constant(double v) { return push(CONST, -1, -1, v); }
+    int input(double v)    { return push(INPUT, -1, -1, v); }
+    int add(int a, int b)  { return push(ADD, a, b, nodes[a].val + nodes[b].val); }
+    int mul(int a, int b)  { return push(MUL, a, b, nodes[a].val * nodes[b].val); }
+    int sin_(int a)        { return push(SIN, a, -1, std::sin(nodes[a].val)); }
+    int exp_(int a)        { return push(EXP, a, -1, std::exp(nodes[a].val)); }
+
+    double value(int node) const { return nodes[node].val; }
+
+    void accumulate(int node, double g) {
+        // constants take part in the forward value but carry no gradient
+        if (node < 0 || nodes[node].op == CONST) return;
+        grads[node] += g;
+    }
+
+    void backward(int root) {
+        grads.assign(nodes.size(), 0.0);
+        if (root < 0 || root >= (int)nodes.size()) return;
+        grads[root] = 1.0;
+        // Reverse recording order: every consumer has a larger id than its
+        // inputs, so it is fully accumulated before its gradient is pushed back.
+        for (int i = root; i >= 0; --i) {
+            const double g = grads[i];
+            if (g == 0.0) continue;
+            const Node& n = nodes[i];
+            switch (n.op) {
+                case ADD:
+                    accumulate(n.a, g);
+                    accumulate(n.b, g);
+                    break;
+                case MUL:
+                    accumulate(n.a, g * nodes[n.b].val);
+                    accumulate(n.b, g * nodes[n.a].val);
+                    break;
+                case SIN:
+                    accumulate(n.a, g * std::cos(nodes[n.a].val));
+                    break;
+                case EXP:
+                    accumulate(n.a, g * n.val);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    double grad(int node) const {
+        if (node < 0 || node >= (int)grads.size()) return 0.0;
+        return grads[node];
+    }
+};

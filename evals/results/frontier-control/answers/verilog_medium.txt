@@ -1,0 +1,48 @@
+module sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)
+  (input clk, input rst_n,
+   input wr_en, input [WIDTH-1:0] din,
+   input rd_en, output reg [WIDTH-1:0] dout,
+   output full, output empty);
+
+    function integer clog2;
+        input integer value;
+        integer i;
+        begin
+            clog2 = 0;
+            for (i = value - 1; i > 0; i = i >> 1)
+                clog2 = clog2 + 1;
+        end
+    endfunction
+
+    localparam AW = (clog2(DEPTH) < 1) ? 1 : clog2(DEPTH);
+
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+
+    // One extra MSB on each pointer distinguishes full from empty when the
+    // address bits are equal.
+    reg [AW:0] wptr;
+    reg [AW:0] rptr;
+
+    assign empty = (wptr == rptr);
+    assign full  = (wptr[AW] != rptr[AW]) && (wptr[AW-1:0] == rptr[AW-1:0]);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            wptr <= {(AW+1){1'b0}};
+        end else if (wr_en && !full) begin
+            mem[wptr[AW-1:0]] <= din;
+            wptr <= wptr + 1'b1;
+        end
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            rptr <= {(AW+1){1'b0}};
+            dout <= {WIDTH{1'b0}};
+        end else if (rd_en && !empty) begin
+            dout <= mem[rptr[AW-1:0]];
+            rptr <= rptr + 1'b1;
+        end
+    end
+
+endmodule

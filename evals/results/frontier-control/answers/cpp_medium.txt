@@ -1,0 +1,56 @@
+double mlp_loss_and_grad(const double* params, int n_in, int n_hidden,
+                         const double* X, const double* y, int n_samples,
+                         double* grad)
+{
+    const double* W1 = params;
+    const double* b1 = W1 + n_hidden * n_in;
+    const double* W2 = b1 + n_hidden;
+    const double* b2 = W2 + n_hidden;
+
+    double* gW1 = grad;
+    double* gb1 = gW1 + n_hidden * n_in;
+    double* gW2 = gb1 + n_hidden;
+    double* gb2 = gW2 + n_hidden;
+
+    const int n_params = n_hidden * n_in + 2 * n_hidden + 1;
+    for (int i = 0; i < n_params; ++i) grad[i] = 0.0;   // overwrite, never accumulate across calls
+    if (n_samples <= 0) return 0.0;
+
+    const double inv_n = 1.0 / (double)n_samples;
+    double total_loss = 0.0;
+
+    for (int s = 0; s < n_samples; ++s) {
+        const double* x = X + s * n_in;
+
+        // forward pass: z = sum_j W2[j] * tanh(W1[j].x + b1[j]) + b2
+        double z = *b2;
+        for (int j = 0; j < n_hidden; ++j) {
+            const double* w = W1 + j * n_in;
+            double a = b1[j];
+            for (int k = 0; k < n_in; ++k) a += w[k] * x[k];
+            z += W2[j] * std::tanh(a);
+        }
+
+        const double p = 1.0 / (1.0 + std::exp(-z));
+        // -(y log p + (1-y) log(1-p)) == softplus(z) - y*z, evaluated stably
+        const double softplus = (z > 0.0 ? z : 0.0) + std::log(1.0 + std::exp(-std::fabs(z)));
+        total_loss += softplus - y[s] * z;
+
+        // backward pass, already scaled by 1/n_samples
+        const double dz = (p - y[s]) * inv_n;
+        *gb2 += dz;
+        for (int j = 0; j < n_hidden; ++j) {
+            const double* w = W1 + j * n_in;
+            double a = b1[j];
+            for (int k = 0; k < n_in; ++k) a += w[k] * x[k];
+            const double h = std::tanh(a);
+            gW2[j] += dz * h;
+            const double da = dz * W2[j] * (1.0 - h * h);
+            gb1[j] += da;
+            double* gw = gW1 + j * n_in;
+            for (int k = 0; k < n_in; ++k) gw[k] += da * x[k];
+        }
+    }
+
+    return total_loss * inv_n;
+}

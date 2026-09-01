@@ -1,0 +1,39 @@
+struct RingBuffer {
+    RingBuffer(int capacity) {
+        if (capacity < 1) capacity = 1;
+        if (capacity > 1024) capacity = 1024;
+        cap_ = capacity;
+        head_ = 0;
+        tail_ = 0;
+        count_ = 0;
+    }
+
+    bool push(int value) {
+        if (count_ >= cap_) return false;
+        data_[tail_] = value;
+        ++tail_;
+        if (tail_ >= cap_) tail_ = 0;
+        ++count_;
+        return true;
+    }
+
+    bool pop(int& out) {
+        if (count_ == 0) return false;
+        out = data_[head_];
+        ++head_;
+        if (head_ >= cap_) head_ = 0;
+        --count_;
+        return true;
+    }
+
+    int size() const { return count_; }
+    bool empty() const { return count_ == 0; }
+    bool full() const { return count_ == cap_; }
+
+private:
+    int data_[1024];
+    int cap_;
+    int head_;
+    int tail_;
+    int count_;
+};

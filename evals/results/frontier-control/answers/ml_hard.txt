@@ -1,0 +1,41 @@
+def attention_forward(Q, K, V):
+    """Q, K, V are (T, d). Return (out, cache).
+    S    = Q @ K.T / sqrt(d)        (T, T)
+    P    = row-wise softmax of S    (T, T)
+    out  = P @ V                    (T, d)
+    `cache` is whatever you need for the backward pass."""
+    Q = np.asarray(Q)
+    K = np.asarray(K)
+    V = np.asarray(V)
+    d = Q.shape[1]
+    scale = 1.0 / np.sqrt(d)
+
+    S = (Q @ K.T) * scale                               # (T, T)
+    S_shifted = S - np.max(S, axis=1, keepdims=True)    # numerically stable softmax
+    E = np.exp(S_shifted)
+    P = E / np.sum(E, axis=1, keepdims=True)            # (T, T)
+    out = P @ V                                         # (T, d)
+
+    cache = (Q, K, V, P, scale)
+    return out, cache
+
+
+def attention_backward(dout, cache):
+    """dout is (T, d), the gradient of a scalar loss w.r.t. out.
+    Return (dQ, dK, dV), each the same shape as Q, K, V."""
+    Q, K, V, P, scale = cache
+    dout = np.asarray(dout)
+
+    # out = P @ V
+    dV = P.T @ dout                                     # (T, d)
+    dP = dout @ V.T                                     # (T, T)
+
+    # row-wise softmax Jacobian: dS = P * (dP - sum(dP * P, row))
+    dS = P * (dP - np.sum(dP * P, axis=1, keepdims=True))
+
+    # S = (Q @ K.T) * scale
+    dS = dS * scale
+    dQ = dS @ K                                         # (T, d)
+    dK = dS.T @ Q                                       # (T, d)
+
+    return dQ, dK, dV

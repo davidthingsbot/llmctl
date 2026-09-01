@@ -1,0 +1,95 @@
+Replacement design: separate acquisition, derivation, retrieval and reporting
+
+1. Command / responsibility boundaries (one command, one responsibility)
+
+- SCAN
+  Transduces one new physical sample and nothing else. It writes an immutable RAW
+  frame into the frame store and returns its identity. It applies no transform,
+  updates no filters, stores no derived data and emits no events.
+  Request: SCAN{source_id, [acquisition_params]}
+  Response: {frame_id, source_id, timestamp, seq, config_rev, geometry, status}
+
+- APPLY_TRANSFORM{src_frame_id, transform_id, params_rev}
+  Pure derivation over a retained frame. Produces a NEW derived frame with its own
+  frame_id and a provenance record {parent_frame_id, transform_id, params_rev}. The
+  parent raw frame is never overwritten or consumed, so a transform can be re-run,
+  re-parameterised or compared without touching the hardware.
+
+- READ_FRAME{frame_id, offset, length}
+  Side-effect-free download of any retained frame, raw or derived, in chunks. It is
+  idempotent and never triggers acquisition. This is what makes later audit and
+  download possible without rescanning.
+
+- FRAME_INFO{frame_id} / LIST_FRAMES{filter}
+  Metadata and provenance only, so a host can audit what exists before pulling bytes.
+
+- RELEASE_FRAME{frame_id} and the retention policy command set explicitly control
+  frame lifetime; nothing else silently discards data.
+
+- SET_FILTER / GET_FILTER{filter_id, params}
+  Filter configuration is an explicit, versioned command. Configuration never changes
+  as a side effect of acquisition. Each change bumps config_rev, which every subsequent
+  frame records.
+
+- ACQ_START{mode, rate, source_set} / ACQ_STOP / ACQ_STATUS
+  Own and release the acquisition hardware for continuous mode.
+
+- EVENT_SOURCE_SELECT{sources, thresholds} / EVENT_ENABLE{on|off} / EVENT_STATUS
+  Change reporting configuration, independent of everything above.
+
+2. Frame and source identity
+
+Every frame carries: frame_id (monotonic, unique for the life of the session and never
+reused while retained), source_id (which sensor/channel produced it), a device
+timestamp plus a monotonic acquisition sequence number, config_rev (the filter and
+acquisition configuration in force at transduction), geometry/format descriptor, and
+for derived frames the provenance tuple {parent_frame_id, transform_id, params_rev}.
+
+Raw frames are immutable. Because the raw sample, the configuration revision and the
+transform parameters are all recorded and retained, any derived result is reproducible:
+the host can re-derive it offline, or ask the device to re-derive it, and get bit-identical
+output without another physical acquisition. Storing only the transformed frame - the
+original proposal - destroys exactly that property, because the raw evidence is gone and
+the transform cannot be undone or re-parameterised.
+
+3. Continuous versus on-demand behaviour, and ownership
+
+The transducer has exactly one owner at a time, tracked by an explicit acquisition-mode
+state {IDLE, ON_DEMAND_BUSY, CONTINUOUS}, readable with ACQ_STATUS.
+
+- In IDLE, SCAN takes the hardware for the duration of one transduction and returns it.
+- ACQ_START moves the device to CONTINUOUS; the continuous engine owns the transducer
+  and produces frames into the same frame store, with the same identity fields, so
+  READ_FRAME / APPLY_TRANSFORM behave identically for continuous and on-demand frames.
+- While CONTINUOUS is active, an on-demand SCAN is REJECTED with ERR_BUSY (acquisition
+  owned by continuous mode). It is never queued, never silently interleaved, and never
+  implicitly stops continuous acquisition - an implicit stop would change timing and
+  break the reproducibility of the continuous series. The host must ACQ_STOP first, or
+  simply read the frames continuous mode is already producing.
+- Derivation and retrieval (APPLY_TRANSFORM, READ_FRAME, FRAME_INFO, LIST_FRAMES) are
+  always permitted in any mode, because they touch only retained frames and not the
+  transducer. This is the whole point of splitting the commands: audit and download
+  never contend for the hardware.
+
+4. Acquisition mode versus event reporting
+
+Event reporting is orthogonal to acquisition mode. EVENT_SOURCE_SELECT chooses which
+quantities/thresholds generate change reports; EVENT_ENABLE turns reporting on or off.
+Neither command starts or stops acquisition, and neither ACQ_START nor ACQ_STOP nor SCAN
+alters the event source selection. Events are evaluated against whatever frames are
+produced, by whichever mode currently owns the transducer; if nothing is acquiring, no
+events occur, but the selection is retained unchanged. Event reports carry the frame_id
+they were derived from, so any report can be traced back to the exact retained frame.
+
+5. Framing and integrity
+
+Every command and response is carried in one outer packet protected by a single CRC over
+the complete outer packet (header + payload), not per-payload CRCs. Chunked READ_FRAME
+responses each carry frame_id, offset and length so a partial download is unambiguous
+and resumable.
+
+6. Error codes
+
+ERR_BUSY (transducer owned by continuous acquisition), ERR_NO_SUCH_FRAME,
+ERR_FRAME_RELEASED, ERR_RANGE (bad offset/length), ERR_BAD_TRANSFORM,
+ERR_CONFIG_LOCKED (configuration change attempted while CONTINUOUS), ERR_CRC.

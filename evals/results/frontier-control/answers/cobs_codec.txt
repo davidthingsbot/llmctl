@@ -1,0 +1,47 @@
+def cobs_encode(data):
+    out = bytearray()
+    code_index = 0
+    out.append(0)          # placeholder for the first code byte
+    code = 1
+    for b in data:
+        if b == 0:
+            out[code_index] = code
+            code_index = len(out)
+            out.append(0)  # placeholder for the next code byte
+            code = 1
+        else:
+            out.append(b)
+            code += 1
+            if code == 255:
+                out[code_index] = code
+                code_index = len(out)
+                out.append(0)
+                code = 1
+    out[code_index] = code
+    return bytes(out)
+
+
+def cobs_decode(data):
+    data = bytes(data)
+    n = len(data)
+    if n == 0:
+        raise ValueError("empty input is not a valid COBS frame")
+    out = bytearray()
+    i = 0
+    while i < n:
+        code = data[i]
+        if code == 0:
+            raise ValueError("zero byte in COBS encoded data")
+        i += 1
+        end = i + code - 1
+        if end > n:
+            raise ValueError("COBS group runs past the end of the input")
+        while i < end:
+            b = data[i]
+            if b == 0:
+                raise ValueError("zero byte in COBS encoded data")
+            out.append(b)
+            i += 1
+        if code != 255 and i < n:
+            out.append(0)
+    return bytes(out)

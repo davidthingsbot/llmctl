@@ -1,0 +1,38 @@
+def init_params(n_in, n_hidden, seed):
+    """Return a dict with keys W1, b1, W2, b2."""
+    rng = np.random.RandomState(seed)
+    return {
+        "W1": 0.1 * rng.randn(n_hidden, n_in),
+        "b1": np.zeros(n_hidden),
+        "W2": 0.1 * rng.randn(n_hidden),
+        "b2": 0.0,
+    }
+
+
+def loss_and_grads(params, X, y):
+    """Return (loss, grads) where grads has the same keys as params."""
+    W1, b1, W2, b2 = params["W1"], params["b1"], params["W2"], params["b2"]
+    X = np.asarray(X)
+    y = np.asarray(y)
+    n = X.shape[0]
+
+    # forward
+    A = X @ W1.T + b1                       # (n, n_hidden)
+    H = np.tanh(A)                          # (n, n_hidden)
+    z = H @ W2 + b2                         # (n,)
+    p = 0.5 * (1.0 + np.tanh(0.5 * z))      # sigmoid, numerically stable
+    # -(y log p + (1-y) log(1-p)) == softplus(z) - y*z, evaluated stably
+    softplus = np.maximum(z, 0.0) + np.log1p(np.exp(-np.abs(z)))
+    loss = float(np.mean(softplus - y * z))
+
+    # backward (mean over samples folded into dz)
+    dz = (p - y) / n                        # (n,)
+    gb2 = float(np.sum(dz))
+    gW2 = H.T @ dz                          # (n_hidden,)
+    dH = np.outer(dz, W2)                   # (n, n_hidden)
+    dA = dH * (1.0 - H * H)                 # (n, n_hidden)
+    gb1 = np.sum(dA, axis=0)                # (n_hidden,)
+    gW1 = dA.T @ X                          # (n_hidden, n_in)
+
+    grads = {"W1": gW1, "b1": gb1, "W2": gW2, "b2": gb2}
+    return loss, grads

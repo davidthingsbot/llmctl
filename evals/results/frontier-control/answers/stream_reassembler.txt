@@ -1,0 +1,52 @@
+class Reassembler:
+    SYNC = b"\xaa\x55"
+    MAX_LEN = 4096
+
+    def __init__(self):
+        self._buf = bytearray()
+
+    def feed(self, chunk):
+        if chunk:
+            self._buf.extend(chunk)
+        buf = self._buf
+        out = []
+        pos = 0
+        n = len(buf)
+
+        while True:
+            idx = buf.find(self.SYNC, pos)
+            if idx < 0:
+                # No sync word left. Keep a trailing 0xAA, it may start one.
+                if n > 0 and buf[n - 1] == 0xAA:
+                    pos = n - 1
+                else:
+                    pos = n
+                break
+
+            pos = idx
+            if n - pos < 4:
+                break  # need the length field
+
+            length = buf[pos + 2] | (buf[pos + 3] << 8)
+            if length > self.MAX_LEN:
+                pos += 1  # bogus header, resync from the next byte
+                continue
+
+            total = 4 + length + 1
+            if n - pos < total:
+                break  # wait for the rest of the frame
+
+            payload = bytes(buf[pos + 4:pos + 4 + length])
+            check = buf[pos + 4 + length]
+            x = 0
+            for b in payload:
+                x ^= b
+            if x == check:
+                out.append(payload)
+                pos += total
+            else:
+                pos += 1  # bad check byte: drop it and resync
+
+        if pos:
+            del buf[:pos]
+        return out

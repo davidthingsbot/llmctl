@@ -1,0 +1,27 @@
+def softmax(Z):
+    """Z is (n_samples, n_classes). Return row-wise softmax, same shape."""
+    Z = np.asarray(Z, dtype=np.float64)
+    one_d = (Z.ndim == 1)
+    if one_d:
+        Z = Z.reshape(1, -1)
+    m = np.max(Z, axis=1, keepdims=True)
+    e = np.exp(Z - m)
+    out = e / np.sum(e, axis=1, keepdims=True)
+    if one_d:
+        out = out.reshape(-1)
+    return out
+
+
+def cross_entropy(Z, y):
+    """Z is (n_samples, n_classes) LOGITS, y is (n_samples,) integer labels.
+    Return the mean cross-entropy loss as a float."""
+    Z = np.asarray(Z, dtype=np.float64)
+    if Z.ndim == 1:
+        Z = Z.reshape(1, -1)
+    y = np.asarray(y).reshape(-1).astype(np.intp)
+    n = Z.shape[0]
+    m = np.max(Z, axis=1, keepdims=True)
+    shifted = Z - m
+    log_denom = np.log(np.sum(np.exp(shifted), axis=1))
+    correct = shifted[np.arange(n), y]
+    return float(np.mean(log_denom - correct))

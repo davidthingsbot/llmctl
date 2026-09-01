@@ -1,0 +1,104 @@
+module async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)
+  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output reg wfull,
+   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output reg rempty);
+
+  localparam ASIZE = $clog2(DEPTH);
+
+  // Gray -> binary: bin[i] = XOR of gray bits i..MSB
+  function [ASIZE:0] gray2bin;
+    input [ASIZE:0] g;
+    integer i;
+    begin
+      for (i = 0; i <= ASIZE; i = i + 1)
+        gray2bin[i] = ^(g >> i);
+    end
+  endfunction
+
+  reg [WIDTH-1:0] mem [0:DEPTH-1];
+
+  // ---------------- write clock domain ----------------
+  reg  [ASIZE:0]   wbin;                 // binary write pointer (extra wrap bit)
+  reg  [ASIZE:0]   wptr;                 // Gray-coded write pointer, crosses to rclk
+  reg  [ASIZE:0]   wq1_rptr, wq2_rptr;   // two-flop synchroniser for Gray read pointer
+  wire [ASIZE:0]   wbinnext, wgraynext, wq2_rbin;
+  wire [ASIZE-1:0] waddr;
+  wire             wfull_val;
+
+  assign waddr     = wbin[ASIZE-1:0];
+  assign wbinnext  = wbin + {{ASIZE{1'b0}}, (winc & ~wfull)};
+  assign wgraynext = (wbinnext >> 1) ^ wbinnext;
+  assign wq2_rbin  = gray2bin(wq2_rptr);
+  // full: same address, opposite wrap bit
+  assign wfull_val = (wbinnext[ASIZE-1:0] == wq2_rbin[ASIZE-1:0]) &&
+                     (wbinnext[ASIZE]     != wq2_rbin[ASIZE]);
+
+  always @(posedge wclk or negedge wrst_n) begin
+    if (!wrst_n) begin
+      wbin <= {(ASIZE+1){1'b0}};
+      wptr <= {(ASIZE+1){1'b0}};
+    end else begin
+      wbin <= wbinnext;
+      wptr <= wgraynext;
+    end
+  end
+
+  always @(posedge wclk or negedge wrst_n) begin
+    if (!wrst_n) wfull <= 1'b0;
+    else         wfull <= wfull_val;
+  end
+
+  always @(posedge wclk or negedge wrst_n) begin
+    if (!wrst_n) begin
+      wq1_rptr <= {(ASIZE+1){1'b0}};
+      wq2_rptr <= {(ASIZE+1){1'b0}};
+    end else begin
+      wq1_rptr <= rptr;
+      wq2_rptr <= wq1_rptr;
+    end
+  end
+
+  always @(posedge wclk) begin
+    if (winc && !wfull)
+      mem[waddr] <= wdata;
+  end
+
+  // ---------------- read clock domain ----------------
+  reg  [ASIZE:0]   rbin;                 // binary read pointer (extra wrap bit)
+  reg  [ASIZE:0]   rptr;                 // Gray-coded read pointer, crosses to wclk
+  reg  [ASIZE:0]   rq1_wptr, rq2_wptr;   // two-flop synchroniser for Gray write pointer
+  wire [ASIZE:0]   rbinnext, rgraynext;
+  wire [ASIZE-1:0] raddr;
+  wire             rempty_val;
+
+  assign raddr      = rbin[ASIZE-1:0];
+  assign rbinnext   = rbin + {{ASIZE{1'b0}}, (rinc & ~rempty)};
+  assign rgraynext  = (rbinnext >> 1) ^ rbinnext;
+  assign rempty_val = (rgraynext == rq2_wptr);
+  assign rdata      = mem[raddr];
+
+  always @(posedge rclk or negedge rrst_n) begin
+    if (!rrst_n) begin
+      rbin <= {(ASIZE+1){1'b0}};
+      rptr <= {(ASIZE+1){1'b0}};
+    end else begin
+      rbin <= rbinnext;
+      rptr <= rgraynext;
+    end
+  end
+
+  always @(posedge rclk or negedge rrst_n) begin
+    if (!rrst_n) rempty <= 1'b1;
+    else         rempty <= rempty_val;
+  end
+
+  always @(posedge rclk or negedge rrst_n) begin
+    if (!rrst_n) begin
+      rq1_wptr <= {(ASIZE+1){1'b0}};
+      rq2_wptr <= {(ASIZE+1){1'b0}};
+    end else begin
+      rq1_wptr <= wptr;
+      rq2_wptr <= rq1_wptr;
+    end
+  end
+
+endmodule

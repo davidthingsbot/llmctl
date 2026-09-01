@@ -1,0 +1,11 @@
+1. Unbounded memcpy into a fixed 32-byte buffer. `len` comes straight off the wire (0-255) and is copied into `payload[32]`, so any frame with rx[1] > 32 smashes the stack. Correction: reject the frame unless `len <= sizeof(payload)` before any copy.
+
+2. `rx_len` is never used, so every access is unchecked. rx[1], the payload bytes and the two CRC bytes at rx[2+len], rx[3+len] can all read past the end of the received buffer. Correction: validate `rx != NULL && rx_len >= 4 && rx_len == (size_t)len + 4` (command + length + payload + 2 CRC bytes) and return an error otherwise, before touching the payload.
+
+3. `if (calc = got)` is an assignment, not a comparison. It overwrites the computed CRC and takes the branch for any non-zero `got`, so the integrity check never rejects anything. Correction: `if (calc == got)`, and treat a mismatch as a hard reject of the whole frame.
+
+4. The CRC is computed over the wrong bytes. The protocol says the CRC covers command + length + payload, but the code computes `crc16(payload, len)`. Correction: `calc = crc16(rx, 2u + len)` so the command and length bytes are included; the CRC bytes themselves must be excluded. The two received bytes must also be assembled in the protocol's defined byte order, not assumed big-endian.
+
+5. Side effects happen before validation and before authentication. `sequence++` and `parse_command()` run on unverified, unauthenticated data, and `authenticate()` is called only afterwards - an attacker's malformed frame still mutates state and reaches the command parser. Correction: order the path as length validation -> CRC check -> authenticate -> only on success parse_command() and increment `sequence`; abort on any failure with no state change.
+
+6. `printf("payload=%s\n", payload)` prints a non-NUL-terminated binary buffer as a C string, reading past the array until it happens to find a zero byte, and passing attacker-controlled bytes to a formatted output path. Correction: never print the payload as `%s`; if logging is needed, emit a bounded hex dump of exactly `len` bytes.
