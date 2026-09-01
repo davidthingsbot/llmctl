@@ -350,7 +350,7 @@ In at most 400 words, recommend a policy. Analyze what calibration does and does
 
 
 
-def task_kv_sizing():
+def task_sizing_hard():
     prompt = '''A hybrid-attention model. Work out its KV cache cost. Return ONLY JSON.
 
 Architecture:
@@ -405,10 +405,10 @@ Return exactly these keys:
             + (3 if details["max_context"] else 0) + (3 if details["fits"] else 0)
         return score, 16, details
 
-    return "kv_sizing", prompt, 420, grade
+    return "sizing_hard", prompt, 420, grade
 
 
-def task_causal_identification():
+def task_causal_medium():
     prompt = '''A causal DAG over observed variables. Arrows are direct causes.
 
   C -> T      C -> Y
@@ -455,11 +455,11 @@ Return ONLY JSON with exactly these keys:
             + (2 if details["i_is_instrument"] else 0)
         return score, 18, details
 
-    return "causal_identification", prompt, 460, grade
+    return "causal_medium", prompt, 460, grade
 
 
 
-def task_resource_optimization():
+def task_optimization_medium():
     prompt = '''You have 112 GiB of unified memory and must choose which models stay resident.
 Each is all-or-nothing: you cannot load part of one. Maximise total value.
 
@@ -519,10 +519,10 @@ Return ONLY JSON with exactly these keys:
                 + (2 if details["total_size_gib"] else 0)
                 + (4 if details["greedy_total"] else 0)), 16, details
 
-    return "resource_optimization", prompt, 460, grade
+    return "optimization_medium", prompt, 460, grade
 
 
-def task_thermal_physics():
+def task_physics_medium():
     prompt = '''A compute module dissipates heat through a heatsink to still air.
 
 Given:
@@ -575,7 +575,349 @@ Return ONLY JSON with exactly these keys:
         weights = [5, 4, 4, 3]
         return sum(w for w, ok in zip(weights, got) if ok), 16, details
 
-    return "thermal_physics", prompt, 420, grade
+    return "physics_medium", prompt, 420, grade
+
+
+
+def _numeric_grader(expected, tolerances, weights, max_score, traps=None):
+    """Shared grader for exact-numeric reasoning tasks."""
+    def grade(text):
+        data = extract_json(text)
+        details = {f"expected_{k}": (round(v, 4) if isinstance(v, float) else v)
+                   for k, v in expected.items()}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, max_score, details
+        details["parsed"] = True
+        score = 0
+        for key, want in expected.items():
+            got = data.get(key)
+            if isinstance(want, bool):
+                ok = got is want
+            elif isinstance(want, (int, float)):
+                ok = (isinstance(got, (int, float)) and not isinstance(got, bool)
+                      and abs(got - want) <= tolerances[key])
+            else:
+                ok = str(got).strip().lower() == str(want).strip().lower()
+            details[key] = ok
+            if ok:
+                score += weights[key]
+        for name, (key, value, tol) in (traps or {}).items():
+            got = data.get(key)
+            details[name] = (isinstance(got, (int, float)) and not isinstance(got, bool)
+                             and abs(got - value) <= tol)
+        return score, max_score, details
+    return grade
+
+
+def task_physics_easy():
+    prompt = '''A compute module draws 240 W continuously for 3 hours 30 minutes.
+
+Return ONLY JSON with exactly these keys:
+  "energy_kwh"        number, energy consumed in kilowatt-hours
+  "cost_usd"          number, cost at 0.28 USD per kWh
+  "heat_watts"        number, steady heat dumped into the room, in watts
+  "amps_at_240v"      number, current drawn from a 240 V supply
+'''
+    energy = 240 * 3.5 / 1000
+    expected = {"energy_kwh": energy, "cost_usd": energy * 0.28,
+                "heat_watts": 240.0, "amps_at_240v": 1.0}
+    return ("physics_easy", prompt, 400,
+            _numeric_grader(expected,
+                            {"energy_kwh": 0.01, "cost_usd": 0.01,
+                             "heat_watts": 1.0, "amps_at_240v": 0.02},
+                            {"energy_kwh": 4, "cost_usd": 4, "heat_watts": 3,
+                             "amps_at_240v": 3}, 14))
+
+
+def task_physics_hard():
+    prompt = '''A compute module sits at thermal equilibrium in a 22 C room drawing 120 W.
+Its junction-to-ambient thermal resistance is 0.28 K/W and its lumped heat
+capacity is 900 J/K, so the time constant is resistance times capacity.
+
+At t = 0 the load steps to 300 W. The junction temperature rises exponentially
+towards the new steady state with that same time constant. Firmware throttles
+the moment the junction reaches 95 C.
+
+Return ONLY JSON with exactly these keys:
+  "initial_junction_c"     number, junction temperature just before the step
+  "target_junction_c"      number, the steady state it is heading towards at 300 W
+  "throttles"              true or false, whether it reaches 95 C at all
+  "seconds_to_95c"         number, seconds after the step until it hits 95 C;
+                           use -1 if it never does
+  "sustainable_power_w"    number, the highest constant power that holds the
+                           junction at or below 95 C in this ambient
+'''
+    R, C, AMB = 0.28, 900.0, 22.0
+    t0 = AMB + 120 * R
+    target = AMB + 300 * R
+    tau = R * C
+    import math as _math
+    throttles = target > 95.0
+    t95 = -1.0 if not throttles else tau * _math.log((target - t0) / (target - 95.0))
+    expected = {"initial_junction_c": t0, "target_junction_c": target,
+                "throttles": throttles, "seconds_to_95c": t95,
+                "sustainable_power_w": (95.0 - AMB) / R}
+    return ("physics_hard", prompt, 700,
+            _numeric_grader(expected,
+                            {"initial_junction_c": 0.5, "target_junction_c": 0.5,
+                             "throttles": 0, "seconds_to_95c": 8.0,
+                             "sustainable_power_w": 2.0},
+                            {"initial_junction_c": 3, "target_junction_c": 3,
+                             "throttles": 3, "seconds_to_95c": 8,
+                             "sustainable_power_w": 3}, 20,
+                            # the trap: using the whole tau, or ignoring the
+                            # starting temperature and measuring from ambient
+                            traps={"used_tau_from_ambient":
+                                   ("seconds_to_95c",
+                                    tau * _math.log((target - AMB) / (target - 95.0)), 5.0)}))
+
+
+def task_optimization_easy():
+    prompt = '''You must serve one model and have 96 GiB of memory. Pick the highest-quality
+option that fits.
+
+  name      size_gib   quality
+  alpha        112        95
+  bravo         88        91
+  charlie       64        86
+  delta         32        70
+
+Return ONLY JSON with exactly these keys:
+  "choice"           string, the name you pick
+  "quality"          integer, its quality score
+  "memory_left_gib"  integer, memory remaining after loading it
+  "alpha_fits"       true or false
+'''
+    expected = {"choice": "bravo", "quality": 91, "memory_left_gib": 8,
+                "alpha_fits": False}
+    return ("optimization_easy", prompt, 400,
+            _numeric_grader(expected,
+                            {"quality": 0, "memory_left_gib": 0},
+                            {"choice": 5, "quality": 3, "memory_left_gib": 3,
+                             "alpha_fits": 3}, 14))
+
+
+def task_optimization_hard():
+    prompt = '''Choose which models stay resident. TWO limits bind at once: 112 GiB of
+memory AND 260 GB/s of memory bandwidth, shared by everything loaded.
+
+  name      size_gib   bandwidth_gbs   value
+  atlas        61            120         67
+  borealis     56            140         60
+  cinder       56            130         60
+  dunlin       27             80         28
+  ember        19             70         19
+  fennec       13             55         12
+
+A set is feasible only if total size <= 112 AND total bandwidth <= 260.
+
+Return ONLY JSON with exactly these keys:
+  "selection"         array of names, the value-maximising feasible set
+  "total_value"       integer
+  "total_size_gib"    integer
+  "total_bandwidth"   integer
+  "bandwidth_binds"   true or false, whether the bandwidth limit rules out the
+                      set you would have picked on memory alone
+'''
+    # Tuned so the memory-only optimum (borealis+cinder, 120) is bandwidth
+    # INFEASIBLE at 270 GB/s, and the true answer is a different set worth 107.
+    # Without that the second constraint never binds and the task is inert.
+    items = {"atlas": (61, 120, 67), "borealis": (56, 140, 60), "cinder": (56, 130, 60),
+             "dunlin": (27, 80, 28), "ember": (19, 70, 19), "fennec": (13, 55, 12)}
+    names = sorted(items)
+    best = (-1, None)
+    mem_only = (-1, None)
+    for mask in range(1 << len(names)):
+        chosen = [names[i] for i in range(len(names)) if mask >> i & 1]
+        size = sum(items[c][0] for c in chosen)
+        band = sum(items[c][1] for c in chosen)
+        value = sum(items[c][2] for c in chosen)
+        if size <= 112:
+            if value > mem_only[0]:
+                mem_only = (value, set(chosen))
+            if band <= 260 and value > best[0]:
+                best = (value, set(chosen), size, band)
+    expected = {"total_value": best[0], "total_size_gib": best[2],
+                "total_bandwidth": best[3], "bandwidth_binds": mem_only[1] != best[1]}
+
+    def grade(text):
+        data = extract_json(text)
+        details = {"expected_set": sorted(best[1]), "expected_value": best[0],
+                   "expected_bandwidth": best[3],
+                   "memory_only_optimum": sorted(mem_only[1])}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 22, details
+        details["parsed"] = True
+        sel = data.get("selection")
+        details["selection"] = (isinstance(sel, list)
+                                and {str(x).strip().lower() for x in sel} == best[1])
+        details["total_value"] = data.get("total_value") == best[0]
+        details["total_size_gib"] = data.get("total_size_gib") == best[2]
+        details["total_bandwidth"] = data.get("total_bandwidth") == best[3]
+        details["bandwidth_binds"] = data.get("bandwidth_binds") is expected["bandwidth_binds"]
+        # the trap: optimising on memory alone and ignoring bandwidth
+        details["ignored_bandwidth"] = (isinstance(sel, list)
+                                        and {str(x).strip().lower() for x in sel} == mem_only[1])
+        return ((8 if details["selection"] else 0) + (4 if details["total_value"] else 0)
+                + (3 if details["total_size_gib"] else 0)
+                + (3 if details["total_bandwidth"] else 0)
+                + (4 if details["bandwidth_binds"] else 0)), 22, details
+
+    return "optimization_hard", prompt, 800, grade
+
+
+def task_causal_easy():
+    prompt = '''Ice cream sales and drowning deaths rise and fall together across the year.
+Temperature causes both: hot weather drives ice cream sales, and hot weather
+drives swimming, which causes drownings. Ice cream does not cause drowning.
+
+Return ONLY JSON with exactly these keys:
+  "relationship"        one of "causal", "confounded", "collider" — how ice cream
+                        sales and drownings are related
+  "confounder"          string, the variable responsible; "none" if there is none
+  "adjust_for"          array of variable names to condition on to remove the
+                        spurious association; [] if none is needed
+  "ice_cream_causes_drowning"   true or false
+  "banning_ice_cream_helps"     true or false, whether banning ice cream would
+                                reduce drownings
+'''
+
+    def grade(text):
+        data = extract_json(text)
+        details = {}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 14, details
+        details["parsed"] = True
+        details["relationship"] = str(data.get("relationship", "")).strip().lower() == "confounded"
+        details["confounder"] = "temp" in str(data.get("confounder", "")).strip().lower()
+        adj = data.get("adjust_for")
+        details["adjust_for"] = (isinstance(adj, list) and len(adj) == 1
+                                 and "temp" in str(adj[0]).lower())
+        details["ice_cream_causes_drowning"] = data.get("ice_cream_causes_drowning") is False
+        details["banning_ice_cream_helps"] = data.get("banning_ice_cream_helps") is False
+        return ((4 if details["relationship"] else 0) + (3 if details["confounder"] else 0)
+                + (3 if details["adjust_for"] else 0)
+                + (2 if details["ice_cream_causes_drowning"] else 0)
+                + (2 if details["banning_ice_cream_helps"] else 0)), 14, details
+
+    return "causal_easy", prompt, 400, grade
+
+
+def task_causal_hard():
+    prompt = '''Smoking (T) causes tar deposits in the lungs (M), and tar causes cancer (Y).
+An unobserved genetic factor (U) causes both smoking and cancer directly. U is
+NOT measured and never will be. The only arrows are:
+
+  U -> T      U -> Y
+  T -> M      M -> Y
+
+There is no direct T -> Y arrow: smoking affects cancer only through tar.
+
+You want the causal effect of T on Y from observational data on T, M and Y only.
+
+Return ONLY JSON with exactly these keys:
+  "backdoor_identifiable"   true or false, whether a backdoor adjustment set
+                            exists among the OBSERVED variables
+  "frontdoor_identifiable"  true or false
+  "frontdoor_mediator"      string, the variable playing the mediator role;
+                            "none" if the front-door criterion does not apply
+  "adjust_for_m_directly"   one of "correct", "biased" — what you get if you
+                            simply condition on M and read off the T-Y association
+  "effect_identifiable"     true or false, whether the causal effect of T on Y
+                            can be identified at all from T, M, Y
+'''
+
+    def grade(text):
+        data = extract_json(text)
+        details = {}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 20, details
+        details["parsed"] = True
+        # U is unobserved, so no backdoor set exists among T, M, Y; but the
+        # front-door criterion applies through M, so the effect IS identifiable.
+        details["backdoor_identifiable"] = data.get("backdoor_identifiable") is False
+        details["frontdoor_identifiable"] = data.get("frontdoor_identifiable") is True
+        details["frontdoor_mediator"] = str(data.get("frontdoor_mediator", "")).strip().upper() == "M"
+        details["adjust_for_m_directly"] = str(data.get("adjust_for_m_directly", "")).strip().lower() == "biased"
+        details["effect_identifiable"] = data.get("effect_identifiable") is True
+        # the trap: concluding that unobserved confounding makes it hopeless
+        details["said_unidentifiable"] = data.get("effect_identifiable") is False
+        return ((4 if details["backdoor_identifiable"] else 0)
+                + (5 if details["frontdoor_identifiable"] else 0)
+                + (4 if details["frontdoor_mediator"] else 0)
+                + (3 if details["adjust_for_m_directly"] else 0)
+                + (4 if details["effect_identifiable"] else 0)), 20, details
+
+    return "causal_hard", prompt, 700, grade
+
+
+def task_sizing_easy():
+    prompt = '''A transformer with standard grouped-query attention. Work out its KV cache.
+
+  - 32 layers, every layer caches both K and V.
+  - 8 key/value heads per layer, head dimension 128.
+  - KV stored in fp16: 2 bytes per element.
+  - 1 GiB = 2**30 bytes.
+
+Return ONLY JSON with exactly these keys:
+  "kv_bytes_per_token"   integer
+  "kv_gib_at_8192"       number, GiB of KV cache at 8192 tokens
+  "kv_gib_at_131072"     number, GiB at 131072 tokens
+'''
+    per = 32 * 8 * 128 * 2 * 2
+    expected = {"kv_bytes_per_token": per,
+                "kv_gib_at_8192": per * 8192 / 2 ** 30,
+                "kv_gib_at_131072": per * 131072 / 2 ** 30}
+    return ("sizing_easy", prompt, 400,
+            _numeric_grader(expected,
+                            {"kv_bytes_per_token": 1, "kv_gib_at_8192": 0.02,
+                             "kv_gib_at_131072": 0.05},
+                            {"kv_bytes_per_token": 6, "kv_gib_at_8192": 4,
+                             "kv_gib_at_131072": 4}, 14,
+                            # the trap: forgetting that BOTH K and V are cached
+                            traps={"cached_k_only": ("kv_bytes_per_token", per / 2, 1)}))
+
+
+def task_sizing_medium():
+    prompt = '''Size this model against a 48 GiB budget.
+
+  - Weights: 24.5 GiB.
+  - 40 layers, every layer caches K and V.
+  - 8 key/value heads per layer, head dimension 128.
+  - The KV cache is quantised to q8_0, which costs 1.0625 bytes per element.
+  - Four concurrent sequences are served, EACH needing its own full-length cache.
+  - 1 GiB = 2**30 bytes.
+
+Return ONLY JSON with exactly these keys:
+  "kv_bytes_per_token"      integer, per token for ONE sequence
+  "gib_per_sequence_at_32768"  number, GiB for one sequence at 32768 tokens
+  "total_gib_at_32768"      number, weights plus all four sequences at 32768
+  "max_context_per_sequence"  integer, the largest per-sequence context where
+                            weights plus four sequences still fits in 48 GiB
+                            (round down)
+'''
+    per = 40 * 8 * 128 * 2 * 1.0625
+    one = per * 32768 / 2 ** 30
+    total = 24.5 + 4 * one
+    max_ctx = int((48 - 24.5) * 2 ** 30 / (4 * per))
+    expected = {"kv_bytes_per_token": int(per),
+                "gib_per_sequence_at_32768": one,
+                "total_gib_at_32768": total,
+                "max_context_per_sequence": max_ctx}
+    return ("sizing_medium", prompt, 600,
+            _numeric_grader(expected,
+                            {"kv_bytes_per_token": 1, "gib_per_sequence_at_32768": 0.05,
+                             "total_gib_at_32768": 0.2,
+                             "max_context_per_sequence": max_ctx * 0.01},
+                            {"kv_bytes_per_token": 5, "gib_per_sequence_at_32768": 4,
+                             "total_gib_at_32768": 4, "max_context_per_sequence": 5}, 18,
+                            # the trap: sizing one sequence and forgetting the four
+                            traps={"forgot_four_sequences":
+                                   ("total_gib_at_32768", 24.5 + one, 0.2)}))
 
 
 def tasks(extended=False):
@@ -583,8 +925,17 @@ def tasks(extended=False):
         task_logic_grid(), task_causal_inference(), task_bayesian_reasoning(),
         task_hypothesis_discrimination(), task_adversarial_epistemology(),
         task_value_of_information(), task_wason_selection(), task_complex_policy(),
-    ] + ([task_kv_sizing(), task_causal_identification(),
-          task_resource_optimization(), task_thermal_physics()] if extended else [])
+    ] + ([
+        # easy: can the model do the everyday version at all
+        task_physics_easy(), task_optimization_easy(),
+        task_causal_easy(), task_sizing_easy(),
+        # medium: the original extended set, repositioned by measured difficulty
+        task_physics_medium(), task_optimization_medium(),
+        task_causal_medium(), task_sizing_medium(),
+        # hard: multi-step derivations with a trap that punishes the obvious route
+        task_physics_hard(), task_optimization_hard(),
+        task_causal_hard(), task_sizing_hard(),
+    ] if extended else [])
 
 
 

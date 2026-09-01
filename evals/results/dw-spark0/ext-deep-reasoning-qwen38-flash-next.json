@@ -1,0 +1,323 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "qwen38-flash-next",
+  "endpoint": "http://127.0.0.1:19439/v1/chat/completions",
+  "score": 127,
+  "max_score": 166,
+  "cost": {
+    "prompt_tokens": 2715,
+    "completion_tokens": 2155,
+    "total_tokens": 4870,
+    "task_seconds": 101.97,
+    "wall_seconds": 101.98,
+    "generation_tok_s": 21.13,
+    "truncated_tasks": []
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 5.2368,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 107,
+        "prompt_tokens": 164,
+        "total_tokens": 271,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 6.9249,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 145,
+        "prompt_tokens": 195,
+        "total_tokens": 340,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (Fuzzy)\",\n  \"instrument\": \"Eligibility score crossing the 70 threshold\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for compliers at the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity of potential outcomes at the cutoff\",\n    \"No manipulation of the running variable (score)\",\n    \"Monotonicity (no defiers)\",\n    \"Exclusion restriction (eligibility affects outcomes only through participation)\",\n    \"Independence of treatment assignment and potential outcomes conditional on the score\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 4.8841,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 92,
+        "prompt_tokens": 157,
+        "total_tokens": 249,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 63.0,\n  \"independence_caveat\": \"Real-world tests often share common failure modes or correlated errors (e.g., similar biological markers or environmental factors), violating the conditional independence assumption. This correlation means the second positive result provides less additional information than calculated, making the posterior probability lower than the independent estimate.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 9.2718,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 192,
+        "prompt_tokens": 240,
+        "total_tokens": 432,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The orthogonal assay confirms the signaling reduction is a real biological effect, falsifying H3 (assay artifact).\",\n    \"The occupancy assay showing no binding of X to R falsifies H1 (direct block).\",\n    \"R protein levels decrease while R mRNA remains unchanged, indicating post-transcriptional regulation.\",\n    \"The proteasome inhibitor prevents both the R protein decline and the signaling effect, establishing a causal link between proteasomal degradation of R and the observed signaling reduction.\"\n  ],\n  \"decisive_falsifier\": \"If X treatment leads to a decrease in R protein levels that is NOT prevented by a proteasome inhibitor, or if R protein levels remain stable despite the signaling effect, the proteasomal degradation mechanism would be decisively undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 19.4022,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 424,
+        "prompt_tokens": 238,
+        "total_tokens": 662,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "Belief in the claim that the mayor secretly diverted famine relief should decrease significantly, though not to zero. The assessment relies on weighing source independence against potential collusion.\n\nS1, the rival\u2019s diary, is contemporaneous but highly biased. As a political opponent, the rival had a strong incentive to fabricate or exaggerate accusations. Crucially, S1 lacks transaction details, making it an assertion rather than evidence of specific misconduct. S2 and S4 are derivative sources; they do not provide independent confirmation but merely repeat S1. Therefore, the evidentiary weight of S1, S2, and S4 combined is roughly equal to that of S1 alone, as they share a single point of failure.\n\nS3, the treasury ledger, is the strongest evidence. Its independent preservation and reconciled totals suggest administrative integrity. It establishes that funds were disbursed to named suppliers, contradicting the claim of *secret diversion* (i.e., theft or off-book usage). However, S3 does not prove the *fairness* of the transactions. It confirms payment occurred, not that the mayor didn\u2019t receive kickbacks or that the suppliers weren\u2019t fronts.\n\nThe cousin connection introduces a conflict of interest but does not prove corruption. Since the listed price matches other suppliers, there is no immediate evidence of price gouging or financial loss to the public. While nepotism is possible, it is distinct from the specific claim of diverting relief funds.\n\nThe highest-value next evidence would be private correspondence between the mayor and the cousin-supplier, or bank records showing any flow of money from the supplier back to the mayor. Such evidence could reveal kickbacks that the public ledger (S3) would obscure.\n\nIn conclusion, the claim is weakened by the lack of independent corroboration for the accusation and the presence of reconciled public records showing proper disbursement. While the cousin relationship warrants scrutiny, the current evidence supports a narrative of potential nepotism rather than proven theft. Belief should shift from \"plausible\" to \"unlikely,\" pending discovery of private financial trails.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 5.833,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 116,
+        "prompt_tokens": 210,
+        "total_tokens": 326,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -18.0,\n  \"test_policy_ev_after_cost\": 29.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 10.3947,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 237,
+        "prompt_tokens": 143,
+        "total_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If P then Q' (where P is 'vowel' and Q is 'even number'), we must check for violations. A violation occurs only if P is true and Q is false. \\n\\n1. Card 'A' (Vowel): We must turn this card to ensure the other side is an even number. If it is odd, the rule is violated.\\n2. Card '7' (Odd Number): We must turn this card to ensure the other side is not a vowel. If it is a vowel, the rule is violated (Vowel -> Odd).\\n\\nThe other cards are not required:\\n- Card 'D' (Consonant): The rule only applies to vowels. Whether the other side is even or odd does not affect the truth of the rule.\\n- Card '4' (Even Number): The rule states that vowels imply even numbers, but it does not state that even numbers imply vowels. An even number can have a consonant on the other side without violating the rule.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 24.3386,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 569,
+        "prompt_tokens": 211,
+        "total_tokens": 780,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "The proposal to automatically impose restrictive supervision based on a fixed risk threshold is fundamentally flawed and should be rejected in its current form. While calibration within demographic groups ensures that predicted probabilities match observed frequencies for those groups, it does not justify automated punitive action. Calibration is a statistical property of the model\u2019s output, not a legal or ethical justification for depriving liberty. It ignores the asymmetry of errors: false positives (restricting a non-offender) impose severe civil liberties violations, while false negatives (missing an offender) pose public safety risks. Given that severe offenses are rare, even a highly accurate model will generate a high number of false positives relative to true positives, disproportionately burdening specific communities.\n\nFurthermore, prediction is not causation. The model identifies correlations, not causal drivers of violence. Restrictive supervision may itself increase recidivism through destabilization, creating a self-fulfilling prophecy. This is exacerbated by selective labels and feedback loops: police deployment changes who is arrested, altering the training data. If the system targets specific neighborhoods, more arrests occur there, reinforcing the model\u2019s bias. Defendants may also strategically adapt their behavior or features once they know what triggers high-risk scores, rendering the model obsolete.\n\nDistribution shift is inevitable as economic and social conditions change. A model trained on historical data will degrade as the underlying population dynamics evolve. Automated systems lack the contextual understanding to adjust to these shifts without human oversight.\n\nA constrained, human-in-the-loop deployment is the only acceptable alternative. The system should serve solely as a decision-support tool for judges, never as an automatic trigger for supervision. Recommendations must be advisory, with judges required to provide written justification for deviating from or following the model\u2019s suggestion.\n\n**Deployment and Evaluation Design:**\n1.  **Human Oversight:** Judges retain final authority. The system displays risk scores alongside confidence intervals and key feature contributions, not just a binary \"high risk\" label.\n2.  **Continuous Monitoring:** Implement real-time monitoring for calibration drift across demographic groups and overall population. Track false positive and false negative rates separately.\n3.  **Feedback Loop Mitigation:** Regularly audit police deployment patterns to ensure they are not solely driven by model outputs. Use counterfactual analysis to estimate the impact of supervision on recidivism.\n4.  **Stopping Conditions:** Automatically suspend the system if:\n    *   Calibration error exceeds a predefined threshold for any demographic group.\n    *   False positive rates rise significantly compared to baseline.\n    *   Evidence of strategic adaptation by defendants is detected.\n    *   Significant shifts in social conditions invalidate the training data distribution.\n\nThis approach respects due process by ensuring individualized assessment, acknowledges the limits of prediction, and prioritizes civil liberties while allowing for cautious, evidence-based improvements in public safety.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": false,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    },
+    {
+      "task": "kv_sizing",
+      "score": 3,
+      "max_score": 16,
+      "elapsed_s": 4.9762,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 90,
+        "prompt_tokens": 366,
+        "total_tokens": 456,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"kv_bytes_per_token\": 21760,\n  \"kv_gib_at_262144\": 5.25,\n  \"max_context_tokens_in_25gib\": 1249996,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": false,
+        "gib_at_262144": false,
+        "max_context": false,
+        "fits": true,
+        "counted_all_48_layers": false
+      }
+    },
+    {
+      "task": "causal_identification",
+      "score": 18,
+      "max_score": 18,
+      "elapsed_s": 3.5093,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 264,
+        "total_tokens": 322,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": true,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      }
+    },
+    {
+      "task": "resource_optimization",
+      "score": 12,
+      "max_score": 16,
+      "elapsed_s": 3.6645,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 261,
+        "total_tokens": 325,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"selection\": [\n    \"borealis\",\n    \"cinder\"\n  ],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 119\n}",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": false,
+        "reported_greedy_as_optimal": false
+      }
+    },
+    {
+      "task": "thermal_physics",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 3.5379,
+      "max_tokens": 12000,
+      "usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 266,
+        "total_tokens": 327,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.4\n}",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": true,
+        "gave_rise_not_temperature": false
+      }
+    }
+  ]
+}
