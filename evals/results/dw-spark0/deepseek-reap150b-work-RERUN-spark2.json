@@ -1,0 +1,198 @@
+{
+  "suite": "work_quality_v1",
+  "model": "deepseek-flash-150b",
+  "endpoint": "http://127.0.0.1:19438/v1/chat/completions",
+  "score": 81,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 4.4881,
+      "usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 188,
+        "total_tokens": 245,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\"scan_action\":\"transduce_only\",\"transform_command\":\"APPLY_TRANSFORM\",\"retained_read_command\":\"READ_FRAME\",\"crc_scope\":\"outer_packet\",\"acquisition_conflict\":\"reject_on_demand_scan\",\"event_mode_relation\":\"independent\"}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 4.5876,
+      "usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 240,
+        "total_tokens": 302,
+        "prompt_tokens_details": {
+          "cached_tokens": 29
+        }
+      },
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16,\n  \"setup_cost_usd\": 40\n}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 8.3107,
+      "usage": {
+        "completion_tokens": 121,
+        "prompt_tokens": 257,
+        "total_tokens": 378,
+        "prompt_tokens_details": {
+          "cached_tokens": 29
+        }
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 6,
+      "max_score": 12,
+      "elapsed_s": 27.2913,
+      "usage": {
+        "completion_tokens": 420,
+        "prompt_tokens": 238,
+        "total_tokens": 658,
+        "prompt_tokens_details": {
+          "cached_tokens": 29
+        }
+      },
+      "response": "1. **Missing bounds check on `rx_len` before reading `rx[1]` and copying payload**  \n   `receive()` reads `rx[1]` and copies `len` bytes from `rx[2]` without verifying `rx_len >= 2 + len + 2`. If `rx_len` is smaller, this reads/copies out of bounds.  \n   **Correction:** Add `if (rx_len < 4 || rx[1] > 32 || rx_len < (size_t)2 + rx[1] + 2) return;` before using `len`.\n\n2. **`memcpy(payload, &rx[2], len)` can overflow `payload`**  \n   `payload` is 32 bytes, but `len` is an `uint8_t` (max 255). If `rx[1] > 32`, the copy writes past the array.  \n   **Correction:** Validate `len <= sizeof(payload)` (e.g., `if (len > sizeof(payload)) return;`) before the copy.\n\n3. **CRC is computed only over the payload, not over command + length + payload**  \n   The protocol says CRC covers command, length, and payload, but the code computes `crc16(payload, len)` only.  \n   **Correction:** Compute `crc16` over `rx[0]`, `rx[1]`, and the payload, e.g., `uint16_t calc = crc16(rx, 2 + len);` (or a combined call).\n\n4. **Assignment `=` used instead of equality `==` in the CRC check**  \n   `if (calc = got)` assigns `got` to `calc` and always evaluates true (unless `got` is zero). This makes the authentication branch unconditional.  \n   **Correction:** Change to `if (calc == got)`.\n\n5. **Command parsing and state changes occur before authentication and CRC verification**  \n   `parse",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": false,
+        "parse_before_auth": false,
+        "unsafe_string_print": false
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 10,
+      "max_score": 18,
+      "elapsed_s": 33.3699,
+      "usage": {
+        "completion_tokens": 520,
+        "prompt_tokens": 155,
+        "total_tokens": 675,
+        "prompt_tokens_details": {
+          "cached_tokens": 29
+        }
+      },
+      "response": "## Replacement Design: `ACQUIRE` and `FETCH` Commands\n\n### 1. Command Overview\n\nReplace the monolithic `SCAN` with two commands:\n\n| Command | Direction | Purpose |\n|---------|-----------|---------|\n| `ACQUIRE` | Host \u2192 Device | Trigger acquisition (continuous or on-demand) |\n| `FETCH` | Host \u2192 Device | Retrieve a stored frame by ID (no re-acquisition) |\n\n---\n\n### 2. Frame and Source Identity\n\nEvery acquired frame is assigned:\n\n- **Frame ID**: monotonically increasing 32-bit unsigned integer, unique per device boot.\n- **Source ID**: 8-bit field identifying the sensor channel (e.g., `0x01` = primary lidar, `0x02` = secondary camera).\n- **Transform Version**: 16-bit field matching the shear-transform revision applied at acquisition time.\n\nThese three fields form an immutable tuple `(FrameID, SourceID, TransformVersion)` stored in the frame header. No frame is ever overwritten or mutated after storage.\n\n---\n\n### 3. Acquisition Modes\n\n#### **Continuous Mode**\n- Started by `ACQUIRE {mode: continuous, source_mask: ...}`.\n- Device acquires frames at its configured rate, applies the *current* shear transform, updates all filters, and stores the transformed frame.\n- Runs until stopped by `ACQUIRE {mode: stop}` or a device-level error.\n- Event reporting is **enabled** during continuous mode (see Section 5).\n\n#### **On-Demand Mode**\n- Started by `ACQUIRE {mode: on_demand, source_mask: ...}`.\n- Device performs **exactly one** acquisition cycle per command invocation.\n- The command blocks until the frame is fully acquired, transformed, filtered, and stored, then returns the `FrameID`.\n- On-demand acquisition **may be issued while continuous mode is active**. The device serializes both operations internally; the on-demand frame is stored with its own unique `FrameID` and does not disturb the continuous stream.\n\n---\n\n### 4. Command/Responsibility Boundaries\n\n| Responsibility | Owner |\n|----------------|-------|\n| Frame acquisition timing | Device (hardware-timed) |\n| Shear-transform application | Device (at acquisition time, using current transform version) |\n| Filter updates | Device (all filters updated per frame, before storage) |\n| Frame storage | Device (immutable, append-only) |\n| Frame retrieval / audit | Host (via `FETCH`, no re-scan",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": false,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": false,
+        "acquisition_ownership": true,
+        "event_independent": false,
+        "conflict_rejected_or_queued": false
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 68.2901,
+      "usage": {
+        "completion_tokens": 92,
+        "prompt_tokens": 30521,
+        "total_tokens": 30613,
+        "prompt_tokens_details": {
+          "cached_tokens": 1
+        }
+      },
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 7.5258,
+      "usage": {
+        "completion_tokens": 109,
+        "prompt_tokens": 156,
+        "total_tokens": 265,
+        "prompt_tokens_details": {
+          "cached_tokens": 29
+        }
+      },
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactor the parser\",\n    \"Add telemetry\",\n    \"Change error codes\",\n    \"Update every documentation page\",\n    \"Rename the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 1,
+      "max_score": 6,
+      "elapsed_s": 5.5293,
+      "usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 169,
+        "total_tokens": 248,
+        "prompt_tokens_details": {
+          "cached_tokens": 29
+        }
+      },
+      "response": "{\n  \"data_bits_per_sample\": 24,\n  \"payload_bit_rate\": 384000,\n  \"wire_time_ms_per_second\": 6,\n  \"chip_select_overhead_ms_per_second\": 192,\n  \"total_bus_utilization_percent\": 19.8,\n  \"remaining_margin_percent\": 80.2\n}",
+      "grade_details": {
+        "data_bits_per_sample": false,
+        "payload_bit_rate": false,
+        "wire_time_ms_per_second": false,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ]
+}

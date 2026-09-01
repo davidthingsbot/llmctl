@@ -1,0 +1,195 @@
+{
+  "suite": "deep_reasoning_v1",
+  "model": "deepseek-flash-150b",
+  "endpoint": "http://127.0.0.1:19438/v1/chat/completions",
+  "score": 57,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "elapsed_s": 5.1122,
+      "usage": {
+        "completion_tokens": 69,
+        "prompt_tokens": 142,
+        "total_tokens": 211,
+        "prompt_tokens_details": {
+          "cached_tokens": 1
+        }
+      },
+      "response": "{\n  \"Ada\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Ben\": {\"day\": \"Tuesday\", \"topic\": \"Biology\"},\n  \"Cara\": {\"day\": \"Thursday\", \"topic\": \"History\"},\n  \"Dion\": {\"day\": \"Monday\", \"topic\": \"Logic\"}\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 0,
+      "max_score": 14,
+      "elapsed_s": 23.4217,
+      "usage": {
+        "completion_tokens": 360,
+        "prompt_tokens": 174,
+        "total_tokens": 534,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"design\": \"The causal design is a threshold-based eligibility rule for a voluntary job-training program, where the score cutoff at 70 determines eligibility. The design creates a discontinuity in participation at the threshold, but participation is not universal above 70 and some below 70 still participate, indicating that the cutoff is not strictly enforced or that other factors influence participation.\",\n  \"instrument\": \"The exogenous treatment variation is created by the natural variation in the score around the cutoff of 70. Since the score cannot be precisely manipulated and potential outcomes vary smoothly through 70 absent treatment, the variation in participation at the threshold is due to the inherent variability in the score and the voluntary nature of enrollment.\",\n  \"estimand\": \"The causal quantity identified is the effect of the score crossing the 70 threshold on participation in the job-training program, specifically the difference in participation rates just above and just below the cutoff, holding other factors constant.\",\n  \"global_generalization\": \"The causal effect does not automatically generalize to everyone. The effect is specific to the threshold at 70 and the population near that cutoff. It may not apply to individuals far from the threshold or to other thresholds, and it does not necessarily apply to all individuals above or below the cutoff because participation is not universal on either side.\",\n  \"assumptions\": [\n    \"The score cutoff at 70 is the only policy change at that threshold; no other policies change at 70.\",\n    \"The score cannot be precisely manipulated, meaning individuals cannot easily change their score to cross the threshold.\",\n    \"Potential outcomes vary smoothly through 70 absent treatment, implying that without the program, the relationship between score and outcome is continuous.\",\n    \"Participation jumps sharply at 70 but is not universal above the cutoff, and some below",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": false,
+        "late_compliers": false,
+        "not_global": false,
+        "continuity": false,
+        "no_manipulation": false,
+        "exclusion": false,
+        "monotonicity": false
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 9.5195,
+      "usage": {
+        "completion_tokens": 142,
+        "prompt_tokens": 145,
+        "total_tokens": 287,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 8.3,\n  \"two_positive_percent\": 0.7,\n  \"independence_caveat\": \"The second calculation assumes conditional independence of test errors given the true condition status, meaning the probability of a second positive given the first positive and the true status equals the probability of a second positive given only the true status. In real life, repeated tests of the same type may have correlated errors (e.g., systematic biases in the test method, shared environmental factors, or patient-specific quirks), so the second positive may be more likely than the independence assumption suggests, making the posterior probability overconfident (too low).\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 13.0247,
+      "usage": {
+        "completion_tokens": 194,
+        "prompt_tokens": 214,
+        "total_tokens": 408,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X has the same effect in an orthogonal signaling assay, suggesting the effect is not an artifact of a specific assay design.\",\n    \"A validated occupancy assay detects no binding of X to R, ruling out direct binding and blocking of R.\",\n    \"R protein falls after X treatment, but R mRNA is unchanged, indicating degradation of the protein representation rather than removal of the underlying mRNA.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect, directly implicating proteasomal degradation as the mechanism.\"\n  ],\n  \"decisive_falsifier\": \"If a future experiment shows that the signaling effect persists even when proteasomal degradation is prevented (e.g., by using a proteasome inhibitor) and no binding of X to R is detected, then the proteasomal degradation hypothesis would be undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 26.8159,
+      "usage": {
+        "completion_tokens": 412,
+        "prompt_tokens": 210,
+        "total_tokens": 622,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "The accusation originates with S1, an authenticated diary by the mayor\u2019s political rival. S1 is contemporaneous and credible as a statement of the rival\u2019s belief, but it provides no transaction details, so it cannot by itself prove diversion. S2 is a 1920 article that cites only S1; it adds no independent evidence and merely propagates the original accusation. S4 consists of five modern websites that cite S2 or each other, forming a chain with no new primary material; these add no evidentiary weight and could reflect uncritical repetition of the original claim.\n\nS3 is an independently preserved treasury ledger whose totals reconcile and show the disputed funds paid to named grain suppliers. This is strong evidence that funds were disbursed to suppliers, not diverted to the mayor\u2019s personal use. However, S3 does not establish the mayor\u2019s intent: it shows payments occurred, but not whether the mayor authorized them for famine relief or secretly redirected funds to those suppliers for another purpose. The ledger\u2019s reconciliation rules out a simple accounting fraud, but it does not rule out a legitimate-looking payment that was nonetheless unauthorized or deceptive.\n\nThe cousin evidence: one supplier in S3 was the mayor\u2019s cousin, but the listed price matches other suppliers that month. This is a weak signal. It could suggest a possible conflict of interest, but the price parity makes it equally consistent with normal procurement. It does not materially strengthen or weaken the claim without additional context.\n\nBelief should shift moderately downward: S3 provides independent evidence that funds went to grain suppliers, which is more consistent with legitimate famine relief than with diversion, but the lack of transaction-level detail in S1 and the absence of any document linking the mayor\u2019s instructions to S3 leaves the accusation unproven. The highest-value next evidence would be the mayor\u2019s own contemporaneous order or authorization records for those specific payments, or a second independent ledger from a different institution showing the same transactions. Such evidence would clarify whether the payments were authorized and intended for famine relief.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": false,
+        "rival_incentive": false,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 10,
+      "max_score": 12,
+      "elapsed_s": 8.5074,
+      "usage": {
+        "completion_tokens": 123,
+        "prompt_tokens": 209,
+        "total_tokens": 332,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7272727273,\n  \"launch_ev_given_positive\": 70.9090909091,\n  \"launch_ev_given_negative\": -60.0,\n  \"test_policy_ev_after_cost\": 7.6,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 13.3749,
+      "usage": {
+        "completion_tokens": 196,
+        "prompt_tokens": 130,
+        "total_tokens": 326,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is a conditional: if vowel then even number. To test it, we need to check cards that could violate it. A card with a vowel on one side must have an even number on the other side. So we must turn the card showing 'A' to verify the other side is even. A card with a consonant (D) does not need to be turned because the rule does not constrain it. A card with an even number (4) does not need to be turned because the rule only applies when the letter side is a vowel, and an even number does not imply anything about the letter. A card with an odd number (7) must be turned to check that the other side is not a vowel, because if it were a vowel, the rule would be violated. Thus only 'A' and '7' are logically required to be turned.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 40.8525,
+      "usage": {
+        "completion_tokens": 620,
+        "prompt_tokens": 192,
+        "total_tokens": 812,
+        "prompt_tokens_details": {
+          "cached_tokens": 27
+        }
+      },
+      "response": "## Policy Recommendation: Constrained Use with Safeguards\n\n**Recommendation:** Implement the automated restrictive supervision system only as a **non-punitive, probationary intervention** with a **high threshold**, **continuous human review**, and **temporary duration**. Do not deploy as a permanent, fully automated punitive mechanism.\n\n---\n\n### What Calibration Does and Does Not Justify\n\n**Justified:** Calibration within demographic groups ensures the model's *ranking* of risk is roughly consistent across protected groups\u2014it does not guarantee equal false-positive rates across groups, but it prevents systematic under-ranking of any group.\n\n**Not justified:** Calibration does not justify:\n- Treating predicted risk as actual causation\n- Assuming the model generalizes across distribution shifts\n- Ignoring asymmetric error costs\n- Assuming defendants won't adapt\n\n---\n\n### Key Analytical Points\n\n**Base rates and asymmetric errors:** Severe offenses are rare (perhaps <1% of defendants). A model with 95% precision on positives may still have high false-positive rates in absolute terms. False positives (restricting law-abiding citizens) are costly and potentially rights-violating; false negatives (missing offenders) are also costly but different in kind. The asymmetry demands a high threshold and human oversight.\n\n**Causation vs. prediction:** The model predicts correlation with future offense, not causation. It cannot distinguish defendants who would commit offenses regardless of supervision from those who would only do so if unsupervised. This distinction is critical for policy legitimacy.\n\n**Rights and due process:** Restrictive supervision may violate rights to lawful conduct. Defendants have a right to a fair process, not a predetermined outcome. Automated decisions based on opaque models undermine due process.\n\n**Selective labels/feedback loops:** The system creates its own training data\u2014supervised defendants generate fewer offense labels, making the model appear more accurate than it is. This feedback loop will systematically underestimate risk for supervised populations.\n\n**Distribution shift and strategic adaptation:** Economic/social shifts change offense patterns. Defendants who learn their features are monitored may change behavior strategically, creating adversarial dynamics the model cannot anticipate.\n\n---\n\n### Concrete Deployment Design\n\n1. **Phase 1 (6 months): Shadow mode.** Run predictions in parallel, no enforcement. Log predictions, track accuracy against actual offenses, monitor demographic calibration drift.\n\n2. **Phase 2 (Conditional deployment):** Only if Phase 1 shows:\n   - Precision \u2265 90% on positives\n   - False-positive rate \u2264 2% of all flagged\n   - No demographic group has >3\u00d7 the false-positive rate of the lowest group\n   - No significant distribution shift detected\n\n3. **Implementation:** Flag defendants above the 95th percentile of predicted risk. Apply **temporary probationary supervision** (e.g., 90 days), subject to human review within 72 hours. Supervision is non-punitive, reversible, and disclosed to the defendant.\n\n4. **Continuous monitoring:** Quarterly audits comparing predicted vs. actual offense rates; automatic rollback if precision drops below 85% or false-positive rate exceeds ",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}

@@ -446,6 +446,167 @@ machine, quant and offload regime, per the rule stated for the tables above.
 measured against it on this box — the 9B, gpt-oss-20b and Qwen3.6 — and none
 displaced it.
 
+## dw-spark0 results — 2026-08-23, machine record recovered 2026-08-31
+
+The first DGX Spark run: GB10 Blackwell (sm_121), 128 GB unified LPDDR5X at
+~273 GB/s, 20 cores. **Not comparable to any table above** — different hardware,
+different quantisations, and the only machine here whose GPU and CPU share one
+memory pool. The two models are comparable to each other: same machine, same
+harness, thinking disabled on both, llama.cpp in both cases.
+
+Both are compressions of the same base model, DeepSeek-V4-Flash-0731 (284B total
+/ 13B active, MIT, 1M native context), pruned from 256 routed experts per layer
+down to 132. They differ only in *how*: **REAP** prunes the low-saliency experts
+and drops them; **REAM** merges them into the survivors.
+
+| | REAP-150B MXFP4 (`deepseek-flash-150b`) | REAM-120B NVFP4 (`deepseek-vllm-120b`) |
+|---|---:|---:|
+| Work quality | **91/100** | 69/100 |
+| Deep reasoning | **57/100** | 52/100 |
+| Work suite wall time | 162.57 s | **106.39 s** |
+| Reasoning suite wall time | 145.15 s | **94.64 s** |
+
+| Work task | REAP | REAM | | Reasoning task | REAP | REAM |
+|---|---:|---:|---|---|---:|---:|
+| Strict protocol JSON | 12/12 | 12/12 | | Logic grid | 0/12 | 0/12 |
+| BOM consolidation | **10/10** | 1/10 | | Causal inference | **0/14** | 6/14 |
+| Executable code repair | 20/20 | 20/20 | | Bayesian updating | 4/12 | 4/12 |
+| Embedded C review | 10/12 | 10/12 | | Hypothesis discrim. | 12/12 | 8/12 |
+| Protocol architecture | **16/18** | 8/18 | | Adversarial epist. | 12/14 | 14/14 |
+| 35K retrieval | 16/16 | 16/16 | | Value of information | **10/12** | 4/12 |
+| Scope control | 6/6 | 2/6 | | Wason selection | 9/10 | 2/10 |
+| Acquisition timing | 1/6 | 0/6 | | Complex policy | 10/14 | 14/14 |
+
+### Interpretation
+
+- **REAP-150B scored 91/100 on Spark #1 and 81/100 on Spark #2 — the same
+  weights file, the same flags, a rebuilt machine.** Read the 91 as the top of a
+  range, not a record. At 91 it would lead this repo; at 81 it sits below
+  DW-X1Pro's `qwen3.6-35b-a3b-q5` (88) and level with the DW-ASUS-LINUX
+  incumbent. See **Reproducibility** below — the entire 10-point gap comes from
+  two keyword-rubric tasks, and every exact and executed task reproduced
+  bit-for-bit. The claim that survives is narrower and still interesting: it beat
+  the dense-27B line on the exactly-graded half of the suite, twice.
+- **This is the first time the active-parameter rule has been broken.** Five
+  times running — 122B-A10B, 284B-A13B, Mistral Small 4 at ~6.6B active, and
+  others — the model with more *active* parameters won, and a 27B dense beat
+  everything larger. Here a 13B-active MoE beats a 27.8B dense model. The
+  difference is generation, not size: DeepSeek V4-Flash is April 2026,
+  contemporary with Qwen3.8, where every previous large challenger was
+  Qwen3.5-era or older. Size still buys nothing on its own; being current does.
+- **REAP vs REAM is a 22-point gap on the work suite from an identical base
+  model, identical expert count and identical size.** The whole difference is
+  pruning versus merging. It shows up as a *quantitative* collapse, not a general
+  one: REAM matched REAP exactly on strict JSON (12/12), code repair (20/20),
+  embedded C (10/12) and retrieval (16/16), then scored 1/10 on BOM
+  consolidation, 8/18 on protocol architecture and 2/6 on scope control. The
+  publisher's own numbers say the same thing — mean 0.8248 for REAP against
+  0.6952 for REAM, with REAP at 132 experts actually scoring +0.80 mean *above*
+  the unpruned 284B base while REAM loses 12.16. **Take REAP, never REAM.**
+- **REAM also emitted raw `<tool_calls>` XML that the `deepseek_v4` parser did
+  not catch**, which is a serving defect on top of the quality one.
+- **`value_of_information` 10/12 is the best result that task has ever
+  recorded** (previous ceiling 9/12, on DW-X1Pro). `protocol_architecture` 16/18
+  is second only to Mistral Small 4's anomalous 18/18 on DW-ASUS-LINUX.
+- **REAP scored 0/14 on causal inference while the model it beats by 22 points
+  scored 6/14.** The suite ceiling on that task is 12/14 (`gpt-oss-20b`). A
+  0 from the strongest work model on the suite is more likely a formatting or
+  parsing failure than a reasoning one, and the saved response should be read
+  before the number is trusted.
+- **Deep reasoning 57/100 is mid-table** — below `qwen3.8-27b-fp8`'s 71 and well
+  below `qwen3-coder-next-iq4-xs`'s 83. The division of labour that follows:
+  **REAP-150B for engineering work, a Qwen for open reasoning.**
+- **Acquisition timing scored 1/6, which ties the ceiling** rather than breaking
+  it. Across every machine and model in this repo nothing has exceeded 1/6. The
+  standing recommendation holds: compute link budgets with a tool, then ask the
+  model to interpret checked numbers.
+- **No blind open-response review was run for this machine.** The DW-X1Pro and
+  DW-ASUS-LINUX sections both show the deterministic rubric overstating models on
+  the open tasks. REAP's 16/18 on protocol architecture should be read with that
+  history in mind — it is exactly the shape of result that the blind judges have
+  twice contradicted.
+
+### Reproducibility — the rubric tasks are the only thing that moved
+
+Both suites were re-run on Spark #2 on 2026-08-31 against the identical GGUF,
+with llama.cpp master `458681e` (8 days newer than Spark #1's build), results in
+`*-RERUN-spark2.json`. **Work 91 -> 81, deep reasoning 57 -> 57.**
+
+| Grading | Tasks | Result |
+|---|---|---|
+| Exact match | strict_protocol_json, bom_consolidation, long_context_retrieval, scope_control, acquisition_timing, logic_grid, causal_inference, bayesian_reasoning, hypothesis_discrimination, value_of_information, wason_selection | **all identical** |
+| Executed | code_repair | **identical, 20/20 both** |
+| Keyword rubric | embedded_c_review 10->6, protocol_architecture 16->10, adversarial_epistemology 12->10, complex_policy_reasoning 10->12 | **every one moved** |
+
+Deep reasoning held at 57 only because its two rubric swings cancelled (-2, +2).
+Nothing else changed anywhere.
+
+The mechanism, measured by diffing the saved responses:
+
+| Task | chars | similarity | score |
+|---|---|---|---|
+| `strict_protocol_json` | 217 -> 217 | **1.000, byte-identical** | 12 = 12 |
+| `code_repair` | 481 -> 453 | 0.964 | 20 = 20 |
+| `protocol_architecture` | 2229 -> 2265 | **0.073** | 16 -> 10 |
+
+At temperature 0 a short constrained answer is bit-reproducible across different
+silicon and different CUDA builds. A long free-form answer is **93% different** —
+floating-point divergence between builds compounds over thousands of tokens into
+a different essay — and the keyword rubric then scores that essay six points
+apart. The executed task is unbothered.
+
+**CONSEQUENCE FOR EVERY TABLE IN THIS FILE: cross-machine comparisons are sound
+on the exact and executed tasks and are worth about +/-6 points on the rubric
+tasks.** The three earlier sections each noted the rubric overstating models
+against blind judges; this is the first measurement of how much it moves on its
+own, with the model held constant. Prefer the exactly-graded subtotal when
+ranking models across machines, and treat a rubric-driven margin under ~10 points
+as no margin at all.
+
+### Serving facts, and a caution about how they were nearly lost
+
+Measured on the first Spark, 2026-08-23, and reproduced on its replacement,
+2026-08-31 (see `inventory/machines/dw-spark0/`):
+
+| | Spark #1, 2026-08-23 | Spark #2, 2026-08-31 |
+|---|---:|---:|
+| Load time | not recorded | 86 s |
+| Prefill | ~590 tok/s | 589.0 tok/s |
+| Single-stream generation | 15.3 tok/s | 15.8 tok/s |
+| TTFT | ~250 ms | 2.59 s (1526-token prompt) |
+| Resident footprint at 4x256K | ~90 G | 101.5 G |
+
+- **Aggregate throughput is FLAT at ~15.4 tok/s across 1, 2 and 4 streams.** A
+  bandwidth-bound MoE decode whose experts differ per token gets *zero* batching
+  gain on ~273 GB/s; per-stream throughput simply divides. Do not size
+  concurrency on this machine expecting the vLLM-style scaling that the dual-3090
+  box shows (4.98x on Qwen3.6-35B-A3B). This is the single most important
+  operational fact about the Spark.
+- KV measured **8.33 KiB/token** by memory differencing, so 1M total context
+  costs ~8.5 G and four 256K slots fit inside the 115000 MB budget.
+- `VRAM_PER_GPU_MB` must be set **by hand**. `nvidia-smi` reports `[N/A]` for
+  every memory field on GB10 unified memory; llmctl falls back to `MemTotal`
+  (124609) and 115000 is the value that leaves the OS its ~9.6 G.
+- **MXFP4_MOE is the baseline, not a quantisation.** DeepSeek ships the routed
+  experts in MXFP4 already and llama.cpp's converter repacks them without
+  changing a value, so the GGUF is numerically identical to the safetensors
+  checkpoint. Every rung below it (Q3_K_M / IQ3_XXS / Q2_K) is a requantisation
+  of already-4-bit data and costs more than the same rung would from bf16.
+- **There is no vendor-blessed recipe for this configuration.** The official vLLM
+  recipe covers the unpruned 148.66 GiB FP8 checkpoint and lists DGX Spark only
+  as a *cluster* target. The 85 GB REAP MXFP4 build under llama.cpp is what makes
+  a single Spark viable, and it is off the supported path by construction.
+
+**The machine record for the first Spark was never committed, and the box was
+wiped on 2026-08-31.** Only the four result files in `evals/results/dw-spark0/`
+had been pushed — under a filename convention that does not match the one in
+**Run** below (`MODEL-work.json` / `MODEL-reasoning.json` instead of
+`MODEL.json` / `deep-reasoning-MODEL.json`). The `machine.conf`, the `models.d/`
+recipes and `stats.jsonl` were lost with the reinstall; everything above was
+reconstructed from a manual backup taken 40 minutes before the wipe. **Run
+`llmctl machine record` and commit it on the day a machine is brought up**, not
+when the results happen to be interesting.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.
