@@ -79,5 +79,98 @@ class DeepReasoningSuiteTests(unittest.TestCase):
         self.assertTrue(details["ledger_not_complete_exoneration"])
 
 
+
+class ExtendedReasoningTest(unittest.TestCase):
+    """Exactly-graded tasks: a correct answer scores full, the classic trap scores 0."""
+
+    def test_kv_sizing_correct_answer_scores_full(self):
+        _, _, _, grade = suite.task_kv_sizing()
+        per = 12 * 8 * 128 * 2 * 1.0625
+        gib = per * 262144 / (2 ** 30)
+        answer = json.dumps({
+            "kv_bytes_per_token": int(per),
+            "kv_gib_at_262144": round(gib, 3),
+            "max_context_tokens_in_25gib": int(25 * (2 ** 30) // per),
+            "weights_87gib_and_262144_fits_in_112gib": (87 + gib) <= 112,
+        })
+        score, maximum, _ = grade(answer)
+        self.assertEqual(score, maximum)
+
+    def test_kv_sizing_flags_the_all_layers_trap(self):
+        _, _, _, grade = suite.task_kv_sizing()
+        per = 12 * 8 * 128 * 2 * 1.0625
+        answer = json.dumps({"kv_bytes_per_token": int(per * 4),
+                             "kv_gib_at_262144": 25.5,
+                             "max_context_tokens_in_25gib": 257003,
+                             "weights_87gib_and_262144_fits_in_112gib": False})
+        score, _, details = grade(answer)
+        self.assertEqual(score, 0)
+        self.assertTrue(details["counted_all_48_layers"])
+
+    def test_causal_identification_correct_answer_scores_full(self):
+        _, _, _, grade = suite.task_causal_identification()
+        answer = json.dumps({"adjustment_set": ["C"], "conditioning_on_M": "direct",
+                             "z_is_collider": True, "conditioning_on_Z": "introduces_bias",
+                             "i_is_instrument": True})
+        score, maximum, _ = grade(answer)
+        self.assertEqual(score, maximum)
+
+    def test_causal_identification_penalises_adjusting_for_everything(self):
+        _, _, _, grade = suite.task_causal_identification()
+        answer = json.dumps({"adjustment_set": ["C", "M", "Z"], "conditioning_on_M": "total",
+                             "z_is_collider": False, "conditioning_on_Z": "removes_bias",
+                             "i_is_instrument": False})
+        score, _, details = grade(answer)
+        self.assertEqual(score, 0)
+        self.assertTrue(details["included_mediator_or_collider"])
+
+    def test_extended_tasks_are_opt_in(self):
+        default = {t[0] for t in suite.tasks()}
+        extended = {t[0] for t in suite.tasks(True)}
+        self.assertNotIn("kv_sizing", default)
+        self.assertIn("kv_sizing", extended)
+        self.assertIn("causal_identification", extended)
+        self.assertTrue(default < extended)
+
+
+
+class DomainReasoningTest(unittest.TestCase):
+    def test_optimization_correct_answer_scores_full(self):
+        _, _, _, grade = suite.task_resource_optimization()
+        answer = json.dumps({"selection": ["borealis", "cinder"], "total_value": 120,
+                             "total_size_gib": 112,
+                             "greedy_by_value_density_total": 114})
+        score, maximum, _ = grade(answer)
+        self.assertEqual(score, maximum)
+
+    def test_optimization_greedy_is_strictly_suboptimal(self):
+        # The item set is chosen so density-greedy scores 114 against 120; a task
+        # where greedy happens to be optimal would not discriminate at all.
+        _, _, _, grade = suite.task_resource_optimization()
+        answer = json.dumps({"selection": ["atlas", "dunlin", "ember"],
+                             "total_value": 114, "total_size_gib": 107,
+                             "greedy_by_value_density_total": 114})
+        score, maximum, details = grade(answer)
+        self.assertLess(score, maximum)
+        self.assertTrue(details["reported_greedy_as_optimal"])
+
+    def test_physics_correct_answer_scores_full(self):
+        _, _, _, grade = suite.task_thermal_physics()
+        answer = json.dumps({"steady_state_junction_c": 89.2, "tau_seconds": 252.0,
+                             "power_for_85c_limit_w": 225.0,
+                             "junction_after_one_tau_c": 64.48})
+        score, maximum, _ = grade(answer)
+        self.assertEqual(score, maximum)
+
+    def test_physics_flags_rise_reported_as_temperature(self):
+        _, _, _, grade = suite.task_thermal_physics()
+        answer = json.dumps({"steady_state_junction_c": 89.2, "tau_seconds": 252.0,
+                             "power_for_85c_limit_w": 225.0,
+                             "junction_after_one_tau_c": 42.48})
+        score, maximum, details = grade(answer)
+        self.assertLess(score, maximum)
+        self.assertTrue(details["gave_rise_not_temperature"])
+
+
 if __name__ == "__main__":
     unittest.main()

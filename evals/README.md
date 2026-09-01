@@ -698,6 +698,75 @@ an agent can switch by task type rather than committing the server to one mode.
    1.0, which is why `--token-budget-scale` defaults to 1.0 and why a thinking-on
    run must be paired with a thinking-off run at the same scale.
 
+## Harder tasks — the `--extended` set, 2026-09-01
+
+The eight default tasks are saturating. Across every run recorded in this repo:
+
+| | runs | full marks | zeros |
+|---|---:|---:|---:|
+| `strict_protocol_json` | 16 | **16** | 0 |
+| `scope_control` | 16 | 15 | 0 |
+| `long_context_retrieval` | 16 | 14 | 0 |
+| `code_repair` | 16 | 13 | 0 |
+| `adversarial_epistemology` | 16 | 10 | 0 |
+| `acquisition_timing` | 16 | 0 | **11** |
+
+`strict_protocol_json` has never scored anything but 12/12; `scope_control` has
+only ever scored 2 or 6. Five tasks are saturated and two are floors, so the
+suite increasingly separates models only by the occasional zero — and today's
+truncation finding showed how many of those zeros were mechanical.
+
+`--extended` appends eight harder tasks, all **exactly or executably graded**,
+never keyword-rubric, because the rubric tasks carry +/-6 points of noise with
+the model held constant. It changes the denominator, so extended results compare
+only with other extended results; the suite id becomes `work_quality_v1+hard` /
+`deep_reasoning_v1+hard`.
+
+| task | max | graded by |
+|---|---:|---|
+| `cobs_codec` | 24 | executed — known vectors, round-trip, overhead bound |
+| `stream_reassembler` | 24 | executed — split chunks, resync, false sync in payload |
+| `verilog_fifo` | 26 | **Icarus simulation + Verilator lint** |
+| `cuda_reduction` | 26 | **nvcc compile + GPU execution + compute-sanitizer** |
+| `kv_sizing` | 16 | exact numeric |
+| `causal_identification` | 18 | exact |
+| `resource_optimization` | 16 | exact, optimum brute-forced by the grader |
+| `thermal_physics` | 16 | exact numeric |
+
+Each was validated against a correct reference AND against plausible bugs, so the
+scores form a gradient rather than pass/fail:
+
+| task | correct | plausible bug | worse bug |
+|---|---:|---:|---:|
+| `cobs_codec` | 24 | 18 (254-byte boundary) | 13 (no grouping) |
+| `stream_reassembler` | 24 | 21 (loses frame after bad checksum) | |
+| `verilog_fifo` | 26 | 22 (blocking assignment) | 15 (`full` never asserts) |
+| `cuda_reduction` | 26 | 24 (barrier in divergent branch) | 8 (no bounds guard) |
+| `resource_optimization` | 16 | 12 (right set, wrong greedy) | 4 (greedy as optimal) |
+| `thermal_physics` | 16 | 13 (rise reported as temperature) | |
+
+Three points worth keeping:
+
+- **`verilog_fifo` scores on two independent axes.** Icarus says whether it
+  *works*; Verilator lint says whether it is synthesisable RTL rather than
+  something that merely simulates. A blocking assignment in a sequential block
+  passes every behavioural check and is caught only by lint — which is exactly
+  the class of bug that reaches silicon.
+- **`cuda_reduction` pads and POISONS the input past `n`.** Without that, a
+  kernel with no bounds guard reads freshly-zeroed memory and passes by luck; it
+  scored full marks until the tail was poisoned, and 8/26 after.
+- **Tooling absence degrades, it does not fail.** Missing iverilog/verilator/nvcc
+  records `simulator: absent` or `nvcc: absent` and falls back to structural
+  checks, and a busy GPU records `gpu: unavailable`. A machine without the
+  toolchain still produces a valid, visibly weaker number instead of scoring a
+  correct model zero. Install with `sudo apt install -y iverilog verilator`;
+  compute-sanitizer ships with CUDA.
+
+`extract_code` was also generalised to accept any language fence. It previously
+matched only ```` ```python ```` or a bare fence, so a ```` ```verilog ```` reply
+fell through and the backticks themselves were handed to the parser — a latent
+zero for any non-Python task.
+
 ## Caveats
 
 - This is one deterministic run per model, not a statistical quality estimate.

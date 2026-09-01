@@ -311,12 +311,242 @@ In at most 400 words, recommend a policy. Analyze what calibration does and does
     return "complex_policy_reasoning", prompt, 620, grade
 
 
-def tasks():
+
+def task_kv_sizing():
+    prompt = '''A hybrid-attention model. Work out its KV cache cost. Return ONLY JSON.
+
+Architecture:
+- 48 decoder layers in total.
+- 12 of those 48 layers use full attention and cache both K and V.
+- The other 36 layers use a linear-attention mechanism whose recurrent state is a
+  fixed size that does not grow with sequence length. It contributes nothing to
+  the KV cache.
+- Each full-attention layer has 8 key/value heads with a head dimension of 128.
+  K and V are cached separately.
+- The KV cache is quantised to q8_0, which costs 1.0625 bytes per element.
+- 1 GiB is 2**30 bytes.
+
+Return exactly these keys:
+  "kv_bytes_per_token"        integer, bytes of KV cache per token of context
+  "kv_gib_at_262144"          number, GiB of KV cache at 262144 tokens of context
+  "max_context_tokens_in_25gib"  integer, the largest context that fits in 25 GiB
+                                 of KV cache (round down)
+  "weights_87gib_and_262144_fits_in_112gib"  true or false, whether 87 GiB of
+                                 weights plus the KV at 262144 tokens fits in 112 GiB
+'''
+
+    per_token = 12 * 8 * 128 * 2 * 1.0625
+    gib_262144 = per_token * 262144 / (2 ** 30)
+    max_ctx = int(25 * (2 ** 30) // per_token)
+    fits = (87 + gib_262144) <= 112
+
+    def grade(text):
+        data = extract_json(text)
+        details = {"expected_bytes_per_token": int(per_token),
+                   "expected_gib": round(gib_262144, 3),
+                   "expected_max_ctx": max_ctx, "expected_fits": fits}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 16, details
+        details["parsed"] = True
+
+        def num(key):
+            v = data.get(key)
+            return v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+        bpt = num("kv_bytes_per_token")
+        details["bytes_per_token"] = bpt is not None and abs(bpt - per_token) <= 1
+        gib = num("kv_gib_at_262144")
+        details["gib_at_262144"] = gib is not None and abs(gib - gib_262144) <= 0.05
+        mc = num("max_context_tokens_in_25gib")
+        details["max_context"] = mc is not None and abs(mc - max_ctx) <= max_ctx * 0.01
+        details["fits"] = data.get("weights_87gib_and_262144_fits_in_112gib") is fits
+        # The trap: charging KV to all 48 layers instead of the 12 that cache it.
+        details["counted_all_48_layers"] = bpt is not None and abs(bpt - per_token * 4) <= 4
+        score = (6 if details["bytes_per_token"] else 0) + (4 if details["gib_at_262144"] else 0) \
+            + (3 if details["max_context"] else 0) + (3 if details["fits"] else 0)
+        return score, 16, details
+
+    return "kv_sizing", prompt, 420, grade
+
+
+def task_causal_identification():
+    prompt = '''A causal DAG over observed variables. Arrows are direct causes.
+
+  C -> T      C -> Y
+  I -> T
+  T -> Y      T -> M      M -> Y
+  T -> Z      Y -> Z
+
+You want to estimate the TOTAL causal effect of T on Y from observational data.
+Return ONLY JSON with exactly these keys:
+
+  "adjustment_set"        array of variable names, the minimal sufficient set to
+                          condition on to identify the total effect; [] if none
+                          is needed. Use only C, I, M, Z.
+  "conditioning_on_M"     one of "total", "direct", "unchanged" — which effect of
+                          T on Y you are left estimating if you also condition on M
+  "z_is_collider"         true or false
+  "conditioning_on_Z"     one of "removes_bias", "introduces_bias", "no_effect"
+  "i_is_instrument"       true or false, whether I is a valid instrument for T
+'''
+
+    def grade(text):
+        data = extract_json(text)
+        details = {}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 18, details
+        details["parsed"] = True
+        adj = data.get("adjustment_set")
+        # C is the only confounder; M is a mediator and Z a collider, so both
+        # belong OUT of the set, and I is unnecessary.
+        details["adjustment_set"] = (isinstance(adj, list)
+                                     and [str(x).strip().upper() for x in adj] == ["C"])
+        details["included_mediator_or_collider"] = (
+            isinstance(adj, list)
+            and bool({str(x).strip().upper() for x in adj} & {"M", "Z"}))
+        details["conditioning_on_M"] = str(data.get("conditioning_on_M", "")).strip().lower() == "direct"
+        details["z_is_collider"] = data.get("z_is_collider") is True
+        details["conditioning_on_Z"] = str(data.get("conditioning_on_Z", "")).strip().lower() == "introduces_bias"
+        details["i_is_instrument"] = data.get("i_is_instrument") is True
+        score = (5 if details["adjustment_set"] else 0) \
+            + (4 if details["conditioning_on_M"] else 0) \
+            + (3 if details["z_is_collider"] else 0) \
+            + (4 if details["conditioning_on_Z"] else 0) \
+            + (2 if details["i_is_instrument"] else 0)
+        return score, 18, details
+
+    return "causal_identification", prompt, 460, grade
+
+
+
+def task_resource_optimization():
+    prompt = '''You have 112 GiB of unified memory and must choose which models stay resident.
+Each is all-or-nothing: you cannot load part of one. Maximise total value.
+
+  name       size_gib   value
+  atlas         61        67
+  borealis      56        60
+  cinder        56        60
+  dunlin        27        28
+  ember         19        19
+  fennec        13        12
+
+Return ONLY JSON with exactly these keys:
+  "selection"      array of names, the value-maximising set that fits in 112 GiB
+  "total_value"    integer, its total value
+  "total_size_gib" integer, its total size
+  "greedy_by_value_density_total"  integer, the total value you would get by
+                   repeatedly taking the model with the highest value-per-GiB
+                   that still fits
+'''
+
+    # Chosen so greedy-by-value-density is STRICTLY suboptimal (114 against 120):
+    # taking atlas first blocks the borealis+cinder pair that exactly fills 112.
+    items = {"atlas": (61, 67), "borealis": (56, 60), "cinder": (56, 60),
+             "dunlin": (27, 28), "ember": (19, 19), "fennec": (13, 12)}
+    names = sorted(items)
+    best_value, best_set = -1, None
+    for mask in range(1 << len(names)):
+        chosen = [names[i] for i in range(len(names)) if mask >> i & 1]
+        size = sum(items[c][0] for c in chosen)
+        if size <= 112:
+            value = sum(items[c][1] for c in chosen)
+            if value > best_value:
+                best_value, best_set, best_size = value, set(chosen), size
+    remaining, greedy_value = 112, 0
+    for name in sorted(names, key=lambda n: -items[n][1] / items[n][0]):
+        if items[name][0] <= remaining:
+            remaining -= items[name][0]
+            greedy_value += items[name][1]
+
+    def grade(text):
+        data = extract_json(text)
+        details = {"expected_value": best_value, "expected_set": sorted(best_set),
+                   "expected_greedy": greedy_value}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 16, details
+        details["parsed"] = True
+        sel = data.get("selection")
+        details["selection"] = (isinstance(sel, list)
+                                and {str(x).strip().lower() for x in sel} == best_set)
+        details["total_value"] = data.get("total_value") == best_value
+        details["total_size_gib"] = data.get("total_size_gib") == best_size
+        details["greedy_total"] = data.get("greedy_by_value_density_total") == greedy_value
+        # The trap: greedy by density is NOT optimal here.
+        details["reported_greedy_as_optimal"] = data.get("total_value") == greedy_value
+        return ((6 if details["selection"] else 0) + (4 if details["total_value"] else 0)
+                + (2 if details["total_size_gib"] else 0)
+                + (4 if details["greedy_total"] else 0)), 16, details
+
+    return "resource_optimization", prompt, 460, grade
+
+
+def task_thermal_physics():
+    prompt = '''A compute module dissipates heat through a heatsink to still air.
+
+Given:
+- Steady-state power draw: 240 W.
+- Junction-to-ambient thermal resistance: 0.28 K/W.
+- Ambient air: 22 C.
+- The module's thermal mass (heat capacity) is 900 J/K.
+- Treat the module as a single lumped thermal mass: one temperature, exponential
+  approach to steady state, time constant tau = thermal_resistance * heat_capacity.
+
+Return ONLY JSON with exactly these keys:
+  "steady_state_junction_c"   number, steady-state junction temperature in C
+  "tau_seconds"               number, the thermal time constant in seconds
+  "power_for_85c_limit_w"     number, the highest steady power that keeps the
+                              junction at or below 85 C in the same ambient
+  "junction_after_one_tau_c"  number, junction temperature one time constant after
+                              switching on from ambient at the full 240 W
+'''
+
+    R, P, AMBIENT, C = 0.28, 240.0, 22.0, 900.0
+    steady = AMBIENT + P * R
+    tau = R * C
+    p_limit = (85.0 - AMBIENT) / R
+    after_tau = AMBIENT + (steady - AMBIENT) * (1 - 2.718281828459045 ** -1)
+
+    def grade(text):
+        data = extract_json(text)
+        details = {"expected_steady_c": round(steady, 2), "expected_tau_s": round(tau, 1),
+                   "expected_power_w": round(p_limit, 1),
+                   "expected_after_tau_c": round(after_tau, 2)}
+        if not isinstance(data, dict):
+            details["parsed"] = False
+            return 0, 16, details
+        details["parsed"] = True
+
+        def close(key, want, tol):
+            v = data.get(key)
+            ok = isinstance(v, (int, float)) and not isinstance(v, bool) and abs(v - want) <= tol
+            details[key] = ok
+            return ok
+
+        got = [close("steady_state_junction_c", steady, 0.5),
+               close("tau_seconds", tau, 2.0),
+               close("power_for_85c_limit_w", p_limit, 2.0),
+               close("junction_after_one_tau_c", after_tau, 1.0)]
+        # The trap: reporting the RISE above ambient rather than the temperature.
+        v = data.get("junction_after_one_tau_c")
+        details["gave_rise_not_temperature"] = (
+            isinstance(v, (int, float)) and abs(v - (after_tau - AMBIENT)) <= 1.0)
+        weights = [5, 4, 4, 3]
+        return sum(w for w, ok in zip(weights, got) if ok), 16, details
+
+    return "thermal_physics", prompt, 420, grade
+
+
+def tasks(extended=False):
     return [
         task_logic_grid(), task_causal_inference(), task_bayesian_reasoning(),
         task_hypothesis_discrimination(), task_adversarial_epistemology(),
         task_value_of_information(), task_wason_selection(), task_complex_policy(),
-    ]
+    ] + ([task_kv_sizing(), task_causal_identification(),
+          task_resource_optimization(), task_thermal_physics()] if extended else [])
 
 
 def main():
@@ -338,6 +568,15 @@ def main():
              "comparable",
     )
     parser.add_argument(
+        "--extended", action="store_true",
+        help="append the harder tasks. The eight default tasks are saturating — "
+             "strict_protocol_json has scored full marks in every run ever "
+             "recorded — so the suite increasingly discriminates only by the "
+             "occasional zero. Extended tasks are exactly or executably graded, "
+             "never keyword-rubric. Changes the denominator, so extended results "
+             "are comparable only with other extended results",
+    )
+    parser.add_argument(
         "--token-budget-scale", type=float, default=1.0, metavar="N",
         help="multiply every task's max_tokens by N. The budgets are sized for a "
              "direct answer; a model that thinks first spends them on the thinking "
@@ -349,7 +588,7 @@ def main():
     args = parser.parse_args()
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     results = []
-    for name, prompt, max_tokens, grader in tasks():
+    for name, prompt, max_tokens, grader in tasks(args.extended):
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
         try:
@@ -368,7 +607,7 @@ def main():
                    "error": f"{type(exc).__name__}: {exc}", "response": "", "grade_details": {}}
         results.append(row)
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
-    output = {"suite": "deep_reasoning_v1", "model": args.model, "endpoint": args.url,
+    output = {"suite": "deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1", "model": args.model, "endpoint": args.url,
               "score": sum(x["score"] for x in results),
               "max_score": sum(x["max_score"] for x in results), "tasks": results}
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)

@@ -7,7 +7,11 @@ import argparse
 import ast
 import json
 import math
+import os
 import re
+import shutil
+import subprocess
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -28,7 +32,10 @@ def extract_json(text: str):
 
 
 def extract_code(text: str) -> str:
-    match = re.search(r"```(?:python)?\s*(.*?)```", text, re.S | re.I)
+    # Any language tag, not just python: a ```verilog or ```cuda fence used to
+    # fall through this regex entirely, handing the fence markers themselves to
+    # the parser and scoring a correct answer zero.
+    match = re.search(r"```[a-zA-Z0-9_+#-]*\s*(.*?)```", text, re.S | re.I)
     return (match.group(1) if match else text).strip()
 
 
@@ -410,6 +417,578 @@ of chip-select/setup overhead beyond wire time. Ignore all other costs. Do not r
     return "acquisition_timing", prompt, 180, grade
 
 
+
+def task_cobs_codec():
+    prompt = '''Implement COBS (Consistent Overhead Byte Stuffing). Return ONLY the two
+complete functions `cobs_encode` and `cobs_decode`, no imports, no explanation.
+
+Encoding removes every zero byte from the payload so 0x00 can delimit frames.
+
+Rules:
+- The encoded output contains no zero bytes and never includes the delimiter itself.
+- Output is a sequence of groups. Each group is one code byte `n` (1..255) followed
+  by `n - 1` non-zero data bytes.
+- A code byte `n < 255` means: those `n - 1` data bytes were followed by a zero byte
+  in the input, and that zero is consumed by the encoding.
+- A code byte of exactly 255 means: 254 data bytes NOT followed by a zero. Encoding
+  continues with a new group.
+- The empty input encodes to a single byte 0x01.
+
+`cobs_decode` must invert `cobs_encode` exactly, and must raise ValueError on input
+that no encoder could have produced (a zero byte anywhere, a group whose data runs
+past the end of the input, or a trailing code byte promising bytes that are absent).
+
+Worked examples:
+  b""                     -> b"\\x01"
+  b"\\x00"                 -> b"\\x01\\x01"
+  b"\\x11\\x22\\x00\\x33"      -> b"\\x03\\x11\\x22\\x02\\x33"
+  b"\\x11\\x22\\x33\\x44"      -> b"\\x05\\x11\\x22\\x33\\x44"
+  b"\\x00\\x11\\x00"          -> b"\\x01\\x02\\x11\\x01"
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        try:
+            tree = ast.parse(code)
+            safe = all(not isinstance(n, (ast.Import, ast.ImportFrom, ast.Global, ast.Nonlocal))
+                       for n in ast.walk(tree))
+            names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+            details["functions_only"] = bool(safe and {"cobs_encode", "cobs_decode"} <= names
+                                             and all(isinstance(n, ast.FunctionDef) for n in tree.body))
+            if not details["functions_only"]:
+                return 0, 24, details
+            env = {"__builtins__": {"len": len, "int": int, "bytes": bytes, "bytearray": bytearray,
+                                    "range": range, "enumerate": enumerate, "ValueError": ValueError,
+                                    "IndexError": IndexError, "list": list, "min": min, "max": max}}
+            exec(compile(tree, "candidate", "exec"), env)
+            enc, dec = env["cobs_encode"], env["cobs_decode"]
+
+            vectors = [
+                ("vec_empty", b"", b"\x01"),
+                ("vec_single_zero", b"\x00", b"\x01\x01"),
+                ("vec_embedded_zero", b"\x11\x22\x00\x33", b"\x03\x11\x22\x02\x33"),
+                ("vec_no_zero", b"\x11\x22\x33\x44", b"\x05\x11\x22\x33\x44"),
+                ("vec_leading_trailing_zero", b"\x00\x11\x00", b"\x01\x02\x11\x01"),
+            ]
+            for name, raw, expected in vectors:
+                try:
+                    details[name] = enc(raw) == expected
+                except Exception:
+                    details[name] = False
+
+            try:
+                details["encode_never_emits_zero"] = all(
+                    0 not in enc(bytes(payload)) for payload in
+                    (b"", b"\x00" * 300, bytes(range(256)), b"\x00\x01" * 200))
+            except Exception:
+                details["encode_never_emits_zero"] = False
+
+            # The 254-byte group boundary is where COBS implementations break, but
+            # whether a trailing 0x01 group follows an exactly-full 255-group is a
+            # genuine convention difference — both forms decode identically. So
+            # grade the OVERHEAD BOUND, which every correct encoder satisfies and
+            # every mis-grouped one violates: at most one code byte per 254 bytes
+            # of run, plus one.
+            try:
+                details["overhead_bound"] = all(
+                    len(enc(p)) <= len(p) + 1 + len(p) // 254
+                    for p in (b"\x01" * 253, b"\x01" * 254, b"\x01" * 255,
+                              b"\x01" * 508, b"\x01" * 762, bytes(range(1, 256)) * 3))
+            except Exception:
+                details["overhead_bound"] = False
+
+            # Round-tripping across the boundary catches the off-by-one regardless
+            # of which convention the candidate chose.
+            try:
+                details["boundary_roundtrip"] = all(
+                    dec(enc(p)) == p for p in
+                    (b"\x01" * 253, b"\x01" * 254, b"\x01" * 255, b"\x01" * 256,
+                     b"\x01" * 507, b"\x01" * 508, b"\x01" * 509,
+                     b"\x00" + b"\x01" * 254, b"\x01" * 254 + b"\x00"))
+            except Exception:
+                details["boundary_roundtrip"] = False
+
+            roundtrip = [b"", b"\x00", b"\x00\x00\x00", bytes(range(256)),
+                         b"\x01" * 253, b"\x01" * 254, b"\x01" * 255, b"\x01" * 600,
+                         b"\x00" + b"\x02" * 254 + b"\x00"]
+            try:
+                details["roundtrip"] = all(dec(enc(p)) == p for p in roundtrip)
+            except Exception:
+                details["roundtrip"] = False
+
+            def rejects(data):
+                try:
+                    dec(data)
+                except ValueError:
+                    return True
+                except Exception:
+                    return False
+                return False
+
+            details["decode_rejects_zero_byte"] = rejects(b"\x03\x11\x00")
+            details["decode_rejects_overrun"] = rejects(b"\x05\x11\x22")
+        except Exception as exc:
+            details["parse_or_run_error"] = type(exc).__name__
+            return 0, 24, details
+        vec = sum(2 for k in ("vec_empty", "vec_single_zero", "vec_embedded_zero", "vec_no_zero",
+                              "vec_leading_trailing_zero") if details.get(k))
+        boundary = sum(3 for k in ("overhead_bound", "boundary_roundtrip") if details.get(k))
+        rest = sum(2 for k in ("encode_never_emits_zero", "roundtrip") if details.get(k))
+        rej = sum(1 for k in ("decode_rejects_zero_byte", "decode_rejects_overrun") if details.get(k))
+        return min(24, vec + boundary + rest + rej + (2 if details.get("functions_only") else 0)), 24, details
+
+    return "cobs_codec", prompt, 700, grade
+
+
+def task_stream_reassembler():
+    prompt = '''Implement a framing reassembler for a byte stream that arrives in arbitrary
+chunks. Return ONLY the complete class `Reassembler`, no imports, no explanation.
+
+Wire format, repeated back to back:
+  sync   : 2 bytes, 0xAA 0x55
+  length : 2 bytes, little-endian, the payload length in bytes
+  payload: `length` bytes
+  check  : 1 byte, the XOR of every payload byte (0x00 for an empty payload)
+
+`Reassembler().feed(chunk: bytes) -> list[bytes]` returns the payloads of every
+frame completed by that chunk, in order. State carries across calls: a frame may
+be split across any number of chunks, including one byte at a time.
+
+Requirements:
+- A chunk may contain several whole frames, or none.
+- Bytes before a sync word are garbage and are discarded silently.
+- A frame whose check byte does not match is discarded, and the stream must
+  resync so that a valid frame immediately following it is still returned.
+- `length` may be 0. A `length` above 4096 is invalid: discard and resync.
+- The payload may itself contain 0xAA 0x55; length governs, not scanning.
+- No exceptions: malformed input yields fewer frames, never a raised error.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+
+        def frame(payload):
+            check = 0
+            for b in payload:
+                check ^= b
+            return b"\xaa\x55" + len(payload).to_bytes(2, "little") + payload + bytes([check])
+
+        try:
+            tree = ast.parse(code)
+            safe = all(not isinstance(n, (ast.Import, ast.ImportFrom, ast.Global, ast.Nonlocal))
+                       for n in ast.walk(tree))
+            classes = [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Reassembler"]
+            details["class_only"] = bool(safe and classes)
+            if not details["class_only"]:
+                return 0, 24, details
+            # __build_class__ and __name__ are what a `class` statement needs; without
+            # them the exec raises NameError before any test runs.
+            env = {"__name__": "candidate",
+                   "__builtins__": {"len": len, "int": int, "bytes": bytes, "bytearray": bytearray,
+                                    "range": range, "enumerate": enumerate, "list": list,
+                                    "min": min, "max": max, "object": object, "ValueError": ValueError,
+                                    "IndexError": IndexError, "slice": slice, "reversed": reversed,
+                                    "__build_class__": __build_class__, "__name__": "candidate",
+                                    "print": lambda *a, **k: None}}
+            exec(compile(tree, "candidate", "exec"), env)
+            R = env["Reassembler"]
+
+            def run(chunks):
+                r = R()
+                got = []
+                for c in chunks:
+                    got.extend(r.feed(c))
+                return got
+
+            checks = {
+                "single_frame": lambda: run([frame(b"hello")]) == [b"hello"],
+                "empty_payload": lambda: run([frame(b"")]) == [b""],
+                "two_frames_one_chunk": lambda: run([frame(b"ab") + frame(b"cd")]) == [b"ab", b"cd"],
+                # one byte at a time is where a naive index-based parser falls apart
+                "split_byte_by_byte": lambda: run([bytes([b]) for b in frame(b"abcdef")]) == [b"abcdef"],
+                "split_across_two_chunks": lambda: (
+                    lambda f: run([f[:4], f[4:]]) == [b"payload"])(frame(b"payload")),
+                "garbage_before_sync": lambda: run([b"\x01\x02\xaa\x03" + frame(b"ok")]) == [b"ok"],
+                # the discriminating case: a corrupt frame must not swallow the next
+                "resync_after_bad_check": lambda: (
+                    lambda bad: run([bad[:-1] + bytes([bad[-1] ^ 0xFF]) + frame(b"good")]) == [b"good"]
+                )(frame(b"bad")),
+                "oversize_length_rejected": lambda: run(
+                    [b"\xaa\x55" + (5000).to_bytes(2, "little") + b"\x00" * 10 + frame(b"after")]
+                ) == [b"after"],
+                "payload_containing_sync": lambda: run([frame(b"\xaa\x55\xaa\x55")]) == [b"\xaa\x55\xaa\x55"],
+                "no_frame_no_output": lambda: run([b"\x00\x01\x02"]) == [],
+                "stateful_across_calls": lambda: (
+                    lambda f: run([f[:1], f[1:3], f[3:6], f[6:]]) == [b"chunked"])(frame(b"chunked")),
+            }
+            for name, check in checks.items():
+                try:
+                    details[name] = bool(check())
+                except Exception:
+                    details[name] = False
+        except Exception as exc:
+            details["parse_or_run_error"] = type(exc).__name__
+            return 0, 24, details
+        easy = sum(2 for k in ("single_frame", "empty_payload", "two_frames_one_chunk",
+                               "garbage_before_sync", "no_frame_no_output") if details.get(k))
+        hard = sum(3 for k in ("split_byte_by_byte", "resync_after_bad_check",
+                               "payload_containing_sync") if details.get(k))
+        mid = sum(1 for k in ("split_across_two_chunks", "oversize_length_rejected",
+                              "stateful_across_calls") if details.get(k))
+        return min(24, easy + hard + mid + (2 if details.get("class_only") else 0)), 24, details
+
+    return "stream_reassembler", prompt, 900, grade
+
+
+
+VERILOG_TESTBENCH = r"""
+module tb;
+  localparam WIDTH = 8, DEPTH = 4;
+  reg clk = 0, rst_n = 0, wr_en = 0, rd_en = 0;
+  reg [WIDTH-1:0] din = 0;
+  wire [WIDTH-1:0] dout;
+  wire full, empty;
+  integer pass = 0, fail = 0;
+
+  sync_fifo #(.WIDTH(WIDTH), .DEPTH(DEPTH)) dut
+    (.clk(clk), .rst_n(rst_n), .wr_en(wr_en), .din(din),
+     .rd_en(rd_en), .dout(dout), .full(full), .empty(empty));
+
+  always #5 clk = ~clk;
+
+  task check(input integer id, input cond);
+    begin
+      if (cond) begin pass = pass + 1; $display("CHECK %0d PASS", id); end
+      else      begin fail = fail + 1; $display("CHECK %0d FAIL", id); end
+    end
+  endtask
+
+  task push(input [WIDTH-1:0] value);
+    begin @(negedge clk); wr_en = 1; din = value; @(negedge clk); wr_en = 0; end
+  endtask
+
+  task pop;
+    begin @(negedge clk); rd_en = 1; @(negedge clk); rd_en = 0; end
+  endtask
+
+  initial begin
+    #12 rst_n = 1;
+    @(negedge clk);
+    check(0, empty === 1'b1 && full === 1'b0);
+
+    push(8'hA1); push(8'hB2); push(8'hC3);
+    check(1, full === 1'b0 && empty === 1'b0);
+    push(8'hD4);
+    check(2, full === 1'b1);
+
+    // A write while full must be ignored, not corrupt the contents.
+    push(8'hEE);
+    check(3, full === 1'b1);
+
+    pop; check(4, dout === 8'hA1);
+    pop; check(5, dout === 8'hB2);
+    check(6, full === 1'b0);
+    pop; check(7, dout === 8'hC3);
+    pop; check(8, dout === 8'hD4);
+    check(9, empty === 1'b1);
+
+    // A read while empty must be ignored.
+    pop;
+    check(10, empty === 1'b1);
+
+    // Pointer wrap-around: the same depth must be usable again.
+    push(8'h11); push(8'h22); push(8'h33); push(8'h44);
+    check(11, full === 1'b1);
+    pop; check(12, dout === 8'h11);
+    pop; pop; pop;
+    check(13, empty === 1'b1);
+
+    $display("SUMMARY pass=%0d fail=%0d", pass, fail);
+    $finish;
+  end
+endmodule
+"""
+
+
+def task_verilog_fifo():
+    prompt = '''Write a synchronous FIFO in Verilog-2001. Return ONLY the complete module,
+no testbench, no explanation.
+
+module sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)
+  (input clk, input rst_n,
+   input wr_en, input [WIDTH-1:0] din,
+   input rd_en, output reg [WIDTH-1:0] dout,
+   output full, output empty);
+
+Requirements:
+- DEPTH is a power of two. Storage is a register array of DEPTH entries.
+- `rst_n` is asynchronous, active low: it empties the FIFO.
+- On a clock edge with `wr_en` and not `full`, `din` is stored.
+- On a clock edge with `wr_en` while `full`, nothing is written and nothing is corrupted.
+- On a clock edge with `rd_en` and not `empty`, the oldest entry appears on `dout`.
+- On a clock edge with `rd_en` while `empty`, nothing happens.
+- `full` and `empty` must be distinguishable when the read and write pointers are
+  equal — that is the whole difficulty.
+- Must be synthesisable RTL: non-blocking assignments in sequential blocks, no
+  inferred latches, no combinational loops.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "module" not in code or "sync_fifo" not in code:
+            details["module_present"] = False
+            return 0, 26, details
+        details["module_present"] = True
+        workdir = tempfile.mkdtemp(prefix="verilog-")
+        design = os.path.join(workdir, "sync_fifo.v")
+        bench = os.path.join(workdir, "tb.v")
+        try:
+            with open(design, "w") as handle:
+                handle.write(code + "\n")
+            with open(bench, "w") as handle:
+                handle.write(VERILOG_TESTBENCH)
+
+            if shutil.which("iverilog") and shutil.which("vvp"):
+                details["simulator"] = "iverilog"
+                build = subprocess.run(["iverilog", "-g2001", "-o",
+                                        os.path.join(workdir, "sim"), design, bench],
+                                       capture_output=True, text=True, timeout=60)
+                details["compiles"] = build.returncode == 0
+                if details["compiles"]:
+                    run = subprocess.run(["vvp", os.path.join(workdir, "sim")],
+                                         capture_output=True, text=True, timeout=60)
+                    out = run.stdout
+                    labels = ['empty_after_reset', 'not_full_at_three', 'full_at_depth', 'write_while_full_ignored', 'first_out_is_first_in', 'second_out', 'not_full_after_reads', 'third_out', 'fourth_out', 'empty_after_draining', 'read_while_empty_ignored', 'full_after_wrap', 'wrap_first_out', 'empty_after_wrap_drain']
+                    for line in out.splitlines():
+                        if line.startswith("CHECK "):
+                            _, ident, verdict = line.split()
+                            if ident.isdigit() and int(ident) < len(labels):
+                                details[labels[int(ident)]] = verdict == "PASS"
+                    match = re.search(r"SUMMARY pass=(\d+) fail=(\d+)", out)
+                    details["ran_to_completion"] = bool(match)
+                else:
+                    details["compile_error"] = build.stderr.strip().splitlines()[:3]
+            else:
+                # Absent tooling must be visible, not silently scored as failure.
+                details["simulator"] = "absent"
+
+            if shutil.which("verilator"):
+                # Stylistic warnings (filename/module mismatch, unused signals) say
+                # nothing about correctness; the rest catch RTL that simulates but
+                # does not synthesise.
+                lint = subprocess.run(
+                    ["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME", "-Wno-EOFNEWLINE",
+                     "-Wno-UNUSEDSIGNAL", "-Wno-UNUSEDPARAM", "-Wno-VARHIDDEN", design],
+                    capture_output=True, text=True, timeout=60)
+                details["lint_clean"] = lint.returncode == 0
+                if not details["lint_clean"]:
+                    details["lint_first"] = [l for l in lint.stderr.splitlines()
+                                             if l.startswith("%")][:3]
+            else:
+                details["lint_clean"] = None
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+        if details.get("simulator") == "absent":
+            # Structural fallback so a machine without the toolchain still scores
+            # something meaningful, flagged so the number is not compared blindly.
+            seq = re.search(r"always\s*@\s*\(\s*posedge", code) is not None
+            nonblocking = code.count("<=") >= 2
+            details["structural_sequential"] = bool(seq and nonblocking)
+            return (10 if details["structural_sequential"] else 3), 26, details
+
+        behaviour = sum(1 for k in (
+            "empty_after_reset", "not_full_at_three", "full_at_depth",
+            "write_while_full_ignored", "first_out_is_first_in", "second_out",
+            "not_full_after_reads", "third_out", "fourth_out", "empty_after_draining",
+            "read_while_empty_ignored", "full_after_wrap", "wrap_first_out",
+            "empty_after_wrap_drain") if details.get(k))
+        score = (2 if details.get("compiles") else 0) + behaviour \
+            + (4 if details.get("lint_clean") else 0) \
+            + (6 if behaviour == 14 else 0)
+        return min(26, score), 26, details
+
+    return "verilog_fifo", prompt, 900, grade
+
+
+CUDA_HARNESS = r"""
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+
+__CANDIDATE__
+
+int main() {
+    const int cases[] = {1, 31, 32, 33, 255, 256, 257, 1000, 4096, 100000};
+    const int ncases = sizeof(cases) / sizeof(cases[0]);
+    int failures = 0, ran = 0;
+    for (int c = 0; c < ncases; ++c) {
+        int n = cases[c];
+        int threads = 256;
+        int blocks = (n + threads - 1) / threads;
+        // Allocate a whole number of blocks and POISON everything past n. A kernel
+        // that reads out of range then sums poison and is caught; without this the
+        // tail is freshly-zeroed memory and an unguarded kernel passes by luck.
+        int padded = blocks * threads;
+        float *h = (float *)malloc(padded * sizeof(float));
+        double expected = 0.0;
+        for (int i = 0; i < n; ++i) { h[i] = (float)((i % 7) + 1); expected += h[i]; }
+        for (int i = n; i < padded; ++i) h[i] = 1.0e6f;
+        float *d_in = 0, *d_out = 0;
+        if (cudaMalloc(&d_in, padded * sizeof(float)) != cudaSuccess ||
+            cudaMalloc(&d_out, blocks * sizeof(float)) != cudaSuccess) {
+            printf("GPU_UNAVAILABLE\n"); free(h); return 3;
+        }
+        cudaMemcpy(d_in, h, padded * sizeof(float), cudaMemcpyHostToDevice);
+        block_sum<<<blocks, threads, threads * sizeof(float)>>>(d_in, d_out, n);
+        if (cudaDeviceSynchronize() != cudaSuccess) { printf("GPU_UNAVAILABLE\n"); return 3; }
+        float *partial = (float *)malloc(blocks * sizeof(float));
+        cudaMemcpy(partial, d_out, blocks * sizeof(float), cudaMemcpyDeviceToHost);
+        double got = 0.0;
+        for (int b = 0; b < blocks; ++b) got += partial[b];
+        ran++;
+        if (fabs(got - expected) > 1e-3 * expected + 1e-3) {
+            printf("CASE %d FAIL got=%f want=%f\n", n, got, expected);
+            failures++;
+        } else {
+            printf("CASE %d PASS\n", n);
+        }
+        cudaFree(d_in); cudaFree(d_out); free(h); free(partial);
+    }
+    printf("SUMMARY ran=%d failures=%d\n", ran, failures);
+    return 0;
+}
+"""
+
+
+
+def _barrier_inside_thread_conditional(code):
+    """True if a __syncthreads() sits inside a branch guarded by a thread index.
+
+    compute-sanitizer's synccheck does not flag this on Volta-and-later hardware
+    — independent thread scheduling makes it usually work — but it is undefined
+    behaviour and the classic reduction bug, so it is worth detecting textually.
+    """
+    for match in re.finditer(r"if\s*\([^)]*\b(?:tid|threadIdx)\b[^)]*\)\s*\{", code):
+        depth, i = 0, match.end() - 1
+        while i < len(code):
+            if code[i] == "{":
+                depth += 1
+            elif code[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        if "__syncthreads" in code[match.end():i]:
+            return True
+    return False
+
+
+def task_cuda_reduction():
+    prompt = '''Write a CUDA kernel that reduces an array of floats to one partial sum per
+block. Return ONLY the kernel, no host code, no main, no includes, no explanation.
+
+    __global__ void block_sum(const float* in, float* out, int n)
+
+Contract:
+- Launched as block_sum<<<blocks, threads, threads * sizeof(float)>>>(in, out, n)
+  with threads = 256 and blocks = ceil(n / threads).
+- Each block sums the elements it is responsible for and writes that single
+  partial sum to out[blockIdx.x]. The host adds the partials afterwards.
+- `n` is NOT necessarily a multiple of the block size, and may be smaller than one
+  block. Out-of-range elements must contribute nothing.
+- Use the dynamically allocated shared memory (declare it `extern __shared__`).
+- Every thread in the block must reach every __syncthreads(). Placing a barrier
+  where only some threads arrive is undefined behaviour, even when it appears to
+  work.
+'''
+
+    def grade(text):
+        code = extract_code(text)
+        details = {}
+        if "__global__" not in code or "block_sum" not in code:
+            details["kernel_present"] = False
+            return 0, 26, details
+        details["kernel_present"] = True
+        if not shutil.which("nvcc"):
+            details["nvcc"] = "absent"
+            details["uses_shared"] = "__shared__" in code
+            details["uses_barrier"] = "__syncthreads" in code
+            details["guards_n"] = bool(re.search(r"<\s*n\b", code))
+            return (6 if all((details["uses_shared"], details["uses_barrier"],
+                              details["guards_n"])) else 2), 26, details
+
+        workdir = tempfile.mkdtemp(prefix="cuda-")
+        source = os.path.join(workdir, "candidate.cu")
+        binary = os.path.join(workdir, "candidate")
+        try:
+            with open(source, "w") as handle:
+                handle.write(CUDA_HARNESS.replace("__CANDIDATE__", code))
+            build = subprocess.run(["nvcc", "-o", binary, source],
+                                   capture_output=True, text=True, timeout=300)
+            details["compiles"] = build.returncode == 0
+            if not details["compiles"]:
+                details["compile_error"] = [l for l in build.stderr.splitlines()
+                                            if "error" in l.lower()][:3]
+                return 0, 26, details
+            run = subprocess.run([binary], capture_output=True, text=True, timeout=300)
+            out = run.stdout
+            if "GPU_UNAVAILABLE" in out or run.returncode == 3:
+                # The GPU is busy serving a model. Compilation still proves a lot;
+                # flag the gap rather than scoring a correct kernel as broken.
+                details["gpu"] = "unavailable"
+                details["uses_shared"] = "__shared__" in code
+                details["uses_barrier"] = "__syncthreads" in code
+                return 10, 26, details
+            details["gpu"] = "used"
+            for line in out.splitlines():
+                if line.startswith("CASE "):
+                    parts = line.split()
+                    details[f"n_{parts[1]}"] = parts[2] == "PASS"
+            match = re.search(r"SUMMARY ran=(\d+) failures=(\d+)", out)
+            details["all_cases_pass"] = bool(match and match.group(2) == "0")
+
+            # A __syncthreads() that only some threads reach is undefined behaviour
+            # that frequently WORKS on current hardware, so the functional tests
+            # cannot see it. synccheck can.
+            sanitizer = shutil.which("compute-sanitizer") or "/usr/local/cuda/bin/compute-sanitizer"
+            if os.path.exists(sanitizer):
+                audit = subprocess.run(
+                    [sanitizer, "--tool", "synccheck", "--error-exitcode", "9", binary],
+                    capture_output=True, text=True, timeout=600)
+                details["barrier_divergence_clean"] = audit.returncode == 0
+                if not details["barrier_divergence_clean"]:
+                    details["sanitizer_first"] = [
+                        l.strip() for l in audit.stdout.splitlines()
+                        if "Barrier error" in l or "ERROR SUMMARY" in l][:2]
+            else:
+                details["barrier_divergence_clean"] = None
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            return 0, 26, details
+        except Exception as exc:
+            details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 26, details
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+        cases = sum(1 for key in details if key.startswith("n_") and details[key])
+        # The ragged sizes are the discriminating ones: 1, 31, 33, 257, 1000.
+        ragged = sum(2 for key in ("n_1", "n_31", "n_33", "n_257", "n_1000")
+                     if details.get(key))
+        details["barrier_in_thread_conditional"] = _barrier_inside_thread_conditional(code)
+        barrier = (2 if details.get("barrier_divergence_clean") else 0) \
+            + (2 if not details["barrier_in_thread_conditional"] else 0)
+        return min(26, 2 + cases + ragged + barrier), 26, details
+
+    return "cuda_reduction", prompt, 700, grade
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
@@ -429,6 +1008,15 @@ def main():
              "comparable",
     )
     parser.add_argument(
+        "--extended", action="store_true",
+        help="append the harder tasks. The eight default tasks are saturating — "
+             "strict_protocol_json has scored full marks in every run ever "
+             "recorded — so the suite increasingly discriminates only by the "
+             "occasional zero. Extended tasks are exactly or executably graded, "
+             "never keyword-rubric. Changes the denominator, so extended results "
+             "are comparable only with other extended results",
+    )
+    parser.add_argument(
         "--token-budget-scale", type=float, default=1.0, metavar="N",
         help="multiply every task's max_tokens by N. The budgets are sized for a "
              "direct answer; a model that thinks first spends them on the thinking "
@@ -443,6 +1031,9 @@ def main():
         task_structured_protocol(), task_bom(), task_code_repair(), task_code_review(),
         task_protocol_design(), task_long_context(), task_scope_control(), task_timing(),
     ]
+    if args.extended:
+        tasks += [task_cobs_codec(), task_stream_reassembler(),
+                  task_verilog_fifo(), task_cuda_reduction()]
     results = []
     for name, prompt, max_tokens, grader in tasks:
         print(f"running {name}...", flush=True)
@@ -472,7 +1063,7 @@ def main():
         results.append(row)
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
     output = {
-        "suite": "work_quality_v1",
+        "suite": "work_quality_v1+hard" if args.extended else "work_quality_v1",
         "model": args.model,
         "endpoint": args.url,
         "score": sum(row["score"] for row in results),
