@@ -450,5 +450,21 @@ class RetryTest(unittest.TestCase):
         self.assertTrue(suite.failure_report({}).strip())
 
 
+
+class RetryDefaultTest(unittest.TestCase):
+    def test_retry_is_on_by_default(self):
+        import argparse, io, contextlib
+        # Rebuild the parser the way main() does and check the default.
+        for module in (suite,):
+            src = open(module.__file__ if hasattr(module, "__file__")
+                       else str(MODULE_PATH)).read()
+        self.assertIn('"--retry", action=argparse.BooleanOptionalAction, default=True', src)
+        self.assertIn("--no-retry", src)
+
+    def test_cold_run_is_marked_in_the_suite_id(self):
+        src = open(str(MODULE_PATH)).read()
+        self.assertIn('+ ("" if args.retry else "+cold")', src)
+
+
 if __name__ == "__main__":
     unittest.main()

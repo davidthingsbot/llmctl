@@ -2406,12 +2406,14 @@ def main():
              "are comparable only with other extended results",
     )
     parser.add_argument(
-        "--retry", action="store_true",
+        "--retry", action=argparse.BooleanOptionalAction, default=True,
         help="give every imperfect task ONE do-over, showing the model the raw "
              "checker output (compiler errors, failed check names) with no "
-             "analysis. Records score_first and score_retry separately; the "
-             "credited score is the retry times --retry-credit, and never lower "
-             "than the first attempt",
+             "analysis. ON BY DEFAULT: repairing your own work from an error is "
+             "the normal case, not a special mode. Records score_first and "
+             "score_retry separately; the credited score is the retry times "
+             "--retry-credit and never lower than the first attempt. "
+             "--no-retry gives a cold-score-only run",
     )
     parser.add_argument(
         "--retry-credit", type=float, default=0.7, metavar="F",
@@ -2515,7 +2517,7 @@ def main():
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
     output = {
         "suite": ("work_quality_v1+hard" if args.extended else "work_quality_v1")
-                 + ("+retry" if args.retry else ""),
+                 + ("" if args.retry else "+cold"),
         "model": args.model,
         "endpoint": args.url,
         "score": sum(row["score"] for row in results),

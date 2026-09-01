@@ -1079,8 +1079,9 @@ def main():
              "are comparable only with other extended results",
     )
     parser.add_argument(
-        "--retry", action="store_true",
-        help="give every imperfect task ONE do-over with the raw checker output",
+        "--retry", action=argparse.BooleanOptionalAction, default=True,
+        help="give every imperfect task ONE do-over with the raw checker output. "
+             "ON BY DEFAULT; --no-retry gives a cold-score-only run",
     )
     parser.add_argument(
         "--retry-credit", type=float, default=0.7, metavar="F",
@@ -1150,7 +1151,7 @@ def main():
         results.append(row)
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
     output = {"suite": ("deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1")
-              + ("+retry" if args.retry else ""), "model": args.model, "endpoint": args.url,
+              + ("" if args.retry else "+cold"), "model": args.model, "endpoint": args.url,
               "score": sum(x["score"] for x in results),
               "max_score": sum(x["max_score"] for x in results),
               "cost": _cost_summary(results, time.monotonic() - suite_started),
