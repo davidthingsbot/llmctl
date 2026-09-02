@@ -84,6 +84,30 @@ for name in sorted(models, key=lambda n: -((models[n].get("work") or {}).get("sc
     wall = sum((x.get("cost") or {}).get("wall_seconds", 0) for x in (w, r) if x)
     lines.append(f"| `{name}` | {wcell} | {rcell} | {ccell} | {tok or '—'} | {f'{wall/60:.0f} min' if wall else '—'} |")
 
+# Cold vs retry for models measured both ways: the same weights, same prompts,
+# the only difference being one do-over with the raw checker output.
+cold_dir = R / "cold"
+if cold_dir.exists():
+    pairs = []
+    for name, m in sorted(models.items()):
+        for key, prefix in (("work", "full-"), ("reason", "full-deep-reasoning-")):
+            cold = load(cold_dir / f"{prefix}{name}.json")
+            warm = m.get(key)
+            if cold and warm and (warm.get("cost") or {}).get("retries"):
+                pairs.append((name, key, cold, warm))
+    if pairs:
+        lines += ["", "## Cold vs retry — same model, same prompts", "",
+                  "| model | suite | cold | retry-credited | Δ | first attempt of retry run | tasks changed by a do-over |",
+                  "|---|---|---:|---:|---:|---:|---|"]
+        for name, key, cold, warm in pairs:
+            first = sum(t.get("score_first", t["score"]) for t in warm["tasks"])
+            changed = [f"{t['task']} {t['score_first']}→{t['score']}" for t in warm["tasks"]
+                       if "score_first" in t and t["score"] != t["score_first"]]
+            lines.append(f"| `{name}` | {key} | {cold['score']} | **{warm['score']}** | "
+                         f"{warm['score']-cold['score']:+d} | {first} | {', '.join(changed) or '—'} |")
+        lines += ["", "_The 'first attempt of retry run' column is the retry run's own cold score; its "
+                  "difference from the cold column is run-to-run noise, not retry._"]
+
 lines += ["", "## Retry gaps (score_first → credited)", ""]
 any_retry = False
 for name, m in sorted(models.items()):
