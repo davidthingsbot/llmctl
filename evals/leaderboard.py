@@ -47,12 +47,14 @@ for p in sorted(R.glob("full-*.json")):
         models.setdefault(name, {})["work"] = d
 
 def retry_note(d):
+    """cost.retries is authoritative: files from before the retry_enabled field
+    existed still record how many do-overs happened."""
     if not d: return ""
-    if d.get("retry_enabled") is False or (d.get("cost") or {}).get("retries") is None and "retry_enabled" not in d:
-        return " (cold)"
-    if d.get("retry_enabled"):
-        r = (d.get("cost") or {}).get("retries", 0)
+    r = (d.get("cost") or {}).get("retries")
+    if r:
         return f" (retry×{r})"
+    if d.get("retry_enabled"):
+        return " (retry×0)"
     return " (cold)"
 
 lines = [f"# {MACHINE} leaderboard", "",
