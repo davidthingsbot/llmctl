@@ -813,7 +813,22 @@ by default from model 2's reasoning suite onwards. Live table:
 | `qwen38-27b-nvfp4` | 84/64/130/92 = **370** (cold) | 79/48/51/30 = **208** (cold) | 11/20/41/**79** |
 | `qwen38-27b-fp8` | 91/64/118/92 = **365** (cold) | 75/48/37/**67** = **227** (retry×10) | 8/16/31/59 |
 | `deepseek-flash-150b` | 94/64/132/98 = **388** (retry×8) | 69/56/22/27 = **174** (retry×14) | 15/14/34/33 |
-| `nemotron-120b` | failed to load — silent 40-min init, no OOM | | |
+| `nemotron-120b` | 96/61/122/117 = **396** (retry×7) | 83/42/31/36 = 192 (retry×12) | see table |
+
+### Nemotron, measured after all
+
+The "silent 40-minute init" was FlashInfer JIT-compiling the sm_120 fused-MoE
+kernel — 68 CUTLASS files — one at a time under my `MAX_JOBS=1`. With `MAX_JOBS=4`
+it built in five minutes (memory peaked at 109/121 GiB; that is the ceiling) and
+is cached for good. Measured 19:18–19:36, the fastest battery of the five at 13
+tok/s with terse answers: **work 396/438, hard tier 117/120** — `cpp_hard`,
+`cuda_hard`, `ml_hard` all perfect, `verilog_hard` 27/30 — against reasoning
+192/302 with three genuine zeros: `sizing_easy` cached K and forgot V (exactly
+half the right answer, the trap detector fired), `optimization_medium` chose a
+173 GiB set for a 112 GiB budget, `sizing_medium` wrong throughout. It is the
+second large MoE, after deepseek, to write flawless hard-tier code and fail
+multi-step arithmetic that the dense 27B gets right. It also maxed
+`acquisition_timing` 6/6 — the first local model to, on the corrected keys.
 
 ### What the retry measured
 

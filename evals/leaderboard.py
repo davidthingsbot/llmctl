@@ -102,6 +102,8 @@ log = Path("/tmp/claude-1000/-home-david-work-llmctl/49d5d2f7-7af1-4a83-bef2-8b2
 if log.exists():
     import re
     failed = re.findall(r"!!! (\S+) FAILED TO LOAD", log.read_text())
+    # a model that failed in the sweep but was measured afterwards is measured
+    failed = [m for m in failed if m not in models]
     if failed:
         lines += ["", "## Not measured", ""] + [f"- `{m}` — failed to load; see machine NOTES" for m in failed]
 
