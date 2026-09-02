@@ -97,6 +97,14 @@ for name, m in sorted(models.items()):
 if not any_retry:
     lines.append("_No retry-era results yet._")
 
+# models the sweep attempted but could not measure
+log = Path("/tmp/claude-1000/-home-david-work-llmctl/49d5d2f7-7af1-4a83-bef2-8b233a7cd81a/scratchpad/sweep.log")
+if log.exists():
+    import re
+    failed = re.findall(r"!!! (\S+) FAILED TO LOAD", log.read_text())
+    if failed:
+        lines += ["", "## Not measured", ""] + [f"- `{m}` — failed to load; see machine NOTES" for m in failed]
+
 out = R / "LEADERBOARD.md"
 out.write_text("\n".join(lines) + "\n")
 print("\n".join(lines))

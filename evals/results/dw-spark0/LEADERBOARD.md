@@ -20,3 +20,7 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 - `qwen38-27b-fp8` causal_medium: 13 → retry 13 → credited **13**/18
 - `qwen38-27b-fp8` sizing_medium: 0 → retry 0 → credited **0**/18
 - `qwen38-27b-fp8` physics_hard: 9 → retry 9 → credited **9**/20
+
+## Not measured
+
+- `nemotron-120b` — failed to load; see machine NOTES
