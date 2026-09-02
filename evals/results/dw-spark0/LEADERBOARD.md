@@ -5,10 +5,10 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 | model | work L/E/M/H = total | reasoning L/E/M/H = total | concurrency 1/2/4/8 tok/s | tokens | wall |
 |---|---|---|---|---:|---:|
 | **Fable 5.1 (reference)** | 100 / 64 / 154 / 120 = **438**/438 | 100 / 56 / 68 / 78 = **302**/302 | — | — | — |
-| `qwen38-flash-next` | 98 / 59 / 136 / 111 = **404**/438 (retry×5) | 78 / 56 / 46 / 32 = **212**/302 (retry×9) | 22 / 36 / 48 / 48 | 19152 | 15 min |
+| `qwen38-flash-next` | 98 / 64 / 136 / 111 = **409**/438 (retry×5) | 78 / 56 / 46 / 32 = **212**/302 (retry×9) | 22 / 36 / 48 / 48 | 19152 | 15 min |
+| `deepseek-flash-150b` | 94 / 64 / 132 / 98 = **388**/438 (retry×8) | 69 / 56 / 22 / 27 = **174**/302 (retry×14) | 15 / 14 / 34 / 33 | 30904 | 35 min |
 | `qwen38-27b-nvfp4` | 84 / 64 / 130 / 92 = **370**/438 (cold) | 79 / 48 / 51 / 30 = **208**/302 (cold) | 11 / 20 / 41 / 79 | 16816 | 25 min |
 | `qwen38-27b-fp8` | 91 / 64 / 118 / 92 = **365**/438 (cold) | 75 / 48 / 37 / 67 = **227**/302 (retry×10) | 8 / 16 / 31 / 59 | 21407 | 46 min |
-| `deepseek-flash-150b` | 94 / 64 / 124 / 76 = **358**/438 (retry×8) | 69 / 56 / 22 / 27 = **174**/302 (retry×14) | 15 / 14 / 34 / 33 | 30904 | 35 min |
 
 ## Retry gaps (score_first → credited)
 
@@ -16,10 +16,10 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 - `deepseek-flash-150b` protocol_architecture: 16 → retry 16 → credited **16**/18
 - `deepseek-flash-150b` acquisition_timing: 4 → retry 4 → credited **4**/6
 - `deepseek-flash-150b` cobs_codec: 14 → retry 14 → credited **14**/24
-- `deepseek-flash-150b` cuda_medium: 10 → retry 26 → credited **18**/26
+- `deepseek-flash-150b` cuda_medium: 26 → retry 26 → credited **26**/26
 - `deepseek-flash-150b` ml_medium: 14 → retry 0 → credited **14**/26
 - `deepseek-flash-150b` verilog_hard: 5 → retry 12 → credited **8**/30
-- `deepseek-flash-150b` cuda_hard: 8 → retry 8 → credited **8**/30
+- `deepseek-flash-150b` cuda_hard: 30 → retry 30 → credited **30**/30
 - `deepseek-flash-150b` logic_grid: 6 → retry 6 → credited **6**/12
 - `deepseek-flash-150b` causal_inference: 4 → retry 4 → credited **4**/14
 - `deepseek-flash-150b` bayesian_reasoning: 4 → retry 4 → credited **4**/12
@@ -45,7 +45,7 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 - `qwen38-27b-fp8` sizing_medium: 0 → retry 0 → credited **0**/18
 - `qwen38-27b-fp8` physics_hard: 9 → retry 9 → credited **9**/20
 - `qwen38-flash-next` protocol_architecture: 16 → retry 16 → credited **16**/18
-- `qwen38-flash-next` cuda_easy: 6 → retry 16 → credited **11**/16
+- `qwen38-flash-next` cuda_easy: 16 → retry 16 → credited **16**/16
 - `qwen38-flash-next` cobs_codec: 14 → retry 14 → credited **14**/24
 - `qwen38-flash-next` ml_medium: 0 → retry 26 → credited **18**/26
 - `qwen38-flash-next` verilog_hard: 7 → retry 30 → credited **21**/30
