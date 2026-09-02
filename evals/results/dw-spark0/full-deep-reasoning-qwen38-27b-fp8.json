@@ -1,0 +1,748 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "qwen38-27b-fp8",
+  "endpoint": "http://127.0.0.1:19434/v1/chat/completions",
+  "score": 227,
+  "max_score": 302,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 8471,
+    "completion_tokens": 11831,
+    "total_tokens": 20302,
+    "task_seconds": 1554.95,
+    "wall_seconds": 1554.96,
+    "generation_tok_s": 7.61,
+    "truncated_tasks": [],
+    "retries": 10,
+    "retry_completion_tokens": 1086
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 14.2574,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 164,
+        "total_tokens": 271,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": true
+      },
+      "score_first": 3,
+      "retry_feedback": "failed checks: Ada, Cara, Dion",
+      "score_retry": 6,
+      "retry_usage": {
+        "prompt_tokens": 328,
+        "total_tokens": 435,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 14.2677,
+      "retry_response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "retry_grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 23.4139,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 372,
+        "completion_tokens": 177,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"The eligibility score relative to the cutoff of 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for the compliers (individuals whose participation status is determined by crossing the score threshold)\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: The expected values of the potential outcomes (absent treatment) are continuous functions of the score at the cutoff.\",\n    \"No manipulation: The score cannot be precisely manipulated by agents to cross the threshold (density is continuous at the cutoff).\",\n    \"Exclusion Restriction: The score affects the outcome only through its effect on treatment eligibility/participation, and no other policy changes occur at the threshold.\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": false
+      },
+      "score_first": 10,
+      "retry_feedback": "failed checks: fuzzy_rd, monotonicity",
+      "score_retry": 11,
+      "retry_usage": {
+        "prompt_tokens": 430,
+        "total_tokens": 570,
+        "completion_tokens": 140,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 18.6229,
+      "retry_response": "{\n  \"design\": \"Fuzzy Regression Discontinuity Design\",\n  \"instrument\": \"Eligibility status determined by the score cutoff at 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for compliers\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity of potential outcomes in the running variable at the cutoff\",\n    \"No precise manipulation of the running variable at the cutoff\",\n    \"Monotonicity of treatment assignment with respect to the running variable\",\n    \"Exclusion restriction: the instrument affects the outcome only through treatment\"\n  ]\n}",
+      "retry_grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 4,
+      "max_score": 12,
+      "elapsed_s": 10.8049,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 157,
+        "total_tokens": 238,
+        "completion_tokens": 81,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"one_positive_percent\": 16.4,\n  \"two_positive_percent\": 76.9,\n  \"independence_caveat\": \"The assumption of conditional independence ignores potential correlations in test errors, such as shared biological factors, systematic biases, or the same underlying pathology affecting both tests, which can make the second positive less informative than calculated.\"\n}",
+      "grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      },
+      "score_first": 4,
+      "retry_feedback": "failed checks: one_positive, two_positive",
+      "score_retry": 4,
+      "retry_usage": {
+        "prompt_tokens": 295,
+        "total_tokens": 376,
+        "completion_tokens": 81,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 10.8428,
+      "retry_response": "{\n  \"one_positive_percent\": 16.4,\n  \"two_positive_percent\": 76.9,\n  \"independence_caveat\": \"The assumption of conditional independence ignores potential correlations in test errors, such as shared biological factors, systematic biases, or the same underlying pathology affecting both tests, which can make the second positive less informative than calculated.\"\n}",
+      "retry_grade_details": {
+        "one_positive": false,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 27.9024,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 240,
+        "total_tokens": 451,
+        "completion_tokens": 211,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The observation that X has the same effect in an orthogonal signaling assay rules out H3 (assay_artifact).\",\n    \"The validated occupancy assay detecting no binding of X to R rules out H1 (direct_block).\",\n    \"The decrease in R protein with unchanged R mRNA indicates post-transcriptional regulation, consistent with protein degradation.\",\n    \"The prevention of both R-protein decline and the signaling effect by a proteasome inhibitor confirms that the proteasome is required for the mechanism, supporting H2 (proteasomal_degradation).\"\n  ],\n  \"decisive_falsifier\": \"If a proteasome inhibitor fails to prevent the decline in R protein levels or the reduction in signaling, or if X is shown to inhibit the proteasome directly rather than targeting R for degradation, the proteasomal_degradation hypothesis would be undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 68.5583,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 238,
+        "total_tokens": 759,
+        "completion_tokens": 521,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "The claim that the mayor diverted famine relief in 1892 should be assessed with significant skepticism, though not dismissed entirely. The evidentiary weight currently favors the innocence of the mayor regarding the specific transaction, but the historical context requires nuance.\n\nSource dependence is a critical weakness in the prosecution\u2019s case. S1, the primary source for the accusation, is authored by a political rival, introducing a clear incentive to fabricate or exaggerate misconduct. S2 and S4 are derivative; they add no independent verification, merely amplifying S1\u2019s unverified claims. This creates a circular citation loop where the accusation rests solely on a hostile witness with no corroborating transactional data.\n\nS3, the treasury ledger, is the most probative evidence. As an independently preserved document with reconciled totals, it demonstrates that the disputed funds were indeed disbursed to named grain suppliers. This directly contradicts the core mechanism of \"diversion\" if defined as embezzlement or misappropriation for personal gain. The ledger establishes that the money reached the intended sector (grain supply). However, S3 does not establish the *quality* or *timeliness* of the grain, nor does it prove the mayor did not collude with suppliers to inflate costs or delay delivery. It confirms the flow of funds, not the integrity of the procurement process.\n\nThe detail that one supplier was the mayor\u2019s cousin is a red flag for potential conflict of interest, but it is neutralized by the pricing data. Since the listed price matched other suppliers that month, there is no evidence of price gouging or financial benefit to the mayor through this specific transaction. This weakens the argument of self-dealing, though it does not rule out nepotistic favoritism in supplier selection, which is a different ethical violation than diversion.\n\nBelief in the claim should decrease significantly. The burden of proof for \"diversion\" requires evidence of misappropriation, which S3 refutes for the specific funds in question. The remaining doubt lies in whether the grain was actually delivered or was of sufficient quality to alleviate famine.\n\nThe highest-value next evidence to seek would be independent delivery receipts or warehouse logs from the grain suppliers, or contemporary reports from famine relief workers verifying the arrival and distribution of the grain. If the grain arrived and was distributed, the claim of diversion collapses. If the grain never arrived, S3\u2019s reconciliation might indicate a fraudulent entry, shifting the focus to accounting fraud rather than simple diversion. Until such evidence is found, the claim remains unsupported by material proof.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 15.2831,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 325,
+        "completion_tokens": 115,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"launch_now_ev\": 36.0,\n  \"positive_probability\": 0.52,\n  \"good_given_positive\": 0.769,\n  \"launch_ev_given_positive\": 60.0,\n  \"launch_ev_given_negative\": -12.0,\n  \"test_policy_ev_after_cost\": 20.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      },
+      "score_first": 8,
+      "retry_feedback": "failed checks: launch_ev_given_negative, launch_ev_given_positive, launch_now_ev, test_policy_ev_after_cost",
+      "score_retry": 8,
+      "retry_usage": {
+        "prompt_tokens": 396,
+        "total_tokens": 511,
+        "completion_tokens": 115,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 15.3539,
+      "retry_response": "{\n  \"launch_now_ev\": 36.0,\n  \"positive_probability\": 0.52,\n  \"good_given_positive\": 0.769,\n  \"launch_ev_given_positive\": 60.0,\n  \"launch_ev_given_negative\": -12.0,\n  \"test_policy_ev_after_cost\": 20.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "retry_grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 32.5701,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 143,
+        "total_tokens": 390,
+        "completion_tokens": 247,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"The rule is 'If vowel, then even number'. To test this, we must look for a counterexample: a card with a vowel on one side and an odd number on the other. \\n1. Card 'A': 'A' is a vowel. We must turn it to check if the other side is an even number. If it is odd, the rule is false.\\n2. Card '7': '7' is an odd number. We must turn it to check if the other side is a vowel. If it is a vowel, the rule is false (vowel with odd number).\\n3. Card 'D': 'D' is a consonant. The rule only applies to vowels. Whether the other side is even or odd does not violate the rule.\\n4. Card '4': '4' is an even number. The rule does not state that even numbers must have vowels on the other side (it is not a biconditional). Therefore, finding a consonant on the other side does not violate the rule.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      },
+      "score_first": 9,
+      "retry_feedback": "failed checks: four_not_converse",
+      "score_retry": 10,
+      "retry_usage": {
+        "prompt_tokens": 446,
+        "total_tokens": 744,
+        "completion_tokens": 298,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 39.3939,
+      "retry_response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"The rule is 'If a card has a vowel on one side, then it has an even number on the other side.' This is a conditional statement (P -> Q). To falsify it, we need to find a case where P is true and Q is false (Vowel AND Odd Number). \\n1. Card 'A': 'A' is a vowel (P is true). We must turn it to ensure the other side is not an odd number. If it is odd, the rule is violated.\\n2. Card '7': '7' is an odd number (Q is false). We must turn it to ensure the other side is not a vowel. If it is a vowel, we have a Vowel with an Odd number, violating the rule.\\n3. Card 'D': 'D' is a consonant (P is false). The rule does not constrain what is on the other side of a consonant. Turning it is not required.\\n4. Card '4': '4' is an even number (Q is true). The rule does not state that even numbers must have vowels on the other side (this would be the converse, which is not logically equivalent). Therefore, finding a consonant on the other side does not violate the rule. Turning it is not required.\"\n}",
+      "retry_grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 103.1704,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 211,
+        "total_tokens": 996,
+        "completion_tokens": 785,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "**Recommendation: Do Not Implement Automatic Restrictive Supervision. Adopt a Constrained, Human-in-the-Loop Decision Support System with Rigorous Auditing.**\n\nAutomatic imposition of restrictive supervision based solely on a fixed risk threshold is unjustified and dangerous. While the model is calibrated within demographic groups, calibration only ensures that predicted probabilities match observed frequencies in the historical data. It does not guarantee fairness, accuracy in individual cases, or robustness to future changes. Relying on it for automatic action ignores critical statistical, causal, and ethical failures.\n\n**Statistical and Causal Limitations**\nSevere violent offenses are rare events. Even a highly accurate model will produce a high number of false positives relative to true positives due to the base rate fallacy. If the base rate of severe violence is 1%, a model with 90% sensitivity and 95% specificity will still flag many non-offenders. Because the cost of a false positive (unjustified liberty deprivation) is severe, and the cost of a false negative (missed offense) is also high, a single fixed threshold is arbitrary. More critically, prediction is not causation. The model identifies correlation, not the causal mechanism of violence. Restrictive supervision may not prevent the specific offense predicted, or it may exacerbate risk factors (e.g., social isolation, economic hardship) that contribute to recidivism.\n\n**Feedback Loops and Distribution Shift**\nPolice deployment changes who is observed and arrested. If police focus on high-risk predictions, they will arrest more people from those groups, creating a feedback loop where the model\u2019s training data becomes biased toward over-policed demographics. This \"selective labels\" problem means the model learns to predict who is *arrested*, not who is *violent*. Furthermore, defendants can adapt strategically if features are known (e.g., hiding assets, changing behavior), rendering the model obsolete. Finally, economic and social shifts will cause distribution shift, meaning historical calibration will not hold in the future.\n\n**Rights and Due Process**\nAutomatic restriction violates due process by denying individualized assessment. It treats individuals as statistical aggregates, ignoring mitigating circumstances. It also raises equal protection concerns if the model\u2019s features proxy for race or socioeconomic status, even if calibrated within groups.\n\n**Proposed Deployment and Evaluation Design**\n1.  **Role:** Use the model only as a decision-support tool for human judges or parole boards. It must not trigger automatic action.\n2.  **Thresholds:** Use multiple thresholds with clear cost-benefit analysis. Require a high confidence level for restrictive measures.\n3.  **Safeguards:**\n    *   **Human Review:** Every case flagged for restriction must be reviewed by a human who can consider context, mitigating factors, and alternative interventions.\n    *   **Transparency:** Provide defendants with the specific factors driving the risk score and the right to contest them.\n    *   **Audit:** Independent, ongoing auditing for disparate impact, accuracy, and feedback loops.\n4.  **Evaluation:**\n    *   **Counterfactual Analysis:** Use synthetic control methods or randomized trials (where ethical) to measure the causal impact of supervision on recidivism.\n    *   **Monitoring:** Track false positive rates, especially for marginalized groups. Monitor for strategic adaptation by defendants.\n5.  **Stopping Conditions:**\n    *   If disparate impact exceeds a defined threshold.\n    *   If the model\u2019s predictive accuracy degrades significantly due to distribution shift.\n    *   If evidence shows that restrictive supervision increases recidivism or harms social outcomes.\n    *   If feedback loops are detected that bias police deployment.\n\nThis approach balances public safety with individual rights, acknowledging the model\u2019s limitations while leveraging its potential for targeted, human-oversight interventions.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    },
+    {
+      "task": "physics_easy",
+      "score": 6,
+      "max_score": 14,
+      "elapsed_s": 7.6193,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 152,
+        "total_tokens": 209,
+        "completion_tokens": 57,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"energy_kwh\": 2.7,\n  \"cost_usd\": 0.756,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}",
+      "grade_details": {
+        "expected_energy_kwh": 0.84,
+        "expected_cost_usd": 0.2352,
+        "expected_heat_watts": 240.0,
+        "expected_amps_at_240v": 1.0,
+        "parsed": true,
+        "energy_kwh": false,
+        "cost_usd": false,
+        "heat_watts": true,
+        "amps_at_240v": true
+      },
+      "score_first": 6,
+      "retry_feedback": "failed checks: cost_usd, energy_kwh",
+      "score_retry": 6,
+      "retry_usage": {
+        "prompt_tokens": 268,
+        "total_tokens": 325,
+        "completion_tokens": 57,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 7.652,
+      "retry_response": "{\n  \"energy_kwh\": 2.7,\n  \"cost_usd\": 0.756,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}",
+      "retry_grade_details": {
+        "expected_energy_kwh": 0.84,
+        "expected_cost_usd": 0.2352,
+        "expected_heat_watts": 240.0,
+        "expected_amps_at_240v": 1.0,
+        "parsed": true,
+        "energy_kwh": false,
+        "cost_usd": false,
+        "heat_watts": true,
+        "amps_at_240v": true
+      }
+    },
+    {
+      "task": "optimization_easy",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 5.5256,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 182,
+        "total_tokens": 223,
+        "completion_tokens": 41,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}",
+      "grade_details": {
+        "expected_choice": "bravo",
+        "expected_quality": 91,
+        "expected_memory_left_gib": 8,
+        "expected_alpha_fits": false,
+        "parsed": true,
+        "choice": true,
+        "quality": true,
+        "memory_left_gib": true,
+        "alpha_fits": true
+      }
+    },
+    {
+      "task": "causal_easy",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 7.6363,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 221,
+        "total_tokens": 278,
+        "completion_tokens": 57,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}",
+      "grade_details": {
+        "parsed": true,
+        "relationship": true,
+        "confounder": true,
+        "adjust_for": true,
+        "ice_cream_causes_drowning": true,
+        "banning_ice_cream_helps": true
+      }
+    },
+    {
+      "task": "sizing_easy",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 7.7591,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 199,
+        "total_tokens": 257,
+        "completion_tokens": 58,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1.0,\n  \"kv_gib_at_131072\": 16.0\n}",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 131072,
+        "expected_kv_gib_at_8192": 1.0,
+        "expected_kv_gib_at_131072": 16.0,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "kv_gib_at_8192": true,
+        "kv_gib_at_131072": true,
+        "cached_k_only": false
+      }
+    },
+    {
+      "task": "physics_medium",
+      "score": 8,
+      "max_score": 16,
+      "elapsed_s": 8.9554,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 333,
+        "completion_tokens": 67,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"steady_state_junction_c\": 299.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 219.2\n}",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": false,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": false,
+        "gave_rise_not_temperature": false
+      },
+      "score_first": 8,
+      "retry_feedback": "failed checks: gave_rise_not_temperature, junction_after_one_tau_c, steady_state_junction_c",
+      "score_retry": 8,
+      "retry_usage": {
+        "prompt_tokens": 402,
+        "total_tokens": 469,
+        "completion_tokens": 67,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 9.0044,
+      "retry_response": "{\n  \"steady_state_junction_c\": 299.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 219.2\n}",
+      "retry_grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": false,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": false,
+        "gave_rise_not_temperature": false
+      }
+    },
+    {
+      "task": "optimization_medium",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 310.6676,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 261,
+        "total_tokens": 2630,
+        "completion_tokens": 2369,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To find the optimal selection, we must solve a 0/1 Knapsack problem where the capacity is 112 GiB.\n\n**Models:**\n1.  **atlas**: 61 GiB, Value 67\n2.  **borealis**: 56 GiB, Value 60\n3.  **cinder**: 56 GiB, Value 60\n4.  **dunlin**: 27 GiB, Value 28\n5.  **ember**: 19 GiB, Value 19\n6.  **fennec**: 13 GiB, Value 12\n\n**Step 1: Calculate Value Density (Value / Size)**\n*   atlas: $67 / 61 \\approx 1.098$\n*   borealis: $60 / 56 \\approx 1.071$\n*   cinder: $60 / 56 \\approx 1.071$\n*   dunlin: $28 / 27 \\approx 1.037$\n*   ember: $19 / 19 = 1.000$\n*   fennec: $12 / 13 \\approx 0.923$\n\n**Step 2: Determine the Optimal Set (Maximise Total Value)**\n\nLet's evaluate combinations that fit within 112 GiB. Since the items are relatively large, we can check combinations of the largest items first.\n\n*   **Option A: Two large items**\n    *   atlas (61) + borealis (56) = 117 GiB (Too big)\n    *   atlas (61) + cinder (56) = 117 GiB (Too big)\n    *   borealis (56) + cinder (56) = 112 GiB.\n        *   Size: 112 GiB\n        *   Value: $60 + 60 = 120$\n        *   Remaining space: 0 GiB.\n        *   This is a valid candidate.\n\n*   **Option B: One large item + smaller items**\n    *   **atlas (61)**: Remaining capacity = $112 - 61 = 51$ GiB.\n        *   We need to maximize value from {borealis, cinder, dunlin, ember, fennec} within 51 GiB.\n        *   borealis (56) and cinder (56) don't fit.\n        *   Best fit from remaining:\n            *   dunlin (27) + ember (19) = 46 GiB. Value: $28 + 19 = 47$.\n            *   dunlin (27) + fennec (13) = 40 GiB. Value: $28 + 12 = 40$.\n            *   ember (19) + fennec (13) = 32 GiB. Value: $19 + 12 = 31$.\n            *   dunlin (27) alone = 27 GiB. Value: 28.\n            *   Can we fit anything else with dunlin+ember? $51 - 46 = 5$ GiB left. No other item fits.\n            *   So, best with atlas is: atlas + dunlin + ember.\n            *   Total Size: $61 + 27 + 19 = 107$ GiB.\n            *   Total Value: $67 + 28 + 19 = 114$.\n            *   This is less than 120.\n\n    *   **borealis (56)**: Remaining capacity = $112 - 56 = 56$ GiB.\n        *   We need to maximize value from {atlas, cinder, dunlin, ember, fennec} within 56 GiB.\n        *   atlas (61) doesn't fit.\n        *   cinder (56) fits exactly.\n            *   borealis + cinder = 112 GiB. Value: $60 + 60 = 120$. (Same as Option A).\n        *   If we don't take cinder, we look at {dunlin, ember, fennec} within 56 GiB.\n            *   dunlin (27) + ember (19) + fennec (13) = $27+19+13 = 59$ GiB (Too big).\n            *   dunlin (27) + ember (19) = 46 GiB. Value: $28+19=47$.\n            *   dunlin (27) + fennec (13) = 40 GiB. Value: $28+12=40$.\n            *   ember (19) + fennec (13) = 32 GiB. Value: $19+12=31$.\n            *   Best subset here is dunlin+ember (47).\n            *   Total Value: $60 (\\text{borealis}) + 47 = 107$.\n            *   This is less than 120.\n\n    *   **cinder (56)**: Symmetric to borealis. Best is cinder + borealis = 120.\n\n*   **Option C: No large items (atlas, borealis, cinder)**\n    *   Items: dunlin (27), ember (19), fennec (13).\n    *   Total Size: $27 + 19 + 13 = 59$ GiB.\n    *   Total Value: $28 + 19 + 12 = 59$.\n    *   This is much less than 120.\n\n**Conclusion for Optimal Selection:**\nThe set {borealis, cinder} yields a total value of 120 and uses exactly 112 GiB.\nThe set {atlas, dunlin, ember} yields a total value of 114 and uses 107 GiB.\n120 > 114.\n\nTherefore, the optimal selection is **borealis** and **cinder**.\n\n**Step 3: Calculate Greedy by Value Density Total**\n\nAlgorithm: Repeatedly pick the available model with the highest value-per-GiB that fits in the remaining capacity.\n\n1.  **Current Capacity**: 112 GiB.\n    *   Densities:\n        *   atlas: 1.098\n        *   borealis: 1.071\n        *   cinder: 1.071\n        *   dunlin: 1.037\n        *   ember: 1.000\n        *   fennec: 0.923\n    *   Highest density: **atlas** (1.098).\n    *   Does it fit? Yes (61 <= 112).\n    *   **Select atlas**.\n    *   Remaining Capacity: $112 - 61 = 51$ GiB.\n    *   Current Total Value: 67.\n\n2.  **Current Capacity**: 51 GiB.\n    *   Remaining Models: borealis, cinder, dunlin, ember, fennec.\n    *   Densities:\n        *   borealis: 1.071 (Size 56) -> Does not fit (56 > 51).\n        *   cinder: 1.071 (Size 56) -> Does not fit (56 > 51).\n        *   dunlin: 1.037 (Size 27) -> Fits.\n        *   ember: 1.000 (Size 19) -> Fits.\n        *   fennec: 0.923 (Size 13) -> Fits.\n    *   Highest density among those that fit: **dunlin** (1.037).\n    *   **Select dunlin**.\n    *   Remaining Capacity: $51 - 27 = 24$ GiB.\n    *   Current Total Value: $67 + 28 = 95$.\n\n3.  **Current Capacity**: 24 GiB.\n    *   Remaining Models: borealis, cinder, ember, fennec.\n    *   Densities:\n        *   borealis: 1.071 (Size 56) -> Does not fit.\n        *   cinder: 1.071 (Size 56) -> Does not fit.\n        *   ember: 1.000 (Size 19) -> Fits.\n        *   fennec: 0.923 (Size 13) -> Fits.\n    *   Highest density among those that fit: **ember** (1.000).\n    *   **Select ember**.\n    *   Remaining Capacity: $24 - 19 = 5$ GiB.\n    *   Current Total Value: $95 + 19 = 114$.\n\n4.  **Current Capacity**: 5 GiB.\n    *   Remaining Models: borealis, cinder, fennec.\n    *   Densities:\n        *   borealis: 1.071 (Size 56) -> Does not fit.\n        *   cinder: 1.071 (Size 56) -> Does not fit.\n        *   fennec: 0.923 (Size 13) -> Does not fit (13 > 5).\n    *   No models fit. Stop.\n\n**Greedy Total Value**: 114.\n\n**Final Check:**\n*   Optimal Selection: [\"borealis\", \"cinder\"]\n*   Total Value: 120\n*   Total Size: 112\n*   Greedy Total: 114\n\n```json\n{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}\n```",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      }
+    },
+    {
+      "task": "causal_medium",
+      "score": 13,
+      "max_score": 18,
+      "elapsed_s": 8.1802,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 264,
+        "total_tokens": 325,
+        "completion_tokens": 61,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"adjustment_set\": [\"C\", \"I\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": false,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      },
+      "score_first": 13,
+      "retry_feedback": "failed checks: adjustment_set, included_mediator_or_collider",
+      "score_retry": 13,
+      "retry_usage": {
+        "prompt_tokens": 386,
+        "total_tokens": 447,
+        "completion_tokens": 61,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 8.2238,
+      "retry_response": "{\n  \"adjustment_set\": [\"C\", \"I\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "retry_grade_details": {
+        "parsed": true,
+        "adjustment_set": false,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      }
+    },
+    {
+      "task": "sizing_medium",
+      "score": 0,
+      "max_score": 18,
+      "elapsed_s": 9.6155,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 286,
+        "total_tokens": 358,
+        "completion_tokens": 72,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"kv_bytes_per_token\": 8192,\n  \"gib_per_sequence_at_32768\": 2.5,\n  \"total_gib_at_32768\": 34.5,\n  \"max_context_per_sequence\": 49152\n}",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": false,
+        "gib_per_sequence_at_32768": false,
+        "total_gib_at_32768": false,
+        "max_context_per_sequence": false,
+        "forgot_four_sequences": false
+      },
+      "score_first": 0,
+      "retry_feedback": "failed checks: forgot_four_sequences, gib_per_sequence_at_32768, kv_bytes_per_token, max_context_per_sequence, total_gib_at_32768",
+      "score_retry": 0,
+      "retry_usage": {
+        "prompt_tokens": 445,
+        "total_tokens": 531,
+        "completion_tokens": 86,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 11.4863,
+      "retry_response": "{\n  \"kv_bytes_per_token\": 8320,\n  \"gib_per_sequence_at_32768\": 2.548828125,\n  \"total_gib_at_32768\": 34.6953125,\n  \"max_context_per_sequence\": 47104\n}",
+      "retry_grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": false,
+        "gib_per_sequence_at_32768": false,
+        "total_gib_at_32768": false,
+        "max_context_per_sequence": false,
+        "forgot_four_sequences": false
+      }
+    },
+    {
+      "task": "physics_hard",
+      "score": 9,
+      "max_score": 20,
+      "elapsed_s": 9.8789,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 289,
+        "total_tokens": 363,
+        "completion_tokens": 74,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 126.0,\n  \"sustainable_power_w\": 232.14\n}",
+      "grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": false,
+        "sustainable_power_w": false,
+        "used_tau_from_ambient": false
+      },
+      "score_first": 9,
+      "retry_feedback": "failed checks: seconds_to_95c, sustainable_power_w, used_tau_from_ambient",
+      "score_retry": 9,
+      "retry_usage": {
+        "prompt_tokens": 431,
+        "total_tokens": 505,
+        "completion_tokens": 74,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "retry_elapsed_s": 9.9309,
+      "retry_response": "{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 126.0,\n  \"sustainable_power_w\": 232.14\n}",
+      "retry_grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": false,
+        "sustainable_power_w": false,
+        "used_tau_from_ambient": false
+      }
+    },
+    {
+      "task": "optimization_hard",
+      "score": 22,
+      "max_score": 22,
+      "elapsed_s": 575.5779,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 298,
+        "total_tokens": 4703,
+        "completion_tokens": 4405,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To determine the value-maximizing feasible set, we must evaluate combinations of models that satisfy both constraints:\n1.  **Total Size** $\\le 112$ GiB\n2.  **Total Bandwidth** $\\le 260$ GB/s\n\nThe goal is to maximize the **Total Value**.\n\n**Models:**\n*   **atlas**: Size 61, BW 120, Value 67\n*   **borealis**: Size 56, BW 140, Value 60\n*   **cinder**: Size 56, BW 130, Value 60\n*   **dunlin**: Size 27, BW 80, Value 28\n*   **ember**: Size 19, BW 70, Value 19\n*   **fennec**: Size 13, BW 55, Value 12\n\nLet's analyze the high-value items first, as they dominate the value metric.\n*   `atlas` (67) is the highest value.\n*   `borealis` (60) and `cinder` (60) are next.\n*   `dunlin` (28), `ember` (19), `fennec` (12) are lower.\n\n**Step 1: Check if we can include `atlas` (61 GiB, 120 GB/s, Value 67).**\nRemaining Capacity:\n*   Size: $112 - 61 = 51$ GiB\n*   Bandwidth: $260 - 120 = 140$ GB/s\n\nWe need to fill the remaining 51 GiB and 140 GB/s with other models to maximize value.\nAvailable models: `borealis` (56), `cinder` (56), `dunlin` (27), `ember` (19), `fennec` (13).\n\n*   Can we add `borealis` (56 GiB)? No, $56 > 51$.\n*   Can we add `cinder` (56 GiB)? No, $56 > 51$.\n*   Can we add `dunlin` (27 GiB, 80 GB/s, Value 28)?\n    *   New Size: $61 + 27 = 88 \\le 112$.\n    *   New BW: $120 + 80 = 200 \\le 260$.\n    *   Remaining Capacity: Size $112 - 88 = 24$, BW $260 - 200 = 60$.\n    *   Can we add more?\n        *   `ember` (19 GiB, 70 GB/s): BW $70 > 60$. No.\n        *   `fennec` (13 GiB, 55 GB/s): BW $55 \\le 60$, Size $13 \\le 24$. Yes.\n        *   Set: `{atlas, dunlin, fennec}`.\n        *   Total Size: $61 + 27 + 13 = 101$.\n        *   Total BW: $120 + 80 + 55 = 255$.\n        *   Total Value: $67 + 28 + 12 = 107$.\n        *   Remaining Capacity: Size $11$, BW $5$. No other items fit.\n\n*   Can we add `ember` (19 GiB, 70 GB/s, Value 19) instead of `dunlin`?\n    *   Set: `{atlas, ember}`.\n    *   Size: $61 + 19 = 80$.\n    *   BW: $120 + 70 = 190$.\n    *   Remaining: Size 32, BW 70.\n    *   Can we add `fennec` (13, 55, 12)?\n        *   Set: `{atlas, ember, fennec}`.\n        *   Size: $80 + 13 = 93$.\n        *   BW: $190 + 55 = 245$.\n        *   Value: $67 + 19 + 12 = 98$.\n        *   Remaining: Size 19, BW 15. No more fit.\n    *   Can we add `dunlin` (27, 80, 28) to `{atlas, ember}`?\n        *   BW: $190 + 80 = 270 > 260$. No.\n\n*   Can we add `fennec` (13, 55, 12) to `{atlas}`?\n    *   Set: `{atlas, fennec}`.\n    *   Size: 74, BW: 175.\n    *   Remaining: Size 38, BW 85.\n    *   Can we add `ember` (19, 70, 19)?\n        *   Set: `{atlas, fennec, ember}`. Value 98 (calculated above).\n    *   Can we add `dunlin` (27, 80, 28)?\n        *   Set: `{atlas, fennec, dunlin}`. Value 107 (calculated above).\n\nSo, the best set containing `atlas` is **`{atlas, dunlin, fennec}`** with Value **107**.\n\n**Step 2: Check if we can get a higher value without `atlas`.**\nIf we exclude `atlas`, we have 112 GiB and 260 GB/s available.\nTop candidates: `borealis` (56, 140, 60) and `cinder` (56, 130, 60).\n\n*   Try `{borealis, cinder}`:\n    *   Size: $56 + 56 = 112$. (Exactly at limit)\n    *   BW: $140 + 130 = 270$.\n    *   $270 > 260$. **Infeasible**.\n\n*   Try `{borealis, dunlin, ember, fennec}`:\n    *   Size: $56 + 27 + 19 + 13 = 115 > 112$. **Infeasible**.\n\n*   Try `{borealis, dunlin, fennec}`:\n    *   Size: $56 + 27 + 13 = 96 \\le 112$.\n    *   BW: $140 + 80 + 55 = 275 > 260$. **Infeasible**.\n\n*   Try `{borealis, dunlin, ember}`:\n    *   Size: $56 + 27 + 19 = 102 \\le 112$.\n    *   BW: $140 + 80 + 70 = 290 > 260$. **Infeasible**.\n\n*   Try `{borealis, ember, fennec}`:\n    *   Size: $56 + 19 + 13 = 88 \\le 112$.\n    *   BW: $140 + 70 + 55 = 265 > 260$. **Infeasible**.\n\n*   Try `{borealis, fennec}`:\n    *   Size: $56 + 13 = 69$.\n    *   BW: $140 + 55 = 195$.\n    *   Value: $60 + 12 = 72$.\n    *   Remaining: Size 43, BW 65.\n    *   Can we add `dunlin` (27, 80)? BW $195+80=275 > 260$. No.\n    *   Can we add `ember` (19, 70)? BW $195+70=265 > 260$. No.\n    *   Can we add `cinder`? Size $69+56=125 > 112$. No.\n    *   Max value here is 72.\n\n*   Try `{cinder, dunlin, fennec}`:\n    *   Size: $56 + 27 + 13 = 96 \\le 112$.\n    *   BW: $130 + 80 + 55 = 265 > 260$. **Infeasible**.\n\n*   Try `{cinder, dunlin, ember}`:\n    *   Size: $56 + 27 + 19 = 102 \\le 112$.\n    *   BW: $130 + 80 + 70 = 280 > 260$. **Infeasible**.\n\n*   Try `{cinder, ember, fennec}`:\n    *   Size: $56 + 19 + 13 = 88 \\le 112$.\n    *   BW: $130 + 70 + 55 = 255 \\le 260$. **Feasible**.\n    *   Value: $60 + 19 + 12 = 91$.\n    *   Remaining: Size 24, BW 5. No more fit.\n\n*   Try `{cinder, dunlin}`:\n    *   Size: $56 + 27 = 83$.\n    *   BW: $130 + 80 = 210$.\n    *   Value: $60 + 28 = 88$.\n    *   Remaining: Size 29, BW 50.\n    *   Can we add `fennec` (13, 55)? BW $210+55=265 > 260$. No.\n    *   Can we add `ember` (19, 70)? BW $210+70=280 > 260$. No.\n\n*   Try `{borealis, cinder}` was infeasible. What about just one of them plus others?\n    We checked `{borealis, ...}` and `{cinder, ...}`.\n    Best without `atlas` seems to be `{cinder, ember, fennec}` with Value 91.\n    Let's check if we can swap `cinder` for `borealis` in that set?\n    `{borealis, ember, fennec}` was infeasible (BW 265).\n    \n    Let's check `{borealis, fennec}` + something else?\n    We established `{borealis, fennec}` leaves BW 65. `dunlin` needs 80. `ember` needs 70. Neither fits.\n    \n    Let's check `{cinder, fennec}` + something else?\n    `{cinder, fennec}`: Size 69, BW 185, Value 72.\n    Remaining: Size 43, BW 75.\n    Can we add `dunlin` (27, 80)? BW $185+80=265 > 260$. No.\n    Can we add `ember` (19, 70)? BW $185+70=255 \\le 260$. Yes.\n    Set: `{cinder, fennec, ember}`. Value 91. (Same as above).\n\n    Is there a combination of 3 small items?\n    `{dunlin, ember, fennec}`:\n    Size: $27+19+13 = 59$.\n    BW: $80+70+55 = 205$.\n    Value: $28+19+12 = 59$.\n    Remaining: Size 53, BW 55.\n    Can we add `cinder` (56, 130)? Size $59+56=115 > 112$. No.\n    Can we add `borealis` (56, 140)? Size $59+56=115 > 112$. No.\n    Can we add `atlas`? No, we are in the \"without atlas\" branch, but even if we did, we already evaluated sets with atlas.\n\n    So, the maximum value without `atlas` is 91.\n    The maximum value with `atlas` is 107.\n\n    Therefore, the global maximum is **107** with set **`{atlas, dunlin, fennec}`**.\n\n**Step 3: Determine if bandwidth binds.**\nThe question asks: \"whether the bandwidth limit rules out the set you would have picked on memory alone\".\n\n1.  **Pick the set on memory alone**:\n    We need to maximize value subject *only* to Size $\\le 112$.\n    Let's find the max value set ignoring bandwidth.\n    \n    *   `atlas` (61, 67). Remaining Size 51.\n        *   Can we add `borealis` (56)? No ($56>51$).\n        *   Can we add `cinder` (56)? No ($56>51$).\n        *   Can we add `dunlin` (27, 28)? Yes. Remaining Size 24.\n            *   Can we add `ember` (19, 19)? Yes. Remaining Size 5.\n                *   Set: `{atlas, dunlin, ember}`. Value: $67+28+19 = 114$.\n                *   Can we add `fennec` (13, 12) to `{atlas, dunlin}`?\n                    *   Set: `{atlas, dunlin, fennec}`. Value: $67+28+12 = 107$.\n                    *   Remaining Size 11.\n            *   Can we add `fennec` (13, 12) to `{atlas, dunlin, ember}`?\n                *   Size: $61+27+19+13 = 120 > 112$. No.\n        *   Can we add `ember` (19, 19) to `atlas`?\n            *   Remaining Size 32.\n            *   Add `dunlin` (27, 28)?\n                *   Set: `{atlas, ember, dunlin}`. Value 114.\n            *   Add `fennec` (13, 12)?\n                *   Set: `{atlas, ember, fennec}`. Value $67+19+12=98$.\n                *   Remaining Size 19. Can we add `dunlin`? $19+27=46 > 19$? No, wait.\n                *   Size of `{atlas, ember, fennec}` is $61+19+13=93$. Remaining 19.\n                *   `dunlin` is 27. Doesn't fit.\n    \n    *   What if we don't pick `atlas`?\n        *   `borealis` (56, 60) + `cinder` (56, 60).\n        *   Size: $56+56=112$.\n        *   Value: $60+60=120$.\n        *   This is higher than 114.\n        *   Can we add anything else? Size is exactly 112. No.\n    \n    *   So, the set picked on memory alone is **`{borealis, cinder}`** with Value **120**.\n\n2.  **Check if this set is feasible under bandwidth**:\n    *   Set: `{borealis, cinder}`\n    *   Total Bandwidth: $140 + 130 = 270$ GB/s.\n    *   Limit: 260 GB/s.\n    *   $270 > 260$.\n    *   The set is **infeasible** due to bandwidth.\n\n3.  **Conclusion on `bandwidth_binds`**:\n    Since the memory-optimal set (`{borealis, cinder}`) is rejected by the bandwidth constraint, the bandwidth limit *does* rule out the set picked on memory alone.\n    Therefore, `bandwidth_binds` is **true**.\n\n**Final Verification of the Selected Set:**\nSelection: `[\"atlas\", \"dunlin\", \"fennec\"]`\n*   **Size**: $61 + 27 + 13 = 101$ GiB. ($101 \\le 112$) -> OK.\n*   **Bandwidth**: $120 + 80 + 55 = 255$ GB/s. ($255 \\le 260$) -> OK.\n*   **Value**: $67 + 28 + 12 = 107$.\n\nIs there any other combination with value > 107?\nWe checked:\n*   With `atlas`: Max was 107.\n*   Without `atlas`: Max was 91 (`{cinder, ember, fennec}`).\n*   Memory-only max was 120 (`{borealis, cinder}`), but infeasible.\n\nAre there other sets with `atlas`?\n*   `{atlas, borealis}`: Size 117 > 112. Infeasible.\n*   `{atlas, cinder}`: Size 117 > 112. Infeasible.\n*   `{atlas, dunlin, ember}`: Size 107, BW 270 > 260. Infeasible.\n*   `{atlas, dunlin, fennec}`: Size 101, BW 255. Feasible. Value 107.\n*   `{atlas, ember, fennec}`: Size 93, BW 245. Feasible. Value 98.\n*   `{atlas, dunlin}`: Value 95.\n*   `{atlas, ember}`: Value 86.\n*   `{atlas, fennec}`: Value 79.\n\nThe selection is correct.\n\n```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": true\n}\n```",
+      "grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "total_bandwidth": true,
+        "bandwidth_binds": true,
+        "ignored_bandwidth": false
+      }
+    },
+    {
+      "task": "causal_hard",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 7.4173,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 302,
+        "total_tokens": 357,
+        "completion_tokens": 55,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "backdoor_identifiable": true,
+        "frontdoor_identifiable": true,
+        "frontdoor_mediator": true,
+        "adjust_for_m_directly": true,
+        "effect_identifiable": true,
+        "said_unidentifiable": false
+      }
+    },
+    {
+      "task": "sizing_hard",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 155.3802,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 366,
+        "total_tokens": 1551,
+        "completion_tokens": 1185,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": null
+      },
+      "response": "To calculate the KV cache cost, we follow these steps:\n\n1.  **Identify the layers contributing to the KV cache:**\n    *   Total layers: 48\n    *   Full attention layers: 12\n    *   Linear attention layers: 36 (contribute 0 to KV cache)\n    *   Only the 12 full attention layers contribute to the KV cache.\n\n2.  **Calculate the number of elements per token for one full-attention layer:**\n    *   Heads: 8\n    *   Head dimension: 128\n    *   K and V are cached separately.\n    *   Elements per token per layer = $2 \\times \\text{heads} \\times \\text{head\\_dim}$\n    *   Elements per token per layer = $2 \\times 8 \\times 128 = 2048$ elements.\n\n3.  **Calculate the total elements per token for the entire model:**\n    *   Total elements per token = $\\text{Full attention layers} \\times \\text{Elements per token per layer}$\n    *   Total elements per token = $12 \\times 2048 = 24,576$ elements.\n\n4.  **Calculate the bytes per token (`kv_bytes_per_token`):**\n    *   Quantization: q8_0\n    *   Cost per element: 1.0625 bytes\n    *   Bytes per token = $\\text{Total elements per token} \\times \\text{Cost per element}$\n    *   Bytes per token = $24,576 \\times 1.0625$\n    *   Calculation: $24,576 \\times 1 = 24,576$; $24,576 \\times 0.0625 = 24,576 / 16 = 1,536$.\n    *   Total = $24,576 + 1,536 = 26,112$ bytes.\n\n5.  **Calculate the KV cache size at 262,144 tokens (`kv_gib_at_262144`):**\n    *   Total bytes = $\\text{Bytes per token} \\times \\text{Number of tokens}$\n    *   Total bytes = $26,112 \\times 262,144$\n    *   Note: $262,144 = 2^{18}$.\n    *   Total bytes = $26,112 \\times 2^{18}$\n    *   Convert to GiB: Divide by $2^{30}$.\n    *   GiB = $\\frac{26,112 \\times 2^{18}}{2^{30}} = \\frac{26,112}{2^{12}} = \\frac{26,112}{4,096}$\n    *   Calculation: $26,112 / 4,096 = 6.375$ GiB.\n\n6.  **Calculate the maximum context tokens in 25 GiB (`max_context_tokens_in_25gib`):**\n    *   Available bytes = $25 \\text{ GiB} \\times 2^{30} \\text{ bytes/GiB}$\n    *   Available bytes = $25 \\times 1,073,741,824 = 26,843,545,600$ bytes.\n    *   Max tokens = $\\lfloor \\frac{\\text{Available bytes}}{\\text{Bytes per token}} \\rfloor$\n    *   Max tokens = $\\lfloor \\frac{26,843,545,600}{26,112} \\rfloor$\n    *   Calculation:\n        *   $26,843,545,600 / 26,112 \\approx 1,028,015.686$\n    *   Rounding down: 1,028,015 tokens.\n\n7.  **Check if weights + KV fits in 112 GiB (`weights_87gib_and_262144_fits_in_112gib`):**\n    *   Weights size: 87 GiB\n    *   KV size at 262,144 tokens: 6.375 GiB\n    *   Total size = $87 + 6.375 = 93.375$ GiB\n    *   Limit: 112 GiB\n    *   Is $93.375 \\le 112$? Yes.\n    *   Result: true.\n\n```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": true,
+        "gib_at_262144": true,
+        "max_context": true,
+        "fits": true,
+        "counted_all_48_layers": false
+      }
+    }
+  ]
+}

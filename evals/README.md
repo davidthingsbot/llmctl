@@ -810,8 +810,8 @@ by default from model 2's reasoning suite onwards. Live table:
 |---|---|---|---|
 | **Fable 5.1 (reference)** | 100/64/154/120 = **438** | 100/56/68/78 = **302** | — |
 | `qwen38-flash-next` | 98/64/136/111 = **409** (retry×5) | 78/56/46/32 = **212** (retry×9) | 22/36/48/48 |
-| `qwen38-27b-nvfp4` | 84/64/130/92 = **370** (cold) | 79/48/51/30 = **208** (cold) | 11/20/41/**79** |
-| `qwen38-27b-fp8` | 91/64/118/92 = **365** (cold) | 75/48/37/**67** = **227** (retry×10) | 8/16/31/59 |
+| `qwen38-27b-nvfp4` | 84/64/130/92 = **372** (retry×6) | 79/48/51/30 = 208 (retry×9) | 11/20/41/**79** |
+| `qwen38-27b-fp8` | 91/64/118/109 = **383** (retry×6) | 75/48/37/**67** = **227** (retry×10) | 8/16/31/59 |
 | `deepseek-flash-150b` | 94/64/132/98 = **388** (retry×8) | 69/56/22/27 = **174** (retry×14) | 15/14/34/33 |
 | `nemotron-120b` | 96/61/122/117 = **396** (retry×7) | 83/42/31/36 = 192 (retry×12) | see table |
 
@@ -829,6 +829,28 @@ half the right answer, the trap detector fired), `optimization_medium` chose a
 second large MoE, after deepseek, to write flawless hard-tier code and fail
 multi-step arithmetic that the dense 27B gets right. It also maxed
 `acquisition_timing` 6/6 — the first local model to, on the corrected keys.
+
+### Cold vs retry on the same weights
+
+Both 27B builds were re-run with retry on, giving the only same-model,
+same-prompt, same-build comparison in this file (cold files kept under
+`results/dw-spark0/cold/`).
+
+| model | suite | cold | retry | tasks that changed |
+|---|---|---:|---:|---|
+| `qwen38-27b-nvfp4` | work | 370 | 372 | `acquisition_timing` 1→3 (renamed keys, not comparable) |
+| `qwen38-27b-nvfp4` | reasoning | 208 | 208 | none |
+| `qwen38-27b-fp8` | work | 365 | **383** | **`verilog_hard` 2→19** (retry scored 27, credited ×0.7) |
+
+Forty-one of forty-two NVFP4 task scores were IDENTICAL across two loads two
+hours apart — the exact and executed tasks are behaving as instruments — and the
+retry earned NVFP4 nothing: given `rdata is not a valid l-value ... declared here
+as wire`, it resubmitted a design that still did not compile. The FP8 build of
+the SAME weights read the same message and fixed the FIFO to 27/30. One pair, so
+it may be a coin flip at temperature 0 rather than a quantisation effect — but
+it is the second time NVFP4 and FP8 have diverged sharply on a hard task (the
+other being hard reasoning, 30 vs 67), and both times FP8 was the one that
+reasoned its way through.
 
 ### What the retry measured
 

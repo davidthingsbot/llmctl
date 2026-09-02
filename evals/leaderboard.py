@@ -93,7 +93,9 @@ if cold_dir.exists():
         for key, prefix in (("work", "full-"), ("reason", "full-deep-reasoning-")):
             cold = load(cold_dir / f"{prefix}{name}.json")
             warm = m.get(key)
-            if cold and warm and (warm.get("cost") or {}).get("retries"):
+            # only a genuinely cold prior run is a cold baseline
+            if cold and warm and (warm.get("cost") or {}).get("retries") \
+                    and not (cold.get("cost") or {}).get("retries"):
                 pairs.append((name, key, cold, warm))
     if pairs:
         lines += ["", "## Cold vs retry — same model, same prompts", "",

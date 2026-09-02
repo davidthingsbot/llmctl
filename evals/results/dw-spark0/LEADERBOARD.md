@@ -8,8 +8,18 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 | `qwen38-flash-next` | 98 / 64 / 136 / 111 = **409**/438 (retry×5) | 78 / 56 / 46 / 32 = **212**/302 (retry×9) | 22 / 36 / 48 / 48 | 19152 | 15 min |
 | `nemotron-120b` | 96 / 61 / 122 / 117 = **396**/438 (retry×7) | 83 / 42 / 31 / 36 = **192**/302 (retry×12) | 15 / 24 / 41 / 62 | 14655 | 17 min |
 | `deepseek-flash-150b` | 94 / 64 / 132 / 98 = **388**/438 (retry×8) | 69 / 56 / 22 / 27 = **174**/302 (retry×14) | 15 / 14 / 34 / 33 | 30904 | 35 min |
-| `qwen38-27b-nvfp4` | 84 / 64 / 130 / 92 = **370**/438 (cold) | 79 / 48 / 51 / 30 = **208**/302 (cold) | 11 / 20 / 41 / 79 | 16816 | 25 min |
-| `qwen38-27b-fp8` | 91 / 64 / 118 / 92 = **365**/438 (cold) | 75 / 48 / 37 / 67 = **227**/302 (retry×10) | 8 / 16 / 31 / 59 | 21407 | 46 min |
+| `qwen38-27b-fp8` | 92 / 64 / 118 / 109 = **383**/438 (retry×6) | 75 / 48 / 37 / 67 = **227**/302 (retry×10) | 8 / 14 / 29 / 56 | 24128 | 54 min |
+| `qwen38-27b-nvfp4` | 86 / 64 / 130 / 92 = **372**/438 (retry×8) | 79 / 48 / 51 / 30 = **208**/302 (retry×11) | 11 / 20 / 41 / 78 | 21815 | 34 min |
+
+## Cold vs retry — same model, same prompts
+
+| model | suite | cold | retry-credited | Δ | first attempt of retry run | tasks changed by a do-over |
+|---|---|---:|---:|---:|---:|---|
+| `qwen38-27b-fp8` | work | 365 | **383** | +18 | 365 | acquisition_timing 0→1, verilog_hard 2→19 |
+| `qwen38-27b-nvfp4` | work | 370 | **372** | +2 | 372 | — |
+| `qwen38-27b-nvfp4` | reason | 208 | **208** | +0 | 208 | — |
+
+_The 'first attempt of retry run' column is the retry run's own cold score; its difference from the cold column is run-to-run noise, not retry._
 
 ## Retry gaps (score_first → credited)
 
@@ -54,6 +64,12 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 - `nemotron-120b` optimization_hard: 4 → retry 0 → credited **4**/22
 - `nemotron-120b` causal_hard: 17 → retry 20 → credited **17**/20
 - `nemotron-120b` sizing_hard: 3 → retry 3 → credited **3**/16
+- `qwen38-27b-fp8` bom_consolidation: 9 → retry 10 → credited **9**/10
+- `qwen38-27b-fp8` embedded_c_review: 10 → retry 10 → credited **10**/12
+- `qwen38-27b-fp8` acquisition_timing: 0 → retry 2 → credited **1**/6
+- `qwen38-27b-fp8` cobs_codec: 14 → retry 14 → credited **14**/24
+- `qwen38-27b-fp8` ml_medium: 0 → retry 0 → credited **0**/26
+- `qwen38-27b-fp8` verilog_hard: 2 → retry 27 → credited **19**/30
 - `qwen38-27b-fp8` logic_grid: 3 → retry 6 → credited **4**/12
 - `qwen38-27b-fp8` causal_inference: 10 → retry 11 → credited **10**/14
 - `qwen38-27b-fp8` bayesian_reasoning: 4 → retry 4 → credited **4**/12
@@ -64,6 +80,25 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 - `qwen38-27b-fp8` causal_medium: 13 → retry 13 → credited **13**/18
 - `qwen38-27b-fp8` sizing_medium: 0 → retry 0 → credited **0**/18
 - `qwen38-27b-fp8` physics_hard: 9 → retry 9 → credited **9**/20
+- `qwen38-27b-nvfp4` bom_consolidation: 9 → retry 10 → credited **9**/10
+- `qwen38-27b-nvfp4` embedded_c_review: 10 → retry 10 → credited **10**/12
+- `qwen38-27b-nvfp4` protocol_architecture: 10 → retry 10 → credited **10**/18
+- `qwen38-27b-nvfp4` acquisition_timing: 3 → retry 3 → credited **3**/6
+- `qwen38-27b-nvfp4` cobs_codec: 15 → retry 15 → credited **15**/24
+- `qwen38-27b-nvfp4` stream_reassembler: 20 → retry 24 → credited **20**/24
+- `qwen38-27b-nvfp4` verilog_medium: 15 → retry 15 → credited **15**/26
+- `qwen38-27b-nvfp4` verilog_hard: 2 → retry 2 → credited **2**/30
+- `qwen38-27b-nvfp4` logic_grid: 6 → retry 6 → credited **6**/12
+- `qwen38-27b-nvfp4` causal_inference: 10 → retry 13 → credited **10**/14
+- `qwen38-27b-nvfp4` bayesian_reasoning: 4 → retry 4 → credited **4**/12
+- `qwen38-27b-nvfp4` value_of_information: 11 → retry 11 → credited **11**/12
+- `qwen38-27b-nvfp4` complex_policy_reasoning: 12 → retry 12 → credited **12**/14
+- `qwen38-27b-nvfp4` physics_easy: 6 → retry 6 → credited **6**/14
+- `qwen38-27b-nvfp4` physics_medium: 13 → retry 13 → credited **13**/16
+- `qwen38-27b-nvfp4` sizing_medium: 4 → retry 4 → credited **4**/18
+- `qwen38-27b-nvfp4` physics_hard: 6 → retry 6 → credited **6**/20
+- `qwen38-27b-nvfp4` optimization_hard: 4 → retry 4 → credited **4**/22
+- `qwen38-27b-nvfp4` sizing_hard: 0 → retry 0 → credited **0**/16
 - `qwen38-flash-next` protocol_architecture: 16 → retry 16 → credited **16**/18
 - `qwen38-flash-next` cuda_easy: 16 → retry 16 → credited **16**/16
 - `qwen38-flash-next` cobs_codec: 14 → retry 14 → credited **14**/24
