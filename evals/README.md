@@ -809,10 +809,10 @@ by default from model 2's reasoning suite onwards. Live table:
 | model | work L/E/M/H = total | reasoning L/E/M/H = total | conc 1/2/4/8 |
 |---|---|---|---|
 | **Fable 5.1 (reference)** | 100/64/154/120 = **438** | 100/56/68/78 = **302** | — |
-| `qwen38-flash-next` | 98/59/136/111 = **404** (retry×5) | 78/56/46/32 = **212** (retry×9) | 22/36/48/48 |
+| `qwen38-flash-next` | 98/64/136/111 = **409** (retry×5) | 78/56/46/32 = **212** (retry×9) | 22/36/48/48 |
 | `qwen38-27b-nvfp4` | 84/64/130/92 = **370** (cold) | 79/48/51/30 = **208** (cold) | 11/20/41/**79** |
 | `qwen38-27b-fp8` | 91/64/118/92 = **365** (cold) | 75/48/37/**67** = **227** (retry×10) | 8/16/31/59 |
-| `deepseek-flash-150b` | 94/64/124/76 = **358** (retry×8) | 69/56/22/27 = **174** (retry×14) | 15/14/34/33 |
+| `deepseek-flash-150b` | 94/64/132/98 = **388** (retry×8) | 69/56/22/27 = **174** (retry×14) | 15/14/34/33 |
 | `nemotron-120b` | failed to load — silent 40-min init, no OOM | | |
 
 ### What the retry measured
@@ -821,9 +821,17 @@ Forty-six do-overs across four models. The feedback TYPE decided everything:
 
 - **Compiler and checker output repairs code.** `qwen38-flash-next` took
   `verilog_hard` from 7 to a perfect 30 — the CDC FIFO both 27B builds failed at
-  2/30 cold — and `ml_medium` from 0 to 26, `cuda_easy` from 6 to 16.
-  `deepseek-flash-150b` took `cuda_medium` from 10 to 26. Every one of those
-  started from a specific error: a compile failure, a named failing test.
+  2/30 cold — and `ml_medium` from 0 to 26. Both started from a specific error:
+  a compile failure, a named failing test.
+- **CORRECTION: the CUDA "repairs" were not repairs.** `cuda_easy` 6 -> 16 and
+  `cuda_medium` 10 -> 26 were first reported as retry successes. Regrading with
+  the GPU free scored the FIRST attempts at 16/16, 26/26 and 30/30. Those first
+  scores — 6, 10, 8 — are exactly the graders' `gpu: unavailable` fallbacks: the
+  sweep's own model was saturating the GPU, `cudaMalloc` failed, and correct
+  kernels were given partial credit. `deepseek-flash-150b` lost 22 points on
+  `cuda_hard` to it. The CUDA graders now retry the binary six times with
+  backoff before falling back, and any row still marked `gpu: unavailable` must
+  be regraded once the GPU is free. Corrected: deepseek work 388, Flash-Next 409.
 - **Field names do not repair arithmetic.** Thirty-three reasoning retries
   across three models produced ONE credited gain (`logic_grid` 3 -> 4). Told
   which numeric field was wrong, every model re-derived the same wrong number.

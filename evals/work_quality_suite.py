@@ -962,6 +962,24 @@ int main() {
 
 
 
+def _run_cuda_binary(binary, timeout=300, attempts=6, backoff_s=10):
+    """Run a compiled CUDA test binary, retrying while the GPU is busy.
+
+    During a sweep the GPU is serving the model under test, so cudaMalloc can
+    fail transiently. On 2026-09-01 that scored three CORRECT kernels 6/16,
+    10/26 and 8/30 — the gpu-unavailable fallbacks — and one of them was then
+    mis-read as a successful retry. Returns (stdout, gpu_available).
+    """
+    out = ""
+    for attempt in range(attempts):
+        run = subprocess.run([binary], capture_output=True, text=True, timeout=timeout)
+        out = run.stdout
+        if "GPU_UNAVAILABLE" not in out and run.returncode != 3:
+            return out, True
+        time.sleep(backoff_s)
+    return out, False
+
+
 def _barrier_inside_thread_conditional(code):
     """True if a __syncthreads() sits inside a branch guarded by a thread index.
 
@@ -1031,9 +1049,8 @@ Contract:
                 details["compile_error"] = [l for l in build.stderr.splitlines()
                                             if "error" in l.lower()][:3]
                 return 0, 26, details
-            run = subprocess.run([binary], capture_output=True, text=True, timeout=300)
-            out = run.stdout
-            if "GPU_UNAVAILABLE" in out or run.returncode == 3:
+            out, gpu_ok = _run_cuda_binary(binary)
+            if not gpu_ok:
                 # The GPU is busy serving a model. Compilation still proves a lot;
                 # flag the gap rather than scoring a correct kernel as broken.
                 details["gpu"] = "unavailable"
@@ -1831,12 +1848,12 @@ Contract:
                 details["compile_error"] = [l for l in build.stderr.splitlines()
                                             if "error" in l.lower()][:3]
                 return 0, 16, details
-            run = subprocess.run([binary], capture_output=True, text=True, timeout=300)
-            if "GPU_UNAVAILABLE" in run.stdout or run.returncode == 3:
+            run_out, gpu_ok = _run_cuda_binary(binary)
+            if not gpu_ok:
                 details["gpu"] = "unavailable"
                 return 6, 16, details
             details["gpu"] = "used"
-            for line in run.stdout.splitlines():
+            for line in run_out.splitlines():
                 if line.startswith("CASE "):
                     parts = line.split()
                     details[f"n_{parts[1]}"] = parts[2] == "PASS"
@@ -1941,12 +1958,12 @@ Contract:
                 details["compile_error"] = [l for l in build.stderr.splitlines()
                                             if "error" in l.lower()][:3]
                 return 0, 30, details
-            run = subprocess.run([binary], capture_output=True, text=True, timeout=300)
-            if "GPU_UNAVAILABLE" in run.stdout or run.returncode == 3:
+            run_out, gpu_ok = _run_cuda_binary(binary)
+            if not gpu_ok:
                 details["gpu"] = "unavailable"
                 return 8, 30, details
             details["gpu"] = "used"
-            for line in run.stdout.splitlines():
+            for line in run_out.splitlines():
                 if line.startswith("CASE "):
                     parts = line.split()
                     details[f"case_{parts[1]}"] = parts[2] == "PASS"
