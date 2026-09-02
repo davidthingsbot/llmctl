@@ -800,6 +800,63 @@ matched only ```` ```python ```` or a bare fence, so a ```` ```verilog ```` repl
 fell through and the backticks themselves were handed to the parser — a latent
 zero for any non-Python task.
 
+## dw-spark0 clean sweep — 2026-09-01
+
+Five models, one load each, both suites fully tiered, 12k-token floor, retry on
+by default from model 2's reasoning suite onwards. Live table:
+[`results/dw-spark0/LEADERBOARD.md`](results/dw-spark0/LEADERBOARD.md).
+
+| model | work L/E/M/H = total | reasoning L/E/M/H = total | conc 1/2/4/8 |
+|---|---|---|---|
+| **Fable 5.1 (reference)** | 100/64/154/120 = **438** | 100/56/68/78 = **302** | — |
+| `qwen38-flash-next` | 98/59/136/111 = **404** (retry×5) | 78/56/46/32 = **212** (retry×9) | 22/36/48/48 |
+| `qwen38-27b-nvfp4` | 84/64/130/92 = **370** (cold) | 79/48/51/30 = **208** (cold) | 11/20/41/**79** |
+| `qwen38-27b-fp8` | 91/64/118/92 = **365** (cold) | 75/48/37/**67** = **227** (retry×10) | 8/16/31/59 |
+| `deepseek-flash-150b` | 94/64/124/76 = **358** (retry×8) | 69/56/22/27 = **174** (retry×14) | 15/14/34/33 |
+| `nemotron-120b` | failed to load — silent 40-min init, no OOM | | |
+
+### What the retry measured
+
+Forty-six do-overs across four models. The feedback TYPE decided everything:
+
+- **Compiler and checker output repairs code.** `qwen38-flash-next` took
+  `verilog_hard` from 7 to a perfect 30 — the CDC FIFO both 27B builds failed at
+  2/30 cold — and `ml_medium` from 0 to 26, `cuda_easy` from 6 to 16.
+  `deepseek-flash-150b` took `cuda_medium` from 10 to 26. Every one of those
+  started from a specific error: a compile failure, a named failing test.
+- **Field names do not repair arithmetic.** Thirty-three reasoning retries
+  across three models produced ONE credited gain (`logic_grid` 3 -> 4). Told
+  which numeric field was wrong, every model re-derived the same wrong number.
+  "failed checks: kv_bytes_per_token" names the symptom; a compiler error names
+  the line.
+- **A retry can make things worse.** `deepseek-flash-150b` `ml_medium` went
+  14 -> 0: given a gradient-check failure, it rewrote working code into code
+  that did not run. The never-lower rule kept the 14. It is not a nicety.
+
+### What the tiers separated
+
+- Every model swept the easy tier or nearly so (59-64/64); the frontier
+  reference is flat at 100% through hard. The hard tier is where they part:
+  111, 92, 92, 76 on work; 32, 30, 67, 27 on reasoning.
+- **Same weights, two quantisations, hard reasoning 30 vs 67** (NVFP4 vs FP8,
+  both cold). One pair is not a conclusion, but it is the largest quant effect
+  seen anywhere in this repo and it lands on the hardest tier. Worth a deliberate
+  re-run.
+- `deepseek-flash-150b` writes a correct CDC FIFO (26/26 on `verilog_medium`,
+  the only model to do so cold) and scores 0 on a thermal time constant, 0 on a
+  two-constraint knapsack and 0 on KV sizing. A 150B MoE with a specific,
+  narrow hole in multi-step arithmetic.
+- `acquisition_timing`, never passed by any model before the key rename, now
+  scores 4/6 on deepseek and 1-4/6 elsewhere. It was measuring the key name.
+
+### Concurrency, now that STREAMS is set fairly
+
+`qwen38-flash-next` at `STREAMS=4` scales 22 -> 48 to four streams and holds
+there — it batches, up to its slot count. The earlier "flat at 25" reading was
+`STREAMS=1`, a configuration artifact, not the model. The dense 27B under vLLM
+still leads at 8 streams (79), because a dense model amortises weight reads
+across a batch and a sparse MoE routing to different experts per token cannot.
+
 ## Frontier control — 740/740, 2026-09-01
 
 > Live standings for this machine, regenerated as each model completes: [`results/dw-spark0/LEADERBOARD.md`](results/dw-spark0/LEADERBOARD.md) (`python3 evals/leaderboard.py`).
