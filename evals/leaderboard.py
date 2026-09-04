@@ -78,6 +78,10 @@ for name in sorted(models, key=lambda n: -((models[n].get("work") or {}).get("sc
     if c:
         rows = [x for x in c["results"] if "aggregate_tok_s" in x]
         ccell = " / ".join(f"{x['aggregate_tok_s']:.0f}" for x in rows)
+        # a ladder that goes past 8 streams says so, since the header names 1/2/4/8
+        extra = [str(x["streams"]) for x in rows if x.get("streams", 0) > 8]
+        if extra:
+            ccell += f" (…/{'/'.join(extra)} streams)"
     else:
         ccell = "—"
     tok = sum((x.get("cost") or {}).get("completion_tokens", 0) for x in (w, r) if x)
