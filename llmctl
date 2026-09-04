@@ -2325,10 +2325,28 @@ def color_class(p): return "31" if p >= 85 else ("38;5;208" if p >= 75 else "32"
 def temp_class(t):  # quiet until it matters — Ryzen idles in the 80s by design
     return "31" if t >= 90 else ("33" if t >= 80 else "2")
 
+# A model switch mid-session (one goes down, another comes up) is drawn as a
+# dim vertical bar through EVERY chart at that tick, and the model header reads
+# "old │ new" while the bar is on screen. MARKS is one bool per tick, trimmed
+# with the histories, so it right-aligns with any series (a peer's history may
+# start later, but its last sample is this tick's like everyone else's).
+MARKS = []
+SWITCHES = []   # (tick, old names tuple, new names tuple)
+TICKN = 0
+MARK = f"{ESC}[2m│"
+
+def marks_for(n):  # the last n ticks' marks, right-aligned to a series of length n
+    m = MARKS[-n:] if n else []
+    return [False] * (n - len(m)) + m
+
 def spark_row(series, width):  # one-line full-width trace, colored per sample
     pts = list(series)[-width:]
+    mk = marks_for(len(pts))
     out, cur = [" " * (width - len(pts))], None
-    for p in pts:
+    for i, p in enumerate(pts):
+        if mk[i]:
+            out.append(MARK); cur = None
+            continue
         cls = color_class(p)
         if cls != cur:
             out.append(f"{ESC}[{cls}m"); cur = cls
@@ -2347,12 +2365,16 @@ def area_chart(main, line, rows, width, colors=None):
     m = list(main)[-width:]
     l = list(line)[-width:] if line is not None else None
     cl = list(colors)[-width:] if colors is not None else None
+    mk = marks_for(len(m))
     pad = " " * (width - len(m))
     out = []
     for r in range(rows):
         b = rows - 1 - r  # this display row covers levels [b*8, b*8+8)
         s, cur = [pad], None
         for i, p in enumerate(m):
+            if mk[i]:  # model switch: a bar through the whole column
+                s.append(MARK); cur = None
+                continue
             sub = max(0, min(8, round(p / 100 * rows * 8) - b * 8))
             if sub == 0 and l is not None \
                and min(rows - 1, int(max(0.0, min(99.9, l[i])) / 100 * rows)) == b:
@@ -2965,6 +2987,20 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         mlines = [c("1;35", " MODEL") + "  " + c("2", "(none running)")]
     else:
         mlines = [l for m in up for l in model_block(m, hists, cw)]
+    # a switch still on screen: name both sides above the blocks, oldest first
+    recent = [sw for sw in SWITCHES if TICKN - sw[0] < cw]
+    if recent:
+        names = []
+        for _, old, new in recent:
+            for n in list(old) + list(new):
+                if n not in names:
+                    names.append(n)
+        for n in [m["name"] for m in up]:
+            if n not in names:
+                names.append(n)
+        mlines.insert(0, c("1;35", " MODEL") + "  "
+                      + (c("2", " │ ")).join(n or c("2", "(none)") for n in names)
+                      + c("2", f"   switch {fmt_t((TICKN - recent[-1][0]) * TICK)} ago"))
 
     # peer nodes get the SAME blocks as this box — GPU util+vram, CPU, RAM —
     # from the latest ssh probe (held between probes). Unreachable is drawn
@@ -3156,6 +3192,7 @@ def mem_read():
 hists = {}
 cpu_prev = cpu_read()
 models_prev, t_prev = {}, time.monotonic()
+models_prev_up = []
 # models are polled concurrently: /metrics and /slots each wait on the target's
 # inference loop, so serial polling would make a tick cost the SUM over models
 # (up to 2 x POLL_TMO each) instead of the slowest one. urllib releases the GIL
@@ -3180,10 +3217,19 @@ try:
         t_now = time.monotonic()
         models = list(pool.map(
             lambda mm: model_read(*mm, prev=models_prev.get(mm[0], {})), MODELS))
+        names_now = tuple(sorted(m["name"] for m in models if m["up"]))
+        if models_prev and names_now != tuple(sorted(models_prev_up)):
+            MARKS.append(True); SWITCHES.append((TICKN, tuple(sorted(models_prev_up)), names_now))
+        else:
+            MARKS.append(False)
+        models_prev_up = list(names_now)
+        TICKN += 1
         lines = frame(cpu_prev, cpu_now, gpus, mem, models,
                       models_prev, t_now - t_prev, hists)
         for h in hists.values():
             del h[:-HIST]
+        del MARKS[:-HIST]
+        SWITCHES[:] = [sw for sw in SWITCHES if TICKN - sw[0] < HIST]
         if ONCE or not interactive:
             print("\n".join(lines))
             if ONCE:
