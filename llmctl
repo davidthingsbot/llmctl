@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # llmctl — run local LLM servers (vLLM / llama.cpp) as systemd user units,
 # one fixed port per model, and keep this machine's agents pointed at the
-# right one. Several models can run at once if they fit in VRAM.
+# right one. Several models can run at once if they fit in VRAM. A model too
+# big for one box can span this machine plus PEERS (BACKEND=cluster): status,
+# top and the memory pre-check then watch every node.
 #
 # Usage:
 #   llmctl                     interactive menu
 #   llmctl <model>             shorthand for `llmctl set <model>`
 #   llmctl list                model registry + status
-#   llmctl status              units, health, GPU, agent targets, chat links
+#   llmctl status              units, health, agent targets, chat links, and
+#                              every node's CPU/RAM/GPU (this box + PEERS)
 #   llmctl set  <model>        THE switch: stop other models, start <model>,
 #                              repoint the following agents + browser chat
 #                              (open-webui for vLLM, llama.cpp's own UI else);
@@ -32,7 +35,7 @@
 #                              agent logs + vLLM finish reasons), then
 #                              full-width history charts — GPU util+VRAM per
 #                              card, per-core CPU traces (combined when
-#                              short), RAM
+#                              short), RAM; one line + ram trace per PEER
 #   llmctl bench <model>       benchmark a running model (tok/s, GPU, power)
 #   llmctl stats [model]       recorded load times + benchmark history
 #   llmctl machine             show machine profile + probed hardware
@@ -51,8 +54,11 @@
 # VRAM pre-check and the `machine init` overwrite protection.
 #
 # Everything host-specific lives in ~/.config/llmctl/ :
-#   machine.conf      host facts: accelerator, GPUs, binaries, web UI, ...
-#   models.d/*.conf   one file per model (`llmctl add`)
+#   machine.conf      host facts: accelerator, GPUs, binaries, web UI, PEERS
+#                     ("name=addr ..." — the other box of a two-box model)
+#   models.d/*.conf   one file per model (`llmctl add`); BACKEND=cluster
+#                     points MODEL_REF at a launch script that drives every
+#                     node in NODES (hand-written; see scripts/*-tp2.sh)
 #   agents.d/*.conf   one file per agent (`llmctl agent add`): TYPE=hermes|
 #                     openclaw, CFG, UNIT, FOLLOW — FOLLOW=0 pins an agent so
 #                     `set` leaves it alone. While agents.d/ is empty, legacy
@@ -144,6 +150,13 @@ ENABLE_BUILTIN_MODELS=1        # 0 = ignore the registry block (models.d/ only)
 HERMES_ENABLE=1
 OPENCLAW_ENABLE=1
 WEBUI_ENABLE=1
+# Peer nodes for two-box models (a DGX Spark pair): "name=addr name2=addr2" —
+# addr is whatever ssh takes, the fabric IP preferred. `status`/`top` probe every
+# node; a cluster model refuses to start unless every node it spans answers ssh
+# and has the memory (a starved GB10 stops answering ssh before it dies).
+PEERS=""
+PEER_NAMES=()
+declare -A PEER_ADDR
 
 # ----------------------------------------------------------------------------
 # Helpers
@@ -164,24 +177,37 @@ key_of()   { sed -n '/./{p;q}' "${KEYFILE[$1]}"; }
 # ----------------------------------------------------------------------------
 # External models (~/.config/llmctl/models.d/*.conf) — added by `llmctl add`.
 # Files are PARSED (key=value), not sourced, so a broken file can't break llmctl.
-# Required keys: BACKEND (vllm|llamacpp), PORT, MODEL_REF (HF repo | gguf path).
+# Required keys: BACKEND (vllm|llamacpp|cluster), PORT, MODEL_REF
+#   (HF repo | gguf path | cluster: an executable launch script that drives every
+#   node and accepts extra `vllm serve` args, e.g. scripts/glm53-flash-tp2.sh).
 # Optional: MODEL_ID, CTX, DESC, VRAM_MB, HEALTH_TIMEOUT, GPUS, EXTRA_ARGS,
 #           ENV_EXTRA ("A=1; B=2", exported before the server starts),
 #           TENSOR_PARALLEL, GPU_UTIL, MAX_MODEL_LEN (vllm),
-#           SERVER_CTX, STREAMS (llamacpp).
+#           SERVER_CTX, STREAMS (llamacpp),
+#           NODES (cluster: peer names from PEERS the model spans; default all;
+#           VRAM_MB is then checked as MemAvailable on EVERY node).
 # ----------------------------------------------------------------------------
 if ((MACHINE_RECORD_REQUEST)); then
   MODELS_D="${MODELS_D:-$HOME/.config/llmctl/models.d}"
 else
   MODELS_D="$HOME/.config/llmctl/models.d"
 fi
-declare -A EXTERNAL MREF TP GUTIL MAXLEN SRVCTX STREAMS GPUS XARGS XENV
+declare -A EXTERNAL MREF TP GUTIL MAXLEN SRVCTX STREAMS GPUS XARGS XENV NODES
 
 conf_get() { # conf_get <key> <file> [default]
   local v
   v="$(sed -n "s/^$1=//p" "$2" | tail -1)"
   v="${v%\"}"; v="${v#\"}"
   echo "${v:-${3:-}}"
+}
+
+parse_peers() { # PEERS="name=addr ..." -> PEER_NAMES / PEER_ADDR (name alone: addr = name)
+  local p n a
+  PEER_NAMES=(); PEER_ADDR=()
+  for p in $PEERS; do
+    n="${p%%=*}"; a="${p#*=}"; [[ "$p" == *=* ]] || a="$n"
+    PEER_NAMES+=("$n"); PEER_ADDR[$n]="$a"
+  done
 }
 
 load_machine_profile() {
@@ -192,12 +218,13 @@ load_machine_profile() {
            WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
            HERMES_ENABLE HERMES_CFG HERMES_UNIT \
            OPENCLAW_ENABLE OPENCLAW_DIR OPENCLAW_UNIT \
-           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE; do
+           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE PEERS; do
     v="$(conf_get "$k" "$MACHINE_CONF")"
     [[ -n "$v" ]] && printf -v "$k" '%s' "$v"
   done
   v="$(conf_get ACCEL "$MACHINE_CONF")"
   [[ -n "$v" ]] && ACCEL="$v"
+  parse_peers
   # LEGACY_UNITS="" present in the file means "none" (the built-in default
   # describes the dual-3090 box and must not leak onto other machines)
   if grep -q '^LEGACY_UNITS=' "$MACHINE_CONF"; then
@@ -251,8 +278,8 @@ load_external_models() {
     fi
     backend="$(conf_get BACKEND "$f")"
     port="$(conf_get PORT "$f")"
-    if [[ ! "$backend" =~ ^(vllm|llamacpp)$ || ! "$port" =~ ^[0-9]+$ || -z "$(conf_get MODEL_REF "$f")" ]]; then
-      err "models.d: $f needs BACKEND=vllm|llamacpp, numeric PORT, MODEL_REF — skipping"; continue
+    if [[ ! "$backend" =~ ^(vllm|llamacpp|cluster)$ || ! "$port" =~ ^[0-9]+$ || -z "$(conf_get MODEL_REF "$f")" ]]; then
+      err "models.d: $f needs BACKEND=vllm|llamacpp|cluster, numeric PORT, MODEL_REF — skipping"; continue
     fi
     local n
     for n in "${MODELS[@]}"; do
@@ -280,6 +307,12 @@ load_external_models() {
       TP[$name]="$(conf_get TENSOR_PARALLEL "$f" 2)"
       GUTIL[$name]="$(conf_get GPU_UTIL "$f" 0.90)"
       MAXLEN[$name]="$(conf_get MAX_MODEL_LEN "$f" "${CTX[$name]}")"
+    elif [[ "$backend" == cluster ]]; then
+      # a two-box vLLM: the launch script owns TP/util/len; llmctl owns the
+      # port, the key, health, the nodes and their memory
+      KEYFILE[$name]="$VLLM_KEYFILE"
+      TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 2400)"
+      NODES[$name]="$(conf_get NODES "$f" "${PEER_NAMES[*]:-}")"
     else
       KEYFILE[$name]="$LLAMA_KEYFILE"
       TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 300)"
@@ -575,6 +608,8 @@ start_model() { # start_model <name> — write unit, timed start, health-wait, b
 status_of() { # short status string
   if is_active "$1"; then
     is_healthy "$1" && echo "up+healthy" || echo "starting"
+  elif is_healthy "$1"; then
+    echo "up (unmanaged)"   # answering on its port with no unit: started by hand
   else
     echo "-"
   fi
@@ -602,8 +637,27 @@ ensure_linger() {
 }
 
 vram_ok() { # free VRAM per GPU >= VRAM[name], unless FORCE=1 (CUDA only)
-  local name="$1" need="${VRAM[$name]}" line idx free bad=0
+  # two statements: bash expands every word of one `local` before assigning any,
+  # so need="${VRAM[$name]}" on the same line read the CALLER's $name (unbound
+  # when there is none — found by the cluster test)
+  local name="$1"
+  local need="${VRAM[$name]}" line idx free bad=0
   [[ "${FORCE:-0}" == 1 ]] && { log "FORCE=1 — skipping VRAM check"; return 0; }
+  if [[ "${BACKEND[$name]}" == cluster ]]; then
+    # every node must have VRAM_MB of MemAvailable: a two-box model holds its
+    # share on each, and a node that does not answer is the worse sign
+    local n avail
+    for n in "" ${NODES[$name]}; do
+      avail="$(node_avail_mib "$n")"
+      if [[ -z "$avail" ]]; then
+        err "node '${n:-$MACHINE_NAME}' did not answer — a starved or wedged box looks exactly like this; check it before starting '$name'"; bad=1
+      elif (( avail < need )); then
+        err "node '${n:-$MACHINE_NAME}' has ${avail} MiB available, '$name' needs ~${need} MiB on every node"; bad=1
+      fi
+    done
+    (( bad )) && { err "not enough memory across the nodes — 'llmctl down <other>' first (and check the peers), or FORCE=1 to try anyway"; return 1; }
+    return 0
+  fi
   if [[ "$ACCEL" != cuda ]]; then
     log "VRAM pre-check unavailable on accel=$ACCEL — starting without it"
     return 0
@@ -680,6 +734,68 @@ client_report() { # client_report <port> — who is talking to the model on <por
 }
 
 # ----------------------------------------------------------------------------
+# Peer nodes — a two-box model spans PEERS; every node is probed the same way,
+# locally and over ssh, so status/top/pre-checks see both CPUs and both GPUs.
+# ----------------------------------------------------------------------------
+PEER_SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new)
+
+peer_sh() { # peer_sh <peer> <command> — bounded; a wedged box times out (rc 124)
+  local n="$1"; shift
+  timeout 12 ssh "${PEER_SSH_OPTS[@]}" "${PEER_ADDR[$n]}" "$@"
+}
+
+# One line per node: "ncpu load1 load5 load15 memtotal_kb memavail_kb | gpu csv;gpu csv"
+# gpu csv = index,name,util%,mem.used,mem.total,temp,power. Unified-memory boards
+# (GB10) report [N/A] for the memory fields: the RAM figures ARE the GPU pool there.
+NODE_PROBE='read l1 l5 l15 _ < /proc/loadavg; n=$(nproc); t=$(awk "/^MemTotal/{print \$2}" /proc/meminfo); a=$(awk "/^MemAvailable/{print \$2}" /proc/meminfo); g=$(nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw --format=csv,noheader,nounits 2>/dev/null | tr "\n" ";"); echo "$n $l1 $l5 $l15 $t $a | $g"'
+
+node_probe() { # node_probe [peer] — no argument = this machine
+  if [[ -z "${1:-}" ]]; then bash -c "$NODE_PROBE"; else peer_sh "$1" "$NODE_PROBE"; fi
+}
+
+node_avail_mib() { # node_avail_mib [peer] — MemAvailable in MiB, empty if unreachable
+  node_probe "${1:-}" 2>/dev/null | awk '$6+0>0 {print int($6/1024)}'
+}
+
+node_report_line() { # node_report_line <label> <probe line>
+  local label="$1" line="$2" ncpu l1 l5 l15 t a gpus g idx gname util used tot temp pw memtxt
+  if [[ -z "$line" ]]; then
+    printf '    %-12s unreachable (no answer on ssh — a starved or wedged box looks exactly like this)\n' "$label"
+    return 0
+  fi
+  read -r ncpu l1 l5 l15 t a _ <<<"$line"
+  gpus="${line#*| }"
+  memtxt="$(awk -v t="$t" -v a="$a" 'BEGIN{printf "%.1f/%.1f GiB used (%.1f avail)", (t-a)/1048576, t/1048576, a/1048576}')"
+  printf '    %-12s cpu %sc load %s %s %s · ram %s\n' "$label" "$ncpu" "$l1" "$l5" "$l15" "$memtxt"
+  local IFS=';'
+  for g in $gpus; do
+    [[ -n "$g" ]] || continue
+    IFS=',' read -r idx gname util used tot temp pw <<<"$(sed 's/, /,/g' <<<"$g")"
+    if [[ "$used" =~ ^[0-9]+$ && "$tot" =~ ^[0-9]+$ ]]; then
+      memtxt="$(awk -v u="$used" -v t="$tot" 'BEGIN{printf "%.1f/%.1f GiB", u/1024, t/1024}')"
+    else
+      memtxt="unified memory (the ram line)"
+    fi
+    printf '    %-12s gpu%s %s · util %s%% · %s°C · %sW · %s\n' "" "$idx" "$gname" "$util" "$temp" "$pw" "$memtxt"
+  done
+}
+
+node_report() { # node_report [peer...] — this machine first, then peers (default: all)
+  local nodes=("$@") n
+  ((${#nodes[@]})) || nodes=("${PEER_NAMES[@]}")
+  log "nodes:"
+  node_report_line "$MACHINE_NAME" "$(node_probe 2>/dev/null || true)"
+  for n in "${nodes[@]}"; do
+    [[ -n "${PEER_ADDR[$n]:-}" ]] || { err "unknown peer '$n' (PEERS in machine.conf)"; continue; }
+    node_report_line "$n" "$(node_probe "$n" 2>/dev/null || true)"
+  done
+}
+
+hw_report() { # after up/set and in status: every node when there are peers, else the GPUs
+  if ((${#PEER_NAMES[@]})); then node_report; else gpu_report; fi
+}
+
+# ----------------------------------------------------------------------------
 # Run scripts + units (generated fresh on every `up`/`set` — edit registry, not these)
 # ----------------------------------------------------------------------------
 write_external_run_script() { # generic template for models.d entries
@@ -699,6 +815,23 @@ write_external_run_script() { # generic template for models.d entries
     env_extra="${env_extra%$'\n'}"
   fi
 
+  if [[ "${BACKEND[$name]}" == cluster ]]; then
+    # the launch script drives every node; llmctl pins the served name, port
+    # and key so agents and the web UI see it like any other vLLM model.
+    # ENV_EXTRA reaches the launcher on this box only — container env is the
+    # launch script's business.
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${EXTERNAL[$name]} — edit that file, not this one
+# cluster model spanning: $MACHINE_NAME ${NODES[$name]}
+set -euo pipefail
+${env_extra}
+exec "${MREF[$name]}" --served-model-name ${ID[$name]} --port $port \\
+  --api-key "\$(cat $VLLM_KEYFILE)" ${XARGS[$name]}
+EOF
+    chmod +x "$script"
+    return 0
+  fi
   if [[ "${BACKEND[$name]}" == vllm ]]; then
     [[ "$ACCEL" == cuda ]] && accel_env="export VLLM_USE_FLASHINFER_SAMPLER=0"
     [[ "$ACCEL" != cpu ]] && mem_flag="--gpu-memory-utilization ${GUTIL[$name]} "
@@ -840,6 +973,13 @@ check_prereqs() { # backend binaries / model files present
   case "${BACKEND[$name]}" in
     vllm)     [[ -x "$VLLM_BIN" ]] || die "vllm not found at $VLLM_BIN";;
     llamacpp) [[ -x "$LLAMA_SERVER" ]] || die "llama-server not found at $LLAMA_SERVER";;
+    cluster)  [[ -x "${MREF[$name]}" ]] || die "cluster launch script not executable: ${MREF[$name]}"
+              command -v docker >/dev/null 2>&1 || die "docker not found (cluster models run the vLLM image)"
+              local n
+              for n in ${NODES[$name]}; do
+                [[ -n "${PEER_ADDR[$n]:-}" ]] || die "'$name' spans node '$n' but PEERS in machine.conf does not define it"
+                peer_sh "$n" true >/dev/null 2>&1 || die "node '$n' (${PEER_ADDR[$n]}) does not answer ssh"
+              done;;
   esac
   if [[ -z "${EXTERNAL[$name]:-}" ]]; then
     case "$name" in
@@ -852,10 +992,27 @@ check_prereqs() { # backend binaries / model files present
   fi
 }
 
+write_cluster_teardown() { # the containers outlive the launcher: remove them on every node on stop
+  local name="$1" script="$RUN_DIR/teardown-$name.sh" n
+  {
+    echo '#!/usr/bin/env bash'
+    echo "# generated by llmctl — removes the vllm_node containers ${MREF[$name]} started"
+    echo 'docker rm -f vllm_node >/dev/null 2>&1 || true'
+    for n in ${NODES[$name]}; do
+      echo "timeout 20 ssh ${PEER_SSH_OPTS[*]} ${PEER_ADDR[$n]} 'docker rm -f vllm_node' >/dev/null 2>&1 || true"
+    done
+  } > "$script"
+  chmod +x "$script"
+}
+
 write_unit() { # write_unit <name>
-  local name="$1" unit
+  local name="$1" unit stop_post=""
   unit="$(unit_of "$name")"
   write_run_script "$name"
+  if [[ "${BACKEND[$name]}" == cluster ]]; then
+    write_cluster_teardown "$name"
+    stop_post="ExecStopPost=$RUN_DIR/teardown-$name.sh"
+  fi
   mkdir -p "$SYSTEMD_USER_DIR"
   cat > "$SYSTEMD_USER_DIR/$unit" <<EOF
 [Unit]
@@ -875,6 +1032,7 @@ ExecStart=$RUN_DIR/run-$name.sh
 Restart=always
 RestartSec=10
 TimeoutStopSec=60
+${stop_post}
 # On unified memory the GPU allocation IS system memory, so a model that is too
 # big takes the machine with it rather than merely failing. Stop on OOM instead
 # of retrying into the same wall.
@@ -1145,7 +1303,7 @@ cmd_up() { # start without stopping others
       return 1
     fi
   done
-  gpu_report
+  hw_report
 }
 
 cmd_down() {
@@ -1196,7 +1354,7 @@ cmd_set() { # exclusive switch + agents; rolls back on failure
   systemctl --user enable "$(unit_of "$name")" 2>/dev/null
 
   cmd_point "$name"
-  gpu_report
+  hw_report
   log "SET: $name is the active model — server + agents survive reboot"
 }
 
@@ -1489,7 +1647,7 @@ PYEOF
 }
 
 RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH_TIMEOUT GPUS
-                   EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS)
+                   EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS NODES)
 
 # machine.conf fields that are repository data. Comments are not: the record is
 # rebuilt from this allowlist so an unlisted (or later-added) key cannot leak.
@@ -1497,7 +1655,7 @@ RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH
 RECORD_MACHINE_KEYS=(MACHINE_NAME NOTES ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT
                      VRAM_PER_GPU_MB VLLM_BIN LLAMA_SERVER MODELS_DIR WIZARD_BASE_PORT
                      ENABLE_BUILTIN_MODELS HERMES_ENABLE OPENCLAW_ENABLE
-                     WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS)
+                     WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS PEERS)
 
 conf_is_safe() { # conf_is_safe <file> <recordable-key>...
   local file="$1" key value
@@ -2131,11 +2289,14 @@ cmd_top() { # cmd_top [--once] — live dashboard: GPUs, per-core CPU, RAM, mode
   done
   # process substitution, not a heredoc: the script must not occupy stdin,
   # which stays the tty for the q-to-quit key handling
+  local p prows=()
+  for p in "${PEER_NAMES[@]}"; do prows+=("$p"$'\t'"${PEER_ADDR[$p]}"); done
   T_ACCEL="$ACCEL" T_ONCE="$once" T_HOST="$(hostname -s 2>/dev/null || echo host)" \
     T_MODELS="$(printf '%s\n' "${rows[@]}")" \
+    T_PEERS="$(((${#prows[@]})) && printf '%s\n' "${prows[@]}" || true)" T_PROBE="$NODE_PROBE" \
     T_AGENTS="$(((${#arows[@]})) && printf '%s\n' "${arows[@]}" || true)" \
     python3 <(cat <<'PYEOF'
-import concurrent.futures, glob, json, math, os, re, select, shutil, subprocess, sys, time, urllib.request
+import concurrent.futures, glob, json, math, os, re, select, shutil, subprocess, sys, threading, time, urllib.request
 
 ACCEL = os.environ.get("T_ACCEL", "cpu")
 ONCE  = os.environ.get("T_ONCE") == "1"
@@ -2144,6 +2305,9 @@ MODELS = [l.split("\t") for l in os.environ.get("T_MODELS", "").splitlines()
           if len(l.split("\t")) == 5]  # name, port, id, backend, key
 AGENTS = [l.split("\t") for l in os.environ.get("T_AGENTS", "").splitlines()
           if len(l.split("\t")) == 3]  # name, target port, agent.log path
+PEERS = [l.split("\t") for l in os.environ.get("T_PEERS", "").splitlines()
+         if len(l.split("\t")) == 2]   # name, ssh address
+PROBE = os.environ.get("T_PROBE", "")
 
 TICKS = [0.25, 0.35, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0, 7.0, 10.0]
 tick_i = TICKS.index(1.0)  # +/- keys walk the ladder at runtime
@@ -2210,6 +2374,49 @@ def area_chart(main, line, rows, width, colors=None):
 def gutter(rows):
     return ["100┤" if r == 0 else ("  0┤" if r == rows - 1 else "   │")
             for r in range(rows)]
+
+# Peers are polled on their own threads: ssh to a healthy box is ~100ms, to a
+# starved one it hangs until the timeout, and neither may stall the frame.
+# peer_state holds the latest probe line (None = unreachable) and its age.
+peer_state = {}
+def peer_poll(name, addr):
+    while True:
+        try:
+            r = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5",
+                                "-o", "StrictHostKeyChecking=accept-new", addr, PROBE],
+                               capture_output=True, text=True, timeout=12)
+            line = r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+        except Exception:
+            line = None
+        peer_state[name] = {"t": time.monotonic(), "line": line}
+        time.sleep(max(2.0, TICK))
+
+def peer_parse(line):  # NODE_PROBE line -> {ncpu, load, total_mib, avail_mib, gpus}
+    if not line or "|" not in line:
+        return None
+    head, _, gtxt = line.partition("|")
+    f = head.split()
+    try:
+        d = {"ncpu": int(f[0]), "load": tuple(float(x) for x in f[1:4]),
+             "total": float(f[4]) / 1024, "avail": float(f[5]) / 1024, "gpus": []}
+    except (IndexError, ValueError):
+        return None
+    def num(x):
+        try: return float(x)
+        except ValueError: return None
+    for g in gtxt.split(";"):
+        parts = [x.strip() for x in g.split(",")]
+        if len(parts) < 7:
+            continue
+        used, tot = num(parts[3]), num(parts[4])
+        if used is None or tot is None:   # unified memory: the RAM figures are the pool
+            used, tot = d["total"] - d["avail"], d["total"]
+        d["gpus"].append({"i": parts[0], "name": parts[1], "util": num(parts[2]) or 0.0,
+                          "used": used, "total": tot, "temp": num(parts[5]), "power": num(parts[6])})
+    return d
+
+for _pn, _pa in PEERS:
+    threading.Thread(target=peer_poll, args=(_pn, _pa), daemon=True).start()
 
 def cpu_read():  # {label: (busy, total)} — "cpu" aggregate + "cpuN" per core
     out = {}
@@ -2688,7 +2895,7 @@ def clamp(s, w):
 def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     W, H = shutil.get_terminal_size()
     cw = max(20, W - GUT - 11)  # trace width; 10 chars + gap for current values
-    L = [c("1;36", " llmctl top") + f" — {HOST} ({ACCEL})"
+    L = [c("1;36", " llmctl top") + f" — {HOST}" + (" + " + ", ".join(n for n, _ in PEERS) if PEERS else "") + f" ({ACCEL})"
          + time.strftime("  %H:%M:%S").rjust(max(0, W - 22 - len(HOST) - len(ACCEL))),
          " " + "─" * (W - 2)]
 
@@ -2747,12 +2954,39 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     else:
         mlines = [l for m in up for l in model_block(m, hists, cw)]
 
+    # peer nodes: a stat line and a one-row ram trace each, from the latest
+    # ssh probe; unreachable is drawn as such rather than left blank, because
+    # on these boxes "stops answering ssh" is the first symptom of a lockup
+    plines = []
+    for pname, _ in PEERS:
+        st = peer_state.get(pname)
+        d = peer_parse(st["line"]) if st else None
+        if d is None:
+            what = "probing…" if st is None else "unreachable (no answer on ssh)"
+            plines.append(c("1;35", f" {pname}") + "  " + c("31" if st else "2", what))
+            continue
+        rp = 100.0 * (d["total"] - d["avail"]) / max(1.0, d["total"])
+        hists.setdefault(f"P{pname}r", []).append(rp)
+        used_g = f"{(d['total'] - d['avail']) / 1024:.1f}G"
+        line = (c("1;35", f" {pname}") + f"  cpu {d['ncpu']}c load {d['load'][0]:.2f}"
+                + " · ram " + c(color_class(rp), used_g) + f"/{d['total'] / 1024:.0f}G")
+        for g in d["gpus"]:
+            tp = f"{g['temp']:.0f}°C" if g["temp"] is not None else "-"
+            pw = f"{g['power']:.0f}W" if g["power"] is not None else "-"
+            line += f" · gpu{g['i']} " + c(color_class(g["util"]), f"{g['util']:3.0f}%") + f" {tp} {pw}"
+        age = time.monotonic() - st["t"]
+        if age > 15:
+            line += c("2", f"  ({age:.0f}s old)")
+        plines.append(line)
+        plines.append("    │" + spark_row(hists[f"P{pname}r"], cw) + " "
+                      + c(color_class(rp), f"{rp:3.0f}%") + c("2", " ram"))
+
     # height budget: spare lines go to the cores evenly when every core can
     # grow; otherwise the other charts split them round-robin (capped)
     ncores = len(core_pct)
     CAP, CORE_CAP = 12, 4
-    fixed = len(L) + len(gpus) + 1 + 1 + len(mlines) + 1
-    #       header    stat lines  cpu  ram  models    footer
+    fixed = len(L) + len(gpus) + 1 + 1 + len(mlines) + len(plines) + 1
+    #       header    stat lines  cpu  ram  models   peers          footer
     gsz, rsz, csz = [4] * len(gpus), [4], [3]      # rows: gpu charts, ram, total-cpu
     core_rows = 1
     spare = H - fixed - sum(gsz) - rsz[0] - csz[0] - ncores
@@ -2791,6 +3025,8 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         block[0] += f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:4.0f}%")
         block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
         L.extend(block)
+
+    L.extend(plines)
 
     la = os.getloadavg()
     clks = cpu_clocks()
@@ -2940,12 +3176,12 @@ bench_of() { # bench_of <name> — "prefill/gen tok/s" avg of last 5 benches, ""
 
 print_table() {
   local i=1 name st pg any_bench=0
-  printf '  %-2s %-14s %-9s %-6s %-11s %-12s %s\n' '#' name backend port status 'pp/gen t/s' description
+  printf '  %-2s %-14s %-9s %-6s %-14s %-12s %s\n' '#' name backend port status 'pp/gen t/s' description
   for name in "${MODELS[@]}"; do
     st="$(status_of "$name")"
     pg="$(bench_of "$name")"
     [[ -n "$pg" ]] && any_bench=1
-    printf '  %-2s %-14s %-9s %-6s %-11s %-12s %s\n' \
+    printf '  %-2s %-14s %-9s %-6s %-14s %-12s %s\n' \
       "$i" "$name" "${BACKEND[$name]}" "${PORT[$name]}" "$st" "${pg:--}" "${DESC[$name]}"
     ((i++))
   done
@@ -3031,7 +3267,7 @@ cmd_status() {
   echo
   chat_report
   echo
-  gpu_report
+  hw_report
   # flag any legacy unit still alive
   local u
   for u in "${LEGACY_UNITS[@]}"; do

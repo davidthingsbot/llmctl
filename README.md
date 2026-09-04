@@ -76,7 +76,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl up <model>...` | start model(s) alongside what's running (VRAM pre-check) |
 | `llmctl down <model>...\|all` | stop + remove from boot |
 | `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
-| `llmctl status` / `list` | units, health, agent targets, chat links, GPU memory |
+| `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) |
 | `llmctl agents` | list registered agents: type, FOLLOW, gateway state, current target |
 | `llmctl add` / `remove <model>` | wizard to register a model / unregister it |
 | `llmctl agent add` / `agent remove <name>` | wizard to register an agent / unregister it |
@@ -126,7 +126,16 @@ WIZARD_BASE_PORT=19438
 WEBUI_ENABLE=1              # open-webui docker container for vLLM chat
 WEBUI_PORT=8088
 LEGACY_UNITS=""             # old units to displace when llmctl takes over
+PEERS="spark1=10.100.100.11" # other boxes a two-box model can span ("name=ssh-addr ...")
 ```
+
+With `PEERS` set, `llmctl status` and `llmctl top` probe every node — CPU load,
+RAM, and each GPU's utilisation, temperature and power — over ssh (passwordless,
+the fabric address preferred). A node that does not answer is reported as
+unreachable rather than left blank: on unified-memory boards like the DGX Spark
+"stops answering ssh" is the first symptom of a machine starving, so it is the
+line to look at. On those boards nvidia-smi reports no memory figures; the RAM
+line is the GPU pool.
 
 Agents are not machine.conf keys — they live in `agents.d/` (below). The
 pre-agents.d keys (`HERMES_ENABLE/CFG/UNIT`, `OPENCLAW_ENABLE/DIR/UNIT`) are
@@ -208,6 +217,33 @@ EXTRA_ARGS="--enable-prefix-caching"
 
 llmctl generates a run script and systemd unit from this on every start —
 edit the `.conf`, not the generated files.
+
+### Two-box models (`BACKEND=cluster`)
+
+A model that does not fit one machine can span this one plus a peer from
+`PEERS` (a pair of DGX Sparks over their 200G link, for instance). llmctl does
+not drive the second box itself; a launch script does, and llmctl owns what
+makes it a model like any other — the port, the API key, health, start/stop,
+agent repointing, the web UI, and a memory pre-check on **every** node.
+
+```ini
+BACKEND=cluster
+PORT=8000
+MODEL_REF="/home/me/llmctl/scripts/glm53-flash-tp2.sh"   # executable; extra vllm args are appended
+MODEL_ID="glm53-flash-nvfp4"
+NODES="spark1"              # peer names from PEERS (default: all of them)
+VRAM_MB=105000              # MemAvailable every node needs before start
+HEALTH_TIMEOUT=1500         # two-box loads are slow
+```
+
+The launch script is hand-written (see `scripts/*-tp2.sh` for the working
+ones; they use the eugr/spark-vllm-docker launcher and an official vLLM image)
+and must accept `--served-model-name`, `--port` and `--api-key`, which llmctl
+appends. Stopping the unit also removes the `vllm_node` containers on every
+node, since they outlive the launcher. Before the first launch of a new
+configuration run it with `--load-format dummy` (random weights, ~3 minutes):
+it reaches allocation, compile, profiling and the first forward pass, which is
+where a two-box model fails if it is going to.
 
 ## License
 
