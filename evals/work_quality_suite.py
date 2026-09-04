@@ -144,6 +144,16 @@ RETRY_INSTRUCTION = (
 )
 
 
+# What "no deliberation" is called depends on the chat template. Qwen honours
+# enable_thinking=false; GLM-5.3's template has no such switch — its generation
+# prompt always opens <think> and the only knob is reasoning_effort (low|high|max,
+# default MAX). Found 2026-09-04: GLM-5.3-Flash spent the whole 12k budget on
+# thinking under the Qwen kwarg, scoring 0 on tasks it answers in 73 tokens at
+# reasoning_effort=low. --template-kwargs replaces this dict; the value used is
+# recorded in the result file so a score can be read with its setting.
+TEMPLATE_KWARGS = {"enable_thinking": False}
+
+
 def request(
     url: str, key: str, model: str, prompt: str, max_tokens: int,
     template_kwargs: bool = True,
@@ -174,7 +184,7 @@ def request(
     # to disable, so omitting it is a no-op for them — but it is NOT a no-op for
     # the Qwen models, so it stays on by default to keep results comparable.
     if template_kwargs:
-        payload["chat_template_kwargs"] = {"enable_thinking": False}
+        payload["chat_template_kwargs"] = TEMPLATE_KWARGS
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
@@ -2406,6 +2416,7 @@ Requirements:
 
 
 def main():
+    global TEMPLATE_KWARGS
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
     parser.add_argument("--model", required=True)
@@ -2415,6 +2426,12 @@ def main():
         "--no-template-kwargs", action="store_true",
         help="omit chat_template_kwargs; required for Mistral-tokenizer models, "
              "which reject it with HTTP 400",
+    )
+    parser.add_argument(
+        "--template-kwargs", metavar="JSON", default=None,
+        help="chat_template_kwargs to send instead of the default "
+             '{"enable_thinking": false} — the template decides what turns '
+             'deliberation off: GLM-5.3 wants {"reasoning_effort": "low"}',
     )
     parser.add_argument(
         "--strip-reasoning", action="store_true",
@@ -2463,6 +2480,8 @@ def main():
              "same scale",
     )
     args = parser.parse_args()
+    if args.template_kwargs:
+        TEMPLATE_KWARGS = json.loads(args.template_kwargs)
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     tasks = [
         task_structured_protocol(), task_bom(), task_code_repair(), task_code_review(),
@@ -2547,6 +2566,7 @@ def main():
                  + ("" if args.retry else "+cold"),
         "model": args.model,
         "endpoint": args.url,
+        "template_kwargs": None if args.no_template_kwargs else TEMPLATE_KWARGS,
         "score": sum(row["score"] for row in results),
         "max_score": sum(row["max_score"] for row in results),
         # explicit, because a result file must state its own mode: a cold run

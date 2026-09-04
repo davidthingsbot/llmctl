@@ -120,6 +120,16 @@ RETRY_INSTRUCTION = (
 
 
 
+# What "no deliberation" is called depends on the chat template. Qwen honours
+# enable_thinking=false; GLM-5.3's template has no such switch — its generation
+# prompt always opens <think> and the only knob is reasoning_effort (low|high|max,
+# default MAX). Found 2026-09-04: GLM-5.3-Flash spent the whole 12k budget on
+# thinking under the Qwen kwarg, scoring 0 on tasks it answers in 73 tokens at
+# reasoning_effort=low. --template-kwargs replaces this dict; the value used is
+# recorded in the result file so a score can be read with its setting.
+TEMPLATE_KWARGS = {"enable_thinking": False}
+
+
 def request(
     url: str, key: str, model: str, prompt: str, max_tokens: int,
     template_kwargs: bool = True,
@@ -147,7 +157,7 @@ def request(
     # See work_quality_suite.py: Mistral-tokenizer models reject this with HTTP
     # 400. Default stays on so the existing Qwen results remain comparable.
     if template_kwargs:
-        payload["chat_template_kwargs"] = {"enable_thinking": False}
+        payload["chat_template_kwargs"] = TEMPLATE_KWARGS
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
@@ -1054,6 +1064,7 @@ def _json_safe(value):
 
 
 def main():
+    global TEMPLATE_KWARGS
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
     parser.add_argument("--model", required=True)
@@ -1063,6 +1074,12 @@ def main():
         "--no-template-kwargs", action="store_true",
         help="omit chat_template_kwargs; required for Mistral-tokenizer models, "
              "which reject it with HTTP 400",
+    )
+    parser.add_argument(
+        "--template-kwargs", metavar="JSON", default=None,
+        help="chat_template_kwargs to send instead of the default "
+             '{"enable_thinking": false} — the template decides what turns '
+             'deliberation off: GLM-5.3 wants {"reasoning_effort": "low"}',
     )
     parser.add_argument(
         "--strip-reasoning", action="store_true",
@@ -1106,6 +1123,8 @@ def main():
              "same scale",
     )
     args = parser.parse_args()
+    if args.template_kwargs:
+        TEMPLATE_KWARGS = json.loads(args.template_kwargs)
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
     results = []
     suite_started = time.monotonic()
@@ -1154,6 +1173,7 @@ def main():
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
     output = {"suite": ("deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1")
               + ("" if args.retry else "+cold"), "model": args.model, "endpoint": args.url,
+              "template_kwargs": None if args.no_template_kwargs else TEMPLATE_KWARGS,
               "score": sum(x["score"] for x in results),
               "max_score": sum(x["max_score"] for x in results),
               "retry_enabled": bool(args.retry),
