@@ -3038,10 +3038,15 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
             ck += " " + (c("1;31", "THERM") if tr & 0x60 else c("32", "therm"))
         L.append(c("1;35", f" GPU{g['i']}") + f"   util {GREEN}█{RESET} · vram {CYAN}─{RESET} of "
                  f"{fmt_gib(g['total'])} GiB · {pw} · {tp} · {ck}")
-        block = chart_block(hists[f"g{g['i']}u"], hists[f"g{g['i']}v"], gsz[n], cw)
-        block[0] += f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:4.0f}%")
-        block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
-        L.extend(block)
+        if gsz[n] == 1:   # single-row budget: util trace, both readings on the right
+            L.append("    │" + spark_row(hists[f"g{g['i']}u"], cw)
+                     + f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:3.0f}%")
+                     + " " + c(color_class(vp), f"{fmt_gib(g['used'])}G"))
+        else:
+            block = chart_block(hists[f"g{g['i']}u"], hists[f"g{g['i']}v"], gsz[n], cw)
+            block[0] += f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:4.0f}%")
+            block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
+            L.extend(block)
 
     la = os.getloadavg()
     clks = cpu_clocks()
