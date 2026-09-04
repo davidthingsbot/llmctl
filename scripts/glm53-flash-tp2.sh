@@ -27,7 +27,8 @@
 # Thinking is on by default; enable_thinking=false still yields reasoning-style prose before the answer.
 # The template's only switch is reasoning_effort (low|high|max, default max); the evals use low.
 # 2026-09-04 13:50: --max-num-seqs 2 -> 8. The 2 came from a 2x96GB config; the KV pool (1.16M tokens)
-# is carved out at startup regardless, so the cap only sets occupancy. Ladder at 2 was 14/27/27/27.
+# is carved out at startup regardless, so the cap only sets occupancy. Ladder at 2 was 14/27/27/27;
+# at 8 it was 14/26/44/69/69 (16 streams queued, 4->8 still 1.57x), so 16 at 14:20 the same day.
 cd ~/src/spark-vllm-docker || exit 1
 exec ./launch-cluster.sh -t vllm/vllm-openai:glm53-flash \
   -v /home/david/models/hf:/models -v /home/david/opt/glm53ext:/opt/ext \
@@ -37,7 +38,7 @@ exec ./launch-cluster.sh -t vllm/vllm-openai:glm53-flash \
   exec vllm serve /models/GLM-5.3-Flash-NVFP4 \
     --served-model-name glm53-flash-nvfp4 --host 0.0.0.0 --port 8000 \
     --tensor-parallel-size 2 --gpu-memory-utilization "${GPU_UTIL:-0.83}" \
-    --max-model-len "${MAX_LEN:-65536}" --max-num-seqs "${MAX_SEQS:-8}" \
+    --max-model-len "${MAX_LEN:-65536}" --max-num-seqs "${MAX_SEQS:-16}" \
     --max-num-batched-tokens "${MAX_BATCHED:-2048}" --limit-mm-per-prompt '{"image":0,"video":0}' \
     --kv-cache-dtype fp8 --block-size 256 --enforce-eager --disable-custom-all-reduce \
     --moe-backend flashinfer_cutlass --no-enable-flashinfer-autotune --no-enable-prefix-caching \
