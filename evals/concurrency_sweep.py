@@ -27,7 +27,7 @@ PROMPT = ("Explain, in about 150 words and without bullet points, why token "
 def one_stream(url, key, model, max_tokens, out, idx):
     body = {"model": model, "messages": [{"role": "user", "content": PROMPT}],
             "temperature": 0.7, "max_tokens": max_tokens, "stream": True,
-            "chat_template_kwargs": {"enable_thinking": False}}
+            "chat_template_kwargs": TEMPLATE_KWARGS}
     req = urllib.request.Request(
         url, data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
@@ -93,7 +93,11 @@ def sweep(url, key, model, levels, max_tokens):
     return results
 
 
+TEMPLATE_KWARGS = {"enable_thinking": False}
+
+
 def main():
+    global TEMPLATE_KWARGS
     p = argparse.ArgumentParser()
     p.add_argument("--url", required=True)
     p.add_argument("--model", required=True)
@@ -102,7 +106,14 @@ def main():
     p.add_argument("--levels", default="1,2,4,8",
                    help="comma-separated stream counts (default 1,2,4,8)")
     p.add_argument("--max-tokens", type=int, default=200)
+    p.add_argument("--template-kwargs", metavar="JSON", default=None,
+                   help='chat_template_kwargs instead of {"enable_thinking": false} — '
+                        'the template decides (GLM-5.3: reasoning_effort=low; DeepSeek-V4: thinking=false)')
+    p.add_argument("--strip-reasoning", action="store_true",
+                   help="accepted for symmetry with the suites; the sweep counts streamed tokens, not answers")
     args = p.parse_args()
+    if args.template_kwargs:
+        TEMPLATE_KWARGS = json.loads(args.template_kwargs)
     key = next(l.strip() for l in Path(args.key_file).read_text().splitlines() if l.strip())
     levels = [int(x) for x in args.levels.split(",")]
     print(f"sweeping {args.model} at {levels} streams, {args.max_tokens} tokens each",
