@@ -5,6 +5,7 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 | model | work L/E/M/H = total | reasoning L/E/M/H = total | concurrency 1/2/4/8 tok/s | tokens | wall |
 |---|---|---|---|---:|---:|
 | **Fable 5.1 (reference)** | 100 / 64 / 154 / 120 = **438**/438 | 100 / 56 / 68 / 78 = **302**/302 | — | — | — |
+| `glm53-flash-nvfp4` | 96 / 64 / 153 / 102 = **415**/438 (retry×4) | 85 / 56 / 60 / 78 = **279**/302 (retry×8) | 14 / 27 / 27 / 27 | 19282 | 23 min |
 | `qwen38-flash-next` | 98 / 64 / 136 / 111 = **409**/438 (retry×5) | 78 / 56 / 46 / 32 = **212**/302 (retry×9) | 22 / 36 / 48 / 48 | 19152 | 15 min |
 | `nemotron-120b` | 96 / 61 / 122 / 117 = **396**/438 (retry×7) | 83 / 42 / 31 / 36 = **192**/302 (retry×12) | 15 / 24 / 41 / 62 | 14655 | 17 min |
 | `deepseek-flash-150b` | 94 / 64 / 132 / 98 = **388**/438 (retry×8) | 69 / 56 / 22 / 27 = **174**/302 (retry×14) | 15 / 14 / 34 / 33 | 30904 | 35 min |
@@ -45,6 +46,18 @@ _The 'first attempt of retry run' column is the retry run's own cold score; its 
 - `deepseek-flash-150b` physics_hard: 0 → retry 0 → credited **0**/20
 - `deepseek-flash-150b` optimization_hard: 4 → retry 4 → credited **4**/22
 - `deepseek-flash-150b` sizing_hard: 3 → retry 3 → credited **3**/16
+- `glm53-flash-nvfp4` bom_consolidation: 8 → retry 10 → credited **8**/10
+- `glm53-flash-nvfp4` protocol_architecture: 16 → retry 18 → credited **16**/18
+- `glm53-flash-nvfp4` cobs_codec: 23 → retry 24 → credited **23**/24
+- `glm53-flash-nvfp4` verilog_hard: 12 → retry 12 → credited **12**/30
+- `glm53-flash-nvfp4` logic_grid: 3 → retry 12 → credited **8**/12
+- `glm53-flash-nvfp4` causal_inference: 12 → retry 14 → credited **12**/14
+- `glm53-flash-nvfp4` bayesian_reasoning: 8 → retry 12 → credited **8**/12
+- `glm53-flash-nvfp4` hypothesis_discrimination: 11 → retry 11 → credited **11**/12
+- `glm53-flash-nvfp4` value_of_information: 10 → retry 12 → credited **10**/12
+- `glm53-flash-nvfp4` complex_policy_reasoning: 12 → retry 14 → credited **12**/14
+- `glm53-flash-nvfp4` physics_medium: 13 → retry 13 → credited **13**/16
+- `glm53-flash-nvfp4` sizing_medium: 13 → retry 9 → credited **13**/18
 - `nemotron-120b` bom_consolidation: 8 → retry 8 → credited **8**/10
 - `nemotron-120b` protocol_architecture: 16 → retry 18 → credited **16**/18
 - `nemotron-120b` ml_easy: 13 → retry 13 → credited **13**/16
