@@ -27,6 +27,7 @@ PROMPT = ("Explain, in about 150 words and without bullet points, why token "
 def one_stream(url, key, model, max_tokens, out, idx):
     body = {"model": model, "messages": [{"role": "user", "content": PROMPT}],
             "temperature": 0.7, "max_tokens": max_tokens, "stream": True,
+            "stream_options": {"include_usage": True},
             "chat_template_kwargs": TEMPLATE_KWARGS}
     req = urllib.request.Request(
         url, data=json.dumps(body).encode(),
@@ -34,6 +35,10 @@ def one_stream(url, key, model, max_tokens, out, idx):
     started = time.monotonic()
     first = None
     tokens = 0
+    usage_tokens = None  # the server's count: one streamed chunk is NOT one token
+                         # under speculative decoding (DeepSeek-V4 dspark streams
+                         # bursts of accepted draft tokens per chunk — counting
+                         # chunks read 13.9 tok/s for a 40 tok/s stream, 2026-09-04)
     try:
         with urllib.request.urlopen(req, timeout=900) as response:
             for raw in response:
@@ -44,8 +49,14 @@ def one_stream(url, key, model, max_tokens, out, idx):
                 if payload == "[DONE]":
                     break
                 try:
-                    delta = json.loads(payload)["choices"][0].get("delta", {})
-                except (ValueError, KeyError, IndexError):
+                    chunk = json.loads(payload)
+                except ValueError:
+                    continue
+                if chunk.get("usage") and chunk["usage"].get("completion_tokens") is not None:
+                    usage_tokens = chunk["usage"]["completion_tokens"]
+                try:
+                    delta = chunk["choices"][0].get("delta", {})
+                except (KeyError, IndexError):
                     continue
                 # Count reasoning tokens too: they cost exactly the same bandwidth.
                 if delta.get("content") or delta.get("reasoning_content"):
@@ -56,6 +67,8 @@ def one_stream(url, key, model, max_tokens, out, idx):
         out[idx] = {"error": str(exc)}            # silently averaged as a zero
         return
     elapsed = time.monotonic() - started
+    if usage_tokens:
+        tokens = usage_tokens
     out[idx] = {"tokens": tokens, "elapsed_s": elapsed, "ttft_s": first,
                 "tok_s": tokens / elapsed if elapsed else 0.0}
 
