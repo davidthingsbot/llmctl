@@ -6,6 +6,7 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 |---|---|---|---|---:|---:|
 | **Fable 5.1 (reference)** | 100 / 64 / 154 / 120 = **438**/438 | 100 / 56 / 68 / 78 = **302**/302 | — | — | — |
 | `glm53-flash-nvfp4` | 96 / 64 / 153 / 102 = **415**/438 (retry×4) | 85 / 56 / 60 / 78 = **279**/302 (retry×8) | 14 / 26 / 44 / 70 / 98 / 80 (…/16/32 streams) | 19282 | 23 min |
+| `deepseek-v4-flash` | 94 / 64 / 135 / 117 = **410**/438 (retry×5) | 80 / 42 / 31 / 39 = **192**/302 (retry×11) | 14 / 21 / 31 / 47 / 44 (…/16 streams) | 13006 | 4 min |
 | `qwen38-flash-next` | 98 / 64 / 136 / 111 = **409**/438 (retry×5) | 78 / 56 / 46 / 32 = **212**/302 (retry×9) | 22 / 36 / 48 / 48 | 19152 | 15 min |
 | `nemotron-120b` | 96 / 61 / 122 / 117 = **396**/438 (retry×7) | 83 / 42 / 31 / 36 = **192**/302 (retry×12) | 15 / 24 / 41 / 62 | 14655 | 17 min |
 | `deepseek-flash-150b` | 94 / 64 / 132 / 98 = **388**/438 (retry×8) | 69 / 56 / 22 / 27 = **174**/302 (retry×14) | 15 / 14 / 34 / 33 | 30904 | 35 min |
@@ -46,6 +47,22 @@ _The 'first attempt of retry run' column is the retry run's own cold score; its 
 - `deepseek-flash-150b` physics_hard: 0 → retry 0 → credited **0**/20
 - `deepseek-flash-150b` optimization_hard: 4 → retry 4 → credited **4**/22
 - `deepseek-flash-150b` sizing_hard: 3 → retry 3 → credited **3**/16
+- `deepseek-v4-flash` embedded_c_review: 10 → retry 12 → credited **10**/12
+- `deepseek-v4-flash` long_context_retrieval: 14 → retry 16 → credited **14**/16
+- `deepseek-v4-flash` acquisition_timing: 4 → retry 4 → credited **4**/6
+- `deepseek-v4-flash` cobs_codec: 5 → retry 7 → credited **5**/24
+- `deepseek-v4-flash` verilog_hard: 27 → retry 27 → credited **27**/30
+- `deepseek-v4-flash` logic_grid: 3 → retry 3 → credited **3**/12
+- `deepseek-v4-flash` causal_inference: 5 → retry 12 → credited **8**/14
+- `deepseek-v4-flash` bayesian_reasoning: 8 → retry 8 → credited **8**/12
+- `deepseek-v4-flash` value_of_information: 11 → retry 11 → credited **11**/12
+- `deepseek-v4-flash` sizing_easy: 0 → retry 0 → credited **0**/14
+- `deepseek-v4-flash` physics_medium: 13 → retry 13 → credited **13**/16
+- `deepseek-v4-flash` optimization_medium: 0 → retry 0 → credited **0**/16
+- `deepseek-v4-flash` sizing_medium: 0 → retry 0 → credited **0**/18
+- `deepseek-v4-flash` physics_hard: 12 → retry 12 → credited **12**/20
+- `deepseek-v4-flash` optimization_hard: 4 → retry 4 → credited **4**/22
+- `deepseek-v4-flash` sizing_hard: 3 → retry 3 → credited **3**/16
 - `glm53-flash-nvfp4` bom_consolidation: 8 → retry 10 → credited **8**/10
 - `glm53-flash-nvfp4` protocol_architecture: 16 → retry 18 → credited **16**/18
 - `glm53-flash-nvfp4` cobs_codec: 23 → retry 24 → credited **23**/24
