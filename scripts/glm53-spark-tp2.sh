@@ -23,9 +23,9 @@ exec ./launch-cluster.sh -t eugr/spark-vllm-b12x:latest \
     --mamba-cache-mode align --enable-prefix-caching --enable-chunked-prefill \
     --dtype bfloat16 --kv-cache-dtype fp8 --quantization modelopt_mixed \
     --attention-backend B12X --block-size 256 --moe-backend b12x --linear-backend b12x \
-    --no-enable-flashinfer-autotune \
+    --no-enable-flashinfer-autotune --enforce-eager \
     "${LOADER[@]}" \
-    --max-model-len "${MAX_LEN:-262144}" --max-num-seqs "${MAX_SEQS:-8}" --max-num-batched-tokens "${MAX_BATCHED:-4096}" \
+    --max-model-len "${MAX_LEN:-65536}" --max-num-seqs "${MAX_SEQS:-4}" --max-num-batched-tokens "${MAX_BATCHED:-4096}" \
     --speculative-config '{"method":"mtp","num_speculative_tokens":5,"moe_backend":"humming","attention_backend":"B12X"}' \
     --reasoning-parser glm45 --tool-call-parser glm47 --enable-auto-tool-choice \
-    --kv-cache-memory-bytes "${KV_BYTES:-8G}" --gpu-memory-utilization "${GPU_UTIL:-0.83}" "$@"
+    --kv-cache-memory-bytes "${KV_BYTES:-4G}" --gpu-memory-utilization "${GPU_UTIL:-0.80}" "$@"
