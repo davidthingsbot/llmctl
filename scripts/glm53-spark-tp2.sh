@@ -5,6 +5,10 @@
 # pre-flight decides. This is the same model as glm53-flash (RedHatAI NVFP4 + Libertai kernel, 14 tok/s);
 # the point is the B12X stack + 5-token MTP speculative decode that gave DeepSeek 35-59 tok/s.
 cd ~/src/spark-vllm-docker || exit 1
+# The instanttensor loader option is rejected under --load-format dummy (the pre-flight), so it is only
+# passed for a real load: "Model loader extra config is not supported for load format dummy" (00:21, 09-05).
+LOADER=(--load-format instanttensor --model-loader-extra-config '{"instanttensor_copy":false}')
+case " $* " in *" --load-format dummy "*) LOADER=();; esac
 exec ./launch-cluster.sh -t eugr/spark-vllm-b12x:latest \
   -v /home/david/models/hf:/models \
   -e CUTE_DSL_ARCH=sm_121a -e SAFETENSORS_FAST_GPU=1 -e VLLM_ENABLE_ROCE_ALLREDUCE=1 -e VLLM_ROCE_ALLREDUCE_MAX_SIZE=2MB \
@@ -20,7 +24,7 @@ exec ./launch-cluster.sh -t eugr/spark-vllm-b12x:latest \
     --dtype bfloat16 --kv-cache-dtype fp8 --quantization modelopt_mixed \
     --attention-backend B12X --block-size 256 --moe-backend b12x --linear-backend b12x \
     --no-enable-flashinfer-autotune \
-    --load-format instanttensor --model-loader-extra-config '{"instanttensor_copy":false}' \
+    "${LOADER[@]}" \
     --max-model-len "${MAX_LEN:-262144}" --max-num-seqs "${MAX_SEQS:-8}" --max-num-batched-tokens "${MAX_BATCHED:-4096}" \
     --speculative-config '{"method":"mtp","num_speculative_tokens":5,"moe_backend":"humming","attention_backend":"B12X"}' \
     --reasoning-parser glm45 --tool-call-parser glm47 --enable-auto-tool-choice \
