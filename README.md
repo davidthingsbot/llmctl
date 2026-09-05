@@ -73,7 +73,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 |---|---|
 | `llmctl` | interactive menu |
 | `llmctl <model>` / `llmctl set <model>` | exclusive switch: stop others, start, health-check (rollback on failure), repoint agents + web UI, persist across boot |
-| `llmctl up <model>...` | start model(s) alongside what's running (VRAM pre-check) |
+| `llmctl up [--no-point] <model>...` | start model(s) alongside what's running (VRAM pre-check); agents + web UI follow the last one named, `--no-point` leaves them |
 | `llmctl down <model>...\|all` | stop + remove from boot |
 | `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
 | `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) |
@@ -191,7 +191,7 @@ openclaw) or `llmctl agent add`; example:
 TYPE=hermes                 # repoint recipe: hermes | openclaw
 CFG="/home/me/.hermes/profiles/mrlomo/config.yaml"   # openclaw: the dir with openclaw.json
 UNIT="hermes-gateway-mrlomo.service"                 # gateway systemd user unit
-FOLLOW=1                    # 1 = repointed by every `llmctl set`
+FOLLOW=1                    # 1 = repointed by every `llmctl set` / `llmctl up`
                             # 0 = pinned; moves only via `llmctl point <model> <name>`
 ```
 

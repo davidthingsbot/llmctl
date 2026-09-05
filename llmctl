@@ -15,7 +15,9 @@
 #                              repoint the following agents + browser chat
 #                              (open-webui for vLLM, llama.cpp's own UI else);
 #                              rolls back on failure, permanent across boot
-#   llmctl up   <model>...     start model(s) alongside whatever is running
+#   llmctl up [--no-point] <model>...  start model(s) alongside whatever is
+#                              running; agents + chat follow the last one
+#                              (--no-point: leave them where they are)
 #   llmctl down <model>...|all stop model(s)
 #   llmctl point <model> [agent...]  repoint agents only (model must be up):
 #                              all FOLLOW=1 agents, or just the named ones
@@ -185,7 +187,8 @@ key_of()   { sed -n '/./{p;q}' "${KEYFILE[$1]}"; }
 #           TENSOR_PARALLEL, GPU_UTIL, MAX_MODEL_LEN (vllm),
 #           SERVER_CTX, STREAMS (llamacpp),
 #           NODES (cluster: peer names from PEERS the model spans; default all;
-#           VRAM_MB is then checked as MemAvailable on EVERY node).
+#           "local" = this box only; VRAM_MB is then checked as MemAvailable
+#           on EVERY node the model spans).
 # ----------------------------------------------------------------------------
 if ((MACHINE_RECORD_REQUEST)); then
   MODELS_D="${MODELS_D:-$HOME/.config/llmctl/models.d}"
@@ -313,6 +316,10 @@ load_external_models() {
       KEYFILE[$name]="$VLLM_KEYFILE"
       TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 2400)"
       NODES[$name]="$(conf_get NODES "$f" "${PEER_NAMES[*]:-}")"
+      # NODES=local: a launch script that only uses this box (a single-Spark docker
+      # model) — no peer checks, no peer teardown. Needed because an empty value
+      # means "default", i.e. every peer.
+      if [[ "${NODES[$name]}" == local ]]; then NODES[$name]=""; fi
     else
       KEYFILE[$name]="$LLAMA_KEYFILE"
       TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 300)"
@@ -330,7 +337,7 @@ load_external_models() {
 #   CFG                    hermes: path to its config.yaml
 #                          openclaw: the directory holding openclaw.json
 #   UNIT                   the agent's gateway systemd user unit
-#   FOLLOW                 1 (default) = repointed by every `llmctl set`;
+#   FOLLOW                 1 (default) = repointed by every `llmctl set` / `up`;
 #                          0 = pinned, moves only when named in `llmctl point`
 # If NO files exist, the legacy HERMES_*/OPENCLAW_* machine.conf keys
 # synthesize agents named 'hermes' and 'openclaw' (old single-agent setups).
@@ -1282,27 +1289,47 @@ cmd_point() { # cmd_point <model> [agent...]
 # ----------------------------------------------------------------------------
 # Lifecycle
 # ----------------------------------------------------------------------------
-cmd_up() { # start without stopping others
-  local name
-  for name in "$@"; do require_model "$name"; done
+cmd_up() { # cmd_up [--no-point] <model>... — start alongside what's running; agents follow
+  # Agents follow `up` as well as `set` (2026-09-04). On the two-Spark box every
+  # model is started by `llmctl up` from the ops pipelines — a cluster model
+  # needs its own pre-flight and a controlled teardown of the previous one, so
+  # `set` never runs there — and hermes sat on a dead qwen38-flash-next :19439
+  # for three days after glm53-flash and deepseek-v4-flash came up. The FOLLOW=1
+  # agents + browser chat move to the last named model that is up (already-active
+  # counts, like `set`); --no-point starts a secondary model without moving them.
+  local name point=1 last="" names=()
+  for name in "$@"; do
+    case "$name" in
+      --no-point) point=0;;
+      --*)        die "usage: llmctl up [--no-point] <model>...";;
+      *)          names+=("$name");;
+    esac
+  done
+  ((${#names[@]})) || die "usage: llmctl up [--no-point] <model>..."
+  for name in "${names[@]}"; do require_model "$name"; done
   ensure_linger
   # legacy units own :19434 — only displace them if a requested model needs it
-  for name in "$@"; do
+  for name in "${names[@]}"; do
     [[ "${PORT[$name]}" == 19434 ]] && { stop_legacy; break; }
   done
-  for name in "$@"; do
-    if is_active "$name"; then log "'$name' already active on :${PORT[$name]}"; continue; fi
+  for name in "${names[@]}"; do
+    if is_active "$name"; then log "'$name' already active on :${PORT[$name]}"; last="$name"; continue; fi
     check_prereqs "$name"
     vram_ok "$name" || return 1
     if start_model "$name"; then
       systemctl --user enable "$(unit_of "$name")" 2>/dev/null
       log "UP: $name — enabled on boot"
+      last="$name"
     else
       err "'$name' not healthy after ${TIMEOUT[$name]}s — stopping it. Logs: llmctl logs $name"
       systemctl --user stop "$(unit_of "$name")" || true
       return 1
     fi
   done
+  if [[ -n "$last" ]]; then
+    if ((point)); then cmd_point "$last"
+    else log "agents left where they were (--no-point) — later: llmctl point $last"; fi
+  fi
   hw_report
 }
 
@@ -1517,7 +1544,7 @@ cmd_agent_add() {
   fi
   cfg="${cfg/#\~/$HOME}"
   [[ -e "$cfg" ]] || err "warning: $cfg does not exist yet — the agent is skipped until it does"
-  follow="$(ask "follow 'llmctl set'? 1=always repointed, 0=pinned (only 'llmctl point <model> $name')" 1)"
+  follow="$(ask "follow 'llmctl set' / 'llmctl up'? 1=always repointed, 0=pinned (only 'llmctl point <model> $name')" 1)"
 
   mkdir -p "$AGENTS_D"
   local conf="$AGENTS_D/$name.conf"
@@ -3423,7 +3450,7 @@ case "${1:-menu}" in
   menu)          menu;;
   list)          print_table;;
   status)        cmd_status;;
-  up)            shift; (($#)) || die "usage: llmctl up <model>..."; cmd_up "$@";;
+  up)            shift; (($#)) || die "usage: llmctl up [--no-point] <model>..."; cmd_up "$@";;
   down)          shift; (($#)) || die "usage: llmctl down <model>...|all"; cmd_down "$@";;
   set)           shift; (($#==1)) || die "usage: llmctl set <model>"; cmd_set "$1";;
   point)         shift; (($#>=1)) || die "usage: llmctl point <model> [agent...]"; cmd_point "$@";;
