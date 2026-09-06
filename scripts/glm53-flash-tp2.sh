@@ -38,7 +38,7 @@ exec ./launch-cluster.sh -t vllm/vllm-openai:glm53-flash \
   exec vllm serve /models/GLM-5.3-Flash-NVFP4 \
     --served-model-name glm53-flash-nvfp4 --host 0.0.0.0 --port 8000 \
     --tensor-parallel-size 2 --gpu-memory-utilization "${GPU_UTIL:-0.83}" \
-    --max-model-len "${MAX_LEN:-65536}" --max-num-seqs "${MAX_SEQS:-16}" \
+    --max-model-len "${MAX_LEN:-524288}" --max-num-seqs "${MAX_SEQS:-16}" \
     --max-num-batched-tokens "${MAX_BATCHED:-2048}" --limit-mm-per-prompt '{"image":0,"video":0}' \
     --kv-cache-dtype fp8 --block-size 256 --enforce-eager --disable-custom-all-reduce \
     --moe-backend flashinfer_cutlass --no-enable-flashinfer-autotune --no-enable-prefix-caching \
