@@ -12,6 +12,7 @@ Clean sweep, all three tiers, 12k-token floor. Tier columns are legacy / easy / 
 | `qwen38-flash-next-nvfp4` | 100 / 64 / 118 / 111 = **393**/438 (retry×3) | 80 / 56 / 42 / 35 = **213**/302 (retry×10) | 20 / 33 / 42 / 70 / 116 (…/16 streams) | 20037 | 12 min |
 | `deepseek-flash-150b` | 94 / 64 / 132 / 98 = **388**/438 (retry×8) | 69 / 56 / 22 / 27 = **174**/302 (retry×14) | 15 / 14 / 34 / 33 | 30904 | 35 min |
 | `qwen38-27b-fp8` | 92 / 64 / 118 / 109 = **383**/438 (retry×6) | 75 / 48 / 37 / 67 = **227**/302 (retry×10) | 8 / 14 / 29 / 56 | 24128 | 54 min |
+| `qwen38-flash-next-tp2` | 94 / 59 / 110 / 120 = **383**/438 (retry×7) | 76 / 52 / 46 / 35 = **209**/302 (retry×10) | 31 / 45 / 89 / 141 / 154 (…/16 streams) | 28051 | 10 min |
 | `qwen38-27b-nvfp4` | 86 / 64 / 130 / 92 = **372**/438 (retry×8) | 79 / 48 / 51 / 30 = **208**/302 (retry×11) | 11 / 20 / 41 / 78 | 21815 | 34 min |
 
 ## Cold vs retry — same model, same prompts
@@ -157,3 +158,20 @@ _The 'first attempt of retry run' column is the retry run's own cold score; its 
 - `qwen38-flash-next-nvfp4` physics_hard: 12 → retry 12 → credited **12**/20
 - `qwen38-flash-next-nvfp4` optimization_hard: 0 → retry 0 → credited **0**/22
 - `qwen38-flash-next-nvfp4` sizing_hard: 3 → retry 3 → credited **3**/16
+- `qwen38-flash-next-tp2` embedded_c_review: 10 → retry 10 → credited **10**/12
+- `qwen38-flash-next-tp2` protocol_architecture: 16 → retry 18 → credited **16**/18
+- `qwen38-flash-next-tp2` acquisition_timing: 4 → retry 6 → credited **4**/6
+- `qwen38-flash-next-tp2` cuda_easy: 6 → retry 16 → credited **11**/16
+- `qwen38-flash-next-tp2` cobs_codec: 14 → retry 14 → credited **14**/24
+- `qwen38-flash-next-tp2` cpp_medium: 0 → retry 28 → credited **20**/28
+- `qwen38-flash-next-tp2` ml_medium: 0 → retry 0 → credited **0**/26
+- `qwen38-flash-next-tp2` logic_grid: 0 → retry 0 → credited **0**/12
+- `qwen38-flash-next-tp2` bayesian_reasoning: 4 → retry 4 → credited **4**/12
+- `qwen38-flash-next-tp2` value_of_information: 10 → retry 10 → credited **10**/12
+- `qwen38-flash-next-tp2` complex_policy_reasoning: 12 → retry 12 → credited **12**/14
+- `qwen38-flash-next-tp2` sizing_easy: 0 → retry 14 → credited **10**/14
+- `qwen38-flash-next-tp2` optimization_medium: 12 → retry 4 → credited **12**/16
+- `qwen38-flash-next-tp2` sizing_medium: 0 → retry 0 → credited **0**/18
+- `qwen38-flash-next-tp2` physics_hard: 12 → retry 12 → credited **12**/20
+- `qwen38-flash-next-tp2` optimization_hard: 0 → retry 0 → credited **0**/22
+- `qwen38-flash-next-tp2` sizing_hard: 3 → retry 3 → credited **3**/16
