@@ -29,9 +29,17 @@
 # 2026-09-04 13:50: --max-num-seqs 2 -> 8. The 2 came from a 2x96GB config; the KV pool (1.16M tokens)
 # is carved out at startup regardless, so the cap only sets occupancy. Ladder at 2 was 14/27/27/27;
 # at 8 it was 14/26/44/69/69 (16 streams queued, 4->8 still 1.57x), so 16 at 14:20 the same day.
+# 2026-09-07 TOP-K PATCH: three overnight EngineCore deaths (21:03, 23:36, 04:31), each a decode step on a request that
+# had just reached 32,768 tokens: vLLM's persistent_topk (DeepSeek sparse-attention indexer, select_k=512) wants 62
+# cooperative CTAs > GB10's 48 SMs, and its FilteredTopK fallback needs 128 KB smem where GB10 has 99 KB. Upstream fixed
+# it in C++ after this image (vllm PR #54110, merged 09-05: route that case to top_k_per_row_decode); the same dispatch
+# exists in Python, so ~/opt/glm53-patch/sparse_attn_indexer_kpool.py (both boxes) forces the else-branch, exactly what
+# MiaAI-Lab's GLM EXL3 recipe does on GB10 (overlay/patch_glm_video_placeholders.py). Before the patch the 512K window
+# was prefill-only: any decode past 32K killed the server (9-min reload each time).
 cd ~/src/spark-vllm-docker || exit 1
 exec ./launch-cluster.sh -t vllm/vllm-openai:glm53-flash \
   -v /home/david/models/hf:/models -v /home/david/opt/glm53ext:/opt/ext \
+  -v /home/david/opt/glm53-patch/sparse_attn_indexer_kpool.py:/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/sparse_attn_indexer_kpool.py:ro \
   -e PYTHONPATH=/opt/ext -e VLLM_GLM53_CUDA_SPARSE_MLA=1 -e VLLM_GLM53_MOE_INPUT_SCALE=1.0 \
   -e VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
   -e TORCHINDUCTOR_COMPILE_THREADS=1 -e MAX_JOBS=1 -e NVCC_THREADS=1 -e VLLM_ENGINE_READY_TIMEOUT_S=3600 \
