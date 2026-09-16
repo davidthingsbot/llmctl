@@ -1,0 +1,460 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "glm53-flash-nvfp4-vision",
+  "endpoint": "http://127.0.0.1:8006/v1/chat/completions",
+  "status": "complete",
+  "score": 17,
+  "max_score": 28,
+  "tasks": [
+    {
+      "id": "hard_v2_reconciliation",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_reconciliation.png",
+      "question": "Reconcile the document using its displayed rules. Return JSON: released_good_units (integer), released_value_cents (integer), held_ids (ordered list of strings), largest_value_id (string).",
+      "expected": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      },
+      "image_sha256": "9d3246b06f1bd0454652c09f34e1d388c6f97db04d28aeb1e22c7c7bdd971991",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-95e1fd32cc90ebfd",
+        "object": "chat.completion",
+        "created": 1789595670,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"released_good_units\": 152, \"released_value_cents\": 27525, \"held_ids\": [\"E55\", \"F66\"], \"largest_value_id\": \"B22\"}\n```",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "A11: qty 42, rejects 1, cents 125, RELEASE \u2192 good 41, value 5125\nB22: qty 38, rejects 2, cents 240, RELEASE \u2192 good 36, value 8640\nC33: qty 60, rejects 8, cents 80, RELEASE \u2192 good 52, value 6400\nD44: qty 24, rejects 1, cents 320, RELEASE \u2192 good 23, value 7360\nE55: qty 45, rejects 4, HOLD\nF66: HOLD\nTotal good = 41+36+52+23 = 152. Value = 5125+8640+6400+7360 = 27525.\nHeld: E55, F66. Largest value: B22."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2256,
+          "total_tokens": 2481,
+          "completion_tokens": 225,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 17.66,
+      "score": 3,
+      "max_score": 4,
+      "checks": {
+        "released_good_units": true,
+        "released_value_cents": false,
+        "held_ids": true,
+        "largest_value_id": true
+      },
+      "parsed": {
+        "released_good_units": 152,
+        "released_value_cents": 27525,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      }
+    },
+    {
+      "id": "hard_v2_crossing_plot",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_crossing_plot.png",
+      "question": "Apply the plot selection rule and calculate the requested quantities. Return JSON: start_minute (integer), end_minute (integer), crossing_second (integer), right_gap (integer), c_area_unit_seconds (integer).",
+      "expected": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      },
+      "image_sha256": "5af575453f243c5999096c5286ecf6ff748540646d75e3c1cdba0d123e03c11a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-8ba9e827d07d7687",
+        "object": "chat.completion",
+        "created": 1789595687,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"start_minute\": 1, \"end_minute\": 2, \"crossing_second\": 70, \"right_gap\": 25, \"c_area_unit_seconds\": 1950}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Data: A: 20,40,60,35,65,45,70,40,60. B: 50,45,35,55,40,60,50,65,45. C: 15,25,40,30,45,35,55,30,40.\n\nCandidates: A<B left, A>B right, C\u226440 both, A increase \u226520.\nIntervals:\n0-1: A20<50, A40>45? no.\n1-2: 40<45, 60>35 yes; C 25,40 \u226440; increase 20 yes. right gap 25.\n2-3: 60>35 no.\n3-4: 35<55, 65>40 yes; C 30,45 \u2014 45>40 no.\n4-5: 65>60 no.\n5-6: 45<50, 70>50 yes; C 35,55 \u2014 55>40 no.\n6-7: 70>65 no.\n7-8: 40<65, 60>45 yes; C 30,40 \u226440; increase 20 yes. right gap 15.\n\nChoose largest right gap: 1-2, gap 25. Crossing: A-B: at 1: -5, at 2: +25; crossing at t=1+5/30=1.1667 min = 70 s. C area: trapezoid (25+40)/2*60=1950."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2206,
+          "total_tokens": 2573,
+          "completion_tokens": 367,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 27.25,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "start_minute": true,
+        "end_minute": true,
+        "crossing_second": true,
+        "right_gap": true,
+        "c_area_unit_seconds": true
+      },
+      "parsed": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      }
+    },
+    {
+      "id": "hard_v2_logic_network",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_logic_network.png",
+      "question": "Trace and evaluate the displayed logic network. Return JSON: g1_sources (list of strings), g2_sources (list of strings), high_input_codes (list of strings), scenario_y (integer), fault_y (integer).",
+      "expected": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "0010",
+          "0101",
+          "0110",
+          "1000",
+          "1100",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      },
+      "image_sha256": "58cad0d5f34815f8d06d133c8a12ea062c8f8c9298846f6842c06d3bf1ef3ea6",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-87fcdc86ddc5a154",
+        "object": "chat.completion",
+        "created": 1789595714,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Trace wiring. G1 XOR inputs: A (top wire from A) and B? The wire from A splits: one goes to G1 top input, another goes down... A's wire: dot at junction, one branch to G1 top input, another branch down to C line? Actually A branch goes down to... Let me infer typical: G1 inputs A and B? The vertical line from A's junction goes down to C's row? Hmm.\n\nLook: A line goes right, dot at ~x230, continues to x540 (top). Branch from dot goes down to y228 then right to G1 top input. So G1 top input = A. G1 bottom input: line from B? B line at y360 goes right to x540 with dot at x410. There's a vertical line at x320 from y290 down to C row y520 (dot at C). Hmm.\n\nG1 bottom input comes from a wire at y290 going left to x320, which is vertical line connecting down to C (dot at C y520). So G1 inputs = A and C? Wait the vertical at x320 top connects to y290 horizontal which goes to G1 bottom input. And bottom of vertical at x320 has dot on C line. So G1 = A XOR C.\n\nG2 AND inputs: top input from B (dot at x410 branch down to y465 then right to G2 top). Bottom input from D? D line y680, dots at x500 and x560. Vertical from x560 up to y530 then right to G2 bottom input? Actually there's a line at y530 from x560... G2 bottom input at y530. So G2 = B AND D? Wait also vertical at x500 from D up to y530? Hmm two dots on D line. One vertical goes to G2 bottom (y530), other goes up to y380 line that goes right to G3 bottom input? The line at y380 from x560 to G3? G3 bottom input at y380. Yes: vertical from D dot x560 up to y380, right to G3 bottom input. So G3 inputs: top = G1 output (dot at x900 on G1 output line, branch to G3 top), bottom = D. So G3 = G1 XOR D.\n\nG2 output goes right to y500... G2 output line at y500 goes right to x940, then down to G4? G4 OR inputs at y620 and y700. G2 output branches: down to G4 top input (y620). G4 bottom input (y700) from? vertical at x940 down... hmm. There's a line from x940 down to y700? Actually G4 bottom input comes from a wire at y700 going left to x940 which connects up... The G2 output at y500 goes to x940, dot? Then down to y620 (G4 top) and continues? Also vertical line at x940 from y500 down to y700? That would connect both G4 inputs to G2 \u2014 odd. Alternatively G4 bottom input from C? C line ends at x540. Hmm.\n\nMaybe G4 bottom input comes from the vertical at x940 that goes down from G2 output... but then G4 = G2 OR G2? No. Perhaps G4 bottom input from the wire at y700 that goes left to x940 and up to y500 \u2014 same node. Hmm, but maybe the vertical at x940 goes from y500 down to y700 and left to G4 bottom, while G4 top comes from another source: the line at y620 from x940... same.\n\nAlternative: G4 top input from G2 output; G4 bottom input from C via vertical? C's line: from C dot at x320? C line goes right to x540 ending. There's vertical at x500 from D... \n\nLet me reconsider: maybe G4 bottom input comes from the vertical line at x940 descending from G2 output junction, and G4 top input comes from a different wire: the horizontal at y620 from x940 left... same node again.\n\nPerhaps G4 inputs: G2 output and something else \u2014 maybe the wire from B's dot at x410 goes down further? B dot at x410, branch down to y465 (G2 top). Also maybe continues? \n\nAlternatively G4 bottom input from D via the second D dot at x500: vertical up to y530? That was G2 bottom. Hmm, two D dots: x500 and x560. One goes to G2 bottom (y530), other to G3 bottom (y380). Then G4 bottom input must come from elsewhere.\n\nLook again at picture:"
+            },
+            "logprobs": null,
+            "finish_reason": "length",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2268,
+          "total_tokens": 3292,
+          "completion_tokens": 1024,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 72.905,
+      "score": 0,
+      "max_score": 5,
+      "checks": {
+        "g1_sources": false,
+        "g2_sources": false,
+        "high_input_codes": false,
+        "scenario_y": false,
+        "fault_y": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "hard_v2_cube",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cube.png",
+      "question": "Solve the displayed fold, candidate match, and roll sequence. Return JSON: option (string), opposite_c (string), final_top (string), final_front (string), final_right (string).",
+      "expected": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      },
+      "image_sha256": "7f9d9f8486ca3e4890bc949ee81260d9cb8b5048f38ef10ffe5fda054f5e71a0",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-a14e4efd184b025e",
+        "object": "chat.completion",
+        "created": 1789595787,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Net: A top, C center, B left, D right, E far right, F bottom. Opposite pairs: A-F, B-E, C-D.\n\nCheck candidates: P: top A, front C, right B \u2014 C and B adjacent to A, but B and C adjacent? In net B-C adjacent yes. A adjacent to both. Valid? Check chirality: fold cube with A top, C front, B left... In net, A above C, B left of C. Fold: A top, C front, B left. Then right face is D. P says right B \u2014 wrong. Q: top A, front C, right D \u2014 matches. Check chirality: with A top, C front, D right \u2014 yes valid. R: top A, front F, right D \u2014 F opposite A, invalid. S: top C, front E, right A \u2014 C top, E front? E opposite B, adjacent to C yes. A adjacent to C yes. E and A adjacent? E-A: E is far right, A top; when folded, E adjacent to A? E adjacent to D and F? E folds to be opposite B; E adjacent to A? In net, E is two steps from C; E touches D and (folding) F and A? Cube: faces around C: A,B,D,F; E opposite B. E adjacent to A, D, F, C. So E-A adjacent. Chirality: top C, front E, right A \u2014 need check. Q is valid; is S also? Only one valid. Let's verify S chirality. Use coordinates: C front (0,0,1), A top (0,1,0), B left (-1,0,0), D right (1,0,0), F bottom (0,-1,0), E back (0,0,-1). S: top C, front E, right A. From orientation top=C, front=E: right face = ? Cross product: right = front \u00d7 top? For cube, right = top \u00d7 front? Standard: right = front cross up? Let's compute: with top (0,1,0), front (0,0,1), right should be (1,0,0)=D. Check: top \u00d7 front = (1,0,0)? (0,1,0)\u00d7(0,0,1) = (1*1-0*0, 0*0-0*1, 0) = (1,0,0). Yes right = top\u00d7front. S: top C=(0,0,1) in original coords... easier: in original cube, is there orientation with top C, front E, right A? Right = top\u00d7front in the rotated frame; equivalently the triple (top,front,right) must be right-handed cyclic like (A,C,D): A top, C front, D right. Cyclic order: A\u2192C\u2192D. So valid triples: (A,C,D),(C,D,A),(D,A,C) and with other faces: pairs (A,F),(B,E),(C,D). Triples around: (A,C,D) means faces A,C,D mutually adjacent with that handedness. S: (C,E,A): C,E,A. Compare handedness: in original, going around... Determine orientation sign: for triple (X,Y,Z) with Z = X\u00d7Y in original coordinates. Original vectors: A=(0,1,0), C=(0,0,1), D=(1,0,0), E=(0,0,-1), B=(-1,0,0), F=(0,-1,0). Check (A,C,D): A\u00d7C = (0,1,0)\u00d7(0,0,1)=(1,0,0)=D \u2713. S: (C,E,A): C\u00d7E = (0,0,1)\u00d7(0,0,-1)=0 \u2014 not valid, C and E opposite? No, C=(0,0,1), E=(0,0,-1) \u2014 they ARE opposite! Wait E is back, C front \u2014 opposite. But in net E is far right of C... E opposite B. Hmm, recheck: net row B,C,D,E. Folding: B left, C front, D right, E back. Yes E opposite B, and E adjacent to C. But my coordinate assignment put E at back (0,0,-1) which is opposite C (0,0,1). Error: C front (0,0,1), back is (0,0,-1) = E. But E should be opposite B. Contradiction \u2014 fix: B left (-1,0,0), opposite B is (1,0,0)=D? No, D is right of C in net, adjacent to C. Hmm"
+            },
+            "logprobs": null,
+            "finish_reason": "length",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2277,
+          "total_tokens": 3301,
+          "completion_tokens": 1024,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 73.01,
+      "score": 0,
+      "max_score": 5,
+      "checks": {
+        "option": false,
+        "opposite_c": false,
+        "final_top": false,
+        "final_front": false,
+        "final_right": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "hard_v2_resources",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_resources.png",
+      "question": "Find the optimal appointment under all displayed constraints. Return JSON: room (string), technician (string), start (HH:MM string), end (HH:MM string).",
+      "expected": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      },
+      "image_sha256": "ce0db528003bfcddfb8e90243830d255a04d76fa7082337eedd40ce495fd9131",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-8be7552d041a5b23",
+        "object": "chat.completion",
+        "created": 1789595861,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"room\": \"R2\", \"technician\": \"Bo\", \"start\": \"10:15\", \"end\": \"11:15\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Earliest completion: try start 09:00. R1 busy 09:00-10:00; R2 busy 09:00-09:30. So R2 free 09:30. Technician: Ada busy 09:00-09:45, Bo busy 09:00-10:00. Start 09:00 impossible.\n\nStart 09:15: R2 free 09:30-? R2 busy 09:00-09:30, so 09:15 overlaps. R1 busy 09:00-10:00. No.\n\nStart 09:30: R2 free (09:30-10:30). Technician: Ada busy until 09:45 \u2014 setup 09:30-09:45 overlaps. Bo busy until 10:00. No.\n\nStart 09:45: R2 free 09:45-10:45. Ada free 09:45-10:30 (busy 10:30-11:30). Setup 09:45-10:00, scan 10:00-10:30, finish 10:30-10:45 \u2014 finish overlaps Ada busy 10:30. Bo busy until 10:00, free 10:00-10:45: setup 09:45 overlaps. No.\n\nStart 10:00: R1 busy 10:00-? R1 busy 09:00-10:00, free 10:00-11:15. R2 free 09:30-11:30. Ada busy 10:30-11:30. Bo busy 10:45-11:00. Scanner busy 10:00-10:30. Scan must be 10:15-10:45 \u2014 scanner busy 10:15-10:30. No.\n\nStart 10:15: scan 10:30-11:00, scanner busy 10:30-11:00? Scanner busy 10:00-10:30 only, free 10:30-11:30. R1 free 10:00-11:15 (appointment ends 11:15, touching ok). R2 free until 11:30. Technician: Ada busy 10:30-11:30 \u2014 setup 10:15-10:30 ok, finish 11:00-11:15 overlaps. Bo busy 10:45-11:00 \u2014 setup 10:15-10:30 ok, scan free, finish 11:00-11:15 ok. Bo works with R2 (or R1? R1 permits Ada only). So R2 + Bo, 10:15-11:15. Completion 11:15.\n\nCheck earlier none. Answer: R2, Bo, 10:15-11:15."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2325,
+          "total_tokens": 2949,
+          "completion_tokens": 624,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 45.546,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "room": true,
+        "technician": true,
+        "start": true,
+        "end": true
+      },
+      "parsed": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      }
+    },
+    {
+      "id": "hard_v2_cross_reference",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cross_reference.png",
+      "question": "Follow the displayed cross-reference procedure. Return JSON: node (string), probe (string), revision (integer), adjusted (integer), destination (string).",
+      "expected": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      },
+      "image_sha256": "24e4f053bda05dc11ead47923a4b3011f0e95a302bfdce94677265dbd438cdb2",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-969a7a0be79875e5",
+        "object": "chat.completion",
+        "created": 1789595906,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"node\": \"N4\", \"probe\": \"P7\", \"revision\": 3, \"adjusted\": 56, \"destination\": \"BAY-6\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Triangle solid from IN: to H1 (blue triangle solid). Then square edge from H1: to N4 (square). N4: K2/L8 raw=17. LIVE K2 L8: P7 rev 3, rack S2. Calibration P7 rev3: offset -3, gain 4. Adjusted = 4*(17-3)=56. S2 band 50-59 \u2192 BAY-6."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2797,
+          "total_tokens": 2926,
+          "completion_tokens": 129,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 11.199,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "node": true,
+        "probe": true,
+        "revision": true,
+        "adjusted": true,
+        "destination": true
+      },
+      "parsed": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 1024,
+    "chat_template_kwargs": {
+      "reasoning_effort": "low"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 3,
+  "tiers": {
+    "easy": {
+      "score": 0,
+      "max_score": 0
+    },
+    "medium": {
+      "score": 0,
+      "max_score": 0
+    },
+    "hard": {
+      "score": 17,
+      "max_score": 28
+    }
+  }
+}

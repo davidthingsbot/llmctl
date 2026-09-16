@@ -2,6 +2,11 @@
 
 `work_quality_suite.py` is a small, reproducible domain suite for the engineering and agent work done on this machine. It deliberately favors practical tasks over generic academic trivia.
 
+## Recent experiment records
+
+- [2026-09-16: GLM text regrading, headless stability, vision fixtures and blind frontier comparison](EXPERIMENTS-2026-09-16.md). Includes corrections for missing NumPy, invalid/interrupted runs, output-budget caveats, and the deferred provisional-switch decision.
+- [Vision suite usage](VISION.md), [six harder candidates](VISION-HARD.md), [ten additional candidates](VISION-EXTRA10.md), and [retain-all policy](VISION-RETENTION.md).
+
 ## Tasks and weighting
 
 | Task | Points | What it tests |

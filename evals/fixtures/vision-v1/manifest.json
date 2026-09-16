@@ -1,0 +1,108 @@
+{
+  "version": "synthetic-vision-v1",
+  "tasks": [
+    {
+      "id": "easy_ocr",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_ocr.png",
+      "question": "Read the access code. Return JSON with string key code.",
+      "expected": {
+        "code": "R7K2"
+      }
+    },
+    {
+      "id": "easy_spatial",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_spatial.png",
+      "question": "Name the colors of the leftmost and rightmost objects. Return JSON with lowercase string keys leftmost and rightmost.",
+      "expected": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      }
+    },
+    {
+      "id": "easy_count",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_count.png",
+      "question": "Count only the orange circles. Return JSON with integer key count.",
+      "expected": {
+        "count": 6
+      }
+    },
+    {
+      "id": "medium_chart",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_chart.png",
+      "question": "Read the chart. Return JSON: highest (category string), highest_value (integer), gap (highest minus lowest, integer).",
+      "expected": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      }
+    },
+    {
+      "id": "medium_table",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_table.png",
+      "question": "Return JSON: restock_ids (IDs with Stock strictly below Minimum, in displayed order), washers_bin (string), bolts_stock (integer).",
+      "expected": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      }
+    },
+    {
+      "id": "medium_flow",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_flow.png",
+      "question": "Follow the displayed input through the diagram. Return JSON with destination equal to the exact output-box text.",
+      "expected": {
+        "destination": "FAN HIGH"
+      }
+    },
+    {
+      "id": "hard_ledger",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_ledger.png",
+      "question": "Using only RELEASE rows, sum Units minus Rejected. Also identify all batches (including HOLD) tied for most rejected units, in displayed order, and read Units for L14. Return JSON: released_net_units (integer), most_rejected_batches (list of strings), l14_units (integer).",
+      "expected": {
+        "released_net_units": 836,
+        "most_rejected_batches": [
+          "L05",
+          "L10",
+          "L15"
+        ],
+        "l14_units": 79
+      }
+    },
+    {
+      "id": "hard_connections",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_connections.png",
+      "question": "Trace each left input through its middle terminal to the numbered right output. Crossings are not junctions. Return JSON with integer keys A, B, C, D (key names are strings; values are integers).",
+      "expected": {
+        "A": 1,
+        "B": 4,
+        "C": 3,
+        "D": 2
+      }
+    },
+    {
+      "id": "hard_schedule",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_schedule.png",
+      "question": "Which two jobs overlap? Give their names in row order. What is the earliest start time at or after 09:00 for a new uninterrupted 45-minute job, using 15-minute start increments? Return JSON: overlapping_jobs (two strings), earliest_start (HH:MM).",
+      "expected": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "12:00"
+      }
+    }
+  ]
+}

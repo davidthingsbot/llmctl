@@ -1,0 +1,357 @@
+{
+  "suite": "work_quality_v1+hard",
+  "model": "GLM-5.3-Flash-EXL3",
+  "endpoint": "http://127.0.0.1:8005/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": false
+  },
+  "score": 116,
+  "max_score": 438,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 33975,
+    "completion_tokens": 3002,
+    "total_tokens": 36977,
+    "task_seconds": 123.66,
+    "wall_seconds": 128.99,
+    "generation_tok_s": 24.28,
+    "truncated_tasks": [],
+    "retries": 0,
+    "retry_completion_tokens": 0
+  },
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 1.779,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 183,
+        "total_tokens": 241,
+        "completion_tokens": 58,
+        "prompt_tokens_details": null
+      },
+      "response": "{\"scan_action\": \"transduce_only\", \"transform_command\": \"APPLY_TRANSFORM\", \"retained_read_command\": \"READ_FRAME\", \"crc_scope\": \"outer_packet\", \"acquisition_conflict\": \"reject_on_demand_scan\", \"event_mode_relation\": \"independent\"}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      }
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 4.4949,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 247,
+        "total_tokens": 396,
+        "completion_tokens": 149,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16,\n  \"setup_cost_usd\": 40\n}\n```\n\n**Reasoning (excluded from JSON per instructions):** The candidate's 25 V rating cannot withstand the verified 36 V transient, so it is technically invalid (`voltage_valid: false`). The existing 50 V part must be kept, no new SKU is introduced, and the $16/year nominal price advantage (8,000 \u00d7 $0.002) is outweighed by the $40 setup cost anyway.",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "elapsed_s": 8.9171,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 258,
+        "total_tokens": 566,
+        "completion_tokens": 308,
+        "prompt_tokens_details": null
+      },
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual = crc16(frame[0:3] + payload)\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```\n\nWait \u2014 the spec says CRC covers type + length + payload, so `crc16(frame[0:3] + payload)` is correct. Let me re-verify each fix against the spec:\n\n- Minimum length check: header (3) + CRC (2) = 5, so `< 5` is the right guard.\n- Length field is little-endian per spec, not `\"big\"`.\n- Exact-length check `len(frame) != 5 + payload_len` rejects both truncation and trailing bytes.\n- CRC bytes are read from the position immediately after the payload (`frame[3 + payload_len:5 + payload_len]`), not `frame[-2:]`, which would silently accept trailing garbage.\n- CRC is computed over type + length + payload, excluding the stored CRC.\n- CRC field is little-endian.\n\nThe function above is the corrected version.",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      }
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 12.8203,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 241,
+        "total_tokens": 611,
+        "completion_tokens": 370,
+        "prompt_tokens_details": null
+      },
+      "response": "# Six Most Important Defects\n\n1. **No length validation before reading `rx[1]`** \u2014 `rx_len` is never checked; a short buffer causes out-of-bounds reads. **Fix:** reject if `rx_len < 4` (cmd + len + 2 CRC bytes) before any access.\n\n2. **`len` not validated against buffer capacity** \u2014 `memcpy` overflows the 32-byte `payload` stack buffer when `len > 32`, and `rx[2+len]`/`rx[3+len]` can read past the frame. **Fix:** reject if `len > sizeof(payload)` or if `2 + len + 2 > rx_len`.\n\n3. **CRC computed over the wrong data** \u2014 spec says CRC covers command + length + payload, but `crc16(payload, len)` covers payload only. **Fix:** compute CRC over `rx[0..1+len]` (cmd, len, payload).\n\n4. **CRC check uses assignment, not comparison** \u2014 `if (calc = got)` assigns and is always truthy (unless `got == 0`), so corrupted frames pass. **Fix:** use `if (calc == got)`.\n\n5. **Authentication runs after command parsing and state change** \u2014 `parse_command` executes before the CRC/auth gate, violating the required ordering. **Fix:** verify CRC and call `authenticate` first; only then `parse_command`.\n\n6. **`sequence++` on every unvalidated frame** \u2014 state mutates before integrity/auth checks, and `printf(\"%s\")` on non-terminated `payload` reads out of bounds. **Fix:** advance `sequence` only after validation; print with `%.*s` and `len` (or drop the print).",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": true
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 18,
+      "max_score": 18,
+      "elapsed_s": 41.1627,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 163,
+        "total_tokens": 1224,
+        "completion_tokens": 1061,
+        "prompt_tokens_details": null
+      },
+      "response": "# Acquisition and Frame Storage Design\n\n## 1. Separation of concerns\n\nAcquisition, transformation, storage, and notification are distinct responsibilities and must not be collapsed into a single command.\n\n- **`ACQ`** \u2014 acquires one sensor frame and appends it to the frame store as a raw, untransformed sample. It is the only command that touches the sensor.\n- **`XFORM`** \u2014 applies the current shear transform to a stored frame and writes the result back as a new, derived frame. It never touches the sensor.\n- **`FILTER`** \u2014 runs the filter chain over a stored frame. It never touches the sensor.\n- **`SCAN`** \u2014 a convenience macro: `ACQ` \u2192 `XFORM` \u2192 `FILTER`, executed in order. It is defined in terms of the primitive commands and adds no behavior of its own.\n- **`GET` / `LIST`** \u2014 read frames from the store. Never trigger acquisition or transformation.\n- **`EVENT`** \u2014 event-mode configuration only. It does not acquire, transform, or filter.\n\nRationale: a single monolithic command makes the raw frame unrecoverable (only the transformed copy is stored), couples audit/download to the sensor, and gives one command too many side effects to reason about in a concurrency review.\n\n## 2. Frame and source identity\n\n- Every frame receives a monotonically increasing **frame ID** at acquisition time, assigned by the device, never by the client.\n- Every frame records its **source**: the physical sensor channel it came from.\n- Derived frames (transformed, filtered) record the **parent frame ID** and the transform/filter versions applied. The chain from any stored frame back to its raw origin is therefore reconstructible.\n- Frame IDs are never reused, including after reboot (persist the counter or derive it from a monotonic time base).\n\n## 3. Ownership and concurrency\n\n- The frame store is owned by the acquisition task. All writes (from `ACQ`, `XFORM`, `FILTER`) go through it; readers (`GET`, `LIST`, event emission) take a snapshot reference. No client command ever holds a frame across a response boundary in a way that allows two writers.\n- **Continuous acquisition is exclusive.** While a continuous session is active on a source, on-demand `ACQ`/`SCAN` against that source is rejected with a busy error. On-demand access to a *different* source is permitted. This is the single ownership rule; there is no second mechanism to get out of sync.\n- Continuous sessions are started/stopped explicitly (`ACQ START <source> <rate>` / `ACQ STOP`) and are identified by a session ID so a stop cannot act on the wrong session.\n\n## 4. Continuous vs. on-demand behavior\n\n- **Continuous:** the device acquires at the configured rate, runs the same `ACQ` \u2192 `XFORM` \u2192 `FILTER` pipeline per frame, and stores each result. Frames accumulate in the store exactly as if acquired on demand; there is no separate continuous-only buffer.\n- **On-demand:** a single `SCAN` (or individual `ACQ`) executes the same pipeline once, synchronously, and returns the new frame ID(s).\n- Because both paths share the pipeline and the store, a frame's provenance and contents are identical regardless of how it was produced. Audit/download after the fact is always `LIST` + `GET` against stored frames \u2014 never a rescan.\n\n## 5. Acquisition mode vs. event reporting\n\n- Event emission is a **consumer** of stored frames, not a participant in acquisition. When event mode is enabled, the frame store notifies the event task on each committed frame; the event task evaluates and emits per its configuration.\n- Consequences:\n  - Toggling event mode never starts, stops, or paces acquisition. The two are configured independently.\n  - Events are emitted for continuous and on-demand frames alike, since both commit to the same store.\n  - If event mode is disabled, frames are still stored; enabling it later does not retroactively emit, but all frames remain available via `GET`.\n  - Event delivery failure never blocks or discards acquisition; the frame is committed first, and event emission is best-effort from the store's notification.\n\n## 6. Reproducibility guarantees\n\nA frame in the store is sufficient to reproduce all downstream state because:\n\n1. The raw frame is retained, not overwritten by its transform.\n2. Transform and filter versions are recorded per frame, so a later audit knows exactly what was applied.\n3. Frame IDs and parent links give a total order and full lineage.\n4. Re-running `XFORM`/`FILTER` on a raw frame with the recorded versions yields the derived frames deterministically; the sensor is never involved.\n\n## Summary of the correction\n\nThe proposal's `SCAN` is retained only as a macro over explicit primitives. The two substantive changes are: **store the raw frame** (transformed frames are derived, linked children) and **make continuous acquisition the sole owner of the sensor**, with on-demand access rejected rather than interleaved.",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": true,
+        "event_independent": true,
+        "conflict_rejected_or_queued": true
+      }
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 28.3936,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 32100,
+        "total_tokens": 32177,
+        "completion_tokens": 77,
+        "prompt_tokens_details": null
+      },
+      "response": "{\"project\": \"Kestrel\", \"revision\": \"C7\", \"connector\": \"J14\", \"pullup_ohms\": 4700, \"max_retries\": 3, \"crc_polynomial\": \"0x1EDC6F41\", \"calibration_temperature_c\": 42.75, \"owner\": \"Mira Chen\"}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      }
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 2.7411,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 160,
+        "total_tokens": 272,
+        "completion_tokens": 112,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Fix the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py verifying the corrected message.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}\n```",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      }
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 6,
+      "max_score": 6,
+      "elapsed_s": 5.4476,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 208,
+        "total_tokens": 438,
+        "completion_tokens": 230,
+        "prompt_tokens_details": null
+      },
+      "response": "```json\n{\n  \"bits_per_transaction\": 48,\n  \"bus_bit_rate\": 768000,\n  \"wire_time_ms_per_second\": 96,\n  \"chip_select_overhead_ms_per_second\": 192,\n  \"total_bus_utilization_percent\": 28.8,\n  \"remaining_margin_percent\": 71.2\n}\n```\n\nCalculations:\n- bits_per_transaction = 24 + 8 + 16 = 48\n- Total samples/s = 8 \u00d7 2,000 = 16,000\n- bus_bit_rate = 48 \u00d7 16,000 = 768,000 bits/s\n- Wire time = 768,000 / 8,000,000 = 0.096 s = 96 ms per second\n- Chip-select overhead = 16,000 \u00d7 12 \u00b5s = 192,000 \u00b5s = 192 ms per second\n- Total utilization = (96 + 192) / 1000 = 28.8%\n- Remaining margin = 100 \u2212 28.8 = 71.2%",
+      "grade_details": {
+        "bits_per_transaction": true,
+        "bus_bit_rate": true,
+        "wire_time_ms_per_second": true,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": true,
+        "remaining_margin_percent": true
+      }
+    },
+    {
+      "task": "cpp_easy",
+      "score": 16,
+      "max_score": 16,
+      "elapsed_s": 11.5298,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 233,
+        "total_tokens": 616,
+        "completion_tokens": 383,
+        "prompt_tokens_details": null
+      },
+      "response": "```cpp\nstruct RingBuffer {\n    RingBuffer(int capacity) : cap(capacity), head(0), count(0) {\n        // cap is guaranteed >= 1 by contract\n    }\n\n    bool push(int value) {\n        if (full()) return false;\n        data[(head + count) % cap] = value;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (empty()) return false;\n        out = data[head];\n        head = (head + 1) % cap;\n        --count;\n        return true;\n    }\n\n    int size() const { return count; }\n    bool empty() const { return count == 0; }\n    bool full() const { return count == cap; }\n\nprivate:\n    int data[1024];\n    int cap;\n    int head;   // index of oldest element\n    int count;  // number of stored elements\n};\n```\n\n**Notes on correctness:**\n\n- **FIFO order:** `head` always points at the oldest element; `push` writes at `(head + count) % cap`, so the newest element goes right after the oldest ones, wrapping modulo the capacity.\n- **Wrap-around:** Both indices are advanced with `% cap`, so after filling and draining repeatedly the indices keep cycling through `[0, cap)` without ever going out of bounds.\n- **Full push:** `full()` is checked first; on `false` return, neither `data`, `head`, nor `count` are modified, so no data is lost or overwritten.\n- **Empty pop:** `empty()` is checked first; `out` is only assigned after the check, so it is untouched on failure.\n- **Fixed capacity:** The backing store is a plain `int[1024]`, and only the first `cap` slots are ever used.",
+      "grade_details": {
+        "struct_present": true,
+        "compiles": true,
+        "starts_empty": true,
+        "pop_empty_false": true,
+        "push_then_size": true,
+        "fifo_order": true,
+        "empty_after_drain": true,
+        "fills_to_capacity": true,
+        "push_when_full_false": true,
+        "full_push_did_not_corrupt": true,
+        "wraps_repeatedly": true,
+        "capacity_one": true
+      }
+    },
+    {
+      "task": "verilog_easy",
+      "score": 0,
+      "max_score": 16,
+      "elapsed_s": 6.3756,
+      "max_tokens": 12000,
+      "usage": {
+        "prompt_tokens": 182,
+        "total_tokens": 436,
+        "completion_tokens": 254,
+        "prompt_tokens_details": null
+      },
+      "response": "```verilog\nmodule edge_detect(\n    input  wire clk,\n    input  wire wire rst_n,\n    input  wire sig,\n    output reg  pulse\n);\n\n    reg sig_d;\n\n    always @(posedge clk or negedge rst_n) begin\n        if (!rst_n) begin\n            sig_d  <= 1'b0;\n            pulse  <= 1'b0;\n        end else begin\n            sig_d  <= sig;\n            pulse  <= sig & ~sig_d;\n        end\n    end\n\nendmodule\n```\n\nWait \u2014 I introduced a typo (`wire wire`) and the instruction says return ONLY the module. Let me correct that and output the clean module only.```verilog\nmodule edge_detect(\n    input  wire clk,\n    input  wire rst_n,\n    input  wire sig,\n    output reg  pulse\n);\n\n    reg sig_d;\n\n    always @(posedge clk or negedge rst_n) begin\n        if (!rst_n) begin\n            sig_d <= 1'b0;\n            pulse <= 1'b0;\n        end else begin\n            sig_d <= sig;\n            pulse <= sig & ~sig_d;\n        end\n    end\n\nendmodule\n```",
+      "grade_details": {
+        "module_present": true,
+        "simulator": "iverilog",
+        "compiles": false,
+        "compile_error": [
+          "/tmp/vlog-easy-sdbx3e5v/edge_detect.v:3: syntax error",
+          "/tmp/vlog-easy-sdbx3e5v/edge_detect.v:1: Errors in port declarations."
+        ],
+        "lint_clean": false
+      },
+      "score_first": 0,
+      "retry_feedback": "/tmp/vlog-easy-sdbx3e5v/edge_detect.v:3: syntax error\n/tmp/vlog-easy-sdbx3e5v/edge_detect.v:1: Errors in port declarations.\nfailed checks: compiles, lint_clean",
+      "retry_error": "RemoteDisconnected: Remote end closed connection without response"
+    },
+    {
+      "task": "cuda_easy",
+      "score": 0,
+      "max_score": 16,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "ml_easy",
+      "score": 0,
+      "max_score": 16,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "cobs_codec",
+      "score": 0,
+      "max_score": 24,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "stream_reassembler",
+      "score": 0,
+      "max_score": 24,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "verilog_medium",
+      "score": 0,
+      "max_score": 26,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "cuda_medium",
+      "score": 0,
+      "max_score": 26,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "cpp_medium",
+      "score": 0,
+      "max_score": 28,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "ml_medium",
+      "score": 0,
+      "max_score": 26,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "cpp_hard",
+      "score": 0,
+      "max_score": 30,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "verilog_hard",
+      "score": 0,
+      "max_score": 30,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "cuda_hard",
+      "score": 0,
+      "max_score": 30,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    },
+    {
+      "task": "ml_hard",
+      "score": 0,
+      "max_score": 30,
+      "error": "URLError: <urlopen error [Errno 111] Connection refused>",
+      "response": "",
+      "grade_details": {}
+    }
+  ]
+}

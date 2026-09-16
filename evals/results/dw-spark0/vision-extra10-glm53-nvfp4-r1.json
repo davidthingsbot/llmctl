@@ -1,0 +1,719 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "glm53-flash-nvfp4-vision",
+  "endpoint": "http://127.0.0.1:8006/v1/chat/completions",
+  "status": "complete",
+  "score": 22,
+  "max_score": 30,
+  "tasks": [
+    {
+      "id": "extra01_rotated_dimensions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra01_rotated_dimensions.png",
+      "question": "Solve the pictured dimension problem. Return JSON with integer fields du_mm, dv_mm, distance_squared_mm2.",
+      "expected": {
+        "du_mm": 65,
+        "dv_mm": 33,
+        "distance_squared_mm2": 5314
+      },
+      "image_sha256": "54c6a844ac3d5eaeeba76271aec4a763937680a58f49122c6321eabbb394201d",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-be3a0f4920a6de11",
+        "object": "chat.completion",
+        "created": 1789595471,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"du_mm\": 83, \"dv_mm\": 49, \"distance_squared_mm2\": 9290}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "A at u=18, v=16 from bottom-left corner. B: 37 from top edge along u? B is 37 from right edge? Dimensions: 37 measured from top-right corner along u direction to B's extension line... B: 21 from top edge (v), 37 from right edge? Actually 37 arrow points from left toward right corner region; B offset from right edge = 37? Then du = 120-37-18 = 83, dv = 70-21-16 = 49. Distance\u00b2 = 83\u00b2+49\u00b2 = 6889+2401=9290."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2046,
+          "total_tokens": 2207,
+          "completion_tokens": 161,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 12.669,
+      "score": 0,
+      "max_score": 3,
+      "checks": {
+        "du_mm": false,
+        "dv_mm": false,
+        "distance_squared_mm2": false
+      },
+      "parsed": {
+        "du_mm": 83,
+        "dv_mm": 49,
+        "distance_squared_mm2": 9290
+      }
+    },
+    {
+      "id": "extra02_scaled_plate_holes",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra02_scaled_plate_holes.png",
+      "question": "Solve the pictured plate problem. Return JSON with integer fields area_cm2, all_boundary_cm, hole_count.",
+      "expected": {
+        "area_cm2": 328,
+        "all_boundary_cm": 120,
+        "hole_count": 2
+      },
+      "image_sha256": "c6b7c5854f283b47a098ed8ca4a8e89c8fbad6a81281dca2714ff09be76fad7e",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-97e50d44a3ca2ccb",
+        "object": "chat.completion",
+        "created": 1789595484,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"area_cm2\": 352, \"all_boundary_cm\": 116, \"hole_count\": 2}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Shape: full 12\u00d79 minus notch (x8-12, y5-9 = 4\u00d74=16 squares) minus holes: hole1 x5-7,y6-8 = 2\u00d72=4; hole2 x2-4,y2-4=2\u00d72=4. Area squares = 108-16-8=88 \u2192 \u00d74 = 352 cm\u00b2.\n\nBoundary: outer perimeter: top edge x0-8 =8 squares=16cm; right side from y9 down to y5 at x8: 4 squares=8cm; then x8-12 at y5: 4=8cm; right x12 y5-0: 5=10cm; bottom 12=24cm; left 9=18cm. Total outer = 16+8+8+10+24+18=84cm. Holes: 2\u00d72 square perimeter 8 squares=16cm each, two holes=32. Total=116cm."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2046,
+          "total_tokens": 2286,
+          "completion_tokens": 240,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 18.115,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "area_cm2": false,
+        "all_boundary_cm": false,
+        "hole_count": true
+      },
+      "parsed": {
+        "area_cm2": 352,
+        "all_boundary_cm": 116,
+        "hole_count": 2
+      }
+    },
+    {
+      "id": "extra03_closed_road_route",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra03_closed_road_route.png",
+      "question": "Solve the pictured route problem. Return JSON with route (list of node strings in travel order) and cost (integer).",
+      "expected": {
+        "route": [
+          "A",
+          "E",
+          "F",
+          "B",
+          "C",
+          "G",
+          "H",
+          "L"
+        ],
+        "cost": 23
+      },
+      "image_sha256": "18aeb419ff627bc4c36a28e4e91582f303b17be2128544f7be5955be5ae59f61",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-a7c89e36b4d5d4fe",
+        "object": "chat.completion",
+        "created": 1789595502,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"route\": [\"A\", \"E\", \"F\", \"B\", \"C\", \"G\", \"K\", \"L\"], \"cost\": 24}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Edges: A-B4, A-E3, B-C6, B-F4, C-D2, C-G2, D-H7, E-F2, E-I6, F-J2, G-H3, G-K5, H-L3, I-J3, K-L2. Closed: F-G, J-K.\n\nA\u2192F\u2192J\u2192I? no. A-F-J then J-K closed, J-I-E... E visited? A-E-F... A\u2192E\u2192F\u2192J\u2192I dead end (I only E,J). So A-F-J then stuck. Better: A\u2192B\u2192F\u2192J\u2192I\u2192E? E connects A,F,I \u2014 A visited. Dead end. Hmm, need to reach L.\n\nPath must not repeat nodes. From F, options: B, E, J. To get to L: via K (G-K-L) or H-L. G reachable via C. So route: A\u2192E\u2192F\u2192J\u2192I? dead. A\u2192B\u2192F\u2192J\u2192I\u2192E dead.\n\nTry A\u2192E\u2192F\u2192B\u2192C\u2192G\u2192K\u2192L: 3+2+4+6+2+5+2=24. Check nodes unique: yes. Could do A\u2192B\u2192F\u2192E? then E-I-J dead. A\u2192E\u2192F\u2192B\u2192C\u2192D\u2192H\u2192L: 3+2+4+6+2+7+3=27. So 24 via K. Any shorter? A\u2192B\u2192F\u2192J\u2192I dead. A\u2192E\u2192F\u2192J dead. So 24."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2048,
+          "total_tokens": 2427,
+          "completion_tokens": 379,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 27.549,
+      "score": 0,
+      "max_score": 2,
+      "checks": {
+        "route": false,
+        "cost": false
+      },
+      "parsed": {
+        "route": [
+          "A",
+          "E",
+          "F",
+          "B",
+          "C",
+          "G",
+          "K",
+          "L"
+        ],
+        "cost": 24
+      }
+    },
+    {
+      "id": "extra04_permuted_stack_legend",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra04_permuted_stack_legend.png",
+      "question": "Solve the pictured inventory problem. Return JSON with highest_usable (string), total_usable (integer), quarantine_total (integer).",
+      "expected": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      },
+      "image_sha256": "09de75460100f292f7f7d71f74ebac90ee11d80e8c8df7a9be025bbee33c8100",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-b7585998f87c770d",
+        "object": "chat.completion",
+        "created": 1789595529,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"highest_usable\": \"West\", \"total_usable\": 146, \"quarantine_total\": 43}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "North usable 18+17=35; East 12+23=35; South 15+19=34; West 26+16=42. Highest West. Total usable 146. Quarantine 12+8+14+9=43."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2050,
+          "total_tokens": 2131,
+          "completion_tokens": 81,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 7.118,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest_usable": true,
+        "total_usable": true,
+        "quarantine_total": true
+      },
+      "parsed": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      }
+    },
+    {
+      "id": "extra05_formula_cell_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra05_formula_cell_binding.png",
+      "question": "Evaluate the requested pictured cells. Return JSON with integer fields D4, E5, C6.",
+      "expected": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      },
+      "image_sha256": "57edb96596b0e633b32694dd66014012f17f9cac4064c0a95c077949b2ce2294",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-a2b4ddbffee47429",
+        "object": "chat.completion",
+        "created": 1789595537,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"D4\": 34, \"E5\": 103, \"C6\": 76}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "D2=36, D3=45, D4=34, D5=SUM(D2:D4)=115. E2=36-4=32, E3=45-4=41, E4=34-4=30, E5=SUM=103. C5: IF(E5>90,B5,0): B5=SUM(3,5,2)=13 \u2192 C5=13. C6=E5-C3*B2=103-9*3=76."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2043,
+          "total_tokens": 2174,
+          "completion_tokens": 131,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 10.733,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "D4": true,
+        "E5": true,
+        "C6": true
+      },
+      "parsed": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      }
+    },
+    {
+      "id": "extra06_failed_directed_links",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra06_failed_directed_links.png",
+      "question": "Solve the pictured network problem. Return JSON with reachable (alphabetically sorted list of strings) and min_edges_to_G (integer).",
+      "expected": {
+        "reachable": [
+          "B",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      },
+      "image_sha256": "b44248c32b58e801bab1c2c282e097d1b154b239f607866263a08f3047c816ef",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-9b5448654e5e11b5",
+        "object": "chat.completion",
+        "created": 1789595547,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reachable\": [\"B\", \"E\", \"F\", \"G\"], \"min_edges_to_G\": 3}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Edges: A\u2192B, A\u2192E, B\u2192C(failed), C\u2192D, C\u2192G, E\u2192F, F\u2192B, F\u2192G, G\u2192H(failed), H\u2192D.\nReachable: A\u2192B, A\u2192E\u2192F\u2192B, F\u2192G, C? B\u2192C failed. So reachable: B,E,F,G. min edges to G: A\u2192E\u2192F\u2192G = 3."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2050,
+          "total_tokens": 2172,
+          "completion_tokens": 122,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 9.904,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "reachable": true,
+        "min_edges_to_G": true
+      },
+      "parsed": {
+        "reachable": [
+          "B",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      }
+    },
+    {
+      "id": "extra07_clock_edge_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra07_clock_edge_binding.png",
+      "question": "Solve the pictured register timing problem. Return JSON with q_after_edges (bit string), q_rises (integer), final_q (integer).",
+      "expected": {
+        "q_after_edges": "011011",
+        "q_rises": 2,
+        "final_q": 1
+      },
+      "image_sha256": "2e613c6eed63e005901b9331c50ce6e352423387f851f13d386ce7b2962cb00e",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-ab176d5c78d9dd21",
+        "object": "chat.completion",
+        "created": 1789595557,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"q_after_edges\": \"010011\", \"q_rises\": 2, \"final_q\": 1}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Edges at 2,6,10,14,18,22. Signals just after each edge:\n\nt=2: RESET=1 (high until 3) \u2192 Q=0.\nt=6: RESET=0, ENABLE=1 (high until 7), D=1 \u2192 Q=1.\nt=10: ENABLE=0 (low from 7 to 13) \u2192 hold Q=1.\nt=14: RESET=1 (high 14\u201315) \u2192 Q=0.\nt=18: RESET=0, ENABLE=1 (until 19), D=1 \u2192 Q=1.\nt=22: ENABLE=0 (from 19) \u2192 hold Q=1.\n\nBit string: 010011. Rises: initial Q=1; transitions 0\u21921 at edges: t=6, t=18 \u2192 2. Final Q=1."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2374,
+          "total_tokens": 2588,
+          "completion_tokens": 214,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 17.019,
+      "score": 2,
+      "max_score": 3,
+      "checks": {
+        "q_after_edges": false,
+        "q_rises": true,
+        "final_q": true
+      },
+      "parsed": {
+        "q_after_edges": "010011",
+        "q_rises": 2,
+        "final_q": 1
+      }
+    },
+    {
+      "id": "extra08_connector_view_reflection",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra08_connector_view_reflection.png",
+      "question": "Solve the pictured connector mapping. Return JSON with TX_wire, RX_wire, GND_wire (strings) and rear_top_left_pin (integer).",
+      "expected": {
+        "TX_wire": "T",
+        "RX_wire": "R",
+        "GND_wire": "V",
+        "rear_top_left_pin": 4
+      },
+      "image_sha256": "b2e2804bb258e7559d17d6a1b1f3fb886bce3c92f9ef4bd0cd67e23d18af7ec9",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-a31dca6eeaf2d0de",
+        "object": "chat.completion",
+        "created": 1789595574,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"TX_wire\": \"T\", \"RX_wire\": \"R\", \"GND_wire\": \"V\", \"rear_top_left_pin\": 4}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Rear viewed from wire side, mirrored horizontally relative to front. Front pins 1-4 top, 5-8 bottom. Rear top row W Q T P, bottom U R S V. Rear view from back: front pin 1 (top-left front) appears top-right in rear. So rear top-right P = pin 1, T=2, Q=3, W=4; bottom: V=5, S=6, R=7, U=8.\n\nTX=pin2\u2192T, RX=pin7\u2192R, GND=pin5\u2192V. Rear top-left = W = pin 4."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2053,
+          "total_tokens": 2219,
+          "completion_tokens": 166,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 13.114,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "TX_wire": true,
+        "RX_wire": true,
+        "GND_wire": true,
+        "rear_top_left_pin": true
+      },
+      "parsed": {
+        "TX_wire": "T",
+        "RX_wire": "R",
+        "GND_wire": "V",
+        "rear_top_left_pin": 4
+      }
+    },
+    {
+      "id": "extra09_footnote_exclusions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra09_footnote_exclusions.png",
+      "question": "Apply the pictured memo. Return JSON with eligible_rows (list of row-ID strings in displayed order), reimbursement_usd (integer), excluded_count (integer).",
+      "expected": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      },
+      "image_sha256": "654aae6e9286ba6a740f21ebe24266b98ee58bb5b83127fe3e1edb84631e728a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-bfb9a12fce1beec9",
+        "object": "chat.completion",
+        "created": 1789595587,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"eligible_rows\": [\"R1\", \"R2\", \"R7\"], \"reimbursement_usd\": 175, \"excluded_count\": 4}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "R1: Alpha travel 120\u00d70.75=90 \u2713\nR2: Alpha meals min(40,30)=30 \u2713\nR3: Beta equipment excluded\nR4: HOLD excluded\nR5: Delta meals excluded\nR6: Beta travel excluded\nR7: Gamma equipment 110\u00d70.5=55 \u2713\nTotal 175, excluded 4."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2204,
+          "total_tokens": 2319,
+          "completion_tokens": 115,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 9.847,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "eligible_rows": true,
+        "reimbursement_usd": true,
+        "excluded_count": true
+      },
+      "parsed": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      }
+    },
+    {
+      "id": "extra10_sequential_token_tracking",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra10_sequential_token_tracking.png",
+      "question": "Solve the pictured tracking problem. Return JSON with string fields P_cell, R_cell, T_cell, token_at_B3.",
+      "expected": {
+        "P_cell": "C3",
+        "R_cell": "D4",
+        "T_cell": "E2",
+        "token_at_B3": "S"
+      },
+      "image_sha256": "6a1673d7929fc139fee11f671396b60679b5e846a969bba274db242e966d2589",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-b2dd1edd8e90fd31",
+        "object": "chat.completion",
+        "created": 1789595597,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"P_cell\": \"C3\", \"R_cell\": \"D4\", \"T_cell\": \"E2\", \"token_at_B3\": \"S\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Frame1: P A2, R C2, Q B3, T E3, S D4.\nFrame2: B2, C3, D3, B4, C4.\nFrame3: B3, D3, E3, A4, B4.\nFrame4: B3, C3, E2, B4, D4.\n\nFind matching: each token moves one step each frame.\n\nP A2 \u2192 must move to A1,A3,B2,B3? neighbors: A1,A3,B2. Frame2 has B2. P\u2192B2.\nR C2 \u2192 neighbors B2,C1,C3,D2. Frame2: C3 (B2 taken). R\u2192C3.\nQ B3 \u2192 neighbors A3,B2,B4,C3. Remaining: B4, C3? C3 taken by R. Q\u2192B4.\nT E3 \u2192 neighbors D3,E2,E4. D3 available. T\u2192D3.\nS D4 \u2192 neighbors C4,D3,E4,D5. C4 available. S\u2192C4. \u2713\n\nFrame2\u21923: P B2\u2192 neighbors A2,B3,C2,B1. B3 available. P\u2192B3.\nR C3\u2192 neighbors B3,C2,C4,D3. Remaining: D3? B3 taken. R\u2192D3.\nQ B4\u2192 neighbors A4,B3,C4,B5. A4 available. Q\u2192A4.\nT D3\u2192 neighbors C3,D2,D4,E3. E3 available. T\u2192E3.\nS C4\u2192 neighbors B4,C3,C5,D4. B4 available. S\u2192B4. \u2713\n\nFrame3\u21924: P B3\u2192 neighbors A3,B2,B4,C3. Remaining: C3? B4 taken by S. P\u2192C3.\nR D3\u2192 neighbors C3,D2,D4,E3. Remaining: D4. R\u2192D4.\nQ A4\u2192 neighbors A3,A5,B4. B4 taken. Hmm conflict.\n\nAlternative: maybe P\u2192B4, S\u2192C3? Check frame3\u21924 assignments: tokens at B3,D3,E3,A4,B4 \u2192 B3,C3,E2,B4,D4.\nTry: P B3\u2192C3, R D3\u2192D4, T E3\u2192E2, Q A4\u2192B4, S B4\u2192? neighbors A4,B3,C4,B5 \u2014 none available. Bad.\nTry: P B3\u2192B4, R D3\u2192C3, T E3\u2192E2, Q A4\u2192? A3,A5,B4 \u2014 B4 taken. Bad.\nTry: P B3\u2192C3, R D3\u2192D4, T E3\u2192E2, S B4\u2192B3? then Q A4\u2192B4. S B4\u2192B3 valid (B3 available). Q\u2192B4. \u2713\nSo frame4: P C3, R D4, T E2, Q B4, S B3. Token at B3 = S.\n\nCheck earlier alternative consistency: frame2\u21923 could also differ but this works overall? Frame2\u21923 gave P B3, R D3, T E3, Q A4, S B4 \u2014 matches frame3 positions. Then frame3\u21924 as above. All good.\n\nJSON: P_cell C3, R_cell D4, T_cell E2, token_at_B3 S."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2549,
+          "total_tokens": 3325,
+          "completion_tokens": 776,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 55.987,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "P_cell": true,
+        "R_cell": true,
+        "T_cell": true,
+        "token_at_B3": true
+      },
+      "parsed": {
+        "P_cell": "C3",
+        "R_cell": "D4",
+        "T_cell": "E2",
+        "token_at_B3": "S"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 1024,
+    "chat_template_kwargs": {
+      "reasoning_effort": "low"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 6,
+  "tiers": {
+    "easy": {
+      "score": 0,
+      "max_score": 0
+    },
+    "medium": {
+      "score": 0,
+      "max_score": 0
+    },
+    "hard": {
+      "score": 22,
+      "max_score": 30
+    }
+  }
+}

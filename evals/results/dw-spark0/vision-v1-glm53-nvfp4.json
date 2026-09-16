@@ -1,0 +1,619 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "glm53-flash-nvfp4-vision",
+  "endpoint": "http://127.0.0.1:8006/v1/chat/completions",
+  "status": "complete",
+  "score": 20,
+  "max_score": 20,
+  "tasks": [
+    {
+      "id": "easy_ocr",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_ocr.png",
+      "question": "Read the access code. Return JSON with string key code.",
+      "expected": {
+        "code": "R7K2"
+      },
+      "image_sha256": "b6385c9a6883e7ef159c62aceea0258a4168d95ac638b86031efb4225cdfca36",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-b30c49d0049602f1",
+        "object": "chat.completion",
+        "created": 1789594310,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"code\": \"R7K2\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 380,
+          "total_tokens": 391,
+          "completion_tokens": 11,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 4.275,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "code": true
+      },
+      "parsed": {
+        "code": "R7K2"
+      }
+    },
+    {
+      "id": "easy_spatial",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_spatial.png",
+      "question": "Name the colors of the leftmost and rightmost objects. Return JSON with lowercase string keys leftmost and rightmost.",
+      "expected": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      },
+      "image_sha256": "3b1ecb235cfe19b682330ae1e834294f4627d2253430a182cfa2256fc3c23610",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-b1a35af84e240ba1",
+        "object": "chat.completion",
+        "created": 1789594314,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"leftmost\": \"blue\", \"rightmost\": \"red\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 482,
+          "total_tokens": 498,
+          "completion_tokens": 16,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 1.9,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "leftmost": true,
+        "rightmost": true
+      },
+      "parsed": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      }
+    },
+    {
+      "id": "easy_count",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_count.png",
+      "question": "Count only the orange circles. Return JSON with integer key count.",
+      "expected": {
+        "count": 6
+      },
+      "image_sha256": "5981f343d63ba352c333f930662d02511fa7f001539b296988153c5befec8d35",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-b1027c87f78ceb22",
+        "object": "chat.completion",
+        "created": 1789594316,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"count\": 6}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Orange circles: top-left, top-middle, top-right, left-middle, center-bottom, right-middle = 6."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 861,
+          "total_tokens": 893,
+          "completion_tokens": 32,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 4.029,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "count": true
+      },
+      "parsed": {
+        "count": 6
+      }
+    },
+    {
+      "id": "medium_chart",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_chart.png",
+      "question": "Read the chart. Return JSON: highest (category string), highest_value (integer), gap (highest minus lowest, integer).",
+      "expected": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      },
+      "image_sha256": "6627e4693052ef656c3cfef85f7d2429117d4b3e8d59dadc0f1cae2cb4f09ad9",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-8c6fafb18ecbc824",
+        "object": "chat.completion",
+        "created": 1789594320,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"highest\": \"B\", \"highest_value\": 70, \"gap\": 50}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 873,
+          "total_tokens": 894,
+          "completion_tokens": 21,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 2.215,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest": true,
+        "highest_value": true,
+        "gap": true
+      },
+      "parsed": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      }
+    },
+    {
+      "id": "medium_table",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_table.png",
+      "question": "Return JSON: restock_ids (IDs with Stock strictly below Minimum, in displayed order), washers_bin (string), bolts_stock (integer).",
+      "expected": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      },
+      "image_sha256": "bd000b604cad6634530fababfcc2eb8db36aea22109d44f86b8215b94e9c8afd",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-a8fa834d87bffd4b",
+        "object": "chat.completion",
+        "created": 1789594322,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"restock_ids\": [\"P01\", \"P03\", \"P05\"], \"washers_bin\": \"C2\", \"bolts_stock\": 42}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 877,
+          "total_tokens": 913,
+          "completion_tokens": 36,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 3.263,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "restock_ids": true,
+        "washers_bin": true,
+        "bolts_stock": true
+      },
+      "parsed": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      }
+    },
+    {
+      "id": "medium_flow",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_flow.png",
+      "question": "Follow the displayed input through the diagram. Return JSON with destination equal to the exact output-box text.",
+      "expected": {
+        "destination": "FAN HIGH"
+      },
+      "image_sha256": "c296d2d73b01af18a738d7535d8f9c014c5d461dafbb3a6f35cbdf2080d7b3b7",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-93f7f5c7fc35272b",
+        "object": "chat.completion",
+        "created": 1789594326,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"destination\": \"FAN HIGH\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 868,
+          "total_tokens": 878,
+          "completion_tokens": 10,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 1.453,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "destination": true
+      },
+      "parsed": {
+        "destination": "FAN HIGH"
+      }
+    },
+    {
+      "id": "hard_ledger",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_ledger.png",
+      "question": "Using only RELEASE rows, sum Units minus Rejected. Also identify all batches (including HOLD) tied for most rejected units, in displayed order, and read Units for L14. Return JSON: released_net_units (integer), most_rejected_batches (list of strings), l14_units (integer).",
+      "expected": {
+        "released_net_units": 836,
+        "most_rejected_batches": [
+          "L05",
+          "L10",
+          "L15"
+        ],
+        "l14_units": 79
+      },
+      "image_sha256": "cfad9c2b72bba3fafb706dbadde0b4628017bb3bfa6b7543eaf514c1ea36948a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-bf7fc5f453eb7883",
+        "object": "chat.completion",
+        "created": 1789594327,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"released_net_units\": 836, \"most_rejected_batches\": [\"L05\", \"L10\", \"L15\"], \"l14_units\": 79}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "RELEASE rows: L02 43-1=42, L03 44, L04 46, L06 55, L07 57, L08 59, L10 63, L11 70, L12 72, L14 76, L15 78, L16 85, L18 89. Sum: 42+44=86, +46=132, +55=187, +57=244, +59=303, +63=366, +70=436, +72=508, +76=584, +78=662, +85=747, +89=836.\n\nMax rejected = 4: L05, L10, L15."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 1487,
+          "total_tokens": 1683,
+          "completion_tokens": 196,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 15.342,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "released_net_units": true,
+        "most_rejected_batches": true,
+        "l14_units": true
+      },
+      "parsed": {
+        "released_net_units": 836,
+        "most_rejected_batches": [
+          "L05",
+          "L10",
+          "L15"
+        ],
+        "l14_units": 79
+      }
+    },
+    {
+      "id": "hard_connections",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_connections.png",
+      "question": "Trace each left input through its middle terminal to the numbered right output. Crossings are not junctions. Return JSON with integer keys A, B, C, D (key names are strings; values are integers).",
+      "expected": {
+        "A": 1,
+        "B": 4,
+        "C": 3,
+        "D": 2
+      },
+      "image_sha256": "5e7e3f86e3b30c6315ee8df5021dadf459b746d80374e55f0be344f52ce50eb6",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-9e5d628c81977f5b",
+        "object": "chat.completion",
+        "created": 1789594343,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"A\": 1, \"B\": 4, \"C\": 3, \"D\": 2}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "A goes to Y (line from A down to Y). Y connects to 1 (line from Y up to 1). So A\u21921.\n\nB goes to W. W goes down to 4. B\u21924.\n\nC goes to Z. Z goes to 3. C\u21923.\n\nD goes to X. X goes to 2. D\u21922."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 1074,
+          "total_tokens": 1177,
+          "completion_tokens": 103,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 7.901,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true
+      },
+      "parsed": {
+        "A": 1,
+        "B": 4,
+        "C": 3,
+        "D": 2
+      }
+    },
+    {
+      "id": "hard_schedule",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_schedule.png",
+      "question": "Which two jobs overlap? Give their names in row order. What is the earliest start time at or after 09:00 for a new uninterrupted 45-minute job, using 15-minute start increments? Return JSON: overlapping_jobs (two strings), earliest_start (HH:MM).",
+      "expected": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "12:00"
+      },
+      "image_sha256": "d90f53e0fd30e16e2b344ea03308d85c5829d5f5f370fd7cc942a2800a4b3f2c",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-bdb7a95006c2d041",
+        "object": "chat.completion",
+        "created": 1789594350,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"overlapping_jobs\": [\"BUILD\", \"SYNC\"], \"earliest_start\": \"12:00\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "BUILD 09:00\u201309:45, SYNC 09:30\u201310:00 overlap. Gaps: 10:00\u201310:30 (30min), 11:00\u201311:30 (30), 12:00 onward free \u2192 12:00. But 45-min slot needs 45 min: 10:00\u201310:30 only 30. So earliest 12:00."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 1040,
+          "total_tokens": 1151,
+          "completion_tokens": 111,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 8.515,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "overlapping_jobs": true,
+        "earliest_start": true
+      },
+      "parsed": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "12:00"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 1024,
+    "chat_template_kwargs": {
+      "reasoning_effort": "low"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 9,
+  "tiers": {
+    "easy": {
+      "score": 4,
+      "max_score": 4
+    },
+    "medium": {
+      "score": 7,
+      "max_score": 7
+    },
+    "hard": {
+      "score": 9,
+      "max_score": 9
+    }
+  }
+}

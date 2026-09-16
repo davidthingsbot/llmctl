@@ -11,6 +11,11 @@ import time
 import urllib.request
 from pathlib import Path
 
+try:  # Direct script execution and package-based test discovery.
+    from eval_runtime import atomic_write_json
+except ModuleNotFoundError:
+    from evals.eval_runtime import atomic_write_json
+
 
 # Chatty and thinking models need room. A cap only costs anything when it BINDS —
 # a model that answers in 200 tokens uses 200 whether the ceiling is 160 or
@@ -1013,7 +1018,7 @@ def _cost_summary(results, wall_s):
         prompt += usage.get("prompt_tokens") or 0
         completion += usage.get("completion_tokens") or 0
         task_seconds += row.get("elapsed_s") or 0.0
-        if "score_retry" in row:
+        if "score_retry" in row or "retry_usage" in row:
             retries += 1
             retry_usage = row.get("retry_usage") or {}
             prompt += retry_usage.get("prompt_tokens") or 0
@@ -1044,9 +1049,8 @@ def _json_safe(value):
     """Coerce grader details into JSON-serialisable types.
 
     numpy_backprop's grader compares numpy scalars, so a detail can end up as
-    np.bool_ or np.float64. Neither is JSON-serialisable, and because the results
-    are written only after every task has run, one such value discards the whole
-    suite at the final step — 14 tasks of work lost to the last line.
+    np.bool_ or np.float64. Neither is JSON-serialisable, so checkpoint and final
+    writes must convert them first.
     """
     if isinstance(value, dict):
         return {str(k): _json_safe(v) for k, v in value.items()}
@@ -1126,39 +1130,69 @@ def main():
     if args.template_kwargs:
         TEMPLATE_KWARGS = json.loads(args.template_kwargs)
     key = next(line.strip() for line in Path(args.key_file).read_text().splitlines() if line.strip())
+    selected_tasks = tasks(args.extended)
     results = []
     suite_started = time.monotonic()
-    for name, prompt, max_tokens, grader in tasks(args.extended):
+    planned_maximum = sum(grader("")[1] for _, _, _, grader in selected_tasks)
+
+    def checkpoint(complete=False):
+        output = {"suite": ("deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1")
+                  + ("" if args.retry else "+cold"), "model": args.model, "endpoint": args.url,
+                  "template_kwargs": None if args.no_template_kwargs else TEMPLATE_KWARGS,
+                  "score": sum(x["score"] for x in results),
+                  "max_score": planned_maximum,
+                  "retry_enabled": bool(args.retry),
+                  "retry_credit": args.retry_credit if args.retry else None,
+                  "cost": _cost_summary(results, time.monotonic() - suite_started),
+                  "tasks": results}
+        output.update(status="complete" if complete else "partial", complete=complete,
+                      completed_tasks=sum(row.get("status") == "complete" for row in results),
+                      planned_tasks=[task[0] for task in selected_tasks])
+        atomic_write_json(args.output, _json_safe(output))
+        return output
+
+    checkpoint()
+    for name, prompt, max_tokens, grader in selected_tasks:
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
         budget = max(args.min_tokens, round(max_tokens * args.token_budget_scale))
+        row = {"task": name, "score": 0, "max_score": maximum,
+               "max_tokens": budget, "response": "", "grade_details": {},
+               "status": "requesting"}
+        results.append(row)
+        checkpoint()
         try:
-            text, usage, elapsed = request(
+            raw_text, usage, elapsed = request(
                 args.url, key, args.model, prompt, budget,
                 template_kwargs=not args.no_template_kwargs,
-                strip_reasoning=args.strip_reasoning,
+                strip_reasoning=False,
             )
+            text = _visible_answer({"content": raw_text}, args.strip_reasoning)
+            row.update(raw_response=raw_text, response=text, usage=usage,
+                       elapsed_s=round(elapsed, 4), status="grading")
+            checkpoint()
             score, maximum, details = grader(text)
-            row = {"task": name, "score": score, "max_score": maximum,
-                   "elapsed_s": round(elapsed, 4), "max_tokens": budget,
-                   "usage": usage,
-                   "response": text, "grade_details": details}
+            row.update(score=score, max_score=maximum, grade_details=details)
             if args.retry and score < maximum:
                 row["score_first"] = score
                 row["retry_feedback"] = failure_report(details)
+                row["status"] = "requesting_retry"
+                checkpoint()
                 try:
-                    rt, ru, re_s = request(
+                    raw_retry, ru, re_s = request(
                         args.url, key, args.model, prompt, budget,
                         template_kwargs=not args.no_template_kwargs,
-                        strip_reasoning=args.strip_reasoning,
+                        strip_reasoning=False,
                         history=[{"role": "assistant", "content": text},
                                  {"role": "user",
                                   "content": RETRY_INSTRUCTION + row["retry_feedback"]}])
+                    rt = _visible_answer({"content": raw_retry}, args.strip_reasoning)
+                    row.update(raw_retry_response=raw_retry, retry_response=rt,
+                               retry_usage=ru, retry_elapsed_s=round(re_s, 4),
+                               status="grading_retry")
+                    checkpoint()
                     rs, _, rd = grader(rt)
                     row["score_retry"] = rs
-                    row["retry_usage"] = ru
-                    row["retry_elapsed_s"] = round(re_s, 4)
-                    row["retry_response"] = rt
                     row["retry_grade_details"] = rd
                     credited = int(round(rs * args.retry_credit))
                     if credited > score:
@@ -1167,21 +1201,11 @@ def main():
                 except Exception as exc:
                     row["retry_error"] = f"{type(exc).__name__}: {exc}"
         except Exception as exc:
-            row = {"task": name, "score": 0, "max_score": maximum,
-                   "error": f"{type(exc).__name__}: {exc}", "response": "", "grade_details": {}}
-        results.append(row)
+            row.update(score=0, error=f"{type(exc).__name__}: {exc}")
+        row["status"] = "complete"
+        checkpoint()
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
-    output = {"suite": ("deep_reasoning_v1+hard" if args.extended else "deep_reasoning_v1")
-              + ("" if args.retry else "+cold"), "model": args.model, "endpoint": args.url,
-              "template_kwargs": None if args.no_template_kwargs else TEMPLATE_KWARGS,
-              "score": sum(x["score"] for x in results),
-              "max_score": sum(x["max_score"] for x in results),
-              "retry_enabled": bool(args.retry),
-              "retry_credit": args.retry_credit if args.retry else None,
-              "cost": _cost_summary(results, time.monotonic() - suite_started),
-              "tasks": results}
-    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(_json_safe(output), indent=2) + "\n")
+    output = checkpoint(complete=True)
     print(json.dumps({"model": args.model, "score": output["score"],
                       "max_score": output["max_score"], "output": args.output}))
 

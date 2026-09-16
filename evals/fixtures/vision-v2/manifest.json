@@ -1,0 +1,160 @@
+{
+  "version": "synthetic-vision-v2",
+  "tasks": [
+    {
+      "id": "easy_ocr",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_ocr.png",
+      "question": "Read the access code. Return JSON with string key code.",
+      "expected": {
+        "code": "R7K2"
+      }
+    },
+    {
+      "id": "easy_spatial",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_spatial.png",
+      "question": "Name the colors of the leftmost and rightmost objects. Return JSON with lowercase string keys leftmost and rightmost.",
+      "expected": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      }
+    },
+    {
+      "id": "easy_count",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_count.png",
+      "question": "Count only the orange circles. Return JSON with integer key count.",
+      "expected": {
+        "count": 6
+      }
+    },
+    {
+      "id": "medium_chart",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_chart.png",
+      "question": "Read the chart. Return JSON: highest (category string), highest_value (integer), gap (highest minus lowest, integer).",
+      "expected": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      }
+    },
+    {
+      "id": "medium_table",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_table.png",
+      "question": "Return JSON: restock_ids (IDs with Stock strictly below Minimum, in displayed order), washers_bin (string), bolts_stock (integer).",
+      "expected": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      }
+    },
+    {
+      "id": "medium_flow",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_flow.png",
+      "question": "Follow the displayed input through the diagram. Return JSON with destination equal to the exact output-box text.",
+      "expected": {
+        "destination": "FAN HIGH"
+      }
+    },
+    {
+      "id": "hard_v2_reconciliation",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_reconciliation.png",
+      "question": "Reconcile the document using its displayed rules. Return JSON: released_good_units (integer), released_value_cents (integer), held_ids (ordered list of strings), largest_value_id (string).",
+      "expected": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      }
+    },
+    {
+      "id": "hard_v2_crossing_plot",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_crossing_plot.png",
+      "question": "Apply the plot selection rule and calculate the requested quantities. Return JSON: start_minute (integer), end_minute (integer), crossing_second (integer), right_gap (integer), c_area_unit_seconds (integer).",
+      "expected": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      }
+    },
+    {
+      "id": "hard_v2_logic_network",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_logic_network.png",
+      "question": "Trace and evaluate the displayed logic network. Return JSON: g1_sources (list of strings), g2_sources (list of strings), high_input_codes (list of strings), scenario_y (integer), fault_y (integer).",
+      "expected": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "0010",
+          "0101",
+          "0110",
+          "1000",
+          "1100",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      }
+    },
+    {
+      "id": "hard_v2_cube",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cube.png",
+      "question": "Solve the displayed fold, candidate match, and roll sequence. Return JSON: option (string), opposite_c (string), final_top (string), final_front (string), final_right (string).",
+      "expected": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      }
+    },
+    {
+      "id": "hard_v2_resources",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_resources.png",
+      "question": "Find the optimal appointment under all displayed constraints. Return JSON: room (string), technician (string), start (HH:MM string), end (HH:MM string).",
+      "expected": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      }
+    },
+    {
+      "id": "hard_v2_cross_reference",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cross_reference.png",
+      "question": "Follow the displayed cross-reference procedure. Return JSON: node (string), probe (string), revision (integer), adjusted (integer), destination (string).",
+      "expected": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      }
+    }
+  ]
+}

@@ -16,6 +16,11 @@ import time
 import urllib.request
 from pathlib import Path
 
+try:  # Direct script execution and package-based test discovery.
+    from eval_runtime import atomic_write_json, bounded_run
+except ModuleNotFoundError:
+    from evals.eval_runtime import atomic_write_json, bounded_run
+
 
 # Chatty and thinking models need room. A cap only costs anything when it BINDS —
 # a model that answers in 200 tokens uses 200 whether the ceiling is 160 or
@@ -817,6 +822,40 @@ endmodule
 """
 
 
+def _verilog_lint(design, details, flags, timeout):
+    if not shutil.which("verilator"):
+        details["lint_clean"] = None
+        return True
+    lint = bounded_run(["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME",
+                        "-Wno-EOFNEWLINE", "-Wno-UNUSEDSIGNAL", *flags, design],
+                       timeout=timeout)
+    details["lint_clean"] = lint.returncode == 0
+    diagnostics = lint.stdout + "\n" + lint.stderr
+    if not details["lint_clean"]:
+        details["lint_first"] = [line for line in diagnostics.splitlines()
+                                 if line.startswith("%")][:3]
+    loops = [line for line in diagnostics.splitlines()
+             if re.match(r"%(?:Warning|Error)-(?:UNOPTFLAT|DIDNOTCONVERGE)\b", line)]
+    if loops:
+        details["lint_first"] = loops[:3]
+        details["ran_to_completion"] = False
+        details["simulation_skipped"] = "combinational loop reported by Verilator"
+        return False
+    return True
+
+
+def _verilog_completed(run, details):
+    details["simulator_returncode"] = run.returncode
+    details["ran_to_completion"] = (run.returncode == 0 and
+        re.search(r"SUMMARY pass=\d+ fail=\d+", run.stdout) is not None
+        and "TIMEOUT" not in run.stdout)
+    if not details["ran_to_completion"]:
+        details["harness_error"] = (f"simulator exited {run.returncode}; "
+                                    "testbench did not complete successfully")
+        details["simulator_error"] = run.stderr.splitlines()[:3]
+    return details["ran_to_completion"]
+
+
 def task_verilog_medium():
     prompt = '''Write a synchronous FIFO in Verilog-2001. Return ONLY the complete module,
 no testbench, no explanation.
@@ -856,15 +895,19 @@ Requirements:
             with open(bench, "w") as handle:
                 handle.write(VERILOG_TESTBENCH)
 
+            if not _verilog_lint(design, details, ["-Wno-UNUSEDPARAM", "-Wno-VARHIDDEN"], 60):
+                return 0, 26, details
             if shutil.which("iverilog") and shutil.which("vvp"):
                 details["simulator"] = "iverilog"
-                build = subprocess.run(["iverilog", "-g2001", "-o",
-                                        os.path.join(workdir, "sim"), design, bench],
-                                       capture_output=True, text=True, timeout=60)
+                build = bounded_run(["iverilog", "-g2001", "-o",
+                                     os.path.join(workdir, "sim"), design, bench],
+                                    timeout=60)
                 details["compiles"] = build.returncode == 0
                 if details["compiles"]:
-                    run = subprocess.run(["vvp", os.path.join(workdir, "sim")],
-                                         capture_output=True, text=True, timeout=60)
+                    run = bounded_run(["vvp", os.path.join(workdir, "sim")],
+                                      timeout=60)
+                    if not _verilog_completed(run, details):
+                        return 0, 26, details
                     out = run.stdout
                     labels = ['empty_after_reset', 'not_full_at_three', 'full_at_depth', 'write_while_full_ignored', 'first_out_is_first_in', 'second_out', 'not_full_after_reads', 'third_out', 'fourth_out', 'empty_after_draining', 'read_while_empty_ignored', 'full_after_wrap', 'wrap_first_out', 'empty_after_wrap_drain']
                     for line in out.splitlines():
@@ -880,22 +923,14 @@ Requirements:
                 # Absent tooling must be visible, not silently scored as failure.
                 details["simulator"] = "absent"
 
-            if shutil.which("verilator"):
-                # Stylistic warnings (filename/module mismatch, unused signals) say
-                # nothing about correctness; the rest catch RTL that simulates but
-                # does not synthesise.
-                lint = subprocess.run(
-                    ["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME", "-Wno-EOFNEWLINE",
-                     "-Wno-UNUSEDSIGNAL", "-Wno-UNUSEDPARAM", "-Wno-VARHIDDEN", design],
-                    capture_output=True, text=True, timeout=60)
-                details["lint_clean"] = lint.returncode == 0
-                if not details["lint_clean"]:
-                    details["lint_first"] = [l for l in lint.stderr.splitlines()
-                                             if l.startswith("%")][:3]
-            else:
-                details["lint_clean"] = None
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            details["ran_to_completion"] = False
+            return 0, 26, details
         except Exception as exc:
+            details["ran_to_completion"] = False
             details["harness_error"] = f"{type(exc).__name__}: {exc}"
+            return 0, 26, details
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
 
@@ -1450,7 +1485,7 @@ def _cost_summary(results, wall_s):
         prompt += usage.get("prompt_tokens") or 0
         completion += usage.get("completion_tokens") or 0
         task_seconds += row.get("elapsed_s") or 0.0
-        if "score_retry" in row:
+        if "score_retry" in row or "retry_usage" in row:
             retries += 1
             retry_usage = row.get("retry_usage") or {}
             prompt += retry_usage.get("prompt_tokens") or 0
@@ -1481,9 +1516,8 @@ def _json_safe(value):
     """Coerce grader details into JSON-serialisable types.
 
     numpy_backprop's grader compares numpy scalars, so a detail can end up as
-    np.bool_ or np.float64. Neither is JSON-serialisable, and because the results
-    are written only after every task has run, one such value discards the whole
-    suite at the final step — 14 tasks of work lost to the last line.
+    np.bool_ or np.float64. Neither is JSON-serialisable, so checkpoint and final
+    writes must convert them first.
     """
     if isinstance(value, dict):
         return {str(k): _json_safe(v) for k, v in value.items()}
@@ -1753,14 +1787,18 @@ Requirements:
         try:
             open(design, "w").write(code + "\n")
             open(bench, "w").write(VERILOG_EASY_TB)
+            if not _verilog_lint(design, details, [], 60):
+                return 0, 16, details
             if shutil.which("iverilog") and shutil.which("vvp"):
                 details["simulator"] = "iverilog"
-                build = subprocess.run(["iverilog", "-g2001", "-o", os.path.join(workdir, "sim"),
-                                        design, bench], capture_output=True, text=True, timeout=60)
+                build = bounded_run(["iverilog", "-g2001", "-o", os.path.join(workdir, "sim"),
+                                     design, bench], timeout=60)
                 details["compiles"] = build.returncode == 0
                 if details["compiles"]:
-                    run = subprocess.run(["vvp", os.path.join(workdir, "sim")],
-                                         capture_output=True, text=True, timeout=60)
+                    run = bounded_run(["vvp", os.path.join(workdir, "sim")],
+                                      timeout=60)
+                    if not _verilog_completed(run, details):
+                        return 0, 16, details
                     for line in run.stdout.splitlines():
                         if line.startswith("CHECK "):
                             _, ident, verdict = line.split()
@@ -1771,12 +1809,12 @@ Requirements:
             else:
                 details["simulator"] = "absent"
                 return 6, 16, details
-            if shutil.which("verilator"):
-                lint = subprocess.run(["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME",
-                                       "-Wno-EOFNEWLINE", "-Wno-UNUSEDSIGNAL", design],
-                                      capture_output=True, text=True, timeout=60)
-                details["lint_clean"] = lint.returncode == 0
+        except subprocess.TimeoutExpired:
+            details["timeout"] = True
+            details["ran_to_completion"] = False
+            return 0, 16, details
         except Exception as exc:
+            details["ran_to_completion"] = False
             details["harness_error"] = f"{type(exc).__name__}: {exc}"
             return 0, 16, details
         finally:
@@ -2364,14 +2402,19 @@ Requirements:
         try:
             open(design, "w").write(code + "\n")
             open(bench, "w").write(VERILOG_HARD_TB)
+            if not _verilog_lint(design, details, ["-Wno-UNUSEDPARAM", "-Wno-MULTIDRIVEN",
+                                  "-Wno-WIDTHEXPAND", "-Wno-WIDTHTRUNC"], 90):
+                return 0, 30, details
             if shutil.which("iverilog") and shutil.which("vvp"):
                 details["simulator"] = "iverilog"
-                build = subprocess.run(["iverilog", "-g2001", "-o", os.path.join(workdir, "sim"),
-                                        design, bench], capture_output=True, text=True, timeout=90)
+                build = bounded_run(["iverilog", "-g2001", "-o", os.path.join(workdir, "sim"),
+                                     design, bench], timeout=90)
                 details["compiles"] = build.returncode == 0
                 if details["compiles"]:
-                    run = subprocess.run(["vvp", os.path.join(workdir, "sim")],
-                                         capture_output=True, text=True, timeout=180)
+                    run = bounded_run(["vvp", os.path.join(workdir, "sim")],
+                                      timeout=180)
+                    if not _verilog_completed(run, details):
+                        return 0, 30, details
                     for line in run.stdout.splitlines():
                         if line.startswith("CHECK "):
                             _, ident, verdict = line.split()
@@ -2387,17 +2430,12 @@ Requirements:
             else:
                 details["simulator"] = "absent"
                 return 8, 30, details
-            if shutil.which("verilator"):
-                lint = subprocess.run(["verilator", "--lint-only", "-Wall", "-Wno-DECLFILENAME",
-                                       "-Wno-EOFNEWLINE", "-Wno-UNUSEDSIGNAL", "-Wno-UNUSEDPARAM",
-                                       "-Wno-MULTIDRIVEN", "-Wno-WIDTHEXPAND",
-                                       "-Wno-WIDTHTRUNC", design],
-                                      capture_output=True, text=True, timeout=90)
-                details["lint_clean"] = lint.returncode == 0
         except subprocess.TimeoutExpired:
             details["timeout"] = True
+            details["ran_to_completion"] = False
             return 0, 30, details
         except Exception as exc:
+            details["ran_to_completion"] = False
             details["harness_error"] = f"{type(exc).__name__}: {exc}"
             return 0, 30, details
         finally:
@@ -2503,27 +2541,53 @@ def main():
         ]
     results = []
     suite_started = time.monotonic()
+    planned_maximum = sum(grader("")[1] for _, _, _, grader in tasks)
+
+    def checkpoint(complete=False):
+        output = {
+            "suite": ("work_quality_v1+hard" if args.extended else "work_quality_v1")
+                     + ("" if args.retry else "+cold"),
+            "model": args.model,
+            "endpoint": args.url,
+            "template_kwargs": None if args.no_template_kwargs else TEMPLATE_KWARGS,
+            "score": sum(row["score"] for row in results),
+            "max_score": planned_maximum,
+            # explicit, because a result file must state its own mode: a cold run
+            # made between the retry commit and the retry-default commit carried an
+            # id indistinguishable from a retry run
+            "retry_enabled": bool(args.retry),
+            "retry_credit": args.retry_credit if args.retry else None,
+            "cost": _cost_summary(results, time.monotonic() - suite_started),
+            "tasks": results,
+        }
+        output.update(status="complete" if complete else "partial", complete=complete,
+                      completed_tasks=sum(row.get("status") == "complete" for row in results),
+                      planned_tasks=[task[0] for task in tasks])
+        atomic_write_json(args.output, _json_safe(output))
+        return output
+
+    checkpoint()
     for name, prompt, max_tokens, grader in tasks:
         print(f"running {name}...", flush=True)
         _score, maximum, _details = grader("")
         budget = max(args.min_tokens, round(max_tokens * args.token_budget_scale))
+        row = {"task": name, "score": 0, "max_score": maximum,
+               "max_tokens": budget, "response": "", "grade_details": {},
+               "status": "requesting"}
+        results.append(row)
+        checkpoint()
         try:
-            text, usage, elapsed = request(
+            raw_text, usage, elapsed = request(
                 args.url, key, args.model, prompt, budget,
                 template_kwargs=not args.no_template_kwargs,
-                strip_reasoning=args.strip_reasoning,
+                strip_reasoning=False,
             )
+            text = _visible_answer({"content": raw_text}, args.strip_reasoning)
+            row.update(raw_response=raw_text, response=text, usage=usage,
+                       elapsed_s=round(elapsed, 4), status="grading")
+            checkpoint()
             score, maximum, details = grader(text)
-            row = {
-                "task": name,
-                "score": score,
-                "max_score": maximum,
-                "elapsed_s": round(elapsed, 4),
-                "max_tokens": budget,
-                "usage": usage,
-                "response": text,
-                "grade_details": details,
-            }
+            row.update(score=score, max_score=maximum, grade_details=details)
             # One do-over. The model sees the raw checker output and nothing
             # else, then repairs its own answer. Reading an error and fixing your
             # own bug is most of real engineering, and a model that fails cold
@@ -2533,19 +2597,23 @@ def main():
             if args.retry and score < maximum:
                 row["score_first"] = score
                 row["retry_feedback"] = failure_report(details)
+                row["status"] = "requesting_retry"
+                checkpoint()
                 try:
-                    retry_text, retry_usage, retry_elapsed = request(
+                    raw_retry, retry_usage, retry_elapsed = request(
                         args.url, key, args.model, prompt, budget,
                         template_kwargs=not args.no_template_kwargs,
-                        strip_reasoning=args.strip_reasoning,
+                        strip_reasoning=False,
                         history=[{"role": "assistant", "content": text},
                                  {"role": "user",
                                   "content": RETRY_INSTRUCTION + row["retry_feedback"]}])
+                    retry_text = _visible_answer({"content": raw_retry}, args.strip_reasoning)
+                    row.update(raw_retry_response=raw_retry, retry_response=retry_text,
+                               retry_usage=retry_usage, retry_elapsed_s=round(retry_elapsed, 4),
+                               status="grading_retry")
+                    checkpoint()
                     retry_score, _, retry_details = grader(retry_text)
                     row["score_retry"] = retry_score
-                    row["retry_usage"] = retry_usage
-                    row["retry_elapsed_s"] = round(retry_elapsed, 4)
-                    row["retry_response"] = retry_text
                     row["retry_grade_details"] = retry_details
                     credited = int(round(retry_score * args.retry_credit))
                     # A retry can never lower a score.
@@ -2555,30 +2623,11 @@ def main():
                 except Exception as exc:
                     row["retry_error"] = f"{type(exc).__name__}: {exc}"
         except Exception as exc:
-            row = {
-                "task": name, "score": 0, "max_score": maximum,
-                "error": f"{type(exc).__name__}: {exc}", "response": "", "grade_details": {},
-            }
-        results.append(row)
+            row.update(score=0, error=f"{type(exc).__name__}: {exc}")
+        row["status"] = "complete"
+        checkpoint()
         print(json.dumps({k: row[k] for k in row if k in ("task", "score", "max_score", "elapsed_s", "error")}), flush=True)
-    output = {
-        "suite": ("work_quality_v1+hard" if args.extended else "work_quality_v1")
-                 + ("" if args.retry else "+cold"),
-        "model": args.model,
-        "endpoint": args.url,
-        "template_kwargs": None if args.no_template_kwargs else TEMPLATE_KWARGS,
-        "score": sum(row["score"] for row in results),
-        "max_score": sum(row["max_score"] for row in results),
-        # explicit, because a result file must state its own mode: a cold run
-        # made between the retry commit and the retry-default commit carried an
-        # id indistinguishable from a retry run
-        "retry_enabled": bool(args.retry),
-        "retry_credit": args.retry_credit if args.retry else None,
-        "cost": _cost_summary(results, time.monotonic() - suite_started),
-        "tasks": results,
-    }
-    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(_json_safe(output), indent=2) + "\n")
+    output = checkpoint(complete=True)
     print(json.dumps({"model": args.model, "score": output["score"], "max_score": output["max_score"], "output": args.output}))
 
 

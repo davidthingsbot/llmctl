@@ -1,0 +1,165 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "max_tokens": 4096,
+  "reasoning_effort": "low",
+  "status": "complete",
+  "tasks": [
+    {
+      "id": "hard_v2_logic_network",
+      "expected": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "0010",
+          "0101",
+          "0110",
+          "1000",
+          "1100",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      },
+      "raw_response": {
+        "id": "chatcmpl-95d224c110ed25b7",
+        "object": "chat.completion",
+        "created": 1789596011,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"g1_sources\": [\"A\", \"B\"], \"g2_sources\": [\"B\", \"C\"], \"high_input_codes\": [\"0100\", \"0110\", \"1000\", \"1010\", \"1111\"], \"scenario_y\": 0, \"fault_y\": 1}\n```",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Trace wiring: G1 XOR inputs: A and B? A line goes to G1 top input; B line goes to G1 bottom input. G1 = A XOR B.\n\nG2 AND inputs: B and C? B branches down to G2; C goes to G2. G2 = B AND C.\n\nG3 XOR inputs: G1 output and C? G1 output goes to G3 top; a line from C (via junction) goes to G3 bottom? Actually the line into G3 bottom comes from left crossing... Let's see: G3 inputs: G1 output (dot at G1 output branching) and the wire from B? The wire entering G3 bottom comes from far left at y~380, which traces to B? B line at y~360 goes right; there's a junction at B (dot at 410,360). The line at 380 from x~320 vertical down to C junction... Hmm.\n\nVertical line at x=320 from y=290 down to y=520 (C junction). Top connects to a horizontal line at y=290 going right to G1 bottom input? That's the A branch? A junction at (230,200): A goes right to G1 top; branch down to y=230 then right to G1 bottom. So G1 = A,B? Wait G1 inputs both from A? No\u2014line at y=230 to G1 bottom comes from A branch. Then vertical x=320 top at y=290 goes right... to where? It goes right to G3? Actually the horizontal at y=290 extends to x~1020? It goes to G3 top? G3 top input at y~300. Hmm but G1 output also goes to G3.\n\nLet me reconsider: G1 output at y~260 goes right to x=900 with dot at (900,300)? The dot at (900,300) is on G1 output line, branching to G3 top input. So G3 top = G1.\n\nG3 bottom input at y~380: horizontal line from x~560 to 1020. That line at x~560 connects to vertical going down? There's vertical at x=560 from y=380 down to y=680 (D junction at 560,680). So G3 bottom = D? Wait D line at y=680: D goes right, junction at (500,680) and (560,680). Vertical from (560,680) up to y=380 then right to G3 bottom. So G3 = G1 XOR D.\n\nHmm but also vertical at x=560 from y=380... also line at y=380 extends left to x~320? The horizontal at y=380 starts at x~320? Looking: \"B\" line at y=360; there's horizontal at y=380 from x=320 to 560? That would connect C-junction vertical to D vertical. Ambiguous.\n\nG2 AND inputs at y~470 and y~530: top input from B branch (junction at 410,360, vertical down to y=470 then right to G2). Bottom input from C (C line y=520 to G2? C goes right to x~540 then to G2 bottom at y~530). So G2 = B AND C.\n\nG4 OR inputs at y~620 and y~700: top from G2 output? G2 output y~500 goes right to x=940, then down to G4? Actually G2 output line goes right and there's vertical at x=940 down to y=700? And vertical at x=900 (G1 dot) down to y=620? The dot at (900,300) branches down to y=620 to G4 top. So G4 = G1 OR G2? G4 top = G1 (via x=900 vertical), bottom = G2 (via x=940 vertical down). Hmm but the vertical at x=900 down to 620: line from dot goes down to y=620 then right to G4 top. Yes.\n\nG5 AND inputs: G3 output and G4 output. Y = G3 AND G4.\n\nSo: G1=A\u2295B, G2=B\u2227C, G3=G1\u2295D, G4=G1\u2228G2, Y=G3\u2227G4.\n\nCheck scenario A=1,B=1,C=0,D=1: G1=0, G2=0, G3=0\u22951=1, G4=0, Y=0.\nFault C=1: G2=1, G3=1, G4=0\u22281=1, Y=1.\n\nhigh_input_codes: codes ABCD with Y=1. Compute: Y = (A\u2295B\u2295D) \u2227 ((A\u2295B) \u2228 BC).\nLet X=A\u2295B. Y=(X\u2295D)\u2227(X\u2228BC).\nEnumerate: X=0: need D=1 and BC=1 \u2192 B=C=1, A=B \u2192 A=1. Code 1011? A=1,B=1,C=1,D=1 \u2192 1110? order ABCD: 1,1,1,1 = \"1111\". Wait A=1 since X=0 means A=B; B=1\u2192A=1. Code 1111.\nX=1: X\u2295D=1 \u2192 D=0. X\u2228BC=1 always. A\u2260B, D=0: codes 1000(A=1,B=0), 0100(A=0,B=1), with C free: 1000,1010,0100,0110.\nAscending: 0100,0110,1000,1010,1111."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2268,
+          "total_tokens": 3575,
+          "completion_tokens": 1307,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 92.21155735499997,
+      "score": 2,
+      "max_score": 5,
+      "checks": {
+        "g1_sources": false,
+        "g2_sources": false,
+        "high_input_codes": false,
+        "scenario_y": true,
+        "fault_y": true
+      },
+      "parsed": {
+        "g1_sources": [
+          "A",
+          "B"
+        ],
+        "g2_sources": [
+          "B",
+          "C"
+        ],
+        "high_input_codes": [
+          "0100",
+          "0110",
+          "1000",
+          "1010",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      }
+    },
+    {
+      "id": "hard_v2_cube",
+      "expected": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      },
+      "raw_response": {
+        "id": "chatcmpl-8ad2fceb3ec553f8",
+        "object": "chat.completion",
+        "created": 1789596103,
+        "model": "glm53-flash-nvfp4-vision",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"option\": \"Q\", \"opposite_c\": \"E\", \"final_top\": \"F\", \"final_front\": \"D\", \"final_right\": \"C\"}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Net: A above C, F below C, B left of C, D right of C, E right of D. Opposite pairs: A-F, B-D, C-E.\n\nCheck candidates: P: top A, front C, right B \u2014 A,C,B adjacent: A-C yes, C-B yes, A-B? A adjacent to B? A is above C; A's neighbors: C, and when folded, A adjacent to B, D, F. Yes A-B adjacent. Check chirality: with top A, front C, right B \u2014 need correct handedness. Cube: C front, A top, B left of C in net... Let's set coordinates. Net: C center. Fold: A up (top), F down (bottom), B left (left), D right (right), E folds to back? D right, E right of D \u2192 E becomes back. So faces: top A, bottom F, left B, right D, front C, back E. Opposites: A-F, B-D, C-E. \u2713\n\nCandidate P: top A, front C, right B. In our cube, with top A and front C, right face is D, not B. But we can rotate cube: keep top A, front C fixed \u2014 right is D. So P wrong? Alternatively rotate around vertical axis changes front. P requires top A, front C, right B \u2014 impossible since with A top, C front, right is D. So P invalid.\n\nQ: top A, front C, right D \u2014 matches exactly. Valid.\n\nR: top A, front F, right D. A top, F front: F is bottom, can't be front with A top. Invalid.\n\nS: top C, front E, right A. C top, E front: E is back; with C top, front could be... rotate: top C, front E means cube rotated so back becomes front, top stays C? Rotating around vertical keeps top C, front can be any side. With top C, front E, right face: original right D; rotating 180\u00b0 (front E), right becomes B. So right would be B, not A. Invalid.\n\nT: top B, front D, right F. B top, D front: B-D are opposites! Invalid.\n\nU: top F, front C, right D. F top, C front: with F top, front C, right? Original: A top, C front, D right. Flip so F top: rotate 180\u00b0 about front-back axis (C stays front): top becomes F, right becomes... rotating about front-back: top A\u2192bottom, bottom F\u2192top, left B\u2192right, right D\u2192left. So right = B, not D. Invalid.\n\nAnswer: Q. Opposite C = E.\n\nRolls starting from Q orientation: top A, front C, right D.\nRIGHT: right face becomes bottom; top becomes right. New: top = ? right D\u2192bottom, top A\u2192right, front C stays. New top = left face. Left face originally B (opposite of D). New: top B, front C, right A, bottom D.\nAWAY: front becomes top; top becomes back. New top = C, front = old bottom? AWAY: front face becomes top; top becomes back; so bottom becomes front. New: top C, front D, back B, left/right stay: right A.\nRIGHT: right A\u2192bottom, top C\u2192right, front D stays. New top = old left = ? left stays through AWAY: after first RIGHT left was... initial left B; RIGHT keeps front/back, left/right: right\u2192bottom, top\u2192right, so left\u2192top? Actually RIGHT: right\u2192bottom, bottom\u2192left, left\u2192top, top\u2192right. So after RIGHT1: top B, right A, bottom D, left F, front C.\nAWAY: front\u2192top, top\u2192back, back\u2192bottom, bottom\u2192front; left/right stay. After AWAY: top C, front F, back B, left F? wait left was F after RIGHT1? Initial left = B? Initial cube: left B, right D, top A, bottom F, front C, back E. RIGHT1: right D\u2192bottom, bottom F\u2192left, left B\u2192top, top A\u2192right. So top B, front C, right A, bottom D, left F, back E.\nAWAY: front C\u2192top, top B\u2192back, back E\u2192bottom, bottom D\u2192front. Left F, right A stay. Now: top C, front D, right A, left F, back B, bottom E.\nRIGHT2: right A\u2192bottom, bottom E\u2192left, left F\u2192top, top C\u2192right. Final: top F, front D, right C."
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": 154827,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+        "usage": {
+          "prompt_tokens": 2277,
+          "total_tokens": 3332,
+          "completion_tokens": 1055,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 74.98423874100263,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "option": true,
+        "opposite_c": true,
+        "final_top": true,
+        "final_front": true,
+        "final_right": true
+      },
+      "parsed": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      }
+    }
+  ]
+}
