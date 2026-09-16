@@ -751,10 +751,14 @@ peer_sh() { # peer_sh <peer> <command> — bounded; a wedged box times out (rc 1
   timeout 12 ssh "${PEER_SSH_OPTS[@]}" "${PEER_ADDR[$n]}" "$@"
 }
 
-# One line per node: "ncpu load1 load5 load15 memtotal_kb memavail_kb | gpu csv;gpu csv"
+# One line per node:
+#   "ncpu load1 load5 load15 memtotal_kb memavail_kb | gpu csv;gpu csv | cpu stat | cpuN stat;cpuN stat | N:kHz;N:kHz"
 # gpu csv = index,name,util%,mem.used,mem.total,temp,power. Unified-memory boards
 # (GB10) report [N/A] for the memory fields: the RAM figures ARE the GPU pool there.
-NODE_PROBE='read l1 l5 l15 _ < /proc/loadavg; n=$(nproc); t=$(awk "/^MemTotal/{print \$2}" /proc/meminfo); a=$(awk "/^MemAvailable/{print \$2}" /proc/meminfo); g=$(nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw --format=csv,noheader,nounits 2>/dev/null | tr "\n" ";"); c=$(head -1 /proc/stat); echo "$n $l1 $l5 $l15 $t $a | $g | $c"'
+# The stat segments are raw /proc/stat lines (aggregate, then per core) that top
+# differences between probes; the last is each core's scaling_cur_freq, so a
+# peer's CPU block in top carries the same per-core rows and clocks as this box.
+NODE_PROBE='read l1 l5 l15 _ < /proc/loadavg; n=$(nproc); t=$(awk "/^MemTotal/{print \$2}" /proc/meminfo); a=$(awk "/^MemAvailable/{print \$2}" /proc/meminfo); g=$(nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw --format=csv,noheader,nounits 2>/dev/null | tr "\n" ";"); c=$(head -1 /proc/stat); p=$(grep "^cpu[0-9]" /proc/stat | tr "\n" ";"); k=$(for f in /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq; do i=${f#/sys/devices/system/cpu/cpu}; echo -n "${i%%/*}:$(cat "$f" 2>/dev/null);"; done); echo "$n $l1 $l5 $l15 $t $a | $g | $c | $p | $k"'
 
 node_probe() { # node_probe [peer] — no argument = this machine
   if [[ -z "${1:-}" ]]; then bash -c "$NODE_PROBE"; else peer_sh "$1" "$NODE_PROBE"; fi
@@ -2429,7 +2433,7 @@ def gutter(rows):
 # peer_state holds the latest probe line (None = unreachable) and its age.
 peer_state = {}
 def peer_poll(name, addr):
-    prev = None  # (busy, total) from the previous probe's /proc/stat line
+    prev = None  # {"stat": (busy, total), "cores": {i: (busy, total)}} from the previous probe
     while True:
         try:
             r = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5",
@@ -2441,16 +2445,22 @@ def peer_poll(name, addr):
         d = peer_parse(line)
         if d is not None and d.get("stat"):
             if prev:
-                d["cpu"] = 100.0 * (d["stat"][0] - prev[0]) / max(1, d["stat"][1] - prev[1])
-            prev = d["stat"]
+                d["cpu"] = 100.0 * (d["stat"][0] - prev["stat"][0]) / max(1, d["stat"][1] - prev["stat"][1])
+            # every core is listed from the first probe (0% until there is a
+            # delta) so the per-core rows appear at once and the layout holds
+            pc = (prev or {}).get("cores", {})
+            d["core_pct"] = {i: (100.0 * (b - pc[i][0]) / max(1, t - pc[i][1]) if i in pc else 0.0)
+                             for i, (b, t) in d.get("cores", {}).items()}
+            prev = {"stat": d["stat"], "cores": d.get("cores", {})}
         peer_state[name] = {"t": time.monotonic(), "d": d}
         time.sleep(max(2.0, TICK))
 
-def peer_parse(line):  # NODE_PROBE line -> {ncpu, load, total_mib, avail_mib, gpus}
+def peer_parse(line):  # NODE_PROBE line -> {ncpu, load, total_mib, avail_mib, gpus, stat, cores, clks}
     if not line or "|" not in line:
         return None
     head, _, rest = line.partition("|")
-    gtxt, _, ctxt = rest.partition("|")
+    segs = [x.strip() for x in rest.split("|")] + ["", "", ""]
+    gtxt, ctxt, ptxt, ktxt = segs[:4]
     f = head.split()
     try:
         d = {"ncpu": int(f[0]), "load": tuple(float(x) for x in f[1:4]),
@@ -2469,10 +2479,24 @@ def peer_parse(line):  # NODE_PROBE line -> {ncpu, load, total_mib, avail_mib, g
             used, tot = d["total"] - d["avail"], d["total"]
         d["gpus"].append({"i": parts[0], "name": parts[1], "util": num(parts[2]) or 0.0,
                           "used": used, "total": tot, "temp": num(parts[5]), "power": num(parts[6])})
+    def busy_total(fields):  # user nice system idle iowait ... -> (busy, total)
+        vals = [int(x) for x in fields]
+        return (sum(vals) - vals[3] - (vals[4] if len(vals) > 4 else 0), sum(vals))
     cf = ctxt.split()
-    if len(cf) >= 5 and cf[0] == "cpu":   # user nice system idle iowait ...
-        vals = [int(x) for x in cf[1:]]
-        d["stat"] = (sum(vals) - vals[3] - (vals[4] if len(vals) > 4 else 0), sum(vals))
+    if len(cf) >= 5 and cf[0] == "cpu":
+        d["stat"] = busy_total(cf[1:])
+    d["cores"], d["clks"] = {}, {}
+    for entry in ptxt.split(";"):
+        cf = entry.split()
+        if len(cf) >= 5 and cf[0].startswith("cpu") and cf[0][3:].isdigit():
+            try:
+                d["cores"][int(cf[0][3:])] = busy_total(cf[1:])
+            except ValueError:
+                pass
+    for entry in ktxt.split(";"):
+        i, _, khz = entry.partition(":")
+        if i.isdigit() and khz.isdigit():
+            d["clks"][int(i)] = int(khz) / 1000  # MHz, like cpu_clocks()
     return d
 
 for _pn, _pa in PEERS:
@@ -3043,6 +3067,8 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         rp = 100.0 * (d["total"] - d["avail"]) / max(1.0, d["total"])
         hists.setdefault(f"P{pname}r", []).append(rp)
         hists.setdefault(f"P{pname}cpu", []).append(d.get("cpu") or 0.0)
+        for i, p in d.get("core_pct", {}).items():
+            hists.setdefault(f"P{pname}c{i}", []).append(p)
         for g in d["gpus"]:
             hists.setdefault(f"P{pname}g{g['i']}u", []).append(g["util"])
             hists.setdefault(f"P{pname}g{g['i']}v", []).append(100.0 * g["used"] / max(1.0, g["total"]))
@@ -3052,10 +3078,13 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
     #                 header  gpu stat lines   cpu ram         header + status
 
     # height budget: every node's charts start at the same size and grow
-    # together, round-robin (capped); spare lines beyond that go to the
-    # per-core rows. When short, the per-core rows go first (symmetry between
-    # the nodes matters more), then everything drops to single-row traces.
+    # together (capped); spare lines beyond that go to the per-core rows.
+    # When short, the per-core rows go first (symmetry between the nodes
+    # matters more), then everything drops to single-row traces.
     ncores = len(core_pct)
+    # per-core rows are budgeted over EVERY node's cores so all nodes get the
+    # same core_rows: a peer's probe carries its per-core counters too
+    ncores_all = ncores + sum(len(pr["d"].get("core_pct", {})) for pr in peers if pr["ok"])
     CAP, CORE_CAP = 12, 4
     fixed = len(L) + 1 + len(gpus) + 1 + 1 + len(mlines) + peer_fixed + 1
     #       header  node gpu stats cpu ram  models     peers        footer
@@ -3066,20 +3095,33 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
             charts += [(("P", pr["name"], "c"), 3), (("P", pr["name"], "r"), 4)]
     sizes = [b for _, b in charts]
     core_rows = 1
-    spare = H - fixed - sum(sizes) - ncores
-    if ncores and spare >= ncores:
-        core_rows = min(CORE_CAP, 1 + spare // ncores)
-        spare -= (core_rows - 1) * ncores
+    spare = H - fixed - sum(sizes) - ncores_all
+    if ncores_all and spare >= ncores_all:
+        core_rows = min(CORE_CAP, 1 + spare // ncores_all)
+        spare -= (core_rows - 1) * ncores_all
     elif spare < 0:  # per-core doesn't fit: just the total-cpu charts
         core_rows = 0
         spare = H - fixed - sum(sizes)
         if spare < 0:  # tiny terminal: single-row traces everywhere
             sizes, spare = [1] * len(sizes), 0
-    i = 0
-    while spare > 0 and any(x < CAP for x in sizes):
-        if sizes[i] < CAP:
-            sizes[i] += 1; spare -= 1
-        i = (i + 1) % len(sizes)
+    # Growth is per attribute, in lockstep across the nodes: every GPU chart
+    # grows by a row at once, then every RAM chart, then every CPU chart, and
+    # a group only grows when the spare covers all its members. A per-chart
+    # round-robin left this box's charts (dealt first) a row taller than the
+    # peer's whenever the spare didn't divide evenly — spark0 GPU 6 rows over
+    # spark1's 5 — and the two nodes must stay the same size to compare.
+    def attr(k): return k[2] if k[0] == "P" else k[1]
+    groups = [[i for i, (k, _) in enumerate(charts) if attr(k) == a]
+              for a in ("g", "r", "c")]
+    groups = [g for g in groups if g]
+    grew = True
+    while grew:
+        grew = False
+        for idx in groups:
+            if sizes[idx[0]] < CAP and spare >= len(idx):
+                for i in idx:
+                    sizes[i] += 1
+                spare -= len(idx); grew = True
     rows = {k: n for (k, _), n in zip(charts, sizes)}
     gsz = [rows[("L", "g", g["i"])] for g in gpus]
     rsz, csz = [rows[("L", "r")]], [rows[("L", "c")]]
@@ -3111,43 +3153,51 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
             block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
             L.extend(block)
 
-    la = os.getloadavg()
-    clks = cpu_clocks()
+    def cpu_section(pre, ncpu, la, core_pct, clks, ctemps, ctotal, crows, agg_pct):
+        # header, per-core rows (core_rows each), total-cpu chart (crows) —
+        # the SAME block for this box and every peer, drawn from histories
+        # keyed "{pre}c{i}" and "{pre}cpu" ("" = this box, "P<name>" = a peer)
+        S = []
+        ck = f" · {sum(clks.values())/len(clks)/1000:.2f}GHz" if clks else ""
+        tm = f" · {ctotal:.0f}°C" if ctotal is not None else ""
+        S.append(c("1;35", " CPU") + f"    {ncpu} cores{ck}{tm}"
+                 + f" · load {la[0]:.2f} {la[1]:.2f} {la[2]:.2f}")
+        # right-hand column: "100% 62°" is 10 of the 11 reserved, so the clock on
+        # the row below is right-aligned to the same edge instead of its bare 8
+        tw = 10 if ctemps else 5
+        if core_rows == 1:
+            for i in sorted(core_pct):
+                row = (f" c{i:<3d}" + spark_row(hists[f"{pre}c{i}"], cw)
+                       + " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%"))
+                if i in ctemps:
+                    row += " " + c(temp_class(ctemps[i]), f"{ctemps[i]:3.0f}°")
+                S.append(row)
+        elif core_rows > 1:
+            for i in sorted(core_pct):
+                labels = [f" c{i:<3d}"] + ["     "] * (core_rows - 1)
+                block = chart_block(hists[f"{pre}c{i}"], None, core_rows, cw, labels)
+                block[0] += " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%")
+                if i in ctemps:
+                    block[0] += " " + c(temp_class(ctemps[i]), f"{ctemps[i]:3.0f}°")
+                if i in clks:
+                    block[1] += c("2", (" " + f"{clks[i]/1000:.2f}GHz").rjust(tw))
+                S.extend(block)
+        # total-cpu chart: labelled when it sits under the per-core rows, on
+        # the axis gutter when it stands alone
+        cur = (c(color_class(agg_pct), f"{agg_pct:3.0f}%") if agg_pct is not None
+               else c("2", "  --%"))
+        if crows == 1:
+            S.append("    │" + spark_row(hists[f"{pre}cpu"], cw) + " " + cur)
+        else:
+            labels = [" all "] + ["     "] * (crows - 1) if core_rows and core_pct else None
+            block = chart_block(hists[f"{pre}cpu"], None, crows, cw, labels)
+            block[0] += " " + cur
+            S.extend(block)
+        return S
+
     ctotal, ctemps, _ = cpu_temps()   # kind: amd's per-core value is a shared die temp
-    ck = f" · {sum(clks.values())/len(clks)/1000:.2f}GHz" if clks else ""
-    tm = f" · {ctotal:.0f}°C" if ctotal is not None else ""
-    L.append(c("1;35", " CPU") + f"    {ncores} cores{ck}{tm}"
-             + f" · load {la[0]:.2f} {la[1]:.2f} {la[2]:.2f}")
-    # right-hand column: "100% 62°" is 10 of the 11 reserved, so the clock on
-    # the row below is right-aligned to the same edge instead of its bare 8
-    tw = 10 if ctemps else 5
-    if core_rows == 1:
-        for i in sorted(core_pct):
-            row = (f" c{i:<3d}" + spark_row(hists[f"c{i}"], cw)
-                   + " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%"))
-            if i in ctemps:
-                row += " " + c(temp_class(ctemps[i]), f"{ctemps[i]:3.0f}°")
-            L.append(row)
-    elif core_rows > 1:
-        for i in sorted(core_pct):
-            labels = [f" c{i:<3d}"] + ["     "] * (core_rows - 1)
-            block = chart_block(hists[f"c{i}"], None, core_rows, cw, labels)
-            block[0] += " " + c(color_class(core_pct[i]), f"{core_pct[i]:3.0f}%")
-            if i in ctemps:
-                block[0] += " " + c(temp_class(ctemps[i]), f"{ctemps[i]:3.0f}°")
-            if i in clks:
-                block[1] += c("2", (" " + f"{clks[i]/1000:.2f}GHz").rjust(tw))
-            L.extend(block)
-    # total-cpu chart: labelled when it sits under the per-core rows, on the
-    # axis gutter when it stands alone
-    if csz[0] == 1:
-        L.append("    │" + spark_row(hists["cpu"], cw)
-                 + " " + c(color_class(agg_pct), f"{agg_pct:3.0f}%"))
-    else:
-        labels = [" all "] + ["     "] * (csz[0] - 1) if core_rows else None
-        block = chart_block(hists["cpu"], None, csz[0], cw, labels)
-        block[0] += " " + c(color_class(agg_pct), f"{agg_pct:3.0f}%")
-        L.extend(block)
+    L.extend(cpu_section("", ncores, os.getloadavg(), core_pct, cpu_clocks(),
+                         ctemps, ctotal, csz[0], agg_pct))
 
     used_gib = (mem["total"] - mem["avail"]) / 2**20
     L.append(c("1;35", " RAM") + f"    of {mem['total']/2**20:.1f} GiB ({ram_pct:.0f}%)")
@@ -3159,7 +3209,7 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
         block[0] += " " + c(color_class(ram_pct), f"{used_gib:.1f}G")
         L.extend(block)
 
-    # peers: the same three blocks from the probe (no clocks/throttle/per-core)
+    # peers: the same three blocks from the probe (no throttle flag, no temps)
     def trace(key, rows, cur_txt):
         if rows == 1:
             return ["    │" + spark_row(hists[key], cw) + " " + cur_txt]
@@ -3190,11 +3240,9 @@ def frame(cpu_prev, cpu_now, gpus, mem, models, models_prev, dt, hists):
                 block[0] += f" {GREEN}█{RESET}" + c(color_class(g["util"]), f"{g['util']:4.0f}%")
                 block[1] += f" {CYAN}─{RESET} " + c(color_class(vp), f"{fmt_gib(g['used'])}G")
                 L.extend(block)
-        cp = d.get("cpu")
-        l1, l5, l15 = d["load"]
-        L.append(c("1;35", " CPU") + f"    {d['ncpu']} cores · load {l1:.2f} {l5:.2f} {l15:.2f}")
-        cur = c(color_class(cp or 0.0), f"{cp:3.0f}%") if cp is not None else c("2", "  --%")
-        L.extend(trace(f"P{pr['name']}cpu", rows[("P", pr["name"], "c")], cur))
+        L.extend(cpu_section(f"P{pr['name']}", d["ncpu"], d["load"], d.get("core_pct", {}),
+                             d.get("clks", {}), {}, None, rows[("P", pr["name"], "c")],
+                             d.get("cpu")))
         ug = (d["total"] - d["avail"]) / 1024
         L.append(c("1;35", " RAM") + f"    of {d['total']/1024:.1f} GiB ({pr['ram_pct']:.0f}%)")
         L.extend(trace(f"P{pr['name']}r", rows[("P", pr["name"], "r")], c(color_class(pr["ram_pct"]), f"{ug:.1f}G")))
@@ -3480,4 +3528,6 @@ case "${1:-menu}" in
                  else
                    die "unknown command or model '${1}' (models: ${MODELS[*]} — try: llmctl help)"
                  fi;;
-esac
+# Keep exit in the same parsed command as dispatch: a live in-place edit must
+# not make Bash resume reading the changed file after a long model launch.
+esac; exit $?
