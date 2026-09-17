@@ -1,0 +1,808 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "qwen3.5-9b-vl",
+  "endpoint": "http://127.0.0.1:19436/v1/chat/completions",
+  "status": "complete",
+  "score": 24,
+  "max_score": 39,
+  "tasks": [
+    {
+      "id": "easy_ocr",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_ocr.png",
+      "question": "Read the access code. Return JSON with string key code.",
+      "expected": {
+        "code": "R7K2"
+      },
+      "image_sha256": "b6385c9a6883e7ef159c62aceea0258a4168d95ac638b86031efb4225cdfca36",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"code\": \"ENTER\"\n}\n```",
+              "reasoning_content": "Based on the visual content of the image, I see the word \"ACCESS\" at the top in a smaller font and the word \"ENTER\" in a larger, bold font below it. The request asks for the \"access code\". In this context, the prominent text \"ENTER\" is likely the code or the key action required. I will format this as a JSON object with the key \"code\".\n"
+            }
+          }
+        ],
+        "created": 1789618116,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 101,
+          "prompt_tokens": 293,
+          "total_tokens": 394,
+          "prompt_tokens_details": {
+            "cached_tokens": 291
+          }
+        },
+        "id": "chatcmpl-aWtbAGbCJtz0O6fsyjyhj4HLZICjPXRP",
+        "timings": {
+          "cache_n": 291,
+          "prompt_n": 2,
+          "prompt_ms": 25.348,
+          "prompt_per_token_ms": 12.674,
+          "prompt_per_second": 78.90168849613381,
+          "predicted_n": 101,
+          "predicted_ms": 821.236,
+          "predicted_per_token_ms": 8.21236,
+          "predicted_per_second": 121.76767701367208
+        }
+      },
+      "elapsed_s": 0.906,
+      "score": 0,
+      "max_score": 1,
+      "checks": {
+        "code": false
+      },
+      "parsed": {
+        "code": "ENTER"
+      }
+    },
+    {
+      "id": "easy_spatial",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_spatial.png",
+      "question": "Name the colors of the leftmost and rightmost objects. Return JSON with lowercase string keys leftmost and rightmost.",
+      "expected": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      },
+      "image_sha256": "3b1ecb235cfe19b682330ae1e834294f4627d2253430a182cfa2256fc3c23610",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n    \"leftmost\": \"blue\",\n    \"rightmost\": \"red\"\n}\n```",
+              "reasoning_content": "The user wants me to identify the colors of the leftmost and rightmost objects in the image.\n\n1.  **Analyze the image:**\n    *   There are three geometric shapes arranged horizontally.\n    *   The leftmost shape is a blue square.\n    *   The middle shape is a green triangle.\n    *   The rightmost shape is a red circle.\n\n2.  **Identify the specific objects requested:**\n    *   Leftmost object: The blue square. Color: blue.\n    *   Rightmost object: The red circle. Color: red.\n\n3.  **Format the output:**\n    *   The user requested JSON format.\n    *   Keys must be lowercase strings: \"leftmost\" and \"rightmost\".\n    *   Values must be the color names.\n    *   No explanation, just the JSON object.\n\n4.  **Construct the JSON:**\n    *   `{\"leftmost\": \"blue\", \"rightmost\": \"red\"}`\n"
+            }
+          }
+        ],
+        "created": 1789618118,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 244,
+          "prompt_tokens": 370,
+          "total_tokens": 614,
+          "prompt_tokens_details": {
+            "cached_tokens": 368
+          }
+        },
+        "id": "chatcmpl-8WeyWRqRv7xAvf3x5R2AVfYKkZVPfL1n",
+        "timings": {
+          "cache_n": 368,
+          "prompt_n": 2,
+          "prompt_ms": 26.851,
+          "prompt_per_token_ms": 13.4255,
+          "prompt_per_second": 74.48512159696101,
+          "predicted_n": 244,
+          "predicted_ms": 1944.193,
+          "predicted_per_token_ms": 8.000794238683127,
+          "predicted_per_second": 124.98759125251453
+        }
+      },
+      "elapsed_s": 2.0,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "leftmost": true,
+        "rightmost": true
+      },
+      "parsed": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      }
+    },
+    {
+      "id": "easy_count",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_count.png",
+      "question": "Count only the orange circles. Return JSON with integer key count.",
+      "expected": {
+        "count": 6
+      },
+      "image_sha256": "5981f343d63ba352c333f930662d02511fa7f001539b296988153c5befec8d35",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n    \"count\": 6\n}\n```",
+              "reasoning_content": "The user wants me to count the orange circles in the image.\n\n1.  **Scan the image for orange circles:**\n    *   Top left area: There's one orange circle [85, 137, 172, 246].\n    *   Top middle area: There's another orange circle [290, 163, 375, 273].\n    *   Top right area: There's a third orange circle [597, 126, 686, 237].\n    *   Middle left area: There's an orange circle [149, 563, 233, 672].\n    *   Middle bottom area: There's an orange circle [453, 650, 538, 760].\n    *   Middle right area: There's an orange circle [804, 563, 888, 672].\n\n2.  **Verify the shapes and colors:**\n    *   The shape at [85, 137, 172, 246] is a circle and orange. (Count = 1)\n    *   The shape at [290, 163, 375, 273] is a circle and orange. (Count = 2)\n    *   The shape at [597, 126, 686, 237] is a circle and orange. (Count = 3)\n    *   The shape at [149, 563, 233, 672] is a circle and orange. (Count = 4)\n    *   The shape at [453, 650, 538, 760] is a circle and orange. (Count = 5)\n    *   The shape at [804, 563, 888, 672] is a circle and orange. (Count = 6)\n\n3.  **Check for other shapes that might be confused:**\n    *   There are orange squares: [765, 143, 856, 252], [368, 442, 453, 552], [663, 746, 747, 856]. These are squares, not circles.\n    *   There are blue circles: [68, 836, 153, 946], [563, 363, 649, 473], [836, 836, 921, 946]. These are blue, not orange.\n\n4.  **Final Count:** 6 orange circles.\n\n5.  **Format Output:** JSON with key \"count\" and value 6.\n"
+            }
+          }
+        ],
+        "created": 1789618123,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 683,
+          "prompt_tokens": 650,
+          "total_tokens": 1333,
+          "prompt_tokens_details": {
+            "cached_tokens": 648
+          }
+        },
+        "id": "chatcmpl-Ln3HYDP5IvpHfRaegzWT0owv8RA2ef1o",
+        "timings": {
+          "cache_n": 648,
+          "prompt_n": 2,
+          "prompt_ms": 27.291,
+          "prompt_per_token_ms": 13.6455,
+          "prompt_per_second": 73.28423289729214,
+          "predicted_n": 683,
+          "predicted_ms": 5383.751,
+          "predicted_per_token_ms": 7.894063049853373,
+          "predicted_per_second": 126.67747821175236
+        }
+      },
+      "elapsed_s": 5.455,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "count": true
+      },
+      "parsed": {
+        "count": 6
+      }
+    },
+    {
+      "id": "medium_chart",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_chart.png",
+      "question": "Read the chart. Return JSON: highest (category string), highest_value (integer), gap (highest minus lowest, integer).",
+      "expected": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      },
+      "image_sha256": "6627e4693052ef656c3cfef85f7d2429117d4b3e8d59dadc0f1cae2cb4f09ad9",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"highest\": \"B\",\n  \"highest_value\": 70,\n  \"gap\": 50\n}\n```",
+              "reasoning_content": "The user wants me to extract data from the provided bar chart and format it as JSON.\n\n**1. Analyze the chart:**\n*   **Title:** UNITS SOLD\n*   **X-axis:** Categories labeled A, B, C, D.\n*   **Y-axis:** Numerical values ranging from 0 to 80 in increments of 10.\n\n**2. Read the values for each category:**\n*   **Category A:** The bar aligns with the line for 30. So, value = 30.\n*   **Category B:** The bar aligns with the line for 70. So, value = 70.\n*   **Category C:** The bar aligns with the line for 50. So, value = 50.\n*   **Category D:** The bar aligns with the line for 20. So, value = 20.\n\n**3. Identify the highest value:**\n*   Comparing 30, 70, 50, 20.\n*   Highest value is 70.\n*   Corresponding category is \"B\".\n\n**4. Identify the lowest value:**\n*   Comparing 30, 70, 50, 20.\n*   Lowest value is 20.\n*   Corresponding category is \"D\".\n\n**5. Calculate the gap:**\n*   Gap = Highest Value - Lowest Value\n*   Gap = 70 - 20 = 50.\n\n**6. Format the output:**\n*   JSON structure: `{\"highest\": \"B\", \"highest_value\": 70, \"gap\": 50}`\n"
+            }
+          }
+        ],
+        "created": 1789618127,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 406,
+          "prompt_tokens": 662,
+          "total_tokens": 1068,
+          "prompt_tokens_details": {
+            "cached_tokens": 660
+          }
+        },
+        "id": "chatcmpl-9JBb3kRDfDD3yKsBCthZNC79SlFv7ZfL",
+        "timings": {
+          "cache_n": 660,
+          "prompt_n": 2,
+          "prompt_ms": 25.938,
+          "prompt_per_token_ms": 12.969,
+          "prompt_per_second": 77.10694733595497,
+          "predicted_n": 406,
+          "predicted_ms": 3223.196,
+          "predicted_per_token_ms": 7.958508641975309,
+          "predicted_per_second": 125.65168236743902
+        }
+      },
+      "elapsed_s": 3.296,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest": true,
+        "highest_value": true,
+        "gap": true
+      },
+      "parsed": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      }
+    },
+    {
+      "id": "medium_table",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_table.png",
+      "question": "Return JSON: restock_ids (IDs with Stock strictly below Minimum, in displayed order), washers_bin (string), bolts_stock (integer).",
+      "expected": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      },
+      "image_sha256": "bd000b604cad6634530fababfcc2eb8db36aea22109d44f86b8215b94e9c8afd",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"restock_ids\": [\n    \"P01\",\n    \"P03\",\n    \"P05\"\n  ],\n  \"washers_bin\": \"C2\",\n  \"bolts_stock\": 42\n}\n```",
+              "reasoning_content": "The user wants me to extract data from the provided image and format it as a JSON object.\n\n**1. Analyze the input image:**\nThe image is a table titled \"STOCK CHECK\".\nIt has columns: ID, Item, Stock, Minimum, Bin.\nThe rows are:\n- P01, Washers, 17, 20, C2\n- P02, Bolts, 42, 30, A1\n- P03, Clips, 8, 12, B4\n- P04, Nuts, 25, 25, C3\n- P05, Pins, 4, 10, A2\n- P06, Rivets, 60, 40, D1\n\n**2. Analyze the required JSON fields:**\n- `restock_ids`: IDs with Stock strictly below Minimum, in displayed order.\n- `washers_bin`: The Bin value for the item \"Washers\".\n- `bolts_stock`: The Stock value for the item \"Bolts\".\n\n**3. Process `restock_ids`:**\n- Row P01: Stock 17 < Minimum 20? Yes. -> Include \"P01\".\n- Row P02: Stock 42 < Minimum 30? No.\n- Row P03: Stock 8 < Minimum 12? Yes. -> Include \"P03\".\n- Row P04: Stock 25 < Minimum 25? No (strictly below).\n- Row P05: Stock 4 < Minimum 10? Yes. -> Include \"P05\".\n- Row P06: Stock 60 < Minimum 40? No.\n- Result: [\"P01\", \"P03\", \"P05\"]\n\n**4. Process `washers_bin`:**\n- Find row where Item is \"Washers\". It's P01.\n- Bin value is \"C2\".\n\n**5. Process `bolts_stock`:**\n- Find row where Item is \"Bolts\". It's P02.\n- Stock value is 42.\n\n**6. Construct the JSON:**\n```json\n{\n  \"restock_ids\": [\"P01\", \"P03\", \"P05\"],\n  \"washers_bin\": \"C2\",\n  \"bolts_stock\": 42\n}\n```\n"
+            }
+          }
+        ],
+        "created": 1789618132,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 602,
+          "prompt_tokens": 666,
+          "total_tokens": 1268,
+          "prompt_tokens_details": {
+            "cached_tokens": 664
+          }
+        },
+        "id": "chatcmpl-c0HDMqnjBJXPlOx2ztT2hVP8N1RttjCA",
+        "timings": {
+          "cache_n": 664,
+          "prompt_n": 2,
+          "prompt_ms": 27.737,
+          "prompt_per_token_ms": 13.8685,
+          "prompt_per_second": 72.1058513898403,
+          "predicted_n": 602,
+          "predicted_ms": 4742.798,
+          "predicted_per_token_ms": 7.89151081530782,
+          "predicted_per_second": 126.71844763365424
+        }
+      },
+      "elapsed_s": 4.814,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "restock_ids": true,
+        "washers_bin": true,
+        "bolts_stock": true
+      },
+      "parsed": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      }
+    },
+    {
+      "id": "medium_flow",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_flow.png",
+      "question": "Follow the displayed input through the diagram. Return JSON with destination equal to the exact output-box text.",
+      "expected": {
+        "destination": "FAN HIGH"
+      },
+      "image_sha256": "c296d2d73b01af18a738d7535d8f9c014c5d461dafbb3a6f35cbdf2080d7b3b7",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"destination\": \"FAN HIGH\"\n}\n```",
+              "reasoning_content": "The user wants me to trace the logic in the provided flowchart image.\n\n1.  **Identify the Input:** The image states \"INPUT: temperature = 28\".\n2.  **Identify the Decision Node:** The diamond shape asks \"Temperature > 25?\".\n3.  **Evaluate the Condition:** Is 28 greater than 25? Yes, 28 > 25.\n4.  **Follow the Path:** Since the answer is \"YES\", I need to follow the arrow labeled \"YES\".\n5.  **Identify the Destination:** The arrow labeled \"YES\" points to the box on the right.\n6.  **Read the Output Text:** The text inside the destination box is \"FAN HIGH\".\n7.  **Format the Output:** The user requested a JSON object with the key \"destination\" and the exact output-box text as the value.\n\nSo, the JSON should be: `{\"destination\": \"FAN HIGH\"}`.\n"
+            }
+          }
+        ],
+        "created": 1789618133,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 232,
+          "prompt_tokens": 657,
+          "total_tokens": 889,
+          "prompt_tokens_details": {
+            "cached_tokens": 655
+          }
+        },
+        "id": "chatcmpl-eEqXqmScoqv7nRMnjsUSOHXJZ6dFwqQH",
+        "timings": {
+          "cache_n": 655,
+          "prompt_n": 2,
+          "prompt_ms": 25.824,
+          "prompt_per_token_ms": 12.912,
+          "prompt_per_second": 77.44733581164807,
+          "predicted_n": 232,
+          "predicted_ms": 1822.048,
+          "predicted_per_token_ms": 7.887653679653679,
+          "predicted_per_second": 126.7804141273995
+        }
+      },
+      "elapsed_s": 1.892,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "destination": true
+      },
+      "parsed": {
+        "destination": "FAN HIGH"
+      }
+    },
+    {
+      "id": "hard_v2_reconciliation",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_reconciliation.png",
+      "question": "Reconcile the document using its displayed rules. Return JSON: released_good_units (integer), released_value_cents (integer), held_ids (ordered list of strings), largest_value_id (string).",
+      "expected": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      },
+      "image_sha256": "9d3246b06f1bd0454652c09f34e1d388c6f97db04d28aeb1e22c7c7bdd971991",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"released_good_units\": 152,\n  \"released_value_cents\": 25285,\n  \"held_ids\": [\n    \"E55\",\n    \"F66\"\n  ],\n  \"largest_value_id\": \"B22\"\n}",
+              "reasoning_content": "The user wants me to reconcile a document based on provided rules.\n\n**1. Understand the Goal:**\nI need to calculate four values based on the \"Original document\" and the \"Amendments\":\n- `released_good_units`: Total good units from lines with state \"RELEASE\".\n- `released_value_cents`: Total value (cents) from lines with state \"RELEASE\".\n- `held_ids`: List of Line IDs that end up in \"HOLD\" state, in original row order.\n- `largest_value_id`: The ID of the released line with the highest total value (cents * good units).\n\n**2. Analyze the Rules:**\n- `qty`: gross units (including rejects).\n- `rejects`: absolute rejected-unit count.\n- `cents`: price per good unit.\n- `Good units` = `qty` - `rejects`.\n- `SET`: replaces the field value.\n- `ADD`: adds the signed value to the field.\n- Unmentioned fields stay unchanged.\n- Changing `qty` does *not* scale `rejects`.\n- Only final `RELEASE` lines contribute to totals.\n- `held_ids`: List final `HOLD` IDs in original row order.\n- `largest_value_id`: One released line with the largest value.\n\n**3. Process the Data Line by Line:**\n\n**Original Document:**\n- **A11**: qty=48, rejects=3, cents=125, state=RELEASE\n- **B22**: qty=35, rejects=2, cents=240, state=HOLD\n- **C33**: qty=60, rejects=5, cents=80, state=RELEASE\n- **D44**: qty=24, rejects=1, cents=350, state=RELEASE\n- **E55**: qty=40, rejects=4, cents=150, state=HOLD\n- **F66**: qty=32, rejects=2, cents=200, state=RELEASE\n\n**Amendments (Apply in order):**\n\n1.  **Order 1**: Line ID A11, Field qty, Operation ADD, Value -6.\n    - A11 qty becomes 48 + (-6) = 42.\n    - A11 rejects stays 3.\n    - A11 state is RELEASE.\n\n2.  **Order 2**: Line ID C33, Field rejects, Operation SET, Value 8.\n    - C33 rejects becomes 8.\n    - C33 qty stays 60.\n    - C33 state is RELEASE.\n\n3.  **Order 3**: Line ID B22, Field state, Operation SET, Value RELEASE.\n    - B22 state becomes RELEASE.\n    - B22 was HOLD, now RELEASE.\n\n4.  **Order 4**: Line ID D44, Field cents, Operation SET, Value 320.\n    - D44 cents becomes 320.\n    - D44 state is RELEASE.\n\n5.  **Order 5**: Line ID A11, Field rejects, Operation SET, Value 1.\n    - A11 rejects becomes 1.\n    - A11 qty is 42 (from step 1).\n\n6.  **Order 6**: Line ID F66, Field state, Operation SET, Value HOLD.\n    - F66 state becomes HOLD.\n    - F66 was RELEASE, now HOLD.\n\n7.  **Order 7**: Line ID E55, Field qty, Operation ADD, Value 5.\n    - E55 qty becomes 40 + 5 = 45.\n    - E55 rejects stays 4.\n    - E55 state is HOLD.\n\n8.  **Order 8**: Line ID B22, Field qty, Operation SET, Value 38.\n    - B22 qty becomes 38.\n    - B22 rejects stays 2.\n    - B22 state is RELEASE (from step 3).\n\n**4. Final State Calculation:**\n\nLet's calculate Good Units and Value for each line based on final state.\n\n- **A11**:\n    - Final State: RELEASE\n    - Final Qty: 42\n    - Final Rejects: 1\n    - Good Units: 42 - 1 = 41\n    - Cents: 125 (unchanged)\n    - Total Value: 41 * 125 = 5125 cents\n\n- **B22**:\n    - Final State: RELEASE (changed from HOLD in Order 3)\n    - Final Qty: 38 (set in Order 8)\n    - Final Rejects: 2 (unchanged)\n    - Good Units: 38 - 2 = 36\n    - Cents: 240 (unchanged)\n    - Total Value: 36 * 240 = 8640 cents\n\n- **C33**:\n    - Final State: RELEASE\n    - Final Qty: 60 (unchanged)\n    - Final Rejects: 8 (set in Order 2)\n    - Good Units: 60 - 8 = 52\n    - Cents: 80 (unchanged)\n    - Total Value: 52 * 80 = 4160 cents\n\n- **D44**:\n    - Final State: RELEASE\n    - Final Qty: 24 (unchanged)\n    - Final Rejects: 1 (unchanged)\n    - Good Units: 24 - 1 = 23\n    - Cents: 320 (set in Order 4)\n    - Total Value: 23 * 320 = 7360 cents\n\n- **E55**:\n    - Final State: HOLD (unchanged)\n    - Final Qty: 45 (40 + 5)\n    - Final Rejects: 4\n    - Good Units: 41\n    - Cents: 150\n    - Total Value: 41 * 150 = 6150 cents (Does not count for released totals)\n\n- **F66**:\n    - Final State: HOLD (changed from RELEASE in Order 6)\n    - Final Qty: 32 (unchanged)\n    - Final Rejects: 2 (unchanged)\n    - Good Units: 30\n    - Cents: 200\n    - Total Value: 30 * 200 = 6000 cents (Does not count for released totals)\n\n**5. Aggregate Results:**\n\n- **Released Lines**: A11, B22, C33, D44.\n- **Held Lines**: E55, F66.\n\n- **released_good_units**:\n    - A11: 41\n    - B22: 36\n    - C33: 52\n    - D44: 23\n    - Total: 41 + 36 + 52 + 23 = 152\n\n- **released_value_cents**:\n    - A11: 5125\n    - B22: 8640\n    - C33: 4160\n    - D44: 7360\n    - Total: 5125 + 8640 + 4160 + 7360\n    - Calculation:\n        - 5125 + 8640 = 13765\n        - 13765 + 4160 = 17925\n        - 17925 + 7360 = 25285\n\n- **held_ids**:\n    - Original order: B22, E55, F66.\n    - Final states:\n        - B22: RELEASE\n        - E55: HOLD\n        - F66: HOLD\n    - So, held IDs are E55, F66. Wait, let's check original order.\n    - Original rows: A11, B22, C33, D44, E55, F66.\n    - Final states:\n        - A11: RELEASE\n        - B22: RELEASE\n        - C33: RELEASE\n        - D44: RELEASE\n        - E55: HOLD\n        - F66: HOLD\n    - Held IDs in original row order: E55, F66.\n\n- **largest_value_id**:\n    - A11: 5125\n    - B22: 8640\n    - C33: 4160\n    - D44: 7360\n    - Max is 8640 (B22). So ID is \"B22\".\n\n**6. Final Check:**\n- A11: qty 48-6=42, rejects 1. Good=41. Value=41*125=5125. State=RELEASE.\n- B22: qty 38, rejects 2. Good=36. Value=36*240=8640. State=RELEASE.\n- C33: qty 60, rejects 8. Good=52. Value=52*80=4160. State=RELEASE.\n- D44: qty 24, rejects 1. Good=23. Value=23*320=7360. State=RELEASE.\n- E55: qty 40+5=45, rejects 4. Good=41. State=HOLD.\n- F66: qty 32, rejects 2. Good=30. State=HOLD.\n\nReleased Good Units: 41 + 36 + 52 + 23 = 152.\nReleased Value: 5125 + 8640 + 4160 + 7360 = 25285.\nHeld IDs: E55, F66.\nLargest Value ID: B22 (8640).\n\nWait, let me double check the \"held_ids\" rule: \"List final HOLD IDs in original row order.\"\nOriginal row order: A11, B22, C33, D44, E55, F66.\nFinal states:\nA11: RELEASE\nB22: RELEASE (Amendment 3)\nC33: RELEASE\nD44: RELEASE\nE55: HOLD\nF66: HOLD (Amendment 6)\nSo held IDs are E55, F66. Correct.\n\nLet me double check the \"largest_value_id\" rule: \"Largest value means one released line.\"\nValues:\nA11: 5125\nB22: 8640\nC33: 4160\nD44: 7360\nMax is 8640 -> B22. Correct.\n\nOne detail: \"changing qty does not scale rejects\".\n- A11: qty changed 48->42. rejects stayed 3, then set to 1. Correct.\n- E55: qty changed 40->45. rejects stayed 4. Correct.\n\nCalculations check:\nA11: (42-1)*125 = 41*125. 40*125=5000, 1*125=125. Total 5125. Correct.\nB22: (38-2)*240 = 36*240. 36*24 = 864. So 8640. Correct.\nC33: (60-8)*80 = 52*80. 50*80=4000, 2*80=160. Total 4160. Correct.\nD44: (24-1)*320 = 23*320. 23*32 = 736. So 7360. Correct.\n\nSum: 5125 + 8640 + 4160 + 7360\n5125 + 8640 = 13765\n4160 + 7360 = 11520\n13765 + 11520 = 25285. Correct.\n\nGood units sum: 41 + 36 + 52 + 23\n41 + 36 = 77\n52 + 23 = 75\n77 + 75 = 152. Correct.\n\nJSON structure:\n{\n\"released_good_units\": 152,\n\"released_value_cents\": 25285,\n\"held_ids\": [\"E55\", \"F66\"],\n\"largest_value_id\": \"B22\"\n}\n"
+            }
+          }
+        ],
+        "created": 1789618158,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 3059,
+          "prompt_tokens": 1689,
+          "total_tokens": 4748,
+          "prompt_tokens_details": {
+            "cached_tokens": 1687
+          }
+        },
+        "id": "chatcmpl-lxxoqkN2q1MuVgTq3uUDCR5n6uyTzsI3",
+        "timings": {
+          "cache_n": 1687,
+          "prompt_n": 2,
+          "prompt_ms": 25.428,
+          "prompt_per_token_ms": 12.714,
+          "prompt_per_second": 78.65345288658172,
+          "predicted_n": 3059,
+          "predicted_ms": 24282.459,
+          "predicted_per_token_ms": 7.940634074558535,
+          "predicted_per_second": 125.93452747104402
+        }
+      },
+      "elapsed_s": 24.372,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "released_good_units": true,
+        "released_value_cents": true,
+        "held_ids": true,
+        "largest_value_id": true
+      },
+      "parsed": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      }
+    },
+    {
+      "id": "hard_v2_crossing_plot",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_crossing_plot.png",
+      "question": "Apply the plot selection rule and calculate the requested quantities. Return JSON: start_minute (integer), end_minute (integer), crossing_second (integer), right_gap (integer), c_area_unit_seconds (integer).",
+      "expected": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      },
+      "image_sha256": "5af575453f243c5999096c5286ecf6ff748540646d75e3c1cdba0d123e03c11a",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"start_minute\": 1,\n  \"end_minute\": 2,\n  \"crossing_second\": 70,\n  \"right_gap\": 25,\n  \"c_area_unit_seconds\": 1950\n}\n```",
+              "reasoning_content": "The user wants me to extract data from a chart and perform calculations based on specific rules.\n\n**1. Understand the Data:**\n*   **Chart:** \"THREE TELEMETRY CHANNELS\"\n*   **X-axis:** Time (minutes), from 0 to 8.\n*   **Y-axis:** Value (units), from 0 to 80.\n*   **Series:**\n    *   **A (blue circle):**\n        *   t=0, y=20\n        *   t=1, y=40\n        *   t=2, y=60\n        *   t=3, y=35\n        *   t=4, y=65\n        *   t=5, y=45\n        *   t=6, y=70\n        *   t=7, y=40\n        *   t=8, y=60\n    *   **B (orange square):**\n        *   t=0, y=50\n        *   t=1, y=45\n        *   t=2, y=35\n        *   t=3, y=55\n        *   t=4, y=40\n        *   t=5, y=60\n        *   t=6, y=50\n        *   t=7, y=65\n        *   t=8, y=45\n    *   **C (green triangle):**\n        *   t=0, y=15\n        *   t=1, y=25\n        *   t=2, y=40\n        *   t=3, y=30\n        *   t=4, y=45\n        *   t=5, y=35\n        *   t=6, y=55\n        *   t=7, y=30\n        *   t=8, y=40\n\n**2. Apply Selection Rule:**\n*   **Candidate intervals:** Adjacent integer-minute samples. Let's look at intervals [t, t+1].\n*   **Condition 1:** A is strictly below B at the left endpoint ($A_{left} < B_{left}$) AND strictly above B at the right endpoint ($A_{right} > B_{right}$).\n    *   Let's check intervals:\n        *   [0, 1]: $A_0=20, B_0=50$ (20 < 50, OK). $A_1=40, B_1=45$ (40 < 45, Fail).\n        *   [1, 2]: $A_1=40, B_1=45$ (40 < 45, OK). $A_2=60, B_2=35$ (60 > 35, OK). **Candidate.**\n        *   [2, 3]: $A_2=60, B_2=35$ (60 > 35, Fail).\n        *   [3, 4]: $A_3=35, B_3=55$ (35 < 55, OK). $A_4=65, B_4=40$ (65 > 40, OK). **Candidate.**\n        *   [4, 5]: $A_4=65, B_4=40$ (65 > 40, Fail).\n        *   [5, 6]: $A_5=45, B_5=60$ (45 < 60, OK). $A_6=70, B_6=50$ (70 > 50, OK). **Candidate.**\n        *   [6, 7]: $A_6=70, B_6=50$ (70 > 50, Fail).\n        *   [7, 8]: $A_7=40, B_7=65$ (40 < 65, OK). $A_8=60, B_8=45$ (60 > 45, OK). **Candidate.**\n\n*   **Condition 2:** C is at most 40 at BOTH endpoints.\n    *   Candidate [1, 2]: $C_1=25$ (<=40, OK), $C_2=40$ (<=40, OK). **Valid.**\n    *   Candidate [3, 4]: $C_3=30$ (<=40, OK), $C_4=45$ (>40, Fail).\n    *   Candidate [5, 6]: $C_5=35$ (<=40, OK), $C_6=55$ (>40, Fail).\n    *   Candidate [7, 8]: $C_7=30$ (<=40, OK), $C_8=40$ (<=40, OK). **Valid.**\n\n*   **Condition 3:** A increases by at least 20 across the interval.\n    *   Candidate [1, 2]: $A_2 - A_1 = 60 - 40 = 20$. (>= 20, OK).\n    *   Candidate [7, 8]: $A_8 - A_7 = 60 - 40 = 20$. (>= 20, OK).\n\n*   **Selection Criteria:**\n    *   \"Choose the candidate with largest right-end A minus B\".\n    *   Candidate [1, 2]: Right end is t=2. $A_2 - B_2 = 60 - 35 = 25$.\n    *   Candidate [7, 8]: Right end is t=8. $A_8 - B_8 = 60 - 45 = 15$.\n    *   Comparison: 25 > 15. So, choose interval [1, 2].\n    *   \"break ties by earliest start\" - not needed here.\n\n**3. Calculate Requested Quantities:**\n*   **Interval:** [1, 2]\n*   **start_minute:** 1\n*   **end_minute:** 2\n*   **crossing_second:**\n    *   We need the time when A crosses B.\n    *   At t=1: $A=40, B=45$. Gap = $A - B = -5$.\n    *   At t=2: $A=60, B=35$. Gap = $A - B = 25$.\n    *   Linear interpolation for crossing time $t_{cross}$:\n        *   $A(t) = 40 + (60-40)(t-1) = 40 + 20(t-1)$\n        *   $B(t) = 45 + (35-45)(t-1) = 45 - 10(t-1)$\n        *   Set $A(t) = B(t)$:\n        *   $40 + 20(t-1) = 45 - 10(t-1)$\n        *   $30(t-1) = 5$\n        *   $t-1 = 5/30 = 1/6$ minutes.\n        *   $t = 1 + 1/6$ minutes.\n    *   Convert to seconds since minute 0:\n        *   $t_{seconds} = (1 + 1/6) * 60 = 60 + 10 = 70$ seconds.\n    *   Wait, let's re-read carefully: \"Crossing time: seconds since minute 0.\"\n    *   Yes, $1 \\text{ min} = 60 \\text{ sec}$. $1/6 \\text{ min} = 10 \\text{ sec}$. Total = 70 seconds.\n\n*   **right_gap:**\n    *   \"Right gap means A minus B at the chosen right endpoint.\"\n    *   Right endpoint is t=2.\n    *   $A_2 = 60$.\n    *   $B_2 = 35$.\n    *   Gap = $60 - 35 = 25$.\n\n*   **c_area_unit_seconds:**\n    *   \"C area: integral under C across the entire chosen interval, in unit-seconds.\"\n    *   Interval is [1, 2].\n    *   C values: $C_1 = 25$, $C_2 = 40$.\n    *   The segment is straight (linear interpolation).\n    *   Area under curve (trapezoid) = $\\frac{1}{2} * (base_1 + base_2) * height$.\n    *   Here, \"base\" is the time interval width ($\\Delta t = 1$ minute). \"heights\" are the y-values.\n    *   Area in \"unit-minutes\" = $\\frac{1}{2} * (25 + 40) * 1 = 32.5$ units-minutes.\n    *   Convert to \"unit-seconds\": Multiply by 60 seconds/minute.\n    *   Area = $32.5 * 60$.\n    *   $32.5 * 2 = 65$. $65 * 30 = 1950$.\n    *   Let's check calculation: $32.5 * 60 = 325 * 6 = 1950$.\n\n**4. Final Check:**\n*   **start_minute:** 1\n*   **end_minute:** 2\n*   **crossing_second:** 70\n*   **right_gap:** 25\n*   **c_area_unit_seconds:** 1950\n\nLet's double check the \"A increases by at least 20\" rule.\nInterval [1, 2]: $A_1=40, A_2=60$. Increase is 20. Rule says \"at least 20\". So 20 is okay.\nInterval [7, 8]: $A_7=40, A_8=60$. Increase is 20. Rule says \"at least 20\". So 20 is okay.\n\nLet's double check the \"C is at most 40 at BOTH endpoints\" rule.\nInterval [1, 2]: $C_1=25$ (ok), $C_2=40$ (ok).\nInterval [7, 8]: $C_7=30$ (ok), $C_8=40$ (ok).\n\nLet's double check \"A strictly below B at left, strictly above B at right\".\nInterval [1, 2]: Left ($t=1$): $A=40, B=45$. $40 < 45$ (ok). Right ($t=2$): $A=60, B=35$. $60 > 35$ (ok).\nInterval [7, 8]: Left ($t=7$): $A=40, B=65$. $40 < 65$ (ok). Right ($t=8$): $A=60, B=45$. $60 > 45$ (ok).\n\nSelection:\nRight-end A-B for [1, 2]: $60 - 35 = 25$.\nRight-end A-B for [7, 8]: $60 - 45 = 15$.\nLargest is 25. So interval is [1, 2].\n\nCalculations for [1, 2]:\n- start_minute: 1\n- end_minute: 2\n- crossing_second:\n  - $A(t) = 40 + 20(t-1)$\n  - $B(t) = 45 - 10(t-1)$\n  - $40 + 20(t-1) = 45 - 10(t-1)$\n  - $30(t-1) = 5$\n  - $t-1 = 1/6$ min\n  - Seconds = $(1 + 1/6) * 60 = 70$. Correct.\n- right_gap: $A(2) - B(2) = 60 - 35 = 25$. Correct.\n- c_area_unit_seconds:\n  - Trapezoid area under C from t=1 to t=2.\n  - $C(1) = 25$.\n  - $C(2) = 40$.\n  - Width = 1 min.\n  - Area (units * min) = $(25 + 40) / 2 * 1 = 32.5$.\n  - Area (units * sec) = $32.5 * 60 = 1950$. Correct.\n\nJSON structure:\n{\n  \"start_minute\": 1,\n  \"end_minute\": 2,\n  \"crossing_second\": 70,\n  \"right_gap\": 25,\n  \"c_area_unit_seconds\": 1950\n}\n"
+            }
+          }
+        ],
+        "created": 1789618182,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 3050,
+          "prompt_tokens": 1690,
+          "total_tokens": 4740,
+          "prompt_tokens_details": {
+            "cached_tokens": 1688
+          }
+        },
+        "id": "chatcmpl-XnGZydTUzqro6hzriWccfddxEqV8eyrz",
+        "timings": {
+          "cache_n": 1688,
+          "prompt_n": 2,
+          "prompt_ms": 25.525,
+          "prompt_per_token_ms": 12.7625,
+          "prompt_per_second": 78.35455435847209,
+          "predicted_n": 3050,
+          "predicted_ms": 24163.273,
+          "predicted_per_token_ms": 7.924982945227944,
+          "predicted_per_second": 126.18323684874974
+        }
+      },
+      "elapsed_s": 24.265,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "start_minute": true,
+        "end_minute": true,
+        "crossing_second": true,
+        "right_gap": true,
+        "c_area_unit_seconds": true
+      },
+      "parsed": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      }
+    },
+    {
+      "id": "hard_v2_logic_network",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_logic_network.png",
+      "question": "Trace and evaluate the displayed logic network. Return JSON: g1_sources (list of strings), g2_sources (list of strings), high_input_codes (list of strings), scenario_y (integer), fault_y (integer).",
+      "expected": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "0010",
+          "0101",
+          "0110",
+          "1000",
+          "1100",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      },
+      "image_sha256": "58cad0d5f34815f8d06d133c8a12ea062c8f8c9298846f6842c06d3bf1ef3ea6",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to analyze a logic circuit diagram and output specific information in JSON format.\n\n**1. Analyze the Circuit Diagram:**\n\n*   **Inputs:** A, B, C, D.\n*   **Gates:**\n    *   **G1 (XOR):** Inputs come from A and B. Wait, let's trace carefully.\n        *   Top wire comes from A.\n        *   Bottom wire comes from B.\n        *   Wait, let's look at the junctions.\n        *   Wire from A goes right. There's a junction dot. One path goes to G1 top input. The other path goes down... wait, no.\n        *   Let's re-trace.\n        *   **G1 Inputs:**\n            *   Top input: Connected to wire from A.\n            *   Bottom input: Connected to wire from B.\n            *   Wait, let's look at the junctions again.\n            *   Wire A goes right. There is a dot. One line goes to G1 top input. The other line goes down and connects to wire B? No, let's look at the \"Wiring legend\". \"filled dot = electrical junction\".\n            *   Let's trace wire A. It goes right. There is a dot. One branch goes to G1 top input. The other branch goes down. It connects to wire B? No, let's look at the vertical line.\n            *   Let's trace wire B. It goes right. There is a dot. One branch goes up to G1 bottom input. The other branch goes down.\n            *   Let's trace wire C. It goes right. There is a dot. One branch goes up to... where?\n            *   Let's look at the structure again.\n            *   **G1 (XOR):**\n                *   Top input: Connected to the wire coming from A.\n                *   Bottom input: Connected to the wire coming from B.\n                *   Wait, let's look at the junctions near G1.\n                *   The wire from A has a dot. One path goes to G1 top input. The other path goes down.\n                *   The wire from B has a dot. One path goes to G1 bottom input. The other path goes down.\n                *   Actually, let's look at the vertical connections.\n                *   There is a vertical wire connecting the A-line and B-line? No.\n                *   Let's trace from the left.\n                *   **Input A:** Goes right. Hits a dot. Top path goes to G1 top input. Bottom path goes down.\n                *   **Input B:** Goes right. Hits a dot. Top path goes to G1 bottom input. Bottom path goes down.\n                *   Wait, the diagram shows a vertical line connecting the A-line and B-line? No, that's not right.\n                *   Let's look at the junctions (dots).\n                *   Dot 1 (top left): On wire A. Connects to G1 top input. Also connects to a vertical wire going down.\n                *   Dot 2 (middle left): On wire B. Connects to G1 bottom input. Also connects to a vertical wire going down.\n                *   Dot 3 (lower middle): On wire C. Connects to a vertical wire going up (to G1 bottom input? No, that's already connected to B).\n                *   Let's re-examine the whole wiring. It's a bit complex.\n\nLet's trace each gate's inputs carefully.\n\n*   **G1 (XOR):**\n    *   Top input: Connected to wire A.\n    *   Bottom input: Connected to wire B.\n    *   Wait, let's look at the vertical lines.\n    *   There is a vertical line dropping from the A-wire (after the first dot). It goes down to a dot on the C-wire.\n    *   There is a vertical line dropping from the B-wire (after the second dot). It goes down to a dot on the C-wire.\n    *   This implies A, B, and C are all connected? No, that would be weird for an XOR gate.\n    *   Let's look at the \"Gate boxes have two left inputs\".\n    *   **G1 Inputs:**\n        *   Top input: Connected to the horizontal wire coming from A.\n        *   Bottom input: Connected to the horizontal wire coming from B.\n        *   Wait, let's look at the junctions again.\n        *   Wire A -> Dot -> G1 Top Input.\n        *   Wire A -> Dot -> Vertical wire down -> Dot on Wire C.\n        *   Wire B -> Dot -> G1 Bottom Input.\n        *   Wire B -> Dot -> Vertical wire down -> Dot on Wire C.\n        *   Wire C -> Dot -> Vertical wire up -> Dot on Wire B.\n        *   Wire C -> Dot -> Vertical wire up -> Dot on Wire A.\n        *   This means A, B, and C are all electrically connected together? That seems unlikely for a logic puzzle unless it's a specific fault or just a weird diagram.\n        *   Let's look closer at the dots.\n        *   Top dot on A: Connects A to G1 top input. Connects A to a vertical wire going down.\n        *   Middle dot on B: Connects B to G1 bottom input. Connects B to a vertical wire going down.\n        *   Lower dot on C: Connects C to the vertical wire from A. Connects C to the vertical wire from B.\n        *   This means A, B, and C are all shorted together.\n        *   BUT, look at the lines going into G1.\n        *   G1 Top Input is connected to the wire coming from A.\n        *   G1 Bottom Input is connected to the wire coming from B.\n        *   Wait, let's look at the vertical lines again.\n        *   The vertical line from the A-dot goes down to the C-dot.\n        *   The vertical line from the B-dot goes down to the C-dot.\n        *   So A, B, C are connected.\n        *   BUT, look at the line going into G1.\n        *   The line going into G1 top input comes from the A-wire.\n        *   The line going into G1 bottom input comes from the B-wire.\n        *   Wait, let's look at the junction near G1.\n        *   There is a dot on the wire coming from A. One path goes right to G1. One path goes down.\n        *   There is a dot on the wire coming from B. One path goes right to G1. One path goes down.\n        *   There is a dot on the wire coming from C. One path goes right. One path goes up (to B-dot). One path goes up (to A-dot).\n        *   This implies A=B=C.\n        *   Let's re-read the diagram. Maybe I'm misinterpreting the lines.\n        *   Let's look at the line going into G1 bottom input. It comes from the wire labeled B.\n        *   Let's look at the line going into G1 top input. It comes from the wire labeled A.\n        *   Let's look at the vertical connections.\n        *   There is a vertical line connecting the A-wire and the C-wire.\n        *   There is a vertical line connecting the B-wire and the C-wire.\n        *   This would mean A, B, C are all connected.\n        *   Let's look at the line going into G2.\n        *   G2 is an AND gate.\n        *   Top input: Connected to wire B? No, let's trace.\n        *   The wire coming from B goes right, hits a dot. One path goes up to G1. One path goes down.\n        *   The wire coming from C goes right, hits a dot. One path goes up to... where?\n        *   Let's look at the vertical line between B and C.\n        *   There is a vertical line connecting the B-wire and the C-wire.\n        *   Wait, let's look at the dot on the B-wire. It connects to G1 bottom input. It also connects to a vertical line going down.\n        *   That vertical line goes to a dot on the C-wire.\n        *   So B and C are connected.\n        *   Now let's look at the dot on the C-wire. It connects to the vertical line from B. It also connects to a vertical line going up.\n        *   That vertical line goes to a dot on the A-wire.\n        *   So A, B, C are all connected.\n        *   This seems very strange. Let me look really closely at the image.\n        *   Maybe the lines are not connected.\n        *   \"Crossing without a dot = NOT connected.\"\n        *   Let's trace the lines again.\n        *   **Wire A:** Goes right. Dot. Top branch to G1. Bottom branch goes down.\n        *   **Wire B:** Goes right. Dot. Top branch to G1. Bottom branch goes down.\n        *   **Wire C:** Goes right. Dot. Top branch goes up (to B-dot). Bottom branch goes right.\n        *   Wait, let's look at the vertical line from the A-dot. It goes down to the C-dot.\n        *   Let's look at the vertical line from the B-dot. It goes down to the C-dot.\n        *   So A, B, C are connected.\n        *   Let's look at the line going into G2.\n        *   G2 Top Input: Connected to wire B? No.\n        *   Let's trace the wire going into G2 top input. It comes from the right side of the B-wire.\n        *   Wait, the B-wire has a dot. One path goes up to G1. One path goes right.\n        *   The wire going right from the B-dot goes to G2 top input.\n        *   So G2 top input is B.\n        *   G2 Bottom Input: Connected to wire C?\n        *   Let's trace the wire going into G2 bottom input. It comes from the right side of the C-wire.\n        *   The C-wire has a dot. One path goes up to B-dot. One path goes right.\n        *   The wire going right from the C-dot goes to G2 bottom input.\n        *   So G2 inputs are B and C.\n        *   Wait, let's look at the vertical line from the C-dot.\n        *   There is a vertical line going down from the C-dot.\n        *   It goes to a dot on the D-wire.\n        *   So C and D are connected.\n        *   Let's re-evaluate the connections.\n\n**Let's try a different approach. Trace each gate's inputs backwards.**\n\n*   **G5 (AND):**\n    *   Top input: Comes from G3 output.\n    *   Bottom input: Comes from G4 output.\n    *   So Y = G3_out AND G4_out.\n\n*   **G3 (XOR):**\n    *   Top input: Comes from G1 output.\n    *   Bottom input: Comes from... where?\n    *   Let's trace the bottom input of G3.\n    *   It comes from a wire going left.\n    *   This wire connects to the wire coming from B.\n    *   Let's trace the B-wire.\n    *   B goes right. Dot. Top branch to G1. Bottom branch goes right.\n    *   Wait, let's look at the junction near G3.\n    *   There is a dot on the wire coming from G1.\n    *   One path goes right to G3 top input.\n    *   One path goes down.\n    *   This vertical path goes to G4 top input.\n    *   So G1 output is connected to G3 top input AND G4 top input.\n    *   Let's check G3 bottom input.\n    *   It comes from a wire going left.\n    *   This wire connects to the wire coming from B.\n    *   Let's trace the B-wire again.\n    *   B goes right. Dot. Top branch to G1. Bottom branch goes right.\n    *   Wait, the wire going into G3 bottom input seems to come from the B-wire.\n    *   Let's look at the junction on the B-wire.\n    *   There is a dot. Top branch goes up to G1. Bottom branch goes right.\n    *   The wire going right connects to G3 bottom input.\n    *   So G3 inputs are G1_out and B.\n\n*   **G4 (OR):**\n    *   Top input: Comes from G1 output (via the dot on G1 output wire).\n    *   Bottom input: Comes from... where?\n    *   Let's trace the bottom input of G4.\n    *   It comes from a wire going left.\n    *   This wire connects to the wire coming from C.\n    *   Let's trace the C-wire.\n    *   C goes right. Dot. Top branch goes up to B-dot. Bottom branch goes right.\n    *   Wait, let's look at the junction near G4.\n    *   There is a vertical wire coming down from the C-wire.\n    *   It goes to a dot on the D-wire.\n    *   So C and D are connected.\n    *   Let's look at the wire going into G4 bottom input.\n    *   It comes from the wire coming from C.\n    *   Wait, let's look at the junction near G2.\n    *   G2 is an AND gate.\n    *   Top input: Connected to wire B.\n    *   Bottom input: Connected to wire C.\n    *   Wait, let's look at the vertical line from the C-dot.\n    *   It goes down to the D-dot.\n    *   So C and D are connected.\n    *   Let's look at the wire going into G2 bottom input.\n    *   It comes from the wire coming from C.\n    *   Wait, let's look at the junction near G2 again.\n    *   There is a vertical line coming down from the B-wire.\n    *   It goes to the C-dot.\n    *   So B and C are connected.\n    *   This is getting confusing. Let's look at the \"filled dot = electrical junction\" rule.\n\n**Let's restart the tracing with a fresh eye.**\n\n*   **Wire A:**\n    *   Starts at A.\n    *   Goes right.\n    *   Hits a dot.\n    *   Path 1 (up/right): Goes to G1 top input.\n    *   Path 2 (down): Goes down to a dot on Wire C.\n    *   So A is connected to C.\n\n*   **Wire B:**\n    *   Starts at B.\n    *   Goes right.\n    *   Hits a dot.\n    *   Path 1 (up/right): Goes to G1 bottom input.\n    *   Path 2 (down): Goes down to a dot on Wire C.\n    *   So B is connected to C.\n\n*   **Wire C:**\n    *   Starts at C.\n    *   Goes right.\n    *   Hits a dot.\n    *   Path 1 (up): Goes to the dot on Wire B. (So B=C).\n    *   Path 2 (up): Goes to the dot on Wire A. (So A=C).\n    *   Path 3 (right): Goes to G2 bottom input.\n    *   Path 4 (down): Goes to a dot on Wire D.\n\n*   **Wire D:**\n    *   Starts at D.\n    *   Goes right.\n    *   Hits a dot.\n    *   Path 1 (up): Goes to the dot on Wire C. (So C=D).\n    *   Path 2 (right): Goes to G2 bottom input? No, let's look.\n    *   Wait, let's look at the junction near G2.\n    *   There is a vertical line coming down from the B-wire.\n    *   It goes to the C-dot.\n    *   There is a vertical line coming down from the C-dot.\n    *   It goes to the D-dot.\n    *   So A, B, C, D are all connected?\n    *   If A=B=C=D, then the circuit is trivial.\n    *   Let's look at the lines going into the gates again. Maybe I'm misinterpreting the \"dot\".\n    *   \"filled dot = electrical junction\".\n    *   \"Crossing without a dot = NOT connected\".\n\n    Let's look at the lines going into G1.\n    *   Top input: Connected to the wire from A.\n    *   Bottom input: Connected to the wire from B.\n    *   Wait, look at the vertical line dropping from the A-wire.\n    *   It goes down to the C-wire.\n    *   Look at the vertical line dropping from the B-wire.\n    *   It goes down to the C-wire.\n    *   This implies A, B, C are connected.\n    *   BUT, look at the lines going into G2.\n    *   Top input: Connected to the wire from B.\n    *   Bottom input: Connected to the wire from C.\n    *   Wait, look at the vertical line dropping from the C-wire.\n    *   It goes down to the D-wire.\n    *   So C and D are connected.\n    *   This implies A=B=C=D.\n    *   If A=B=C=D, then:\n        *   G1 (XOR A, B) = A XOR A = 0.\n        *   G2 (AND B, C) = B AND C = A AND A = A.\n        *   G3 (XOR G1, B) = XOR(0, A) = A.\n        *   G4 (OR G1, C) = OR(0, A) = A.\n        *   G5 (AND G3, G4) = AND(A, A) = A.\n    *   Let's check the scenario: A=1"
+            }
+          }
+        ],
+        "created": 1789618215,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1746,
+          "total_tokens": 5842,
+          "prompt_tokens_details": {
+            "cached_tokens": 1744
+          }
+        },
+        "id": "chatcmpl-ITdFLkp8W6gd4G8xN0sOzHgjlRKf64X8",
+        "timings": {
+          "cache_n": 1744,
+          "prompt_n": 2,
+          "prompt_ms": 26.007,
+          "prompt_per_token_ms": 13.0035,
+          "prompt_per_second": 76.90237243818972,
+          "predicted_n": 4096,
+          "predicted_ms": 32528.839,
+          "predicted_per_token_ms": 7.943550427350427,
+          "predicted_per_second": 125.88829253942939
+        }
+      },
+      "elapsed_s": 32.647,
+      "score": 0,
+      "max_score": 5,
+      "checks": {
+        "g1_sources": false,
+        "g2_sources": false,
+        "high_input_codes": false,
+        "scenario_y": false,
+        "fault_y": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "hard_v2_cube",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cube.png",
+      "question": "Solve the displayed fold, candidate match, and roll sequence. Return JSON: option (string), opposite_c (string), final_top (string), final_front (string), final_right (string).",
+      "expected": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      },
+      "image_sha256": "7f9d9f8486ca3e4890bc949ee81260d9cb8b5048f38ef10ffe5fda054f5e71a0",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to solve a spatial reasoning puzzle involving a cube net, identifying a valid 3D view, and then simulating a sequence of rolls.\n\n**Step 1: Analyze the Cube Net**\nThe net is a cross shape.\n- Top face: A (Yellow)\n- Middle row: B (Blue), C (Green), D (Pink), E (Purple)\n- Bottom face: F (Light Blue)\n\nLet's determine the opposite faces.\n- In a standard cross net like this:\n    - A is opposite to F (Top and Bottom).\n    - B is opposite to D (Left and Right in the middle row).\n    - C is opposite to E (Front and Back in the middle row).\n\nWait, let's re-verify the folding.\n- Let C be the Front face.\n- Then B is Left, D is Right, A is Top, F is Bottom.\n- E is attached to the right of D. So if D is Right, E folds around to become the Back face.\n- So, C (Front) is opposite E (Back).\n- B (Left) is opposite D (Right).\n- A (Top) is opposite F (Bottom).\n\nLet's check the pairs:\n- A (Yellow) <-> F (Light Blue)\n- B (Blue) <-> D (Pink)\n- C (Green) <-> E (Purple)\n\n**Step 2: Evaluate Candidate Views**\nI need to find the candidate that is physically possible without reflection.\nThe candidates are P, Q, R, S, T, U.\n- **P:** Top=A, Front=C, Right=B.\n    - A is opposite F. C is opposite E. B is opposite D.\n    - In the net, A is above C. B is left of C.\n    - If C is Front, A is Top. B is Left.\n    - The view shows B on the Right. This is a reflection or impossible orientation. If C is Front and A is Top, B must be Left. Here B is Right. So P is incorrect. Wait, let's look closer.\n    - In the net: A is above C. B is left of C.\n    - If I fold C to be Front, A folds up to be Top. B folds left to be Left face.\n    - So, if Front=C and Top=A, then Left=B.\n    - Candidate P shows Top=A, Front=C, Right=B. This implies B is on the right. But B is on the left. So P is impossible.\n\n- **Q:** Top=A, Front=C, Right=D.\n    - If Front=C, Top=A. Then Right should be D (since D is right of C in the net).\n    - Let's check the net: C is green, D is pink. They are adjacent.\n    - If C is Front, D is Right. A is Top.\n    - This looks valid. Let's check the colors. Top is Yellow (A), Front is Green (C), Right is Pink (D).\n    - In the net, A is above C. D is right of C.\n    - So if C is Front, A is Top, D is Right. This matches.\n    - Let's check the letters. Top=A, Front=C, Right=D.\n    - This seems like a valid candidate. Let's keep it as a strong possibility.\n\n- **R:** Top=A, Front=F, Right=D.\n    - A is opposite F. They cannot be adjacent.\n    - So R is impossible.\n\n- **S:** Top=C, Front=E, Right=A.\n    - C is opposite E. They cannot be adjacent.\n    - So S is impossible.\n\n- **T:** Top=B, Front=D, Right=F.\n    - B is opposite D. They cannot be adjacent.\n    - So T is impossible.\n\n- **U:** Top=F, Front=C, Right=D.\n    - Top=F, Front=C.\n    - In the net, F is below C. So if C is Front, F is Bottom.\n    - Here F is Top. This means the cube is upside down relative to the \"C is Front\" orientation.\n    - If F is Top, then C is Bottom.\n    - But the view shows C as Front.\n    - Let's re-evaluate.\n    - If Top=F, then Bottom=A.\n    - Front=C. Then Back=E.\n    - Right=D. Then Left=B.\n    - Let's check adjacencies.\n    - F is adjacent to C (in net, F is below C). So F and C can be adjacent.\n    - If F is Top and C is Front... wait.\n    - In the net, F is attached to the bottom of C.\n    - If I fold C to be Front, F folds to be Bottom.\n    - If I want F to be Top, I need to rotate the cube 180 degrees around the horizontal axis? No.\n    - Let's visualize.\n    - Net: A(top)-C(front)-F(bottom).\n    - If C is Front, A is Top, F is Bottom.\n    - Candidate U has Top=F, Front=C. This is impossible because F and C are adjacent in the net, but their relative positions are fixed.\n    - Wait, let's look at the net again.\n    - A is attached to top of C. F is attached to bottom of C.\n    - So A and F are opposite.\n    - If Top=F, then Bottom=A.\n    - If Front=C, then Back=E.\n    - If Right=D, then Left=B.\n    - Is this a valid configuration?\n    - Let's check the corner. Top=F, Front=C, Right=D.\n    - In the net, F is below C. D is right of C.\n    - So C is adjacent to F and D.\n    - If C is Front, F is Bottom, D is Right.\n    - So the corner (Front, Bottom, Right) is (C, F, D).\n    - Candidate U shows (Top, Front, Right) as (F, C, D).\n    - This means the face labeled F is on Top. The face labeled C is on Front. The face labeled D is on Right.\n    - Let's see if this is possible.\n    - If F is Top, then A is Bottom.\n    - If C is Front, then E is Back.\n    - If D is Right, then B is Left.\n    - Let's check the adjacency of F, C, D.\n    - In the net, C is adjacent to F and D.\n    - So F, C, D meet at a corner?\n    - C is the central square. F is below it. D is right of it.\n    - So C, F, D meet at the bottom-right corner of C.\n    - So yes, F, C, D are mutually adjacent.\n    - Now let's check the orientation.\n    - If C is Front, F is Bottom, D is Right.\n    - Rotate the cube so F becomes Top.\n    - Rotate 90 degrees forward (top moves to front? No, top moves to bottom).\n    - Let's just map the faces.\n    - Opposite pairs: (A,F), (B,D), (C,E).\n    - Candidate U: Top=F, Front=C, Right=D.\n    - Check opposites: Top(F) opposite Bottom(A). Front(C) opposite Back(E). Right(D) opposite Left(B).\n    - Are F, C, D adjacent? Yes.\n    - Is the orientation correct?\n    - Look at the net. C is green. F is light blue. D is pink.\n    - In the net, going from C to F is \"down\". Going from C to D is \"right\".\n    - So if you stand on C (Front), F is \"down\" (Bottom), D is \"right\" (Right).\n    - So the corner is (Front=C, Bottom=F, Right=D).\n    - Candidate U shows Top=F, Front=C, Right=D.\n    - This implies F is Top. But in the standard orientation (C=Front), F is Bottom.\n    - So to get F to Top, we need to flip the cube upside down.\n    - If we flip upside down (rotate 180 around Left-Right axis):\n        - Top becomes Bottom (A becomes Top? No, F becomes Top).\n        - Bottom becomes Top (A becomes Bottom).\n        - Front becomes Back (C becomes Back).\n        - Back becomes Front (E becomes Front).\n    - This doesn't match U (Front=C).\n    - Let's try rotating around Front-Back axis.\n    - If C is Front, F is Bottom, D is Right.\n    - We want F to be Top.\n    - Rotate 180 degrees around the axis passing through the center of C and E (Front-Back axis).\n    - Top (A) -> Bottom.\n    - Bottom (F) -> Top.\n    - Right (D) -> Left.\n    - Left (B) -> Right.\n    - Front (C) -> Front.\n    - Back (E) -> Back.\n    - So after this rotation: Top=F, Front=C, Right=B.\n    - Candidate U has Right=D. So U is incorrect.\n\nLet's re-examine Q.\n- Candidate Q: Top=A, Front=C, Right=D.\n- Net: A is above C. D is right of C.\n- If C is Front, A folds up to be Top. D folds right to be Right.\n- This matches perfectly.\n- So Q is the valid candidate.\n\nLet's double check P again.\n- P: Top=A, Front=C, Right=B.\n- Net: A above C. B left of C.\n- If C is Front, A is Top. B is Left.\n- P shows B on Right. Impossible.\n\nSo the valid candidate is **Q**.\n\n**Step 3: Perform the Rolls**\nStart with Candidate Q.\n- Orientation: Top=A, Front=C, Right=D.\n- (Implied: Bottom=F, Back=E, Left=B).\n\nRoll sequence: RIGHT -> AWAY -> RIGHT.\n\n**Roll 1: RIGHT**\n- Definition: \"right face becomes bottom; top becomes right. Front and back stay in place.\"\n- Current state: Top=A, Front=C, Right=D.\n- Action:\n    - New Bottom = Old Right = D.\n    - New Right = Old Top = A.\n    - Front stays C.\n    - Back stays E.\n    - New Top = Old Left = B. (Since Right became Bottom, Left must become Top).\n- Let's verify.\n    - Faces: Top=A, Front=C, Right=D.\n    - Opposites: Bottom=F, Back=E, Left=B.\n    - Roll RIGHT (rotate around Front-Back axis? No, \"right face becomes bottom\").\n    - Imagine rolling the cube to the right.\n    - The Right face (D) goes down to become Bottom.\n    - The Top face (A) goes to the Right.\n    - The Left face (B) goes to the Top.\n    - The Bottom face (F) goes to the Left.\n    - Front (C) and Back (E) stay in place.\n- New State after Roll 1:\n    - Top: B\n    - Front: C\n    - Right: A\n    - Bottom: D\n    - Left: F\n    - Back: E\n\n**Roll 2: AWAY**\n- Definition: \"front face becomes top; top becomes back. Left and right stay in place.\"\n- Current state: Top=B, Front=C, Right=A.\n- Action:\n    - New Top = Old Front = C.\n    - New Back = Old Top = B.\n    - Front stays... wait. \"front face becomes top\". So the face that was Front is now Top.\n    - \"top becomes back\". So the face that was Top is now Back.\n    - \"Left and right stay in place\".\n- Let's trace carefully.\n    - Current: Top=B, Front=C, Right=A.\n    - Roll AWAY (rotate around Left-Right axis, pushing front away).\n    - Front (C) goes to Top.\n    - Top (B) goes to Back.\n    - Back (E) goes to Bottom.\n    - Bottom (D) goes to Front.\n    - Left (F) and Right (A) stay in place.\n- New State after Roll 2:\n    - Top: C\n    - Front: D\n    - Right: A\n    - Bottom: E\n    - Left: F\n    - Back: B\n\n**Roll 3: RIGHT**\n- Definition: \"right face becomes bottom; top becomes right. Front and back stay in place.\"\n- Current state: Top=C, Front=D, Right=A.\n- Action:\n    - New Bottom = Old Right = A.\n    - New Right = Old Top = C.\n    - Front stays D.\n    - Back stays B.\n    - New Top = Old Left = F.\n- Let's verify.\n    - Current: Top=C, Front=D, Right=A.\n    - Opposites: Bottom=E, Back=B, Left=F.\n    - Roll RIGHT.\n    - Right face (A) becomes Bottom.\n    - Top face (C) becomes Right.\n    - Left face (F) becomes Top.\n    - Bottom face (E) becomes Left.\n    - Front (D) and Back (B) stay.\n- New State after Roll 3:\n    - Top: F\n    - Front: D\n    - Right: C\n    - Bottom: A\n    - Left: E\n    - Back: B\n\n**Step 4: Report Results**\n- \"Report the face opposite C in the folded cube, plus final top, front and right face labels.\"\n- First, identify the face opposite C in the *folded cube* (the original net configuration).\n    - From Step 1: C is opposite E.\n    - So, opposite_c = \"E\".\n- Final Top: F\n- Final Front: D\n- Final Right: C\n\nWait, let me re-read the roll definitions carefully.\n\"RIGHT: right face becomes bottom; top becomes right. Front and back stay in place.\"\n\"AWAY: front face becomes top; top becomes back. Left and right stay in place.\"\n\nLet's re-simulate.\nStart: Top=A, Front=C, Right=D. (From Candidate Q)\nOpposites: Bottom=F, Back=E, Left=B.\n\n**Roll 1: RIGHT**\n- \"right face becomes bottom\": D -> Bottom.\n- \"top becomes right\": A -> Right.\n- \"Front and back stay in place\": C -> Front, E -> Back.\n- What happens to Left and Bottom?\n    - If Right goes to Bottom, and Top goes to Right...\n    - Imagine a clock face on the side. Top is 12, Right is 3, Bottom is 6, Left is 9.\n    - Rolling right means the cube rotates 90 deg clockwise around the Front-Back axis (looking from front).\n    - Top (12) -> Right (3). Correct.\n    - Right (3) -> Bottom (6). Correct.\n    - Bottom (6) -> Left (9).\n    - Left (9) -> Top (12).\n- So:\n    - New Top: B (was Left)\n    - New Front: C (unchanged)\n    - New Right: A (was Top)\n    - New Bottom: D (was Right)\n    - New Left: F (was Bottom)\n    - New Back: E (unchanged)\n- State 1: Top=B, Front=C, Right=A.\n\n**Roll 2: AWAY**\n- \"front face becomes top\": C -> Top.\n- \"top becomes back\": B -> Back.\n- \"Left and right stay in place\": A -> Right, F -> Left.\n- What happens to Bottom and Back?\n    - Imagine rolling the cube away from you (toppling it back).\n    - Front (C) goes to Top.\n    - Top (B) goes to Back.\n    - Back (E) goes to Bottom.\n    - Bottom (D) goes to Front.\n- So:\n    - New Top: C\n    - New Front: D (was Bottom)\n    - New Right: A (unchanged)\n    - New Bottom: E (was Back)\n    - New Left: F (unchanged)\n    - New Back: B (was Top)\n- State 2: Top=C, Front=D, Right=A.\n\n**Roll 3: RIGHT**\n- \"right face becomes bottom\": A -> Bottom.\n- \"top becomes right\": C -> Right.\n- \"Front and back stay in place\": D -> Front, B -> Back.\n- What happens to Left and Bottom?\n    - Rolling right again.\n    - Top (C) -> Right.\n    - Right (A) -> Bottom.\n    - Bottom (E) -> Left.\n    - Left (F) -> Top.\n- So:\n    - New Top: F\n    - New Front: D\n    - New Right: C\n    - New Bottom: A\n    - New Left: E\n    - New Back: B\n- State 3: Top=F, Front=D, Right=C.\n\n**Final Check:**\n- opposite_c: In the original net, C is opposite E. So \"E\".\n- final_top: \"F\"\n- final_front: \"D\"\n- final_right: \"C\"\n\nLet's double check the \"opposite C\" part.\n\"Report the face opposite C in the folded cube\".\nThis refers to the static property of the cube, not the current orientation.\nIn the net:\n- Row: B - C - D - E.\n- C is adjacent to B and D.\n- F is below C. A is above C.\n- Folding:\n    - C is Front.\n    - B is Left.\n    - D is Right.\n    - A is Top.\n    - F is Bottom.\n    - E is attached to D (Right). So E folds around to be Back.\n- So C (Front) is opposite E (Back).\n- Correct.\n\nSo the values are:\n- option: \"Q\"\n- opposite_c: \""
+            }
+          }
+        ],
+        "created": 1789618248,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1706,
+          "total_tokens": 5802,
+          "prompt_tokens_details": {
+            "cached_tokens": 1704
+          }
+        },
+        "id": "chatcmpl-5vOV0BIXznp1UmRlUSD87gPKHPELuahz",
+        "timings": {
+          "cache_n": 1704,
+          "prompt_n": 2,
+          "prompt_ms": 26.972,
+          "prompt_per_token_ms": 13.486,
+          "prompt_per_second": 74.15097137772504,
+          "predicted_n": 4096,
+          "predicted_ms": 32761.702,
+          "predicted_per_token_ms": 8.00041562881563,
+          "predicted_per_second": 124.99350613713536
+        }
+      },
+      "elapsed_s": 32.874,
+      "score": 0,
+      "max_score": 5,
+      "checks": {
+        "option": false,
+        "opposite_c": false,
+        "final_top": false,
+        "final_front": false,
+        "final_right": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "hard_v2_resources",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_resources.png",
+      "question": "Find the optimal appointment under all displayed constraints. Return JSON: room (string), technician (string), start (HH:MM string), end (HH:MM string).",
+      "expected": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      },
+      "image_sha256": "ce0db528003bfcddfb8e90243830d255a04d76fa7082337eedd40ce495fd9131",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to find the optimal appointment based on the provided schedule and rules.\n\n**1. Analyze the Rules:**\n*   **Resources:**\n    *   Rooms: R1, R2\n    *   Technicians: Ada, Bo\n    *   Scanner: Shared\n*   **Constraints:**\n    *   Choose one room (R1 or R2) and one technician (Ada or Bo).\n    *   R1 permits Ada only. R2 permits either technician.\n    *   Appointment duration: 60 minutes total (Setup 15m + Scan 30m + Finish 15m).\n    *   Room occupied for all 60 minutes.\n    *   Technician occupied for Setup (15m) and Finish (15m), free during Scan (30m).\n    *   Scanner occupied only during the middle 30 minutes (the scan part).\n    *   Start time must be on a 15-minute tick (e.g., 09:00, 09:15, 09:30...).\n    *   Entire appointment must be within 09:00 - 13:00.\n    *   \"Touching endpoints do not overlap\" - this usually means if one ends at 10:00, another can start at 10:00. Wait, let's re-read carefully: \"Occupied bars: start above end.\" This implies the bars show the occupied time. \"Touching endpoints do not overlap\" likely means strict inequality isn't required, but let's look at the bars. The bars are solid blue. If a bar ends at 10:00 and another starts at 10:00, they touch. The rule says \"Touching endpoints do not overlap\", which is a bit ambiguous. Usually, it means [Start, End) intervals don't overlap. Let's assume standard scheduling: if one ends at T, another can start at T.\n    *   **Objective:** Earliest completion time.\n\n**2. Analyze the Schedule (Occupied Bars):**\n\n*   **R1:**\n    *   09:00 - 10:00\n    *   11:15 - 12:15\n*   **R2:**\n    *   09:00 - 09:30\n    *   11:30 - 12:00\n    *   12:30 - 13:00\n*   **Ada:**\n    *   09:00 - 09:45\n    *   10:30 - 11:30\n    *   12:00 - 13:00\n*   **Bo:**\n    *   09:00 - 10:00\n    *   10:45 - 11:00\n    *   11:45 - 12:30\n*   **Scanner:**\n    *   09:00 - 09:30\n    *   10:00 - 10:30\n    *   11:30 - 12:00\n\n**3. Evaluate Potential Slots:**\n\nI need to find a 60-minute window [Start, Start+60] where:\n*   Room is free for [Start, Start+60].\n*   Technician is free for [Start, Start+15] AND [Start+45, Start+60]. (Technician is free during the middle 30 mins).\n*   Scanner is free for [Start+15, Start+45].\n\nLet's check possible start times (15-min ticks): 09:00, 09:15, 09:30, 09:45, 10:00, 10:15, 10:30, 10:45, 11:00, 11:15, 11:30, 11:45, 12:00, 12:15, 12:30.\n\n**Constraint Check: Room Availability (60 mins continuous)**\n*   **R1 Free:**\n    *   10:00 - 11:15 (75 mins) -> Possible start times: 10:00, 10:15, 10:30, 10:45, 11:00.\n    *   12:15 - 13:00 (45 mins) -> Not enough for 60 mins.\n*   **R2 Free:**\n    *   09:30 - 11:30 (120 mins) -> Possible start times: 09:30, 09:45, 10:00, 10:15, 10:30, 10:45, 11:00, 11:15.\n    *   12:00 - 12:30 (30 mins) -> Not enough.\n    *   13:00+ -> Out of bounds.\n\nSo, valid Room windows are:\n*   R1: 10:00 - 11:15\n*   R2: 09:30 - 11:30\n\n**Constraint Check: Technician Availability**\n*   **Ada:**\n    *   Free: 09:45 - 10:30 (45 mins) -> Can do 15m setup + 30m scan? No, she needs to be free for setup (15m) and finish (15m).\n        *   Wait, the rule says: \"Technician: setup AND finish; free during scan.\"\n        *   So Technician needs to be free for [Start, Start+15] and [Start+45, Start+60].\n    *   Ada Free intervals:\n        *   09:45 - 10:30 (45 mins).\n            *   Can she do a 60 min appointment?\n            *   Setup: 09:45-10:00. Scan: 10:00-10:30. Finish: 10:30-10:45.\n            *   She is free 09:45-10:30. She is busy 10:30-11:30.\n            *   So she can't finish at 10:45.\n            *   Can she start earlier? No, busy until 09:45.\n            *   Can she start later? No, busy from 10:30.\n            *   So Ada cannot do an appointment in the 09:45-10:30 window because the finish time (Start+60) would be > 10:30.\n            *   Wait, let's re-evaluate Ada's free time.\n            *   Ada busy: 09:00-09:45, 10:30-11:30, 12:00-13:00.\n            *   Ada free: 09:45 - 10:30.\n            *   If appointment starts at 09:45:\n                *   Setup: 09:45-10:00 (Free? Yes).\n                *   Scan: 10:00-10:30 (Free? Yes).\n                *   Finish: 10:30-10:45 (Free? No, busy 10:30-11:30).\n            *   So Ada cannot start at 09:45.\n            *   Can she start at 10:00?\n                *   Setup: 10:00-10:15 (Free? Yes).\n                *   Scan: 10:15-10:45 (Free? Yes).\n                *   Finish: 10:45-11:00 (Free? No, busy 10:30-11:30).\n            *   So Ada cannot do an appointment while busy 10:30-11:30.\n            *   Can she do an appointment *after* 11:30?\n                *   Free: 11:30 - 12:00.\n                *   Start 11:30?\n                    *   Setup: 11:30-11:45 (Free).\n                    *   Scan: 11:45-12:15 (Free? No, busy 12:00-13:00).\n                *   Start 11:45?\n                    *   Setup: 11:45-12:00 (Free).\n                    *   Scan: 12:00-12:30 (Free? No, busy 12:00-13:00).\n            *   So Ada seems unable to fit a 60-minute appointment given her busy blocks.\n            *   Let's check the busy blocks again.\n                *   09:00-09:45\n                *   10:30-11:30\n                *   12:00-13:00\n            *   Free gaps:\n                *   09:45 - 10:30 (45 mins). Too short for 60 min appointment (needs 15+30+15). Wait, she is free during scan. So she needs 15m free + 30m free (scan) + 15m free. Total 60m of \"technician availability\" isn't strictly required, just specific slots.\n                *   Actually, she needs to be free for Setup (15m) and Finish (15m).\n                *   Gap 09:45 - 10:30:\n                    *   Can start at 09:45? Setup 09:45-10:00 (OK). Scan 10:00-10:30 (OK). Finish 10:30-10:45 (Busy). Fail.\n                *   Gap 11:30 - 12:00:\n                    *   Can start at 11:30? Setup 11:30-11:45 (OK). Scan 11:45-12:15 (Busy 12:00-13:00). Fail.\n                    *   Can start at 11:45? Setup 11:45-12:00 (OK). Scan 12:00-12:30 (Busy). Fail.\n            *   Conclusion: **Ada cannot perform any appointment.** She is too busy.\n\n*   **Bo:**\n    *   Busy: 09:00-10:00, 10:45-11:00, 11:45-12:30.\n    *   Free:\n        *   10:00 - 10:45 (45 mins).\n            *   Start 10:00? Setup 10:00-10:15 (OK). Scan 10:15-10:45 (OK). Finish 10:45-11:00 (Busy). Fail.\n        *   11:00 - 11:45 (45 mins).\n            *   Start 11:00? Setup 11:00-11:15 (OK). Scan 11:15-11:45 (OK). Finish 11:45-12:00 (Busy). Fail.\n        *   12:30 - 13:00 (30 mins). Too short.\n    *   Wait, let's look at the bars again.\n        *   Bo: 09:00-10:00.\n        *   Bo: 10:45-11:00.\n        *   Bo: 11:45-12:30.\n    *   Free intervals:\n        *   10:00 - 10:45.\n        *   11:00 - 11:45.\n        *   12:30 - 13:00.\n    *   Let's check if Bo can do an appointment.\n        *   Needs Setup (15m) + Scan (30m) + Finish (15m).\n        *   Technician is free during Scan.\n        *   So Bo needs to be free for [Start, Start+15] and [Start+45, Start+60].\n        *   Let's check the gaps again.\n        *   Gap 10:00 - 10:45.\n            *   Start 10:00: Setup 10:00-10:15 (Free). Scan 10:15-10:45 (Free). Finish 10:45-11:00 (Busy). Fail.\n        *   Gap 11:00 - 11:45.\n            *   Start 11:00: Setup 11:00-11:15 (Free). Scan 11:15-11:45 (Free). Finish 11:45-12:00 (Busy). Fail.\n    *   Is it possible I misread the bars?\n        *   Bo bar 1: 09:00 to 10:00.\n        *   Bo bar 2: 10:45 to 11:00.\n        *   Bo bar 3: 11:45 to 12:30.\n    *   This implies Bo is busy almost all the time.\n    *   Let's re-read the \"Technician\" rule. \"Technician: setup AND finish; free during scan.\"\n    *   This means the technician does NOT need to be free during the middle 30 minutes.\n    *   So, for Bo:\n        *   Busy: 09:00-10:00.\n        *   Busy: 10:45-11:00.\n        *   Busy: 11:45-12:30.\n        *   Free: 10:00 - 10:45.\n            *   Can start at 10:00?\n                *   Setup: 10:00-10:15 (Free).\n                *   Scan: 10:15-10:45 (Free? No, technician is free during scan, so it doesn't matter if the room/scanner are busy, but the technician must be free for setup and finish).\n                *   Wait, the technician is the person. If the technician is busy, they can't do the appointment.\n                *   So Bo is free 10:00-10:45.\n                *   Start 10:00: Setup 10:00-10:15 (Free). Scan 10:15-10:45 (Technician free). Finish 10:45-11:00 (Busy). Fail.\n        *   Free: 11:00 - 11:45.\n            *   Start 11:00: Setup 11:00-11:15 (Free). Scan 11:15-11:45 (Technician free). Finish 11:45-12:00 (Busy). Fail.\n    *   This suggests Bo cannot do an appointment either? That can't be right. Let me re-read the chart carefully.\n    *   Ah, look at the \"Bo\" row.\n        *   Bar 1: 09:00 - 10:00.\n        *   Bar 2: 10:45 - 11:00.\n        *   Bar 3: 11:45 - 12:30.\n    *   Maybe I am misinterpreting \"free during scan\".\n    *   \"Technician: setup AND finish; free during scan.\"\n    *   This means the technician is *not* occupied during the scan.\n    *   So, if Bo is busy 10:45-11:00, he cannot finish an appointment that ends at 11:00.\n    *   If Bo is busy 11:45-12:30, he cannot finish an appointment that ends at 12:00 or 12:15.\n    *   Let's look for a slot where Bo is free for Setup (15m) and Finish (15m).\n    *   Bo Free intervals:\n        *   10:00 - 10:45.\n            *   Can start at 10:00? Setup 10:00-10:15 (OK). Finish 10:45-11:00 (Busy). No.\n            *   Can start at 10:15? Setup 10:15-10:30 (OK). Finish 10:45-11:00 (Busy). No.\n            *   Can start at 10:30? Setup 10:30-10:45 (OK). Finish 10:"
+            }
+          }
+        ],
+        "created": 1789618281,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1747,
+          "total_tokens": 5843,
+          "prompt_tokens_details": {
+            "cached_tokens": 1745
+          }
+        },
+        "id": "chatcmpl-GBLzi3UTbzuPb9n92cQE0Boo496Es3GY",
+        "timings": {
+          "cache_n": 1745,
+          "prompt_n": 2,
+          "prompt_ms": 26.463,
+          "prompt_per_token_ms": 13.2315,
+          "prompt_per_second": 75.57722102558289,
+          "predicted_n": 4096,
+          "predicted_ms": 32617.801,
+          "predicted_per_token_ms": 7.96527496947497,
+          "predicted_per_second": 125.54494400158981
+        }
+      },
+      "elapsed_s": 32.73,
+      "score": 0,
+      "max_score": 4,
+      "checks": {
+        "room": false,
+        "technician": false,
+        "start": false,
+        "end": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "hard_v2_cross_reference",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cross_reference.png",
+      "question": "Follow the displayed cross-reference procedure. Return JSON: node (string), probe (string), revision (integer), adjusted (integer), destination (string).",
+      "expected": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      },
+      "image_sha256": "24e4f053bda05dc11ead47923a4b3011f0e95a302bfdce94677265dbd438cdb2",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"node\": \"N4\",\n  \"probe\": \"P7\",\n  \"revision\": 3,\n  \"adjusted\": 56,\n  \"destination\": \"BAY-6\"\n}\n```",
+              "reasoning_content": "The user wants me to follow a specific procedure based on the provided image.\n\n**1. Understand the Goal:**\nThe goal is to trace a path from \"IN\" through a routing diagram, look up data in a registry, apply calibration, and determine a final destination. The output must be a JSON object with specific fields: `node`, `probe`, `revision`, `adjusted`, `destination`.\n\n**2. Analyze the Procedure:**\n*   **Start:** Begin at \"IN\".\n*   **Path:** Follow a TRIANGLE edge, then a SQUARE edge. Use solid arrows only.\n*   **Dashed arrows:** Archived (ignore).\n*   **Symbols:** Label edges. Crossings don't create new routes.\n*   **At the reached node:** Read Unit / Lot and `raw`.\n*   **Match:** Match BOTH Unit and Lot to the LIVE registry row.\n*   **Calibration:** Use that row's exact Probe AND Rev in the calibration table. Do not pick the latest revision.\n*   **Compute:** `adjusted = Gain x (raw + Offset)`.\n*   **Destination:** Match the registry Rack and the adjusted band.\n*   **Return:** `node`, `probe`, `revision`, `adjusted`, `destination`.\n\n**3. Step-by-Step Execution:**\n\n*   **Step 1: Trace the path from IN.**\n    *   Start at \"IN\".\n    *   Look for a TRIANGLE edge. There are two triangle edges coming out of IN.\n        *   One solid blue triangle pointing up towards H1.\n        *   One dashed blue triangle pointing right towards H2.\n    *   The procedure says \"Follow a TRIANGLE edge... use solid arrows only\". So, I must take the solid blue triangle edge towards **H1**.\n    *   Now at H1. Look for a SQUARE edge.\n        *   There are two edges coming out of H1.\n        *   One solid orange square pointing right towards a box labeled \"N4 K2 / L8 raw = 17\".\n        *   One solid purple diamond pointing right towards a box labeled \"N7 K2 / L3 raw = 17\". Wait, the symbol is a diamond, not a square. The procedure says \"then a SQUARE edge\".\n        *   Let's re-examine the edges from H1.\n            *   Top edge: Solid orange square.\n            *   Bottom edge: Solid purple diamond.\n        *   The procedure says \"Follow a TRIANGLE edge, then a SQUARE edge\". This implies a sequence.\n            *   First edge: Triangle (IN -> H1).\n            *   Second edge: Square (H1 -> ?).\n        *   So, from H1, I must follow the edge with the square symbol. That is the top edge leading to the box \"N4 K2 / L8 raw = 17\".\n\n*   **Step 2: Read data at the reached node.**\n    *   The reached node is the box: **N4 K2 / L8 raw = 17**.\n    *   Unit: **K2**\n    *   Lot: **L8**\n    *   Raw: **17**\n\n*   **Step 3: Match to LIVE registry row.**\n    *   Look at Table B (Device registry).\n    *   Find a row where Unit = K2 AND Lot = L8 AND State = LIVE.\n    *   Rows:\n        *   K2, L3, LIVE... (Lot mismatch)\n        *   K8, L8, LIVE... (Unit mismatch)\n        *   K2, L8, OLD... (State mismatch)\n        *   K2, L8, LIVE... (Match!) -> Unit: K2, Lot: L8, State: LIVE.\n        *   K3, L8, LIVE... (Unit mismatch)\n    *   So, the matching row is: **K2, L8, LIVE, P7, 5, S2**.\n    *   From this row, I get:\n        *   Probe: **P7**\n        *   Rev: **5**\n        *   Rack: **S2**\n\n*   **Step 4: Use Probe and Rev in Calibration table.**\n    *   Look at Table C (Calibration table).\n    *   Find the row where Probe = P7 AND Revision = 5.\n    *   Rows:\n        *   P7, 1...\n        *   P7, 2...\n        *   P9, 3...\n        *   P7, 3...\n        *   P7, 4...\n        *   P9, 5...\n    *   Wait, there is no row for P7, 5.\n    *   Let me re-read the registry row.\n        *   Row 4: K2, L8, LIVE, P7, 3, S2.\n        *   Row 3: K2, L8, OLD, P9, 5, S2.\n    *   Let's re-check the matching.\n        *   My node data: Unit K2, Lot L8.\n        *   Registry rows with K2, L8:\n            *   Row 3: K2, L8, OLD, P9, 5, S2. (State is OLD, not LIVE).\n            *   Row 4: K2, L8, LIVE, P7, 3, S2. (State is LIVE).\n    *   So the correct matching row is Row 4: **K2, L8, LIVE, P7, 3, S2**.\n    *   From this row:\n        *   Probe: **P7**\n        *   Rev: **3**\n        *   Rack: **S2**\n\n*   **Step 5: Compute adjusted value.**\n    *   Use Probe P7 and Revision 3 from the calibration table.\n    *   Look at Table C for Probe P7, Revision 3.\n    *   Row: P7, 3, Offset -3, Gain 4.\n    *   Formula: `adjusted = Gain x (raw + Offset)`\n    *   Raw value from node: 17.\n    *   Offset: -3.\n    *   Gain: 4.\n    *   Calculation: `adjusted = 4 * (17 + (-3)) = 4 * 14 = 56`.\n\n*   **Step 6: Determine Destination.**\n    *   Match the registry Rack (S2) and the adjusted band (56).\n    *   Look at Table D (Dispatch bands).\n    *   Rack is S2.\n    *   Bands for S2:\n        *   Min 0, Max 49 -> BAY-1. (56 is not in range).\n        *   Min 60, Max 99 -> BAY-3. (56 is not in range).\n        *   Min 50, Max 59 -> BAY-6. (56 is in range [50, 59]).\n    *   So, Destination is **BAY-6**.\n\n*   **Step 7: Compile the JSON.**\n    *   node: \"N4\" (The node identifier from the box \"N4 K2 / L8...\")\n    *   probe: \"P7\"\n    *   revision: 3\n    *   adjusted: 56\n    *   destination: \"BAY-6\"\n\nLet me double check the \"node\" field. The prompt asks for \"node (string)\". In the routing diagram, the boxes are labeled N4, N7, N2, N9. The circles are IN, H1, H2, H3. The procedure says \"At the reached node, read Unit / Lot...\". The reached node is the box. The label is N4. So `node` should be \"N4\".\n\nLet me double check the path.\n- Start IN.\n- Triangle edge: Solid blue triangle points to H1. Correct.\n- Square edge: From H1, there is an orange square pointing to N4. There is a purple diamond pointing to N7. The procedure says \"SQUARE edge\". So N4 is correct.\n\nLet me double check the registry match.\n- Node: N4, Unit K2, Lot L8.\n- Registry:\n    - K2, L3, LIVE... (No)\n    - K8, L8, LIVE... (No)\n    - K2, L8, OLD... (No, state is OLD)\n    - K2, L8, LIVE... (Yes, Row 4) -> Probe P7, Rev 3, Rack S2.\n    - K3, L8, LIVE... (No)\n- So Probe P7, Rev 3, Rack S2. Correct.\n\nLet me double check calibration.\n- Probe P7, Rev 3.\n- Table C:\n    - P7, 1...\n    - P7, 2...\n    - P9, 3...\n    - P7, 3... -> Offset -3, Gain 4.\n    - P7, 4...\n    - P9, 5...\n- So Offset -3, Gain 4. Correct.\n\nLet me double check calculation.\n- Raw = 17.\n- Adjusted = 4 * (17 - 3) = 4 * 14 = 56. Correct.\n\nLet me double check destination.\n- Rack S2.\n- Adjusted 56.\n- Table D:\n    - S2, 0-49 -> BAY-1.\n    - S5, 50-59 -> BAY-9.\n    - S2, 60-99 -> BAY-3.\n    - S2, 50-59 -> BAY-6.\n- 56 falls in 50-59 for Rack S2. So BAY-6. Correct.\n\nFinal JSON structure:\n{\n  \"node\": \"N4\",\n  \"probe\": \"P7\",\n  \"revision\": 3,\n  \"adjusted\": 56,\n  \"destination\": \"BAY-6\"\n}\n"
+            }
+          }
+        ],
+        "created": 1789618299,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 2333,
+          "prompt_tokens": 2109,
+          "total_tokens": 4442,
+          "prompt_tokens_details": {
+            "cached_tokens": 2107
+          }
+        },
+        "id": "chatcmpl-f4Fa1axx3J8VoJbCcoazW5dnvxWdcACU",
+        "timings": {
+          "cache_n": 2107,
+          "prompt_n": 2,
+          "prompt_ms": 25.63,
+          "prompt_per_token_ms": 12.815,
+          "prompt_per_second": 78.03355442840422,
+          "predicted_n": 2333,
+          "predicted_ms": 18597.266,
+          "predicted_per_token_ms": 7.974813893653516,
+          "predicted_per_second": 125.39477576972874
+        }
+      },
+      "elapsed_s": 18.718,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "node": true,
+        "probe": true,
+        "revision": true,
+        "adjusted": true,
+        "destination": true
+      },
+      "parsed": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 4096,
+    "chat_template_kwargs": {
+      "reasoning_effort": "low"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 8,
+  "tiers": {
+    "easy": {
+      "score": 3,
+      "max_score": 4
+    },
+    "medium": {
+      "score": 7,
+      "max_score": 7
+    },
+    "hard": {
+      "score": 14,
+      "max_score": 28
+    }
+  }
+}

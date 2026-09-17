@@ -1,0 +1,690 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "qwen3.5-9b-vl",
+  "endpoint": "http://127.0.0.1:19436/v1/chat/completions",
+  "status": "complete",
+  "score": 7,
+  "max_score": 30,
+  "tasks": [
+    {
+      "id": "extra01_rotated_dimensions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra01_rotated_dimensions.png",
+      "question": "Solve the pictured dimension problem. Return JSON with integer fields du_mm, dv_mm, distance_squared_mm2.",
+      "expected": {
+        "du_mm": 65,
+        "dv_mm": 33,
+        "distance_squared_mm2": 5314
+      },
+      "image_sha256": "54c6a844ac3d5eaeeba76271aec4a763937680a58f49122c6321eabbb394201d",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"du_mm\": 102,\n  \"dv_mm\": 33,\n  \"distance_squared_mm2\": 11234\n}"
+            }
+          }
+        ],
+        "created": 1789618301,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 39,
+          "prompt_tokens": 1542,
+          "total_tokens": 1581,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-caYxK63mn5DDVarVhOkUGnJ5y998Kft2",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1542,
+          "prompt_ms": 634.406,
+          "prompt_per_token_ms": 0.41141763942931253,
+          "prompt_per_second": 2430.6201391537916,
+          "predicted_n": 39,
+          "predicted_ms": 306.551,
+          "predicted_per_token_ms": 8.067131578947368,
+          "predicted_per_second": 123.95979788028745
+        }
+      },
+      "elapsed_s": 1.029,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "du_mm": false,
+        "dv_mm": true,
+        "distance_squared_mm2": false
+      },
+      "parsed": {
+        "du_mm": 102,
+        "dv_mm": 33,
+        "distance_squared_mm2": 11234
+      }
+    },
+    {
+      "id": "extra02_scaled_plate_holes",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra02_scaled_plate_holes.png",
+      "question": "Solve the pictured plate problem. Return JSON with integer fields area_cm2, all_boundary_cm, hole_count.",
+      "expected": {
+        "area_cm2": 328,
+        "all_boundary_cm": 120,
+        "hole_count": 2
+      },
+      "image_sha256": "c6b7c5854f283b47a098ed8ca4a8e89c8fbad6a81281dca2714ff09be76fad7e",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"area_cm2\": 168,\n  \"all_boundary_cm\": 104,\n  \"hole_count\": 2\n}"
+            }
+          }
+        ],
+        "created": 1789618302,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 36,
+          "prompt_tokens": 1542,
+          "total_tokens": 1578,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-BdKu1sz4xDvzB9wW6KeQdws5FS3nKU3f",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1542,
+          "prompt_ms": 642.297,
+          "prompt_per_token_ms": 0.41653501945525295,
+          "prompt_per_second": 2400.7585275970464,
+          "predicted_n": 36,
+          "predicted_ms": 283.006,
+          "predicted_per_token_ms": 8.085885714285714,
+          "predicted_per_second": 123.67228963343534
+        }
+      },
+      "elapsed_s": 0.986,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "area_cm2": false,
+        "all_boundary_cm": false,
+        "hole_count": true
+      },
+      "parsed": {
+        "area_cm2": 168,
+        "all_boundary_cm": 104,
+        "hole_count": 2
+      }
+    },
+    {
+      "id": "extra03_closed_road_route",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra03_closed_road_route.png",
+      "question": "Solve the pictured route problem. Return JSON with route (list of node strings in travel order) and cost (integer).",
+      "expected": {
+        "route": [
+          "A",
+          "E",
+          "F",
+          "B",
+          "C",
+          "G",
+          "H",
+          "L"
+        ],
+        "cost": 23
+      },
+      "image_sha256": "18aeb419ff627bc4c36a28e4e91582f303b17be2128544f7be5955be5ae59f61",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"route\": [\n    \"A\",\n    \"B\",\n    \"C\",\n    \"D\",\n    \"H\",\n    \"L\"\n  ],\n  \"cost\": 17\n}"
+            }
+          }
+        ],
+        "created": 1789618303,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 51,
+          "prompt_tokens": 1544,
+          "total_tokens": 1595,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-17vrJaU9vmncy3ciZU1WyiR0DCDUrSXJ",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1544,
+          "prompt_ms": 643.826,
+          "prompt_per_token_ms": 0.4169857512953368,
+          "prompt_per_second": 2398.163478952388,
+          "predicted_n": 51,
+          "predicted_ms": 399.458,
+          "predicted_per_token_ms": 7.989160000000001,
+          "predicted_per_second": 125.16960481452367
+        }
+      },
+      "elapsed_s": 1.097,
+      "score": 0,
+      "max_score": 2,
+      "checks": {
+        "route": false,
+        "cost": false
+      },
+      "parsed": {
+        "route": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "H",
+          "L"
+        ],
+        "cost": 17
+      }
+    },
+    {
+      "id": "extra04_permuted_stack_legend",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra04_permuted_stack_legend.png",
+      "question": "Solve the pictured inventory problem. Return JSON with highest_usable (string), total_usable (integer), quarantine_total (integer).",
+      "expected": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      },
+      "image_sha256": "09de75460100f292f7f7d71f74ebac90ee11d80e8c8df7a9be025bbee33c8100",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"highest_usable\": \"West\",\n  \"total_usable\": 104,\n  \"quarantine_total\": 41\n}"
+            }
+          }
+        ],
+        "created": 1789618304,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1546,
+          "total_tokens": 1583,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-afo4hontnx6OsgEKnlxU2vqpFMlIO5sk",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1546,
+          "prompt_ms": 626.855,
+          "prompt_per_token_ms": 0.40546895213454076,
+          "prompt_per_second": 2466.2800807204217,
+          "predicted_n": 37,
+          "predicted_ms": 287.346,
+          "predicted_per_token_ms": 7.981833333333333,
+          "predicted_per_second": 125.28450021924787
+        }
+      },
+      "elapsed_s": 0.975,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "highest_usable": true,
+        "total_usable": false,
+        "quarantine_total": false
+      },
+      "parsed": {
+        "highest_usable": "West",
+        "total_usable": 104,
+        "quarantine_total": 41
+      }
+    },
+    {
+      "id": "extra05_formula_cell_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra05_formula_cell_binding.png",
+      "question": "Evaluate the requested pictured cells. Return JSON with integer fields D4, E5, C6.",
+      "expected": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      },
+      "image_sha256": "57edb96596b0e633b32694dd66014012f17f9cac4064c0a95c077949b2ce2294",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"D4\": 34,\n  \"E5\": 102,\n  \"C6\": 10\n}"
+            }
+          }
+        ],
+        "created": 1789618305,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 34,
+          "prompt_tokens": 1539,
+          "total_tokens": 1573,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-fZMQaiOGoLnn6arJz1YhsQJX7G6s5wo7",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1539,
+          "prompt_ms": 627.449,
+          "prompt_per_token_ms": 0.4076991552956465,
+          "prompt_per_second": 2452.788991615255,
+          "predicted_n": 34,
+          "predicted_ms": 261.774,
+          "predicted_per_token_ms": 7.932545454545455,
+          "predicted_per_second": 126.06293978775585
+        }
+      },
+      "elapsed_s": 0.941,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "D4": true,
+        "E5": false,
+        "C6": false
+      },
+      "parsed": {
+        "D4": 34,
+        "E5": 102,
+        "C6": 10
+      }
+    },
+    {
+      "id": "extra06_failed_directed_links",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra06_failed_directed_links.png",
+      "question": "Solve the pictured network problem. Return JSON with reachable (alphabetically sorted list of strings) and min_edges_to_G (integer).",
+      "expected": {
+        "reachable": [
+          "B",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      },
+      "image_sha256": "b44248c32b58e801bab1c2c282e097d1b154b239f607866263a08f3047c816ef",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"reachable\":[\"B\",\"C\",\"D\",\"E\",\"F\",\"G\"],\"min_edges_to_G\":3}"
+            }
+          }
+        ],
+        "created": 1789618306,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 23,
+          "prompt_tokens": 1546,
+          "total_tokens": 1569,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-P58BV2Fm4eRqecNVVaNM3ZSD8m5AjyC1",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1546,
+          "prompt_ms": 631.184,
+          "prompt_per_token_ms": 0.40826908150064684,
+          "prompt_per_second": 2449.3650029151568,
+          "predicted_n": 23,
+          "predicted_ms": 175.055,
+          "predicted_per_token_ms": 7.9570454545454545,
+          "predicted_per_second": 125.67478792379536
+        }
+      },
+      "elapsed_s": 0.866,
+      "score": 1,
+      "max_score": 2,
+      "checks": {
+        "reachable": false,
+        "min_edges_to_G": true
+      },
+      "parsed": {
+        "reachable": [
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      }
+    },
+    {
+      "id": "extra07_clock_edge_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra07_clock_edge_binding.png",
+      "question": "Solve the pictured register timing problem. Return JSON with q_after_edges (bit string), q_rises (integer), final_q (integer).",
+      "expected": {
+        "q_after_edges": "011011",
+        "q_rises": 2,
+        "final_q": 1
+      },
+      "image_sha256": "2e613c6eed63e005901b9331c50ce6e352423387f851f13d386ce7b2962cb00e",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"q_after_edges\": \"010100\",\n  \"q_rises\": 2,\n  \"final_q\": 0\n}"
+            }
+          }
+        ],
+        "created": 1789618307,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1838,
+          "total_tokens": 1875,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-i7v1Q7jEed2V5IY7YGdy0qHpRnxTxuza",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1838,
+          "prompt_ms": 804.102,
+          "prompt_per_token_ms": 0.43748748639825896,
+          "prompt_per_second": 2285.7796647688974,
+          "predicted_n": 37,
+          "predicted_ms": 285.869,
+          "predicted_per_token_ms": 7.940805555555556,
+          "predicted_per_second": 125.93180792600806
+        }
+      },
+      "elapsed_s": 1.147,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "q_after_edges": false,
+        "q_rises": true,
+        "final_q": false
+      },
+      "parsed": {
+        "q_after_edges": "010100",
+        "q_rises": 2,
+        "final_q": 0
+      }
+    },
+    {
+      "id": "extra08_connector_view_reflection",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra08_connector_view_reflection.png",
+      "question": "Solve the pictured connector mapping. Return JSON with TX_wire, RX_wire, GND_wire (strings) and rear_top_left_pin (integer).",
+      "expected": {
+        "TX_wire": "T",
+        "RX_wire": "R",
+        "GND_wire": "V",
+        "rear_top_left_pin": 4
+      },
+      "image_sha256": "b2e2804bb258e7559d17d6a1b1f3fb886bce3c92f9ef4bd0cd67e23d18af7ec9",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"TX_wire\": \"Q\",\n  \"RX_wire\": \"S\",\n  \"GND_wire\": \"U\",\n  \"rear_top_left_pin\": 1\n}"
+            }
+          }
+        ],
+        "created": 1789618308,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 42,
+          "prompt_tokens": 1549,
+          "total_tokens": 1591,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-UHQDx2Nm3Ahh1CQDTjSW8efLOloXk8gb",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1549,
+          "prompt_ms": 617.875,
+          "prompt_per_token_ms": 0.3988863783085862,
+          "prompt_per_second": 2506.979567064536,
+          "predicted_n": 42,
+          "predicted_ms": 323.946,
+          "predicted_per_token_ms": 7.901121951219513,
+          "predicted_per_second": 126.56430392719774
+        }
+      },
+      "elapsed_s": 1.006,
+      "score": 0,
+      "max_score": 4,
+      "checks": {
+        "TX_wire": false,
+        "RX_wire": false,
+        "GND_wire": false,
+        "rear_top_left_pin": false
+      },
+      "parsed": {
+        "TX_wire": "Q",
+        "RX_wire": "S",
+        "GND_wire": "U",
+        "rear_top_left_pin": 1
+      }
+    },
+    {
+      "id": "extra09_footnote_exclusions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra09_footnote_exclusions.png",
+      "question": "Apply the pictured memo. Return JSON with eligible_rows (list of row-ID strings in displayed order), reimbursement_usd (integer), excluded_count (integer).",
+      "expected": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      },
+      "image_sha256": "654aae6e9286ba6a740f21ebe24266b98ee58bb5b83127fe3e1edb84631e728a",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"eligible_rows\": [\n    \"R1\",\n    \"R2\",\n    \"R5\",\n    \"R7\"\n  ],\n  \"reimbursement_usd\": 190,\n  \"excluded_count\": 3\n}"
+            }
+          }
+        ],
+        "created": 1789618309,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 61,
+          "prompt_tokens": 1726,
+          "total_tokens": 1787,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-ZtM99ECrrqcjTWLpfbJlSVShnt93c6vP",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1726,
+          "prompt_ms": 729.189,
+          "prompt_per_token_ms": 0.422473348783314,
+          "prompt_per_second": 2367.013216052354,
+          "predicted_n": 61,
+          "predicted_ms": 477.248,
+          "predicted_per_token_ms": 7.954133333333333,
+          "predicted_per_second": 125.72079924902778
+        }
+      },
+      "elapsed_s": 1.265,
+      "score": 0,
+      "max_score": 3,
+      "checks": {
+        "eligible_rows": false,
+        "reimbursement_usd": false,
+        "excluded_count": false
+      },
+      "parsed": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R5",
+          "R7"
+        ],
+        "reimbursement_usd": 190,
+        "excluded_count": 3
+      }
+    },
+    {
+      "id": "extra10_sequential_token_tracking",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra10_sequential_token_tracking.png",
+      "question": "Solve the pictured tracking problem. Return JSON with string fields P_cell, R_cell, T_cell, token_at_B3.",
+      "expected": {
+        "P_cell": "C3",
+        "R_cell": "D4",
+        "T_cell": "E2",
+        "token_at_B3": "S"
+      },
+      "image_sha256": "6a1673d7929fc139fee11f671396b60679b5e846a969bba274db242e966d2589",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"P_cell\": \"B4\",\n  \"R_cell\": \"C3\",\n  \"T_cell\": \"E2\",\n  \"token_at_B3\": \"Q\"\n}"
+            }
+          }
+        ],
+        "created": 1789618311,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 45,
+          "prompt_tokens": 1985,
+          "total_tokens": 2030,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-F37L3NUiPbE1tifH5Uv5tK3EawGcWixC",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1985,
+          "prompt_ms": 907.535,
+          "prompt_per_token_ms": 0.4571964735516373,
+          "prompt_per_second": 2187.243467194103,
+          "predicted_n": 45,
+          "predicted_ms": 348.416,
+          "predicted_per_token_ms": 7.9185454545454546,
+          "predicted_per_second": 126.28581925055107
+        }
+      },
+      "elapsed_s": 1.32,
+      "score": 1,
+      "max_score": 4,
+      "checks": {
+        "P_cell": false,
+        "R_cell": false,
+        "T_cell": true,
+        "token_at_B3": false
+      },
+      "parsed": {
+        "P_cell": "B4",
+        "R_cell": "C3",
+        "T_cell": "E2",
+        "token_at_B3": "Q"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 1024,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "retry": false
+  },
+  "perfect_tasks": 0,
+  "tiers": {
+    "easy": {
+      "score": 0,
+      "max_score": 0
+    },
+    "medium": {
+      "score": 0,
+      "max_score": 0
+    },
+    "hard": {
+      "score": 7,
+      "max_score": 30
+    }
+  }
+}

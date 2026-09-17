@@ -1,0 +1,592 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "qwen3.5-9b-vl",
+  "endpoint": "http://127.0.0.1:19436/v1/chat/completions",
+  "status": "complete",
+  "score": 12,
+  "max_score": 20,
+  "tasks": [
+    {
+      "id": "easy_ocr",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_ocr.png",
+      "question": "Read the access code. Return JSON with string key code.",
+      "expected": {
+        "code": "R7K2"
+      },
+      "image_sha256": "b6385c9a6883e7ef159c62aceea0258a4168d95ac638b86031efb4225cdfca36",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"code\":\"ACCESS DENIED\"}"
+            }
+          }
+        ],
+        "created": 1789618021,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 8,
+          "prompt_tokens": 295,
+          "total_tokens": 303,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-MZ0OfoHh0hEpIan0zb55wJBqkoFz8y02",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 295,
+          "prompt_ms": 126.272,
+          "prompt_per_token_ms": 0.42804067796610173,
+          "prompt_per_second": 2336.226558540294,
+          "predicted_n": 8,
+          "predicted_ms": 58.111,
+          "predicted_per_token_ms": 8.301571428571428,
+          "predicted_per_second": 120.45912133675208
+        }
+      },
+      "elapsed_s": 0.305,
+      "score": 0,
+      "max_score": 1,
+      "checks": {
+        "code": false
+      },
+      "parsed": {
+        "code": "ACCESS DENIED"
+      }
+    },
+    {
+      "id": "easy_spatial",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_spatial.png",
+      "question": "Name the colors of the leftmost and rightmost objects. Return JSON with lowercase string keys leftmost and rightmost.",
+      "expected": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      },
+      "image_sha256": "3b1ecb235cfe19b682330ae1e834294f4627d2253430a182cfa2256fc3c23610",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n    \"leftmost\": \"blue\",\n    \"rightmost\": \"red\"\n}\n```"
+            }
+          }
+        ],
+        "created": 1789618022,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 27,
+          "prompt_tokens": 372,
+          "total_tokens": 399,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-R9yE6kBhoBVJ5yHxkrZ9pCfeSXqOh0GL",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 372,
+          "prompt_ms": 124.933,
+          "prompt_per_token_ms": 0.3358413978494624,
+          "prompt_per_second": 2977.595991451418,
+          "predicted_n": 27,
+          "predicted_ms": 205.762,
+          "predicted_per_token_ms": 7.913923076923077,
+          "predicted_per_second": 126.3595804861928
+        }
+      },
+      "elapsed_s": 0.361,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "leftmost": true,
+        "rightmost": true
+      },
+      "parsed": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      }
+    },
+    {
+      "id": "easy_count",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_count.png",
+      "question": "Count only the orange circles. Return JSON with integer key count.",
+      "expected": {
+        "count": 6
+      },
+      "image_sha256": "5981f343d63ba352c333f930662d02511fa7f001539b296988153c5befec8d35",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"count\": 7\n}"
+            }
+          }
+        ],
+        "created": 1789618022,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 11,
+          "prompt_tokens": 652,
+          "total_tokens": 663,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-kOSjuiEcPo96Hl8ZvfcmfseBkB6qpsa3",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 652,
+          "prompt_ms": 214.975,
+          "prompt_per_token_ms": 0.32971625766871165,
+          "prompt_per_second": 3032.9108035818117,
+          "predicted_n": 11,
+          "predicted_ms": 81.517,
+          "predicted_per_token_ms": 8.1517,
+          "predicted_per_second": 122.6737981034631
+        }
+      },
+      "elapsed_s": 0.336,
+      "score": 0,
+      "max_score": 1,
+      "checks": {
+        "count": false
+      },
+      "parsed": {
+        "count": 7
+      }
+    },
+    {
+      "id": "medium_chart",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_chart.png",
+      "question": "Read the chart. Return JSON: highest (category string), highest_value (integer), gap (highest minus lowest, integer).",
+      "expected": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      },
+      "image_sha256": "6627e4693052ef656c3cfef85f7d2429117d4b3e8d59dadc0f1cae2cb4f09ad9",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"highest\": \"B\",\n  \"highest_value\": 70,\n  \"gap\": 50\n}"
+            }
+          }
+        ],
+        "created": 1789618023,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 30,
+          "prompt_tokens": 664,
+          "total_tokens": 694,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-eKrnckb9AU0ELVhcUDMR47SqVIPs1iqo",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 664,
+          "prompt_ms": 219.298,
+          "prompt_per_token_ms": 0.3302680722891566,
+          "prompt_per_second": 3027.843391184598,
+          "predicted_n": 30,
+          "predicted_ms": 228.394,
+          "predicted_per_token_ms": 7.8756551724137935,
+          "predicted_per_second": 126.97356322845609
+        }
+      },
+      "elapsed_s": 0.486,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest": true,
+        "highest_value": true,
+        "gap": true
+      },
+      "parsed": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      }
+    },
+    {
+      "id": "medium_table",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_table.png",
+      "question": "Return JSON: restock_ids (IDs with Stock strictly below Minimum, in displayed order), washers_bin (string), bolts_stock (integer).",
+      "expected": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      },
+      "image_sha256": "bd000b604cad6634530fababfcc2eb8db36aea22109d44f86b8215b94e9c8afd",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"restock_ids\": [\n    \"P01\",\n    \"P03\",\n    \"P05\"\n  ],\n  \"washers_bin\": \"C2\",\n  \"bolts_stock\": 42\n}"
+            }
+          }
+        ],
+        "created": 1789618023,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 57,
+          "prompt_tokens": 668,
+          "total_tokens": 725,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-djHpXhu9cYlzoNRqQhEBYPIlP3hpa9L6",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 668,
+          "prompt_ms": 216.705,
+          "prompt_per_token_ms": 0.32440868263473055,
+          "prompt_per_second": 3082.5315521100115,
+          "predicted_n": 57,
+          "predicted_ms": 442.588,
+          "predicted_per_token_ms": 7.903357142857144,
+          "predicted_per_second": 126.5285095845346
+        }
+      },
+      "elapsed_s": 0.703,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "restock_ids": true,
+        "washers_bin": true,
+        "bolts_stock": true
+      },
+      "parsed": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      }
+    },
+    {
+      "id": "medium_flow",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_flow.png",
+      "question": "Follow the displayed input through the diagram. Return JSON with destination equal to the exact output-box text.",
+      "expected": {
+        "destination": "FAN HIGH"
+      },
+      "image_sha256": "c296d2d73b01af18a738d7535d8f9c014c5d461dafbb3a6f35cbdf2080d7b3b7",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"destination\": \"FAN HIGH\"\n}"
+            }
+          }
+        ],
+        "created": 1789618024,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 14,
+          "prompt_tokens": 659,
+          "total_tokens": 673,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-m4HN2fduCotm5bCmOVIsR69o0wxPLLPh",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 659,
+          "prompt_ms": 215.115,
+          "prompt_per_token_ms": 0.32642640364188164,
+          "prompt_per_second": 3063.4776747321202,
+          "predicted_n": 14,
+          "predicted_ms": 104.095,
+          "predicted_per_token_ms": 8.007307692307693,
+          "predicted_per_second": 124.88592151400164
+        }
+      },
+      "elapsed_s": 0.358,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "destination": true
+      },
+      "parsed": {
+        "destination": "FAN HIGH"
+      }
+    },
+    {
+      "id": "hard_ledger",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_ledger.png",
+      "question": "Using only RELEASE rows, sum Units minus Rejected. Also identify all batches (including HOLD) tied for most rejected units, in displayed order, and read Units for L14. Return JSON: released_net_units (integer), most_rejected_batches (list of strings), l14_units (integer).",
+      "expected": {
+        "released_net_units": 836,
+        "most_rejected_batches": [
+          "L05",
+          "L10",
+          "L15"
+        ],
+        "l14_units": 79
+      },
+      "image_sha256": "cfad9c2b72bba3fafb706dbadde0b4628017bb3bfa6b7543eaf514c1ea36948a",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\n  \"released_net_units\": 576,\n  \"most_rejected_batches\": [\n    \"L05\",\n    \"L13\",\n    \"L17\"\n  ],\n  \"l14_units\": 79\n}"
+            }
+          }
+        ],
+        "created": 1789618025,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 60,
+          "prompt_tokens": 1139,
+          "total_tokens": 1199,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-D4g0gko5EV3vn7B6twv22mL3C54UtOae",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 1139,
+          "prompt_ms": 401.803,
+          "prompt_per_token_ms": 0.3527682177348551,
+          "prompt_per_second": 2834.722488383611,
+          "predicted_n": 60,
+          "predicted_ms": 468.652,
+          "predicted_per_token_ms": 7.943254237288135,
+          "predicted_per_second": 125.89298669375144
+        }
+      },
+      "elapsed_s": 0.916,
+      "score": 1,
+      "max_score": 3,
+      "checks": {
+        "released_net_units": false,
+        "most_rejected_batches": false,
+        "l14_units": true
+      },
+      "parsed": {
+        "released_net_units": 576,
+        "most_rejected_batches": [
+          "L05",
+          "L13",
+          "L17"
+        ],
+        "l14_units": 79
+      }
+    },
+    {
+      "id": "hard_connections",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_connections.png",
+      "question": "Trace each left input through its middle terminal to the numbered right output. Crossings are not junctions. Return JSON with integer keys A, B, C, D (key names are strings; values are integers).",
+      "expected": {
+        "A": 1,
+        "B": 4,
+        "C": 3,
+        "D": 2
+      },
+      "image_sha256": "5e7e3f86e3b30c6315ee8df5021dadf459b746d80374e55f0be344f52ce50eb6",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"A\":4,\"B\":2,\"C\":3,\"D\":1}"
+            }
+          }
+        ],
+        "created": 1789618025,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 18,
+          "prompt_tokens": 810,
+          "total_tokens": 828,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-42g0xgqMiI6egYNX992KoATPHsT49Lq2",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 810,
+          "prompt_ms": 265.24,
+          "prompt_per_token_ms": 0.3274567901234568,
+          "prompt_per_second": 3053.838033479113,
+          "predicted_n": 18,
+          "predicted_ms": 135.91,
+          "predicted_per_token_ms": 7.994705882352941,
+          "predicted_per_second": 125.08277536605107
+        }
+      },
+      "elapsed_s": 0.445,
+      "score": 1,
+      "max_score": 4,
+      "checks": {
+        "A": false,
+        "B": false,
+        "C": true,
+        "D": false
+      },
+      "parsed": {
+        "A": 4,
+        "B": 2,
+        "C": 3,
+        "D": 1
+      }
+    },
+    {
+      "id": "hard_schedule",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_schedule.png",
+      "question": "Which two jobs overlap? Give their names in row order. What is the earliest start time at or after 09:00 for a new uninterrupted 45-minute job, using 15-minute start increments? Return JSON: overlapping_jobs (two strings), earliest_start (HH:MM).",
+      "expected": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "12:00"
+      },
+      "image_sha256": "d90f53e0fd30e16e2b344ea03308d85c5829d5f5f370fd7cc942a2800a4b3f2c",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"overlapping_jobs\":[\"BUILD\",\"SYNC\"],\"earliest_start\":\"10:00\"}"
+            }
+          }
+        ],
+        "created": 1789618026,
+        "model": "qwen3.5-9b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 20,
+          "prompt_tokens": 764,
+          "total_tokens": 784,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "id": "chatcmpl-PnpsoLZkBDIhgjSpdpD2jd0Po2yznYV2",
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 764,
+          "prompt_ms": 245.372,
+          "prompt_per_token_ms": 0.32116753926701574,
+          "prompt_per_second": 3113.6396980910617,
+          "predicted_n": 20,
+          "predicted_ms": 151.597,
+          "predicted_per_token_ms": 7.978789473684211,
+          "predicted_per_second": 125.33229549397414
+        }
+      },
+      "elapsed_s": 0.444,
+      "score": 1,
+      "max_score": 2,
+      "checks": {
+        "overlapping_jobs": true,
+        "earliest_start": false
+      },
+      "parsed": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "10:00"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 1024,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "retry": false
+  },
+  "perfect_tasks": 4,
+  "tiers": {
+    "easy": {
+      "score": 2,
+      "max_score": 4
+    },
+    "medium": {
+      "score": 7,
+      "max_score": 7
+    },
+    "hard": {
+      "score": 3,
+      "max_score": 9
+    }
+  }
+}

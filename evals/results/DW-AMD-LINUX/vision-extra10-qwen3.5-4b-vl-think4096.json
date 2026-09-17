@@ -1,0 +1,669 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "qwen3.5-4b-vl",
+  "endpoint": "http://127.0.0.1:19437/v1/chat/completions",
+  "status": "complete",
+  "score": 13,
+  "max_score": 30,
+  "tasks": [
+    {
+      "id": "extra01_rotated_dimensions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra01_rotated_dimensions.png",
+      "question": "Solve the pictured dimension problem. Return JSON with integer fields du_mm, dv_mm, distance_squared_mm2.",
+      "expected": {
+        "du_mm": 65,
+        "dv_mm": 33,
+        "distance_squared_mm2": 5314
+      },
+      "image_sha256": "54c6a844ac3d5eaeeba76271aec4a763937680a58f49122c6321eabbb394201d",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to solve a geometry problem based on an image.\n\n**1. Analyze the input image:**\n*   **Title:** \"01 / ROTATED MACHINED PLATE\"\n*   **Text:** \"All dimensions are in mm, measured along the local u and v axes.\"\n*   **Visuals:**\n    *   A rectangular plate is shown.\n    *   There are two axes labeled $+u$ and $+v$. The $+u$ axis is parallel to the long side of the rectangle. The $+v$ axis is parallel to the short side.\n    *   There are two points labeled A and B, which appear to be centers of holes.\n    *   **Dimensions:**\n        *   The length of the plate along the $u$-direction is $120$.\n        *   The width of the plate along the $v$-direction is $70$.\n        *   Point A is located relative to the bottom-left corner.\n            *   Distance from the bottom edge (along $u$) is $18$. Wait, let's look closer. The dimension lines are a bit tricky.\n            *   Let's establish a coordinate system. Let the bottom-left corner of the rectangle be the origin $(0,0)$ in the local $u,v$ system.\n            *   The $+u$ axis points to the right. The $+v$ axis points upwards.\n            *   The rectangle has length $120$ along $u$ and width $70$ along $v$. So the corners are at $(0,0)$, $(120,0)$, $(120,70)$, and $(0,70)$.\n            *   Let's re-examine the position of A.\n                *   There is a dimension $18$ indicating the distance from the bottom edge to the center of hole A. So, $u_A = 18$.\n                *   There is a dimension $16$ indicating the distance from the left edge to the center of hole A. So, $v_A = 16$.\n                *   Wait, let's look at the arrows.\n                *   The dimension $18$ is between the bottom edge and the horizontal line through A. So $u_A = 18$.\n                *   The dimension $16$ is between the left edge and the vertical line through A. So $v_A = 16$.\n                *   So, coordinates of A are $(u_A, v_A) = (18, 16)$.\n\n            *   Now let's look at point B.\n                *   There is a dimension $37$ indicating the distance from the top edge to the horizontal line through B. Wait, let's look at the arrows.\n                *   The dimension $37$ is between the top edge and the horizontal line through B. So the distance from the bottom edge would be $70 - 37$. Let's verify.\n                *   The dimension $21$ is between the right edge and the vertical line through B. So the distance from the left edge would be $120 - 21$.\n                *   Let's re-read the diagram carefully.\n                *   The dimension $37$ is at the top. It shows the distance from the top edge to the horizontal line passing through B. So $v_B$ (distance from bottom) = $70 - 37 = 33$.\n                *   The dimension $21$ is at the right. It shows the distance from the right edge to the vertical line passing through B. So $u_B$ (distance from left) = $120 - 21 = 99$.\n                *   Let's check the position of B relative to A.\n                *   $u_B - u_A = 99 - 18 = 81$.\n                *   $v_B - v_A = 33 - 16 = 17$.\n                *   Let's look at the diagram again. Maybe I misinterpreted the dimensions.\n                *   Let's look at the dimension lines for B again.\n                *   The dimension $37$ is between the top edge and the horizontal line through B. Yes.\n                *   The dimension $21$ is between the right edge and the vertical line through B. Yes.\n                *   Wait, let's look at the dimension lines for A again.\n                *   The dimension $18$ is between the bottom edge and the horizontal line through A. Yes.\n                *   The dimension $16$ is between the left edge and the vertical line through A. Yes.\n\n                *   Let's re-evaluate the coordinates.\n                *   Origin at bottom-left corner $(0,0)$.\n                *   Point A: $u_A = 18$, $v_A = 16$.\n                *   Point B:\n                    *   Horizontal position ($u$): The dimension $21$ is from the right edge. So $u_B = 120 - 21 = 99$.\n                    *   Vertical position ($v$): The dimension $37$ is from the top edge. So $v_B = 70 - 37 = 33$.\n\n                *   Let's check the text \"Find the positive u and v center offsets from A to B.\"\n                *   This implies we need $\\Delta u = u_B - u_A$ and $\\Delta v = v_B - v_A$.\n                *   $\\Delta u = 99 - 18 = 81$.\n                *   $\\Delta v = 33 - 16 = 17$.\n                *   Wait, let's look at the diagram one more time. Is it possible that the dimensions for B are measured from the \"near\" edges?\n                *   Let's look at the dimension lines.\n                *   For B: The dimension $37$ is clearly from the top edge. The dimension $21$ is clearly from the right edge.\n                *   For A: The dimension $18$ is from the bottom edge. The dimension $16$ is from the left edge.\n                *   So my coordinate calculation seems correct.\n                *   Let's re-read the diagram. Maybe the dimension $37$ is from the left edge? No, the arrows point to the top edge and the horizontal line through B.\n                *   Maybe the dimension $21$ is from the left edge? No, the arrows point to the right edge and the vertical line through B.\n                *   Let's look at the dimension $120$. It's the total length.\n                *   Let's look at the dimension $70$. It's the total width.\n\n                *   Let's try a different interpretation. Maybe the dimensions are just offsets.\n                *   Let's look at the dimension lines for B again.\n                *   The dimension $37$ is between the top edge and the horizontal line through B.\n                *   The dimension $21$ is between the right edge and the vertical line through B.\n                *   So $u_B = 120 - 21 = 99$.\n                *   $v_B = 70 - 37 = 33$.\n                *   This seems consistent.\n\n                *   Let's look at the dimension lines for A again.\n                *   The dimension $18$ is between the bottom edge and the horizontal line through A.\n                *   The dimension $16$ is between the left edge and the vertical line through A.\n                *   So $u_A = 18$.\n                *   $v_A = 16$.\n\n                *   So the vector from A to B is $(u_B - u_A, v_B - v_A) = (99 - 18, 33 - 16) = (81, 17)$.\n                *   Wait, let's look at the diagram really closely.\n                *   The dimension $37$ is at the top. It spans from the top edge to the horizontal line through B.\n                *   The dimension $21$ is at the right. It spans from the right edge to the vertical line through B.\n                *   The dimension $120$ is the total length.\n                *   The dimension $70$ is the total width.\n                *   The dimension $18$ is at the bottom. It spans from the bottom edge to the horizontal line through A.\n                *   The dimension $16$ is at the left. It spans from the left edge to the vertical line through A.\n\n                *   Is it possible that the dimension $37$ is measured from the *left* edge? No, the extension lines come from the top edge.\n                *   Is it possible that the dimension $21$ is measured from the *left* edge? No, the extension lines come from the right edge.\n                *   Is it possible that the dimension $18$ is measured from the *right* edge? No, extension lines from bottom edge.\n                *   Is it possible that the dimension $16$ is measured from the *right* edge? No, extension lines from left edge.\n\n                *   Let's reconsider the coordinates.\n                *   Maybe the origin is top-left?\n                *   If origin is top-left $(0,0)$:\n                    *   $u$ goes right, $v$ goes down.\n                    *   Point B: $u_B = 37$, $v_B = 21$.\n                    *   Point A:\n                        *   Distance from bottom is $18$. So distance from top is $70 - 18 = 52$. So $v_A = 52$.\n                        *   Distance from left is $16$. So $u_A = 16$.\n                    *   Vector A to B:\n                        *   $\\Delta u = u_B - u_A = 37 - 16 = 21$.\n                        *   $\\Delta v = v_B - v_A = 21 - 52 = -31$.\n                    *   This gives negative $v$ offset. The problem asks for \"positive u and v center offsets\". This suggests the direction is from A to B.\n                    *   Let's check the direction. A is bottom-left-ish. B is top-right-ish.\n                    *   So $u$ should increase (positive) and $v$ should increase (positive).\n                    *   So my first coordinate system (origin bottom-left) is better.\n                    *   Let's re-verify the \"positive u and v center offsets from A to B\" part.\n                    *   This means we want $\\Delta u = u_B - u_A$ and $\\Delta v = v_B - v_A$.\n                    *   If both are positive, then B is to the right and \"above\" A in the local coordinate system.\n                    *   Looking at the image, B is indeed to the right and \"above\" (in the $+v$ direction) A.\n                    *   So my calculation:\n                        *   $u_A = 18$\n                        *   $v_A = 16$\n                        *   $u_B = 120 - 21 = 99$\n                        *   $v_B = 70 - 37 = 33$\n                        *   $\\Delta u = 99 - 18 = 81$\n                        *   $\\Delta v = 33 - 16 = 17$\n                    *   Wait, let's look at the dimension $37$ again.\n                    *   The dimension line for $37$ is parallel to the $u$ axis. It is located near the top edge.\n                    *   The arrows point to the top edge and the horizontal line through B.\n                    *   So the distance from the top edge to B is $37$.\n                    *   Therefore, the distance from the bottom edge to B is $70 - 37 = 33$.\n                    *   So $v_B = 33$.\n                    *   The dimension $21$ is parallel to the $v$ axis. It is located near the right edge.\n                    *   The arrows point to the right edge and the vertical line through B.\n                    *   So the distance from the right edge to B is $21$.\n                    *   Therefore, the distance from the left edge to B is $120 - 21 = 99$.\n                    *   So $u_B = 99$.\n\n                    *   Now let's look at A again.\n                    *   The dimension $18$ is parallel to the $u$ axis. Located near the bottom edge.\n                    *   Arrows point to bottom edge and horizontal line through A.\n                    *   So distance from bottom edge to A is $18$.\n                    *   So $v_A = 18$? No, wait.\n                    *   Let's look at the arrows for $18$.\n                    *   One arrow points to the bottom edge. The other points to the horizontal line through A.\n                    *   So $v_A = 18$? No, the dimension line is horizontal. So it measures distance along the $u$ axis? No.\n                    *   Let's look at the extension lines.\n                    *   The dimension $18$ is horizontal. The extension lines are vertical.\n                    *   One extension line comes from the bottom edge. The other comes from the horizontal line through A.\n                    *   So this measures the vertical distance ($v$-direction).\n                    *   Wait, the dimension line is parallel to the $u$ axis. So it measures distance along the $u$ axis? No, that would be a horizontal dimension.\n                    *   Let's look at the arrows.\n                    *   The dimension $18$ has arrows pointing left and right. So it's a horizontal dimension.\n                    *   The extension lines are vertical.\n                    *   One extension line is from the bottom edge. The other is from the horizontal line through A.\n                    *   This measures the distance from the bottom edge to the center of A. This is a $v$-coordinate.\n                    *   So $v_A = 18$.\n                    *   Wait, let's look at the dimension $16$.\n                    *   The dimension $16$ has arrows pointing up and down. So it's a vertical dimension.\n                    *   The extension lines are horizontal.\n                    *   One extension line is from the left edge. The other is from the vertical line through A.\n                    *   This measures the distance from the left edge to the center of A. This is a $u$-coordinate.\n                    *   So $u_A = 16$.\n\n                    *   Let's re-examine the whole diagram. It's easy to mix up which dimension is which.\n                    *   Let's look at the dimension lines carefully.\n                    *   **Dimension 120:** Long horizontal dimension. Measures total length along $u$.\n                    *   **Dimension 70:** Long vertical dimension. Measures total width along $v$.\n                    *   **Dimension 18:** Short horizontal dimension near the bottom.\n                        *   Extension lines: One from the bottom edge, one from the horizontal line through A.\n                        *   This measures the distance from the bottom edge to A. This is a $v$-coordinate.\n                        *   So $v_A = 18$.\n                    *   **Dimension 16:** Short vertical dimension near the left.\n                        *   Extension lines: One from the left edge, one from the vertical line through A.\n                        *   This measures the distance from the left edge to A. This is a $u$-coordinate.\n                        *   So $u_A = 16$.\n                    *   **Dimension 37:** Short horizontal dimension near the top.\n                        *   Extension lines: One from the top edge, one from the horizontal line through B.\n                        *   This measures the distance from the top edge to B. This is a $v$-coordinate.\n                        *   So distance from bottom to B is $70 - 37 = 33$. So $v_B = 33$.\n                    *   **Dimension 21:** Short vertical dimension near the right.\n                        *   Extension lines: One from the right edge, one from the vertical line through B.\n                        *   This measures the distance from the right edge to B. This is a $u$-coordinate.\n                        *   So distance from left to B is $120 - 21 = 99$. So $u_B = 99$.\n\n                    *   Let's check the coordinates again.\n                    *   $u_A = 16$\n                    *   $v_A = 18$\n                    *   $u_B = 99$\n                    *   $v_B = 33$\n\n                    *   Let's check the vector A -> B.\n                    *   $\\Delta u = u_B - u_A = 99 - 16 = 83$.\n                    *   $\\Delta v = v_B - v_A = 33 - 18 = 15$.\n\n                    *   Wait, let's look at the dimension $18$ again.\n                    *   The arrows are pointing left and right. The dimension line is horizontal.\n                    *   The extension lines are vertical.\n                    *   One extension line is from the bottom edge. The other is from the horizontal line through A.\n                    *   This measures the vertical distance. So it's a $v$-dimension.\n                    *   So $v_A = 18$.\n                    *   Wait, look at the arrows for $18$.\n                    *   The arrows are pointing *inwards* towards the dimension line.\n                    *   The dimension line is horizontal.\n                    *   The extension lines are vertical.\n                    *   So it measures the distance between the bottom edge and the horizontal line through A.\n                    *   Yes, that's a vertical distance. So $v_A = 18$.\n\n                    *   Now look at dimension $16$.\n                    *   The arrows are pointing *inwards* towards the dimension line.\n                    *   The dimension line is vertical.\n                    *   The extension lines are horizontal.\n                    *   One extension line is from the left edge. The other is from the vertical line through A.\n                    *   This measures the horizontal distance. So it's a $u$-dimension."
+            }
+          }
+        ],
+        "created": 1789619018,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1540,
+          "total_tokens": 5636,
+          "prompt_tokens_details": {
+            "cached_tokens": 1538
+          }
+        },
+        "id": "chatcmpl-2RQ9lmgGizbMFCHhjHpLvGGr2RklPcxR",
+        "timings": {
+          "cache_n": 1538,
+          "prompt_n": 2,
+          "prompt_ms": 25.831,
+          "prompt_per_token_ms": 12.9155,
+          "prompt_per_second": 77.4263481862878,
+          "predicted_n": 4096,
+          "predicted_ms": 28832.467,
+          "predicted_per_token_ms": 7.040895482295483,
+          "predicted_per_second": 142.02738877668705
+        }
+      },
+      "elapsed_s": 28.937,
+      "score": 0,
+      "max_score": 3,
+      "checks": {
+        "du_mm": false,
+        "dv_mm": false,
+        "distance_squared_mm2": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "extra02_scaled_plate_holes",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra02_scaled_plate_holes.png",
+      "question": "Solve the pictured plate problem. Return JSON with integer fields area_cm2, all_boundary_cm, hole_count.",
+      "expected": {
+        "area_cm2": 328,
+        "all_boundary_cm": 120,
+        "hole_count": 2
+      },
+      "image_sha256": "c6b7c5854f283b47a098ed8ca4a8e89c8fbad6a81281dca2714ff09be76fad7e",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"area_cm2\": 368,\n  \"all_boundary_cm\": 120,\n  \"hole_count\": 2\n}\n```",
+              "reasoning_content": "The user wants me to solve a geometry problem based on an image.\n\n**1. Understand the Goal:**\nThe user wants me to calculate three values for the \"plate\" shown in the image:\n*   `area_cm2`: The total area of the material in square centimeters.\n*   `all_boundary_cm`: The total length of the boundary of the plate, including the outer perimeter and the inner holes.\n*   `hole_count`: The number of holes (white interior rectangles).\n\n**2. Analyze the Image and Problem Statement:**\n*   **Grid:** The grid is a square grid.\n*   **Scale:** Each grid square is 2 cm by 2 cm.\n*   **Boundaries:** Heavy lines are physical boundaries.\n*   **Holes:** The white interior rectangles are \"through-holes\".\n*   **Exterior:** The upper-right notch is exterior (meaning it's not part of the plate).\n*   **Task:** Find material area and total boundary length. Count enclosed holes too.\n\n**3. Step-by-Step Calculation:**\n\n**Step 3a: Determine the grid dimensions of the plate.**\n*   **X-axis (horizontal):** The plate spans from x=0 to x=12.\n    *   Total width in grid units = 12 - 0 = 12 units.\n*   **Y-axis (vertical):** The plate spans from y=0 to y=9.\n    *   Total height in grid units = 9 - 0 = 9 units.\n*   **Wait, let's look closer at the shape.**\n    *   The main block is a rectangle from (0,0) to (12,9).\n    *   There is a \"notch\" or missing part in the top right.\n    *   The notch starts at x=8 and goes to x=12.\n    *   The notch goes from y=5 to y=9.\n    *   So, the plate occupies the rectangle [0, 12] x [0, 9] MINUS the rectangle [8, 12] x [5, 9].\n    *   Let's verify the bottom right part. The bottom right corner is at (12, 0). The top right corner of the main block is at (8, 9). Then it steps down to (8, 5) and goes right to (12, 5). Then down to (12, 0).\n    *   So the outer boundary is:\n        *   Bottom: x=0 to x=12 (y=0)\n        *   Right: x=12, y=0 to y=5\n        *   Top (lower part): x=8 to x=12 (y=5)\n        *   Inner vertical edge: x=8, y=5 to y=9\n        *   Top (upper part): x=0 to x=8 (y=9)\n        *   Left: x=0, y=0 to y=9\n\n**Step 3b: Calculate the Area in grid units.**\n*   **Total bounding box area:** 12 units (width) * 9 units (height) = 108 square units.\n*   **Subtract the missing top-right corner:**\n    *   The missing part is a rectangle from x=8 to x=12 (width 4) and y=5 to y=9 (height 4).\n    *   Area of missing part = 4 * 4 = 16 square units.\n*   **Net Area in grid units:** 108 - 16 = 92 square units.\n*   **Wait, let me re-examine the shape.**\n    *   Let's count the squares directly to be sure.\n    *   **Bottom section (y=0 to y=5):** Width is 12. Height is 5. Area = 12 * 5 = 60 squares.\n    *   **Top section (y=5 to y=9):** Width is 8 (from x=0 to x=8). Height is 4. Area = 8 * 4 = 32 squares.\n    *   **Total Area in grid units:** 60 + 32 = 92 squares. This matches my previous calculation.\n\n*   **Convert to cm\u00b2:**\n    *   Each grid square is 2 cm x 2 cm = 4 cm\u00b2.\n    *   Total Area = 92 squares * 4 cm\u00b2/square = 368 cm\u00b2.\n\n**Step 3c: Calculate the Boundary Length in grid units.**\n*   **Outer Boundary:**\n    *   Bottom edge: x=0 to x=12 -> length 12.\n    *   Right edge (lower): x=12, y=0 to y=5 -> length 5.\n    *   Top edge (lower): x=8 to x=12 -> length 4.\n    *   Inner vertical edge: x=8, y=5 to y=9 -> length 4.\n    *   Top edge (upper): x=0 to x=8 -> length 8.\n    *   Left edge: x=0, y=0 to y=9 -> length 9.\n    *   Total Outer Perimeter = 12 + 5 + 4 + 4 + 8 + 9 = 42 units.\n    *   Alternatively, for a rectilinear polygon, perimeter = 2 * (max_width + max_height) if it's a simple bounding box, but here we have a notch.\n    *   Let's trace it:\n        *   (0,0) -> (12,0): 12\n        *   (12,0) -> (12,5): 5\n        *   (12,5) -> (8,5): 4\n        *   (8,5) -> (8,9): 4\n        *   (8,9) -> (0,9): 8\n        *   (0,9) -> (0,0): 9\n        *   Sum: 12 + 5 + 4 + 4 + 8 + 9 = 42. Correct.\n\n*   **Inner Holes (Boundaries):**\n    *   **Hole 1 (Bottom Left):**\n        *   It's a square from x=2 to x=4 and y=2 to y=4.\n        *   Width = 4 - 2 = 2 units.\n        *   Height = 4 - 2 = 2 units.\n        *   Perimeter = 2 * (2 + 2) = 8 units.\n    *   **Hole 2 (Top Middle):**\n        *   It's a rectangle from x=5 to x=7 and y=5 to y=8.\n        *   Width = 7 - 5 = 2 units.\n        *   Height = 8 - 5 = 3 units.\n        *   Perimeter = 2 * (2 + 3) = 10 units.\n\n*   **Total Boundary Length in grid units:**\n    *   Outer Perimeter + Hole 1 Perimeter + Hole 2 Perimeter\n    *   Total = 42 + 8 + 10 = 60 units.\n\n*   **Convert to cm:**\n    *   Each grid unit is 2 cm.\n    *   Total Boundary Length = 60 units * 2 cm/unit = 120 cm.\n\n**Step 3d: Count Holes.**\n*   There are two white rectangles labeled \"VOID\".\n*   So, `hole_count` = 2.\n\n**4. Final Verification:**\n*   **Area:**\n    *   Main block: (12 * 9) - (4 * 4) = 108 - 16 = 92 grid squares.\n    *   Wait, let's re-read the shape.\n    *   The shape is defined by the heavy lines.\n    *   Left edge: x=0, y=0 to 9.\n    *   Top edge: y=9, x=0 to 8.\n    *   Inner vertical: x=8, y=5 to 9.\n    *   Top horizontal (lower): y=5, x=8 to 12.\n    *   Right vertical (lower): x=12, y=0 to 5.\n    *   Bottom horizontal: y=0, x=0 to 12.\n    *   This confirms the shape is a 12x9 rectangle with a 4x4 corner removed at top right.\n    *   Area in grid units = (12*9) - (4*4) = 108 - 16 = 92.\n    *   Area in cm\u00b2 = 92 * (2*2) = 92 * 4 = 368.\n*   **Boundary:**\n    *   Outer perimeter:\n        *   Bottom: 12\n        *   Right (lower): 5\n        *   Top (lower): 4\n        *   Inner vertical: 4\n        *   Top (upper): 8\n        *   Left: 9\n        *   Sum: 12+5+4+4+8+9 = 42.\n    *   Hole 1 (bottom left): Square 2x2. Perimeter = 2+2+2+2 = 8.\n    *   Hole 2 (top middle): Rectangle 2x3 (width 2, height 3). Perimeter = 2+3+2+3 = 10.\n    *   Total grid units: 42 + 8 + 10 = 60.\n    *   Total cm: 60 * 2 = 120.\n*   **Hole Count:** 2.\n\n**5. Construct JSON:**\n```json\n{\n  \"area_cm2\": 368,\n  \"all_boundary_cm\": 120,\n  \"hole_count\": 2\n}\n```\nDouble check the hole dimensions.\n- Hole 1: x from 2 to 4 (width 2), y from 2 to 4 (height 2). It's a 2x2 square. Perimeter = 8. Correct.\n- Hole 2: x from 5 to 7 (width 2), y from 5 to 8 (height 3). It's a 2x3 rectangle. Perimeter = 2*(2+3) = 10. Correct.\n\nDouble check the outer boundary.\n- The shape is the teal area.\n- Top edge goes from x=0 to x=8 at y=9. Length = 8.\n- Then down from x=8 to y=5. Length = 4.\n- Then right from x=8 to x=12 at y=5. Length = 4.\n- Then down from x=12 to y=0. Length = 5.\n- Then left from x=12 to x=0 at y=0. Length = 12.\n- Then up from x=0 to y=9. Length = 9.\n- Sum: 8 + 4 + 4 + 5 + 12 + 9 = 42. Correct.\n\nTotal boundary = 42 (outer) + 8 (hole 1) + 10 (hole 2) = 60 grid units.\n60 grid units * 2 cm/unit = 120 cm.\n\nArea:\n- Total bounding box: 12 * 9 = 108.\n- Missing corner: (12-8) * (9-5) = 4 * 4 = 16.\n- Net area: 108 - 16 = 92 grid units.\n- 92 grid units * (2cm * 2cm) = 92 * 4 = 368 cm\u00b2.\n\nHole count: 2.\n\nEverything seems consistent.\n\nOne small check on \"Grid numbers count squares, not centimeters.\"\n- Yes, x=0 to x=12 is 12 squares.\n- y=0 to y=9 is 9 squares.\n- So my unit calculations are correct.\n\nFinal check of the question: \"Return JSON with integer fields area_cm2, all_boundary_cm, hole_count. Return only the JSON object, no explanation.\"\n\nThe JSON structure:\n{\n  \"area_cm2\": 368,\n  \"all_boundary_cm\": 120,\n  \"hole_count\": 2\n}\n"
+            }
+          }
+        ],
+        "created": 1789619038,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 2878,
+          "prompt_tokens": 1540,
+          "total_tokens": 4418,
+          "prompt_tokens_details": {
+            "cached_tokens": 1538
+          }
+        },
+        "id": "chatcmpl-ummK5gTORDfRb1yMOcyRZgVur5kQqRAQ",
+        "timings": {
+          "cache_n": 1538,
+          "prompt_n": 2,
+          "prompt_ms": 28.451,
+          "prompt_per_token_ms": 14.2255,
+          "prompt_per_second": 70.29629889986292,
+          "predicted_n": 2878,
+          "predicted_ms": 20152.84,
+          "predicted_per_token_ms": 7.004810566562392,
+          "predicted_per_second": 142.75903545108284
+        }
+      },
+      "elapsed_s": 20.28,
+      "score": 2,
+      "max_score": 3,
+      "checks": {
+        "area_cm2": false,
+        "all_boundary_cm": true,
+        "hole_count": true
+      },
+      "parsed": {
+        "area_cm2": 368,
+        "all_boundary_cm": 120,
+        "hole_count": 2
+      }
+    },
+    {
+      "id": "extra03_closed_road_route",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra03_closed_road_route.png",
+      "question": "Solve the pictured route problem. Return JSON with route (list of node strings in travel order) and cost (integer).",
+      "expected": {
+        "route": [
+          "A",
+          "E",
+          "F",
+          "B",
+          "C",
+          "G",
+          "H",
+          "L"
+        ],
+        "cost": 23
+      },
+      "image_sha256": "18aeb419ff627bc4c36a28e4e91582f303b17be2128544f7be5955be5ae59f61",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to solve a shortest path problem on a graph.\n\n**1. Understand the Goal:**\n- Find the minimum-cost route from node **A** to node **L**.\n- The route must visit node **F**.\n- I cannot repeat nodes.\n- Roads are two-way.\n- Numbers represent costs.\n- A red 'X' means the road is closed (cannot be used).\n\n**2. Analyze the Graph:**\nLet's list the edges and their weights based on the image.\n- A-B: 4\n- A-E: 3\n- B-C: 6\n- B-F: 4\n- C-D: 2\n- C-G: 2\n- D-H: 7\n- E-F: 2\n- E-I: 6\n- F-G: Closed (Red X)\n- F-J: 2\n- G-H: 3\n- G-K: 5\n- H-L: 3\n- I-J: 3\n- J-K: Closed (Red X)\n- K-L: 2\n\n**3. Constraints:**\n- Start: A\n- End: L\n- Must visit: F\n- No repeated nodes.\n\n**4. Strategy:**\nSince the graph is small, I can try to find paths from A to F and from F to L, then combine them. Or I can use Dijkstra's algorithm with a state (current_node, visited_set) but that's overkill for this size. Let's just trace paths.\n\n**Path 1: A -> F**\nPossible paths from A to F:\n- A -> B -> F (Cost: 4 + 4 = 8)\n- A -> E -> F (Cost: 3 + 2 = 5)\n- A -> E -> I -> J -> F (Cost: 3 + 6 + 3 + 2 = 14) - Too long.\n- A -> B -> C -> G -> F (Closed) - No.\n- A -> B -> C -> G -> K -> J -> F (Closed J-K) - No.\n\nSo, the best path to F is likely **A -> E -> F** with cost 5.\nWait, let's check A -> B -> F. Cost 8.\nLet's check A -> E -> I -> J -> F. Cost 3+6+3+2 = 14.\nSo, A->E->F is the cheapest way to get to F. Cost = 5.\nNodes visited so far: {A, E, F}.\n\n**Path 2: F -> L**\nNow I need to go from F to L without revisiting A or E.\nFrom F, neighbors are B, E (visited), G (closed), J.\nSo I must go through J or B.\n\n*Option 2a: Go through J*\nPath: F -> J -> ...\nFrom J, neighbors are I, K (closed), F (visited).\nSo must go to I.\nPath: F -> J -> I.\nFrom I, neighbors are E (visited), J (visited). Dead end.\nWait, let's re-check connections.\nI is connected to E and J.\nJ is connected to I, F, K (closed).\nSo if I go F -> J -> I, I'm stuck because E is already visited.\nSo path F -> J is a dead end unless I haven't visited E yet. But I came from A->E->F, so E is visited.\nTherefore, I cannot go F -> J.\n\n*Option 2b: Go through B*\nPath: F -> B -> ...\nFrom B, neighbors are A (visited), C, F (visited).\nSo must go to C.\nPath: F -> B -> C.\nFrom C, neighbors are B (visited), D, G.\nLet's explore branches from C.\n\n*Branch 2b-i: C -> D -> H -> L*\nPath: F -> B -> C -> D -> H -> L\nCosts:\nF->B: 4\nB->C: 6\nC->D: 2\nD->H: 7\nH->L: 3\nTotal cost for this segment: 4 + 6 + 2 + 7 + 3 = 22.\nTotal route cost: (A->E->F cost 5) + 22 = 27.\nNodes: A, E, F, B, C, D, H, L.\nCheck for repeats: A, E, F, B, C, D, H, L. All unique. Valid.\n\n*Branch 2b-ii: C -> G -> H -> L*\nPath: F -> B -> C -> G -> H -> L\nCosts:\nF->B: 4\nB->C: 6\nC->G: 2\nG->H: 3\nH->L: 3\nTotal cost for this segment: 4 + 6 + 2 + 3 + 3 = 18.\nTotal route cost: 5 + 18 = 23.\nNodes: A, E, F, B, C, G, H, L.\nCheck for repeats: A, E, F, B, C, G, H, L. All unique. Valid.\n\n*Branch 2b-iii: C -> G -> K -> L*\nPath: F -> B -> C -> G -> K -> L\nCosts:\nF->B: 4\nB->C: 6\nC->G: 2\nG->K: 5\nK->L: 2\nTotal cost for this segment: 4 + 6 + 2 + 5 + 2 = 19.\nTotal route cost: 5 + 19 = 24.\nNodes: A, E, F, B, C, G, K, L.\nCheck for repeats: A, E, F, B, C, G, K, L. All unique. Valid.\n\nLet's re-evaluate the start. Maybe A -> B -> F is better?\nStart: A -> B -> F (Cost 8).\nVisited: {A, B, F}.\nNeed to go F -> L.\nFrom F, neighbors: E, G (closed), J.\n*Option 2c: Go through E*\nPath: F -> E -> I -> ...\nFrom I, neighbors: E (visited), J.\nSo F -> E -> I -> J.\nFrom J, neighbors: I (visited), K (closed). Dead end.\nWait, J connects to I and K (closed) and F.\nSo F -> E -> I -> J is a dead end.\n\n*Option 2d: Go through J*\nPath: F -> J -> I -> E -> ...\nFrom E, neighbors: A (visited), I (visited), F (visited). Dead end.\nWait, let's look at the graph again.\nI connects to E and J.\nJ connects to I, F, K (closed).\nSo if I go F -> J -> I, I am stuck because E is the only other neighbor of I, but E connects to A and F.\nIf I haven't visited A or E yet...\nLet's try path: A -> B -> F -> J -> I -> E -> ...\nFrom E, neighbors are A (visited), I (visited), F (visited). Dead end.\nSo going through J seems problematic because it leads to a dead end or requires visiting nodes already visited.\nLet's trace carefully.\nStart A.\nGo to B.\nGo to F.\nFrom F, go to J.\nFrom J, go to I.\nFrom I, go to E.\nFrom E, where can I go? A (visited), F (visited), I (visited). Dead end.\nSo A -> B -> F -> J -> I -> E is a dead end.\n\nWhat about A -> B -> F -> J -> ... wait, J only connects to I and K (closed). So from J I must go to I.\nFrom I I must go to E.\nFrom E I must go to A or F. Both visited.\nSo the path A -> B -> F -> J is a dead end.\n\nSo the start must be A -> E -> F.\nCost so far: 3 (A->E) + 2 (E->F) = 5.\nVisited: {A, E, F}.\n\nNow from F, I need to get to L.\nNeighbors of F: B, G (closed), J.\nSince E is visited, I can't go back there.\nIf I go F -> J:\nNeighbors of J: I, K (closed), F.\nSo F -> J -> I.\nNeighbors of I: E (visited), J (visited). Dead end.\nSo I cannot go through J.\n\nTherefore, I MUST go F -> B.\nCost: 4.\nTotal cost so far: 5 + 4 = 9.\nVisited: {A, E, F, B}.\nCurrent node: B.\nNeighbors of B: A (visited), C, F (visited).\nSo I MUST go B -> C.\nCost: 6.\nTotal cost so far: 9 + 6 = 15.\nVisited: {A, E, F, B, C}.\nCurrent node: C.\nNeighbors of C: B (visited), D, G.\n\nLet's look at the paths from C again.\n1. C -> D -> H -> L\n   Cost: 2 (C->D) + 7 (D->H) + 3 (H->L) = 12.\n   Total: 15 + 12 = 27.\n   Path: A, E, F, B, C, D, H, L.\n\n2. C -> G -> H -> L\n   Cost: 2 (C->G) + 3 (G->H) + 3 (H->L) = 8.\n   Total: 15 + 8 = 23.\n   Path: A, E, F, B, C, G, H, L.\n\n3. C -> G -> K -> L\n   Cost: 2 (C->G) + 5 (G->K) + 2 (K->L) = 9.\n   Total: 15 + 9 = 24.\n   Path: A, E, F, B, C, G, K, L.\n\nWait, is there any other way?\nFrom C, can I go to G, then to K, then to J? No, J-K is closed.\nFrom G, can I go to H? Yes.\nFrom H, can I go to L? Yes.\nFrom H, can I go to D? Yes, but D connects to C.\nLet's check H neighbors: D, G, L.\nIf I go C -> G -> H -> D -> ... dead end (C visited).\nSo H -> L is the only way out of H towards L.\n\nLet's re-verify the \"F -> J\" dead end.\nPath: A -> E -> F -> J -> I -> E... No, E is visited.\nIs there any other node connected to I? No, just E and J.\nIs there any other node connected to J? I, F, K (closed).\nSo yes, F -> J leads to a dead end because I only connects to E and J, and E is already visited.\n\nSo the path must be A -> E -> F -> B -> C ...\nLet's check if there's a path A -> B -> F ...\nStart A -> B (4).\nB -> F (4). Total 8.\nVisited {A, B, F}.\nFrom F, neighbors E, G (closed), J.\nIf F -> E (2). Total 10.\nVisited {A, B, F, E}.\nFrom E, neighbors A (visited), I, F (visited).\nSo E -> I (6). Total 16.\nVisited {A, B, F, E, I}.\nFrom I, neighbors E (visited), J.\nSo I -> J (3). Total 19.\nVisited {A, B, F, E, I, J}.\nFrom J, neighbors I (visited), K (closed), F (visited).\nDead end.\nSo A -> B -> F -> E -> I -> J is a dead end.\n\nSo the only viable start is A -> E -> F.\nCost 5.\nThen F -> B (4). Total 9.\nThen B -> C (6). Total 15.\nThen from C...\nOption 1: C -> G -> K -> L.\nCost: 2 (C->G) + 5 (G->K) + 2 (K->L) = 9.\nTotal: 15 + 9 = 24.\nPath: A, E, F, B, C, G, K, L.\nCheck constraints:\n- Start A, End L. Yes.\n- Visit F. Yes.\n- No repeats. A, E, F, B, C, G, K, L. All unique.\n- Closed roads: F-G (not used), J-K (not used).\nThis looks valid. Cost 24.\n\nOption 2: C -> G -> H -> L.\nCost: 2 (C->G) + 3 (G->H) + 3 (H->L) = 8.\nTotal: 15 + 8 = 23.\nPath: A, E, F, B, C, G, H, L.\nCheck constraints:\n- Start A, End L. Yes.\n- Visit F. Yes.\n- No repeats. A, E, F, B, C, G, H, L. All unique.\n- Closed roads: F-G (not used), J-K (not used).\nThis looks valid. Cost 23.\n\nOption 3: C -> D -> H -> L.\nCost: 2 (C->D) + 7 (D->H) + 3 (H->L) = 12.\nTotal: 15 + 12 = 27.\nPath: A, E, F, B, C, D, H, L.\nCost 27. Higher than 23.\n\nSo the minimum cost is 23.\nRoute: A -> E -> F -> B -> C -> G -> H -> L.\n\nLet me double check all edge weights.\nA-E: 3. Correct.\nE-F: 2. Correct.\nF-B: 4. Correct.\nB-C: 6. Correct.\nC-G: 2. Correct.\nG-H: 3. Correct.\nH-L: 3. Correct.\nSum: 3 + 2 + 4 + 6 + 2 + 3 + 3 = 23.\n\nLet's check if there are any other paths I missed.\nWhat about A -> E -> I -> J ... no, J-K closed.\nWhat about A -> B -> C -> G -> K -> L?\nPath: A -> B (4) -> C (6) -> G (2) -> K (5) -> L (2).\nTotal: 4 + 6 + 2 + 5 + 2 = 19.\nBut I must visit F.\nThis path does not visit F.\nCan I insert F?\nA -> B -> F ... then where?\nIf A -> B -> F, I am at F.\nFrom F, I can go to E or J.\nIf F -> E -> I -> J (dead end).\nIf F -> J -> I -> E (dead end, A visited).\nSo I cannot go A -> B -> F and then continue to C.\nBecause from F, the only way to get \"right\" is via G (closed) or J (dead end) or E (leads to dead end).\nWait, let's re-examine F -> E -> I -> J.\nFrom J, neighbors are I, F, K (closed).\nSo from J I must go to I.\nFrom I, neighbors are E, J.\nSo I must go to E.\nFrom E, neighbors are A, I, F.\nIf I came A -> B -> F -> E, then A and F are visited.\nSo from E I must go to I. But I just came from I? No.\nPath: A -> B -> F -> E -> I -> J.\nAt J, neighbors are I (visited), F (visited), K (closed). Dead end.\nSo yes, A -> B -> F is a dead end for reaching L.\n\nSo the path MUST start A -> E -> F.\nThen from F, I must go to B (since G is closed and J leads to dead end).\nSo F -> B.\nThen from B, I must go to C (since A is visited).\nSo B -> C.\nNow at C.\nOptions:\n1. C -> D -> H -> L. Cost 2+7+3 = 12. Total 15+12=27.\n2. C -> G -> H -> L. Cost 2+3+3 = 8. Total 15+8=23.\n3. C -> G -> K -> L. Cost 2+5+2 = 9. Total 15+9=24.\n\nIs there any path from G to L that is cheaper?\nG -> H -> L (cost 3+3=6).\nG -> K -> L (cost 5+2=7).\nSo G -> H -> L is better.\n\nIs there any path from C to L that is cheaper?\nC -> G -> H -> L (cost 2+3+3=8).\nC -> D -> H -> L (cost 2+7+3=12).\nC -> G -> K -> L (cost 2+5+2=9).\nSo C -> G -> H -> L is the best from C.\n\nSo the full path is A -> E -> F -> B -> C -> G -> H -> L.\nCost: 3 + 2 + 4 + 6 + 2 + 3 + 3 = 23.\n\nLet's double check the \"Do not repeat a node\" constraint.\nNodes: A, E, F, B, C"
+            }
+          }
+        ],
+        "created": 1789619067,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1542,
+          "total_tokens": 5638,
+          "prompt_tokens_details": {
+            "cached_tokens": 1540
+          }
+        },
+        "id": "chatcmpl-lHAUzt2XZ4zKJtwpSPZ6bpFSQEHfQ2fp",
+        "timings": {
+          "cache_n": 1540,
+          "prompt_n": 2,
+          "prompt_ms": 26.436,
+          "prompt_per_token_ms": 13.218,
+          "prompt_per_second": 75.65441065214102,
+          "predicted_n": 4096,
+          "predicted_ms": 28507.197,
+          "predicted_per_token_ms": 6.9614644688644685,
+          "predicted_per_second": 143.64793564235725
+        }
+      },
+      "elapsed_s": 28.609,
+      "score": 0,
+      "max_score": 2,
+      "checks": {
+        "route": false,
+        "cost": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "extra04_permuted_stack_legend",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra04_permuted_stack_legend.png",
+      "question": "Solve the pictured inventory problem. Return JSON with highest_usable (string), total_usable (integer), quarantine_total (integer).",
+      "expected": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      },
+      "image_sha256": "09de75460100f292f7f7d71f74ebac90ee11d80e8c8df7a9be025bbee33c8100",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"highest_usable\": \"West\",\n  \"total_usable\": 146,\n  \"quarantine_total\": 43\n}\n```",
+              "reasoning_content": "The user wants me to solve an inventory problem based on an image.\n\n**1. Understand the Goal:**\nThe user wants a JSON object with three fields:\n- `highest_usable` (string): The name of the site with the most usable items.\n- `total_usable` (integer): The sum of usable items across all sites.\n- `quarantine_total` (integer): The sum of quarantined items across all sites.\n\n**2. Analyze the Legend:**\n- `/` (blue): allocated\n- `o` (green): ready\n- `|` (yellow/orange): quarantine\n- `x` (purple): rejected\n\n**3. Analyze the Sites and their stacks:**\n\n*   **North:**\n    *   Top: `x` 8 (rejected)\n    *   Next: `/` 18 (allocated) -> Usable\n    *   Next: `|` 12 (quarantine)\n    *   Bottom: `o` 17 (ready) -> Usable\n    *   *North Usable:* 18 (allocated) + 17 (ready) = 35\n    *   *North Quarantine:* 12\n\n*   **East:**\n    *   Top: `o` 23 (ready) -> Usable\n    *   Next: `|` 8 (quarantine)\n    *   Next: `/` 12 (allocated) -> Usable\n    *   Bottom: `x` 10 (rejected)\n    *   *East Usable:* 23 (ready) + 12 (allocated) = 35\n    *   *East Quarantine:* 8\n\n*   **South:**\n    *   Top: `/` 15 (allocated) -> Usable\n    *   Next: `x` 7 (rejected)\n    *   Next: `o` 19 (ready) -> Usable\n    *   Bottom: `|` 14 (quarantine)\n    *   *South Usable:* 15 (allocated) + 19 (ready) = 34\n    *   *South Quarantine:* 14\n\n*   **West:**\n    *   Top: `|` 9 (quarantine)\n    *   Next: `o` 16 (ready) -> Usable\n    *   Next: `x` 6 (rejected)\n    *   Bottom: `/` 26 (allocated) -> Usable\n    *   *West Usable:* 16 (ready) + 26 (allocated) = 42\n    *   *West Quarantine:* 9\n\n**4. Calculate Totals:**\n\n*   **Usable Items per Site:**\n    *   North: 18 + 17 = 35\n    *   East: 23 + 12 = 35\n    *   South: 15 + 19 = 34\n    *   West: 16 + 26 = 42\n\n*   **Highest Usable:**\n    *   Comparing 35, 35, 34, 42.\n    *   The highest is 42, which corresponds to the **West** site.\n\n*   **Total Usable:**\n    *   Sum of usable items: 35 (North) + 35 (East) + 34 (South) + 42 (West)\n    *   Total = 35 + 35 + 34 + 42\n    *   Total = 70 + 34 + 42\n    *   Total = 104 + 42\n    *   Total = 146\n\n*   **Quarantine Total:**\n    *   Sum of quarantine items: 12 (North) + 8 (East) + 14 (South) + 9 (West)\n    *   Total = 12 + 8 + 14 + 9\n    *   Total = 20 + 14 + 9\n    *   Total = 34 + 9\n    *   Total = 43\n\n**5. Format the Output:**\nJSON object:\n```json\n{\n  \"highest_usable\": \"West\",\n  \"total_usable\": 146,\n  \"quarantine_total\": 43\n}\n```\n"
+            }
+          }
+        ],
+        "created": 1789619074,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 1030,
+          "prompt_tokens": 1544,
+          "total_tokens": 2574,
+          "prompt_tokens_details": {
+            "cached_tokens": 1542
+          }
+        },
+        "id": "chatcmpl-3ZBX5GwxBCO8cuSKRd1gO9RaXa022xGl",
+        "timings": {
+          "cache_n": 1542,
+          "prompt_n": 2,
+          "prompt_ms": 27.141,
+          "prompt_per_token_ms": 13.5705,
+          "prompt_per_second": 73.68925242253418,
+          "predicted_n": 1030,
+          "predicted_ms": 7149.552,
+          "predicted_per_token_ms": 6.948058309037901,
+          "predicted_per_second": 143.92510188050946
+        }
+      },
+      "elapsed_s": 7.261,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest_usable": true,
+        "total_usable": true,
+        "quarantine_total": true
+      },
+      "parsed": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      }
+    },
+    {
+      "id": "extra05_formula_cell_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra05_formula_cell_binding.png",
+      "question": "Evaluate the requested pictured cells. Return JSON with integer fields D4, E5, C6.",
+      "expected": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      },
+      "image_sha256": "57edb96596b0e633b32694dd66014012f17f9cac4064c0a95c077949b2ce2294",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n    \"D4\": 34,\n    \"E5\": 103,\n    \"C6\": 76\n}\n```",
+              "reasoning_content": "The user wants me to evaluate specific cells in a spreadsheet image.\n\n**1. Analyze the Spreadsheet Structure:**\n*   **Columns:** A (Item), B (Qty), C (Rate), D (Gross), E (Net).\n*   **Rows:** 1 (Headers), 2 (Gear), 3 (Plate), 4 (Pin), 5 (Totals), 6 (Fee).\n\n**2. Identify the Target Cells:**\n*   **D4:** This is in the \"Gross\" column for \"Pin\".\n*   **E5:** This is in the \"Net\" column for \"Totals\".\n*   **C6:** This is in the \"Rate\" column for \"Fee\".\n\n**3. Evaluate Cell D4:**\n*   **Formula:** `=B4*C4`\n*   **Values:**\n    *   B4 (Qty for Pin) = 2\n    *   C4 (Rate for Pin) = 17\n*   **Calculation:** 2 * 17 = 34.\n*   **Result D4:** 34.\n\n**4. Evaluate Cell E5:**\n*   **Formula:** `=SUM(E2:E4)`\n*   **Dependencies:** I need the values of E2, E3, and E4.\n    *   **E2 Formula:** `=D2-$B$6`\n        *   D2 (Gross for Gear) = `=B2*C2` = 3 * 12 = 36.\n        *   B6 (Qty for Fee) = 4.\n        *   E2 = 36 - 4 = 32.\n    *   **E3 Formula:** `=D3-$B$6`\n        *   D3 (Gross for Plate) = `=B3*C3` = 5 * 9 = 45.\n        *   B6 (Qty for Fee) = 4.\n        *   E3 = 45 - 4 = 41.\n    *   **E4 Formula:** `=D4-$B$6`\n        *   D4 (Gross for Pin) = 34 (calculated in step 3).\n        *   B6 (Qty for Fee) = 4.\n        *   E4 = 34 - 4 = 30.\n*   **Calculation for E5:** SUM(32, 41, 30) = 32 + 41 + 30 = 103.\n*   **Result E5:** 103.\n\n**5. Evaluate Cell C6:**\n*   **Formula:** `=E5-C3*B2`\n*   **Dependencies:**\n    *   E5 = 103 (calculated in step 4).\n    *   C3 (Rate for Plate) = 9.\n    *   B2 (Qty for Gear) = 3.\n*   **Calculation:** 103 - (9 * 3) = 103 - 27 = 76.\n*   **Result C6:** 76.\n\n**6. Final Check:**\n*   D4: 2 * 17 = 34. Correct.\n*   E5: Sum of Net column.\n    *   Net 2: (3*12) - 4 = 32.\n    *   Net 3: (5*9) - 4 = 41.\n    *   Net 4: (2*17) - 4 = 30.\n    *   Sum: 32 + 41 + 30 = 103. Correct.\n*   C6: E5 - (C3 * B2) = 103 - (9 * 3) = 103 - 27 = 76. Correct.\n\n**7. Format Output:**\n*   JSON object with keys D4, E5, C6.\n*   Values are integers.\n*   No explanation.\n"
+            }
+          }
+        ],
+        "created": 1789619081,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 952,
+          "prompt_tokens": 1537,
+          "total_tokens": 2489,
+          "prompt_tokens_details": {
+            "cached_tokens": 1535
+          }
+        },
+        "id": "chatcmpl-2HmuCJScN2udei7sUcuD4q8E7Lar2Xbv",
+        "timings": {
+          "cache_n": 1535,
+          "prompt_n": 2,
+          "prompt_ms": 26.051,
+          "prompt_per_token_ms": 13.0255,
+          "prompt_per_second": 76.77248474146866,
+          "predicted_n": 952,
+          "predicted_ms": 6558.548,
+          "predicted_per_token_ms": 6.896475289169295,
+          "predicted_per_second": 145.00160706302674
+        }
+      },
+      "elapsed_s": 6.659,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "D4": true,
+        "E5": true,
+        "C6": true
+      },
+      "parsed": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      }
+    },
+    {
+      "id": "extra06_failed_directed_links",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra06_failed_directed_links.png",
+      "question": "Solve the pictured network problem. Return JSON with reachable (alphabetically sorted list of strings) and min_edges_to_G (integer).",
+      "expected": {
+        "reachable": [
+          "B",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      },
+      "image_sha256": "b44248c32b58e801bab1c2c282e097d1b154b239f607866263a08f3047c816ef",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"reachable\": [\"B\", \"E\", \"F\", \"G\"],\n  \"min_edges_to_G\": 3\n}\n```",
+              "reasoning_content": "The user wants me to solve a directed graph problem based on an image.\n\n**1. Analyze the graph structure:**\n*   **Nodes:** A, B, C, D, E, F, G, H.\n*   **Start Node:** A.\n*   **Edges (Directed):**\n    *   A -> B\n    *   A -> E\n    *   B -> C (This link has a red X, so it's broken)\n    *   C -> D\n    *   C -> G\n    *   E -> F\n    *   F -> B\n    *   F -> G\n    *   G -> H (This link has a red X, so it's broken)\n    *   H -> D\n\n**2. Identify reachable nodes from A:**\n*   Start at **A**.\n*   From A, I can go to **B** and **E**.\n    *   Reachable: {A, B, E}\n*   From **B**:\n    *   The link B -> C is broken (red X). So I cannot go to C directly from B.\n    *   Wait, let's look closer. Is there another way to get to C?\n    *   Let's trace from E.\n*   From **E**:\n    *   E -> F.\n    *   Reachable: {A, B, E, F}\n*   From **F**:\n    *   F -> B (already visited).\n    *   F -> G.\n    *   Reachable: {A, B, E, F, G}\n*   From **G**:\n    *   G -> H is broken (red X).\n    *   So I cannot go to H from G.\n    *   Are there other incoming links to H? Yes, H -> D. Wait, that's outgoing from H.\n    *   Let's re-examine the edges around H and D.\n    *   There is an edge H -> D.\n    *   Is there an edge to H? No, the edge G -> H is broken. So H is not reachable from G.\n    *   Is there any other path to H? No.\n    *   So H is not reachable.\n    *   Since H is not reachable, D is not reachable via H.\n    *   Let's check C again.\n    *   Path to C: A -> B -> C (broken).\n    *   Is there another path?\n    *   Let's look at the whole graph again.\n    *   A -> B.\n    *   A -> E -> F -> B. (Cycle B-F-B).\n    *   From B, the only outgoing edge is B -> C, which is broken.\n    *   From E, the only outgoing edge is E -> F.\n    *   From F, outgoing edges are F -> B and F -> G.\n    *   From G, outgoing edge is G -> H (broken).\n    *   So, from A, I can reach:\n        *   A (start)\n        *   B (direct from A)\n        *   E (direct from A)\n        *   F (from E)\n        *   G (from F)\n    *   Can I reach C?\n        *   Path: A -> B -> C (Broken).\n        *   Is there any other way? No. C only has incoming from B. Since B->C is broken, C is unreachable.\n    *   Can I reach H?\n        *   Path: ... -> G -> H (Broken).\n        *   Is there any other way? No. H only has incoming from G. Since G->H is broken, H is unreachable.\n    *   Can I reach D?\n        *   Path: ... -> C -> D (C is unreachable).\n        *   Path: ... -> H -> D (H is unreachable).\n        *   So D is unreachable.\n\n    *   Wait, let me look really closely at the arrows.\n    *   A -> B\n    *   A -> E\n    *   B -> C (Broken)\n    *   C -> D\n    *   C -> G\n    *   E -> F\n    *   F -> B\n    *   F -> G\n    *   G -> H (Broken)\n    *   H -> D\n\n    *   Let's re-trace carefully.\n    *   Start at A.\n    *   Neighbors of A: B, E.\n    *   Neighbors of B: C (broken). So B is a dead end effectively for forward progress, except for the cycle. Wait, B has no other outgoing edges. So from B, I'm stuck.\n    *   Neighbors of E: F.\n    *   Neighbors of F: B, G.\n    *   Neighbors of G: H (broken). So from G, I'm stuck.\n    *   Neighbors of H: D. (But H is not reachable).\n\n    *   So the reachable set is {B, E, F, G}.\n    *   Let's double check.\n    *   A -> B. Reachable: B.\n    *   A -> E. Reachable: E.\n    *   E -> F. Reachable: F.\n    *   F -> B. (Already reachable).\n    *   F -> G. Reachable: G.\n    *   From B: B -> C is broken. Stuck.\n    *   From G: G -> H is broken. Stuck.\n    *   So reachable nodes are B, E, F, G.\n    *   Sorted alphabetically: B, E, F, G.\n\n**3. Find min_edges_to_G:**\n*   I need the shortest path from A to G.\n*   Path 1: A -> E -> F -> G. Length: 3 edges.\n*   Path 2: A -> B -> ... (B -> C is broken). Dead end.\n*   Is there any other path?\n    *   A -> E -> F -> B -> ... (B -> C broken).\n    *   So the only path is A -> E -> F -> G.\n*   Wait, let's look at the diagram again.\n    *   A -> B\n    *   A -> E\n    *   E -> F\n    *   F -> G\n    *   Is there a direct link A -> G? No.\n    *   Is there a link B -> G? No.\n    *   Is there a link C -> G? Yes, but C is unreachable.\n    *   So the path must go through E and F.\n    *   Path: A -> E -> F -> G.\n    *   Number of edges: 3.\n\n    *   Let me re-read the graph. Maybe I missed an edge.\n    *   A -> B\n    *   A -> E\n    *   B -> C (Broken)\n    *   C -> D\n    *   C -> G\n    *   E -> F\n    *   F -> B\n    *   F -> G\n    *   G -> H (Broken)\n    *   H -> D\n\n    *   Okay, let's re-evaluate reachability.\n    *   Start A.\n    *   Go to B.\n    *   Go to E.\n    *   From E, go to F.\n    *   From F, go to B (cycle) or G.\n    *   From G, go to H (Broken).\n    *   So reachable nodes: B, E, F, G.\n    *   Wait, is C reachable?\n        *   Incoming to C is from B. B->C is broken. So C is NOT reachable.\n    *   Is H reachable?\n        *   Incoming to H is from G. G->H is broken. So H is NOT reachable.\n    *   Is D reachable?\n        *   Incoming to D is from C and H. Both C and H are unreachable. So D is NOT reachable.\n\n    *   So reachable list: B, E, F, G.\n    *   Min edges to G:\n        *   Path: A -> E -> F -> G. That's 3 edges.\n        *   Is there a shorter path?\n        *   A -> B -> ... (stuck).\n        *   So min edges is 3.\n\n    *   Let me look really closely at the image again.\n    *   Maybe I misinterpreted an arrow.\n    *   A -> B (Right arrow)\n    *   A -> E (Down arrow)\n    *   B -> C (Right arrow, broken)\n    *   C -> D (Right arrow)\n    *   C -> G (Down arrow)\n    *   E -> F (Right arrow)\n    *   F -> B (Up arrow)\n    *   F -> G (Right arrow)\n    *   G -> H (Right arrow, broken)\n    *   H -> D (Up arrow)\n\n    *   Okay, my analysis holds.\n    *   Reachable: B, E, F, G.\n    *   Min edges to G: 3 (A->E->F->G).\n\n    *   Wait, let me look at the link F -> B.\n    *   Is it possible to go A -> B -> ... no, B->C is broken.\n    *   Is it possible to go A -> E -> F -> B -> ... no, B->C is broken.\n    *   So the only way to get to G is via F.\n    *   To get to F, must come from E.\n    *   To get to E, must come from A.\n    *   So path is A -> E -> F -> G.\n    *   Edges: (A,E), (E,F), (F,G). Count = 3.\n\n    *   Let me check if I missed any edges.\n    *   Is there an edge from B to somewhere else? No.\n    *   Is there an edge from C to somewhere else? C->D, C->G.\n    *   Is there an edge from G to somewhere else? G->H (broken).\n    *   Is there an edge from H to somewhere else? H->D.\n\n    *   Wait, is it possible that \"Red X links have failed\" means the link *between* the nodes is broken, but maybe there's another link?\n    *   \"Red X links have failed and cannot be used.\"\n    *   The link B->C has a red X.\n    *   The link G->H has a red X.\n\n    *   Let's re-verify the \"reachable\" part.\n    *   Start at A.\n    *   Neighbors: B, E.\n    *   From B: No outgoing working edges. (B->C is broken).\n    *   From E: Neighbor F.\n    *   From F: Neighbors B, G.\n    *   From G: No outgoing working edges. (G->H is broken).\n    *   So the set of reachable nodes is {B, E, F, G}.\n    *   Sorted: B, E, F, G.\n\n    *   Let's re-verify \"min_edges_to_G\".\n    *   Path A -> E -> F -> G. Length 3.\n    *   Is there any other path?\n    *   Maybe A -> B -> ... no.\n    *   Maybe A -> E -> F -> B -> ... no.\n    *   So min edges is 3.\n\n    *   Wait, let me look at the diagram one more time. Is it possible that the arrow from F goes to B? Yes, F -> B.\n    *   Is it possible that the arrow from B goes to C? Yes, but it's broken.\n    *   Is it possible that the arrow from C goes to G? Yes, C -> G. But C is unreachable.\n    *   Is it possible that the arrow from G goes to H? Yes, but it's broken.\n\n    *   Let's check the text again. \"Start at A. Follow arrowheads only. Red X links have failed and cannot be used.\"\n    *   \"List all reachable nodes except A, sorted alphabetically.\"\n    *   \"Also find the fewest working directed links needed to reach G.\"\n\n    *   Okay, my logic seems solid.\n    *   Reachable: B, E, F, G.\n    *   Min edges to G: 3.\n\n    *   Let me double check the \"min_edges_to_G\" calculation.\n    *   Is it possible to reach G in fewer steps?\n    *   Step 1: A -> B, A -> E.\n    *   Step 2: From B (dead end). From E -> F. So at step 2, I am at F.\n    *   Step 3: From F -> G. So at step 3, I am at G.\n    *   So yes, 3 edges.\n\n    *   Wait, is it possible that I missed a link?\n    *   Let's look at the link between B and C. It has a red X.\n    *   Let's look at the link between G and H. It has a red X.\n    *   Are there any other links?\n    *   A->B, A->E.\n    *   B->C (broken).\n    *   C->D, C->G.\n    *   E->F.\n    *   F->B, F->G.\n    *   G->H (broken).\n    *   H->D.\n\n    *   Okay, everything seems correct.\n    *   Reachable nodes: B, E, F, G.\n    *   Min edges to G: 3.\n\n    *   Let me re-read the prompt. \"Return JSON with reachable (alphabetically sorted list of strings) and min_edges_to_G (integer).\"\n    *   \"Return only the JSON object, no explanation.\"\n\n    *   Wait, let me look at the link F -> B again.\n    *   Is it possible that the arrow is B -> F?\n    *   The arrowhead is at the top, pointing to B. So it's F -> B.\n    *   The arrowhead for E -> F is at F. So E -> F.\n    *   The arrowhead for A -> E is at E. So A -> E.\n    *   The arrowhead for A -> B is at B. So A -> B.\n    *   The arrowhead for F -> G is at G. So F -> G.\n    *   The arrowhead for C -> G is at G. So C -> G.\n    *   The arrowhead for C -> D is at D. So C -> D.\n    *   The arrowhead for H -> D is at D. So H -> D.\n\n    *   Okay, my graph interpretation is correct.\n    *   Reachable: B, E, F, G.\n    *   Min edges to G: 3.\n\n    *   Let me just pause and think if I missed anything subtle.\n    *   \"Red X links have failed\".\n    *   Link B->C is failed.\n    *   Link G->H is failed.\n    *   So C is not reachable from B.\n    *   H is not reachable from G.\n    *   Since C is not reachable, C->G and C->D are not usable.\n    *   Since H is not reachable, H->D is not usable.\n    *   So D is not reachable.\n    *   So reachable set is indeed {B, E, F, G}.\n\n    *   Wait, is it possible that \"min_edges_to_G\" refers to the number of edges in the path? Yes, \"fewest working directed links needed\".\n    *   Path: A -> E -> F -> G.\n    *   Links: (A,E), (E,F), (F,G).\n    *   Count: 3.\n\n    *   Is there any other path?\n    *   A -> B -> ... (stuck).\n    *   So no.\n\n    *   Final check on alphabetical sorting.\n    *   B, E, F, G.\n    *   B comes before E.\n    *   E comes before F.\n    *   F comes before G.\n    *   Correct.\n\n    *   Final JSON structure:\n    *   {\n      \"reachable\": [\"B\", \"E\", \"F\", \"G\"],\n      \"min_edges_to_G\": 3\n    }\n"
+            }
+          }
+        ],
+        "created": 1789619107,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 3720,
+          "prompt_tokens": 1544,
+          "total_tokens": 5264,
+          "prompt_tokens_details": {
+            "cached_tokens": 1542
+          }
+        },
+        "id": "chatcmpl-sm3q6xTaMr8JGUvYzdBEN4miVmBpcYLV",
+        "timings": {
+          "cache_n": 1542,
+          "prompt_n": 2,
+          "prompt_ms": 25.374,
+          "prompt_per_token_ms": 12.687,
+          "prompt_per_second": 78.82084023015686,
+          "predicted_n": 3720,
+          "predicted_ms": 26020.701,
+          "predicted_per_token_ms": 6.996692928206508,
+          "predicted_per_second": 142.92466601879786
+        }
+      },
+      "elapsed_s": 26.117,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "reachable": true,
+        "min_edges_to_G": true
+      },
+      "parsed": {
+        "reachable": [
+          "B",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      }
+    },
+    {
+      "id": "extra07_clock_edge_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra07_clock_edge_binding.png",
+      "question": "Solve the pictured register timing problem. Return JSON with q_after_edges (bit string), q_rises (integer), final_q (integer).",
+      "expected": {
+        "q_after_edges": "011011",
+        "q_rises": 2,
+        "final_q": 1
+      },
+      "image_sha256": "2e613c6eed63e005901b9331c50ce6e352423387f851f13d386ce7b2962cb00e",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to solve a synchronous register timing problem based on the provided image.\n\n**1. Understand the Rules:**\n*   **Clock (CLK):** Rising edges trigger updates. The marked edges are at time 2, 6, 10, 14, 18, 22.\n*   **Initial State:** $Q = 1$.\n*   **Logic at Rising Edge:**\n    *   If `RESET` = 1: $Q \\leftarrow 0$ (Priority over ENABLE).\n    *   Else if `ENABLE` = 1: $Q \\leftarrow D$.\n    *   Else: $Q$ holds its previous value.\n*   **Coincident Transitions:** Use signal levels *just AFTER* the transition. This is crucial. I need to look at the state of signals immediately following the clock edge.\n\n**2. Analyze the Waveforms at Each Marked Edge:**\n\n*   **Edge 1: Time = 2**\n    *   **CLK:** Rising edge.\n    *   **RESET:** Just after time 2, RESET is 0 (it was 1 before, but the transition happens at 2, and the line goes low right after). Wait, let's look closer. At time 2, RESET goes from 1 to 0. So just after the edge, RESET is 0.\n    *   **ENABLE:** Just after time 2, ENABLE is 1.\n    *   **D:** Just after time 2, D is 0.\n    *   **Logic:** RESET is 0. ENABLE is 1. So $Q \\leftarrow D$.\n    *   **D value:** At time 2, D is 0.\n    *   **New Q:** $Q = 0$.\n\n*   **Edge 2: Time = 6**\n    *   **CLK:** Rising edge.\n    *   **RESET:** Just after time 6, RESET is 0.\n    *   **ENABLE:** Just after time 6, ENABLE is 1.\n    *   **D:** Just after time 6, D is 1.\n    *   **Logic:** RESET is 0. ENABLE is 1. So $Q \\leftarrow D$.\n    *   **D value:** At time 6, D is 1.\n    *   **New Q:** $Q = 1$.\n\n*   **Edge 3: Time = 10**\n    *   **CLK:** Rising edge.\n    *   **RESET:** Just after time 10, RESET is 0.\n    *   **ENABLE:** Just after time 10, ENABLE is 0.\n    *   **D:** Just after time 10, D is 0.\n    *   **Logic:** RESET is 0. ENABLE is 0. So $Q$ holds.\n    *   **Previous Q:** From the previous step, $Q$ was 1.\n    *   **New Q:** $Q = 1$.\n\n*   **Edge 4: Time = 14**\n    *   **CLK:** Rising edge.\n    *   **RESET:** Just after time 14, RESET is 0.\n    *   **ENABLE:** Just after time 14, ENABLE is 1.\n    *   **D:** Just after time 14, D is 0.\n    *   **Logic:** RESET is 0. ENABLE is 1. So $Q \\leftarrow D$.\n    *   **D value:** At time 14, D is 0.\n    *   **New Q:** $Q = 0$.\n\n*   **Edge 5: Time = 18**\n    *   **CLK:** Rising edge.\n    *   **RESET:** Just after time 18, RESET is 0.\n    *   **ENABLE:** Just after time 18, ENABLE is 0.\n    *   **D:** Just after time 18, D is 1.\n    *   **Logic:** RESET is 0. ENABLE is 0. So $Q$ holds.\n    *   **Previous Q:** From the previous step, $Q$ was 0.\n    *   **New Q:** $Q = 0$.\n\n*   **Edge 6: Time = 22**\n    *   **CLK:** Rising edge.\n    *   **RESET:** Just after time 22, RESET is 0.\n    *   **ENABLE:** Just after time 22, ENABLE is 0.\n    *   **D:** Just after time 22, D is 0.\n    *   **Logic:** RESET is 0. ENABLE is 0. So $Q$ holds.\n    *   **Previous Q:** From the previous step, $Q$ was 0.\n    *   **New Q:** $Q = 0$.\n\n**3. Compile the Results:**\n\n*   **q_after_edges:** The sequence of Q values after each edge is: 0, 1, 1, 0, 0, 0.\n    *   Wait, let me re-check the \"Coincident transitions\" rule. \"At coincident transitions, use signal levels just AFTER the transition at that time.\"\n    *   Let's look at the waveforms carefully around the edges.\n\n    *   **Time 2:**\n        *   CLK rises.\n        *   RESET falls from 1 to 0. So just after, RESET=0.\n        *   ENABLE is high (1).\n        *   D is low (0).\n        *   Logic: ENABLE=1 -> Q=D. D is 0. So Q becomes 0. Correct.\n\n    *   **Time 6:**\n        *   CLK rises.\n        *   RESET is low (0).\n        *   ENABLE falls from 1 to 0 at time 7. So at time 6, ENABLE is 1.\n        *   D rises from 0 to 1 at time 4. So at time 6, D is 1.\n        *   Logic: ENABLE=1 -> Q=D. D is 1. So Q becomes 1. Correct.\n\n    *   **Time 10:**\n        *   CLK rises.\n        *   RESET is low (0).\n        *   ENABLE is low (0). (It fell at time 7).\n        *   D is low (0). (It fell at time 10). Wait, let's look at D.\n        *   D is high from 4 to 10. At time 10, D falls from 1 to 0.\n        *   So just after time 10, D is 0.\n        *   Logic: ENABLE=0 -> Hold. Previous Q was 1. So Q stays 1. Correct.\n\n    *   **Time 14:**\n        *   CLK rises.\n        *   RESET is low (0).\n        *   ENABLE rises from 0 to 1 at time 14. So just after, ENABLE is 1.\n        *   D is low (0). (It fell at time 10 and stays low until 16).\n        *   Logic: ENABLE=1 -> Q=D. D is 0. So Q becomes 0. Correct.\n\n    *   **Time 18:**\n        *   CLK rises.\n        *   RESET is low (0).\n        *   ENABLE is high (1) until time 19. So just after 18, ENABLE is 1.\n        *   Wait, let's look at ENABLE again. ENABLE goes high at 14, stays high until 19. So at 18, ENABLE is 1.\n        *   Let's re-evaluate Time 18.\n        *   CLK rises at 18.\n        *   RESET is 0.\n        *   ENABLE is 1 (it's high from 14 to 19).\n        *   D is 0 (it's low from 10 to 16).\n        *   Logic: ENABLE=1 -> Q=D. D is 0. So Q becomes 0.\n        *   Wait, my previous analysis for Time 18 said ENABLE was 0. Let me look really closely at the ENABLE waveform.\n        *   ENABLE: High from 0 to 7. Low from 7 to 14. High from 14 to 19. Low from 19 to 22.\n        *   So at Time 18, ENABLE is definitely 1.\n        *   Let's re-evaluate Time 18.\n        *   CLK rises at 18.\n        *   RESET is 0.\n        *   ENABLE is 1.\n        *   D is 0 (low from 10 to 16).\n        *   Logic: ENABLE=1 -> Q=D. D is 0. So Q becomes 0.\n        *   My previous analysis for Time 18 was: \"ENABLE is 0\". Why? I misread the graph. Let's look at the ENABLE line.\n        *   ENABLE line: High (1) from 0 to 7. Low (0) from 7 to 14. High (1) from 14 to 19. Low (0) from 19 to 22.\n        *   Okay, so at Time 18, ENABLE is 1.\n        *   D line: High (1) from 4 to 10. Low (0) from 10 to 16. High (1) from 16 to 22.\n        *   So at Time 18, D is 1.\n        *   Let's re-evaluate Time 18 with correct signal values.\n        *   CLK rises at 18.\n        *   RESET is 0.\n        *   ENABLE is 1.\n        *   D is 1 (it rose at 16).\n        *   Logic: ENABLE=1 -> Q=D. D is 1. So Q becomes 1.\n        *   Previous Q was 0 (from time 14).\n        *   So New Q at 18 is 1.\n\n    *   **Time 22:**\n        *   CLK rises at 22.\n        *   RESET is 0.\n        *   ENABLE is 0 (fell at 19).\n        *   D is 0 (fell at 22). Wait, let's look at D.\n        *   D line: High from 16 to 22. Low from 22 onwards.\n        *   So at Time 22, D falls from 1 to 0. Just after, D is 0.\n        *   Logic: ENABLE=0 -> Hold.\n        *   Previous Q was 1 (from time 18).\n        *   So New Q at 22 is 1.\n\n**Let's do a full pass again, very carefully.**\n\n*   **Initial Q = 1.**\n\n*   **Edge at t=2:**\n    *   CLK rises.\n    *   RESET: Was 1, falls to 0 at t=2. Just after, RESET=0.\n    *   ENABLE: Is 1.\n    *   D: Is 0.\n    *   Logic: RESET=0, ENABLE=1 -> Q = D.\n    *   D value just after t=2 is 0.\n    *   **Q(2) = 0.**\n\n*   **Edge at t=6:**\n    *   CLK rises.\n    *   RESET: Is 0.\n    *   ENABLE: Is 1 (falls at t=7).\n    *   D: Is 1 (rose at t=4).\n    *   Logic: RESET=0, ENABLE=1 -> Q = D.\n    *   D value just after t=6 is 1.\n    *   **Q(6) = 1.**\n\n*   **Edge at t=10:**\n    *   CLK rises.\n    *   RESET: Is 0.\n    *   ENABLE: Is 0 (fell at t=7).\n    *   D: Is 0 (fell at t=10). Wait, D falls at t=10. Just after t=10, D is 0.\n    *   Logic: RESET=0, ENABLE=0 -> Hold.\n    *   Previous Q(6) = 1.\n    *   **Q(10) = 1.**\n\n*   **Edge at t=14:**\n    *   CLK rises.\n    *   RESET: Is 0.\n    *   ENABLE: Is 1 (rose at t=14). Just after t=14, ENABLE=1.\n    *   D: Is 0 (fell at t=10, rose at t=16).\n    *   Logic: RESET=0, ENABLE=1 -> Q = D.\n    *   D value just after t=14 is 0.\n    *   **Q(14) = 0.**\n\n*   **Edge at t=18:**\n    *   CLK rises.\n    *   RESET: Is 0.\n    *   ENABLE: Is 1 (falls at t=19).\n    *   D: Is 1 (rose at t=16).\n    *   Logic: RESET=0, ENABLE=1 -> Q = D.\n    *   D value just after t=18 is 1.\n    *   **Q(18) = 1.**\n\n*   **Edge at t=22:**\n    *   CLK rises.\n    *   RESET: Is 0.\n    *   ENABLE: Is 0 (fell at t=19).\n    *   D: Is 0 (fell at t=22). Just after t=22, D is 0.\n    *   Logic: RESET=0, ENABLE=0 -> Hold.\n    *   Previous Q(18) = 1.\n    *   **Q(22) = 1.**\n\n**Summary of Q values:**\nt=2: 0\nt=6: 1\nt=10: 1\nt=14: 0\nt=18: 1\nt=22: 1\n\n**q_after_edges string:** \"011011\"\n\n**q_rises count:**\nTransitions from 0 to 1.\n- Initial Q = 1.\n- Q(2) = 0. (1 -> 0, no rise).\n- Q(6) = 1. (0 -> 1, **Rise 1**).\n- Q(10) = 1. (1 -> 1, no rise).\n- Q(14) = 0. (1 -> 0, no rise).\n- Q(18) = 1. (0 -> 1, **Rise 2**).\n- Q(22) = 1. (1 -> 1, no rise).\n\nTotal rises = 2.\n\n**final_q:**\nThe last value is Q(22) = 1.\n\n**Let's double check everything.**\n\n*   **Rule:** \"At coincident transitions, use signal levels just AFTER the transition at that time.\"\n    *   **t=2:**\n        *   RESET goes 1->0. Just after, RESET=0. Correct.\n        *   ENABLE is 1. Correct.\n        *   D is 0. Correct.\n        *   Result: Q=0. Correct.\n    *   **t=6:**\n        *   RESET is 0. Correct.\n        *   ENABLE is 1. Correct.\n        *   D is 1. Correct.\n        *   Result: Q=1. Correct.\n    *   **t=10:**\n        *   RESET is 0. Correct.\n        *   ENABLE is 0. Correct.\n        *   D goes 1->0. Just after, D=0. Correct.\n        *   Result: Hold. Q=1. Correct.\n    *   **t=14:**\n        *   RESET is 0. Correct.\n        *   ENABLE goes 0->1. Just after, ENABLE=1. Correct.\n        *   D is 0. Correct.\n        *   Result: Q=0. Correct.\n    *   **t=18:**\n        *   RESET is 0. Correct.\n        *   ENABLE is 1. Correct.\n        *   D is 1. Correct.\n        *   Result: Q=1. Correct.\n    *   **t=22:**\n        *   RESET is 0. Correct.\n        *   ENABLE is 0. Correct.\n        *   D goes 1->0. Just after, D=0. Correct.\n        *   Result: Hold. Q=1. Correct.\n\n**Final check of the question requirements:**\n*   `q_after_edges`: bit string. \"011011\".\n*   `q_rises`: integer. 2.\n*   `final_q`: integer. 1.\n\nWait, let's re-read the D waveform at t=18.\nD is high from 16 to 22.\nAt t=16, D goes 0->1.\nAt t=18, D is definitely 1.\nENABLE is high from 14 to 19.\nAt t=18, ENABLE is definitely 1.\nSo at t=18, ENABLE=1, D=1. Q becomes 1. Correct.\n\nLet's re-read the D waveform at t=22.\nD is high from 16 to 22.\nAt t=22, D goes 1->0.\nJust after t=22, D is 0.\nENABLE is low from 19 to 22.\nAt t=22, ENABLE is 0.\nSo at t=22, ENABLE=0. Q holds.\nPrevious Q was 1. So Q stays 1. Correct.\n\nLet's re-read the D waveform at t=10.\nD is high from 4 to 10.\nAt t=10"
+            }
+          }
+        ],
+        "created": 1789619135,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1836,
+          "total_tokens": 5932,
+          "prompt_tokens_details": {
+            "cached_tokens": 1834
+          }
+        },
+        "id": "chatcmpl-h03r0aOAQtE06nuRSe8JQrseoJo9vArS",
+        "timings": {
+          "cache_n": 1834,
+          "prompt_n": 2,
+          "prompt_ms": 26.057,
+          "prompt_per_token_ms": 13.0285,
+          "prompt_per_second": 76.75480676977396,
+          "predicted_n": 4096,
+          "predicted_ms": 28540.389,
+          "predicted_per_token_ms": 6.969569963369963,
+          "predicted_per_second": 143.48087547089847
+        }
+      },
+      "elapsed_s": 28.656,
+      "score": 0,
+      "max_score": 3,
+      "checks": {
+        "q_after_edges": false,
+        "q_rises": false,
+        "final_q": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "extra08_connector_view_reflection",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra08_connector_view_reflection.png",
+      "question": "Solve the pictured connector mapping. Return JSON with TX_wire, RX_wire, GND_wire (strings) and rear_top_left_pin (integer).",
+      "expected": {
+        "TX_wire": "T",
+        "RX_wire": "R",
+        "GND_wire": "V",
+        "rear_top_left_pin": 4
+      },
+      "image_sha256": "b2e2804bb258e7559d17d6a1b1f3fb886bce3c92f9ef4bd0cd67e23d18af7ec9",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to solve a connector mapping puzzle based on an image.\n\n**1. Analyze the input image:**\n*   **Title:** \"08 / CONNECTOR FRONT AND REAR VIEWS\"\n*   **Description:** \"Both views show the SAME connector with its key at the top. No vertical flip. Rear view is viewed from the wire-entry side, opposite the front mating face.\"\n*   **Front View:**\n    *   Shows 8 pins numbered 1 to 8.\n    *   Arrangement:\n        *   Top row: 1, 2, 3, 4\n        *   Bottom row: 5, 6, 7, 8\n    *   Key is at the top center.\n*   **Rear View:**\n    *   Shows 8 pins with letters W, Q, T, P, U, R, S, V.\n    *   Arrangement:\n        *   Top row: W, Q, T, P\n        *   Bottom row: U, R, S, V\n    *   Key is at the top center.\n*   **Front pin assignments:**\n    *   TX = pin 2\n    *   RX = pin 7\n    *   GND = pin 5\n*   **Instructions:**\n    *   \"Rear letters are unique wire codes, not pin numbers.\"\n    *   \"Match each signal to its rear wire code; also identify the front pin number at the top-left position of the rear view. Preserve uppercase wire letters.\"\n\n**2. Determine the mapping:**\n*   The problem states \"Both views show the SAME connector with its key at the top. No vertical flip.\"\n*   This implies a direct spatial correspondence between the pins.\n*   Let's look at the layout.\n    *   **Front View:**\n        *   Pin 1 is top-left.\n        *   Pin 2 is top-middle-left.\n        *   Pin 3 is top-middle-right.\n        *   Pin 4 is top-right.\n        *   Pin 5 is bottom-left.\n        *   Pin 6 is bottom-middle-left.\n        *   Pin 7 is bottom-middle-right.\n        *   Pin 8 is bottom-right.\n    *   **Rear View:**\n        *   The text says \"Rear view is viewed from the wire-entry side, opposite the front mating face.\" This usually means looking through the connector.\n        *   However, the diagram shows the \"KEY\" at the top for *both* views. This is a crucial detail.\n        *   If I look at the rear view, the \"KEY\" is at the top. In the front view, the \"KEY\" is at the top.\n        *   Wait, let's re-read carefully: \"Rear view is viewed from the wire-entry side, opposite the front mating face.\"\n        *   Usually, if you look at the back of a connector, the pin numbering or layout might be mirrored or reversed depending on the connector type (e.g., D-sub).\n        *   BUT, the diagram explicitly draws the rear view with the KEY at the top.\n        *   Let's look at the pin positions relative to the key.\n        *   **Front View:** Key is top center. Pins 1, 2, 3, 4 are below it. Pins 5, 6, 7, 8 are below that.\n        *   **Rear View:** Key is top center. Pins W, Q, T, P are below it. Pins U, R, S, V are below that.\n        *   The prompt says \"Both views show the SAME connector with its key at the top.\" This suggests the physical orientation is the same relative to the key.\n        *   Let's assume the pins correspond directly by position.\n            *   Front Pin 1 (top-left) corresponds to Rear Pin W (top-left).\n            *   Front Pin 2 (top-middle-left) corresponds to Rear Pin Q (top-middle-left).\n            *   Front Pin 3 (top-middle-right) corresponds to Rear Pin T (top-middle-right).\n            *   Front Pin 4 (top-right) corresponds to Rear Pin P (top-right).\n            *   Front Pin 5 (bottom-left) corresponds to Rear Pin U (bottom-left).\n            *   Front Pin 6 (bottom-middle-left) corresponds to Rear Pin R (bottom-middle-left).\n            *   Front Pin 7 (bottom-middle-right) corresponds to Rear Pin S (bottom-middle-right).\n            *   Front Pin 8 (bottom-right) corresponds to Rear Pin V (bottom-right).\n\n    *   Let's check the text again. \"Rear view is viewed from the wire-entry side, opposite the front mating face.\"\n    *   If I hold a connector up to the light (wire entry side), and look at it, the \"front\" face is behind it.\n    *   If the key is at the top on the front face, and the key is at the top on the rear face diagram...\n    *   Let's look at the pin numbering on the rear view. It doesn't have numbers. It has letters.\n    *   The prompt asks to \"Match each signal to its rear wire code\".\n    *   Signals are TX, RX, GND.\n    *   Front assignments:\n        *   TX = pin 2\n        *   RX = pin 7\n        *   GND = pin 5\n    *   Based on the direct position mapping (which seems the most logical interpretation of \"SAME connector... key at top\"):\n        *   Pin 2 is the second pin from the left in the top row. In the rear view, the second pin from the left in the top row is **Q**. So TX -> Q.\n        *   Pin 7 is the third pin from the left in the bottom row. In the rear view, the third pin from the left in the bottom row is **S**. So RX -> S.\n        *   Pin 5 is the first pin from the left in the bottom row. In the rear view, the first pin from the left in the bottom row is **U**. So GND -> U.\n\n    *   Wait, let's reconsider the \"Rear view is viewed from the wire-entry side\" part.\n    *   If I look at the rear of a connector, the pins are usually arranged in reverse order or mirrored compared to the front.\n    *   However, the diagram shows the rear view with the KEY at the top.\n    *   Let's look at the pin positions again.\n    *   Front: 1, 2, 3, 4 (top), 5, 6, 7, 8 (bottom).\n    *   Rear: W, Q, T, P (top), U, R, S, V (bottom).\n    *   If the rear view is just a \"back\" view, usually pin 1 on the front corresponds to pin 8 on the back (if it's a standard connector like D-sub).\n    *   BUT, the diagram labels the rear view pins with letters W, Q, T, P...\n    *   And the prompt says \"Rear letters are unique wire codes, not pin numbers.\" This implies the letters *are* the identifiers for the wires coming out of the back.\n    *   The prompt asks to \"Match each signal to its rear wire code\".\n    *   This implies I need to find which letter corresponds to the specific pin number.\n    *   The most straightforward interpretation of the diagram is that the pins are in the same relative positions.\n        *   Front Pin 1 is top-left. Rear Pin W is top-left. So Pin 1 -> W.\n        *   Front Pin 2 is top-left-ish. Rear Pin Q is top-left-ish. So Pin 2 -> Q.\n        *   Front Pin 3 is top-right-ish. Rear Pin T is top-right-ish. So Pin 3 -> T.\n        *   Front Pin 4 is top-right. Rear Pin P is top-right. So Pin 4 -> P.\n        *   Front Pin 5 is bottom-left. Rear Pin U is bottom-left. So Pin 5 -> U.\n        *   Front Pin 6 is bottom-left-ish. Rear Pin R is bottom-left-ish. So Pin 6 -> R.\n        *   Front Pin 7 is bottom-right-ish. Rear Pin S is bottom-right-ish. So Pin 7 -> S.\n        *   Front Pin 8 is bottom-right. Rear Pin V is bottom-right. So Pin 8 -> V.\n\n    *   Let's check if there's any other interpretation.\n    *   \"Rear view is viewed from the wire-entry side, opposite the front mating face.\"\n    *   If I look at the back of the connector, the \"top\" of the connector is still the \"top\". The key is at the top.\n    *   So, physically, the pin at the top-left of the rear face is the same physical pin as the top-left of the front face?\n    *   No, that's physically impossible for a standard connector unless it's a very specific type or the diagram is just showing the layout.\n    *   Let's look at the diagram again.\n    *   Front view: Key at top. Pins 1-4 top row, 5-8 bottom row.\n    *   Rear view: Key at top. Pins W-P top row, U-V bottom row.\n    *   The text says \"Both views show the SAME connector with its key at the top.\"\n    *   This strongly implies a direct mapping of positions.\n    *   Position (row, col) 1,1 -> Front Pin 1, Rear Pin W.\n    *   Position (row, col) 1,2 -> Front Pin 2, Rear Pin Q.\n    *   Position (row, col) 1,3 -> Front Pin 3, Rear Pin T.\n    *   Position (row, col) 1,4 -> Front Pin 4, Rear Pin P.\n    *   Position (row, col) 2,1 -> Front Pin 5, Rear Pin U.\n    *   Position (row, col) 2,2 -> Front Pin 6, Rear Pin R.\n    *   Position (row, col) 2,3 -> Front Pin 7, Rear Pin S.\n    *   Position (row, col) 2,4 -> Front Pin 8, Rear Pin V.\n\n    *   Let's verify this hypothesis.\n    *   TX = pin 2. Pin 2 is at position (1, 2). The corresponding rear pin is Q. So TX wire code is Q.\n    *   RX = pin 7. Pin 7 is at position (2, 3). The corresponding rear pin is S. So RX wire code is S.\n    *   GND = pin 5. Pin 5 is at position (2, 1). The corresponding rear pin is U. So GND wire code is U.\n\n    *   Is there any trick? \"Rear view is viewed from the wire-entry side, opposite the front mating face.\"\n    *   If I look at the back of a connector, the pins are usually reversed. E.g., Pin 1 on front is next to Pin 8 on back.\n    *   However, the diagram shows the rear view with the KEY at the top.\n    *   If the key is at the top on the front, and the key is at the top on the rear...\n    *   Let's imagine a D-sub connector. Key is at top. Front face has pins 1-8. Back face has pins 1-8.\n    *   If I look at the back face, pin 1 is on the right (if standard numbering) or left?\n    *   Actually, for D-sub, pin 1 is at the top right on the front. On the back, pin 1 is at the top left.\n    *   Here, pin 1 is top left on the front.\n    *   If the rear view is just the back of the connector, and the key is at the top...\n    *   Let's assume the diagram is a schematic representation of the pinout, not necessarily a 3D rendering where perspective matters.\n    *   The prompt says \"Match each signal to its rear wire code\".\n    *   This implies the letters W, Q, T, P, U, R, S, V are the codes for the wires connected to the pins.\n    *   So, Pin 1 is connected to wire W. Pin 2 is connected to wire Q. Pin 3 is connected to wire T. Pin 4 is connected to wire P. Pin 5 is connected to wire U. Pin 6 is connected to wire R. Pin 7 is connected to wire S. Pin 8 is connected to wire V.\n    *   This seems the most logical interpretation. The \"Rear view\" diagram is just showing the labels on the back of the connector.\n    *   Wait, is it possible that the rear view is mirrored?\n    *   \"Both views show the SAME connector with its key at the top.\"\n    *   If I hold a connector, the key is at the top.\n    *   Front face: Pins 1, 2, 3, 4 (left to right).\n    *   Rear face: If I look through it, the pins are reversed. So the pin at the back-left (which is front-right) would be visible on the left?\n    *   Let's think about a physical connector.\n    *   Front: Pin 1 (top left), Pin 2, Pin 3, Pin 4 (top right).\n    *   Back: The wire for Pin 1 comes out of the back. Where is it?\n    *   Usually, the pins are arranged in a row.\n    *   If I look at the back, I see the pins from the other side.\n    *   If the connector is a straight-through connector (like a cable), the pins are aligned.\n    *   If I look at the back of the connector housing, the pin at the \"top left\" of the rear face corresponds to the pin at the \"top right\" of the front face? No, that depends on the connector type.\n    *   Let's look at the diagram again.\n    *   Front: Key top center. Pins 1,2,3,4 below.\n    *   Rear: Key top center. Pins W,Q,T,P below.\n    *   The text says \"Rear view is viewed from the wire-entry side, opposite the front mating face.\"\n    *   This is standard terminology.\n    *   If the diagram shows the rear view with the key at the top, it implies the physical orientation is the same.\n    *   Let's assume the pins are in the same relative positions.\n    *   Front Pin 1 (top left) <-> Rear Pin W (top left).\n    *   Front Pin 2 (top mid-left) <-> Rear Pin Q (top mid-left).\n    *   Front Pin 3 (top mid-right) <-> Rear Pin T (top mid-right).\n    *   Front Pin 4 (top right) <-> Rear Pin P (top right).\n    *   Front Pin 5 (bottom left) <-> Rear Pin U (bottom left).\n    *   Front Pin 6 (bottom mid-left) <-> Rear Pin R (bottom mid-left).\n    *   Front Pin 7 (bottom mid-right) <-> Rear Pin S (bottom mid-right).\n    *   Front Pin 8 (bottom right) <-> Rear Pin V (bottom right).\n\n    *   Let's check the pin assignments again.\n    *   TX = pin 2.\n    *   RX = pin 7.\n    *   GND = pin 5.\n\n    *   So:\n    *   TX corresponds to Pin 2. Pin 2 is at position (row 1, col 2). The rear pin at (row 1, col 2) is Q. So TX -> Q.\n    *   RX corresponds to Pin 7. Pin 7 is at position (row 2, col 3). The rear pin at (row 2, col 3) is S. So RX -> S.\n    *   GND corresponds to Pin 5. Pin 5 is at position (row 2, col 1). The rear pin at (row 2, col 1) is U. So GND -> U.\n\n    *   Is there any reason to doubt the direct mapping?\n    *   \"Rear letters are unique wire codes, not pin numbers.\" -> This confirms W, Q, etc. are the wire labels.\n    *   \"Match each signal to its rear wire code\" -> This confirms I need to map TX, RX, GND to letters.\n    *   \"also identify the front pin number at the top-left position of the rear view.\" -> This is a specific request.\n    *   The rear view top-left position has the letter W.\n    *   The prompt asks for \"rear_top_left_pin (integer)\".\n    *   Wait, \"identify the front pin number at the top-left position of the rear view\".\n    *   This implies I need to find which front pin corresponds to the top-left position of the rear view.\n    *   Rear view top-left is pin W.\n    *   Based on my mapping, Pin W corresponds to Front Pin 1.\n    *   So `rear_top_left_pin` should be 1.\n\n    *   Let's double check the \"Rear view is viewed from the wire-entry side\" part.\n    *   If I look at the back of a connector, the \"top\" is still the top.\n    *   If the pins are arranged 1-4 top, 5-8 bottom on the front.\n    *   On the back, usually the pins are arranged in reverse order for numbering (e.g. 8-4 top, 7-3 bottom) or just aligned.\n    *   But here, the diagram shows the rear view with letters W, Q, T, P.\n    *   If the rear view is just a label map, then Pin 1 is W, Pin 2 is Q, etc.\n    *   Why would the prompt ask for \"rear_top_left_pin (integer)\"?\n    *   \"identify the front pin number at the top-left position of the rear view.\"\n    *   This phrasing is slightly ambiguous. Does it mean \"What is the front pin number that corresponds to the top-left pin of the rear view?\"\n    *   Yes, that's the most likely meaning.\n    *   Rear view top-left pin is labeled 'W'.\n    *"
+            }
+          }
+        ],
+        "created": 1789619164,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1547,
+          "total_tokens": 5643,
+          "prompt_tokens_details": {
+            "cached_tokens": 1545
+          }
+        },
+        "id": "chatcmpl-nFAiLlWb40lBdAsvbsxOc1qZsL0zFBb7",
+        "timings": {
+          "cache_n": 1545,
+          "prompt_n": 2,
+          "prompt_ms": 25.594,
+          "prompt_per_token_ms": 12.797,
+          "prompt_per_second": 78.14331483941548,
+          "predicted_n": 4096,
+          "predicted_ms": 28558.537,
+          "predicted_per_token_ms": 6.974001709401709,
+          "predicted_per_second": 143.3896981487532
+        }
+      },
+      "elapsed_s": 28.671,
+      "score": 0,
+      "max_score": 4,
+      "checks": {
+        "TX_wire": false,
+        "RX_wire": false,
+        "GND_wire": false,
+        "rear_top_left_pin": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "extra09_footnote_exclusions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra09_footnote_exclusions.png",
+      "question": "Apply the pictured memo. Return JSON with eligible_rows (list of row-ID strings in displayed order), reimbursement_usd (integer), excluded_count (integer).",
+      "expected": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      },
+      "image_sha256": "654aae6e9286ba6a740f21ebe24266b98ee58bb5b83127fe3e1edb84631e728a",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"eligible_rows\": [\n    \"R1\",\n    \"R2\",\n    \"R7\"\n  ],\n  \"reimbursement_usd\": 175,\n  \"excluded_count\": 4\n}\n```",
+              "reasoning_content": "The user wants me to process a reimbursement memo based on an image.\n\n**1. Analyze the Input Data:**\n*   **Table:**\n    *   R1: Alpha, Travel [1], 120, APPROVED\n    *   R2: Alpha, Meals [2], 40, APPROVED\n    *   R3: Beta, Equipment [3], 90, APPROVED\n    *   R4: Gamma, Travel [1], 80, HOLD\n    *   R5: Delta, Meals [2], 60, APPROVED\n    *   R6: Beta, Travel [1], 50, APPROVED\n    *   R7: Gamma, Equipment [3], 110, APPROVED\n\n*   **Rules:**\n    *   **General Rule:** Only APPROVED rows qualify. HOLD rows receive nothing.\n    *   **[1] Travel:** Reimburse 75% of the claim, *except* Beta travel is excluded.\n    *   **[2] Meals:** Reimburse the smaller of the claim and $30. *Delta meals are excluded.*\n    *   **[3] Equipment:** Reimburse 50% of the claim for Gamma only; all other projects excluded.\n\n**2. Evaluate Each Row:**\n\n*   **R1:**\n    *   Status: APPROVED (Passes General Rule)\n    *   Category: Travel [1]\n    *   Project: Alpha\n    *   Rule [1] Check: Is it Beta travel? No (it's Alpha). So, apply 75%.\n    *   Calculation: 120 * 0.75 = 90.\n    *   Result: Eligible. Reimbursement = 90.\n\n*   **R2:**\n    *   Status: APPROVED (Passes General Rule)\n    *   Category: Meals [2]\n    *   Project: Alpha\n    *   Rule [2] Check: Is it Delta meals? No (it's Alpha). So, apply rule.\n    *   Calculation: min(40, 30) = 30.\n    *   Result: Eligible. Reimbursement = 30.\n\n*   **R3:**\n    *   Status: APPROVED (Passes General Rule)\n    *   Category: Equipment [3]\n    *   Project: Beta\n    *   Rule [3] Check: Is it Gamma only? No (it's Beta). \"all other projects excluded\".\n    *   Result: Excluded. Reimbursement = 0.\n\n*   **R4:**\n    *   Status: HOLD\n    *   General Rule Check: HOLD rows receive nothing.\n    *   Result: Excluded. Reimbursement = 0.\n\n*   **R5:**\n    *   Status: APPROVED (Passes General Rule)\n    *   Category: Meals [2]\n    *   Project: Delta\n    *   Rule [2] Check: \"Delta meals are excluded.\"\n    *   Result: Excluded. Reimbursement = 0.\n\n*   **R6:**\n    *   Status: APPROVED (Passes General Rule)\n    *   Category: Travel [1]\n    *   Project: Beta\n    *   Rule [1] Check: \"except Beta travel is excluded.\"\n    *   Result: Excluded. Reimbursement = 0.\n\n*   **R7:**\n    *   Status: APPROVED (Passes General Rule)\n    *   Category: Equipment [3]\n    *   Project: Gamma\n    *   Rule [3] Check: \"reimburse 50% of the claim for Gamma only\". Yes, it is Gamma.\n    *   Calculation: 110 * 0.50 = 55.\n    *   Result: Eligible. Reimbursement = 55.\n\n**3. Compile Results:**\n\n*   **Eligible Rows:** R1, R2, R7.\n*   **Reimbursements:**\n    *   R1: 90\n    *   R2: 30\n    *   R7: 55\n    *   Total: 90 + 30 + 55 = 175.\n*   **Excluded Count:**\n    *   R3 (Excluded by Equipment rule)\n    *   R4 (Excluded by Status)\n    *   R5 (Excluded by Delta Meals rule)\n    *   R6 (Excluded by Beta Travel rule)\n    *   Total Excluded: 4.\n\n**4. Format Output:**\nJSON format:\n`{\"eligible_rows\": [\"R1\", \"R2\", \"R7\"], \"reimbursement_usd\": 175, \"excluded_count\": 4}`\n"
+            }
+          }
+        ],
+        "created": 1789619172,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 1129,
+          "prompt_tokens": 1724,
+          "total_tokens": 2853,
+          "prompt_tokens_details": {
+            "cached_tokens": 1722
+          }
+        },
+        "id": "chatcmpl-0XN5tujMT0D3jyJUFrDfDynWRq8VBnfE",
+        "timings": {
+          "cache_n": 1722,
+          "prompt_n": 2,
+          "prompt_ms": 25.311,
+          "prompt_per_token_ms": 12.6555,
+          "prompt_per_second": 79.01702816957054,
+          "predicted_n": 1129,
+          "predicted_ms": 7811.172,
+          "predicted_per_token_ms": 6.9247978723404255,
+          "predicted_per_second": 144.4085471424775
+        }
+      },
+      "elapsed_s": 7.93,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "eligible_rows": true,
+        "reimbursement_usd": true,
+        "excluded_count": true
+      },
+      "parsed": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      }
+    },
+    {
+      "id": "extra10_sequential_token_tracking",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra10_sequential_token_tracking.png",
+      "question": "Solve the pictured tracking problem. Return JSON with string fields P_cell, R_cell, T_cell, token_at_B3.",
+      "expected": {
+        "P_cell": "C3",
+        "R_cell": "D4",
+        "T_cell": "E2",
+        "token_at_B3": "S"
+      },
+      "image_sha256": "6a1673d7929fc139fee11f671396b60679b5e846a969bba274db242e966d2589",
+      "status": "complete",
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "The user wants me to solve a tracking problem based on an image.\n\n**1. Understand the Goal:**\nThe objective is to track five tokens (labeled P, Q, R, S, T in Frame 1) across four frames.\n- Each token moves exactly one cell up, down, left, or right between frames.\n- No diagonal moves, stays, new tokens, or lost tokens.\n- One token per cell.\n- Labels only appear in Frame 1. I need to infer identities.\n- Finally, I need to output a JSON object with:\n    - `P_cell`: The cell containing token P in Frame 4.\n    - `R_cell`: The cell containing token R in Frame 4.\n    - `T_cell`: The cell containing token T in Frame 4.\n    - `token_at_B3`: The label of the token at cell B3 in Frame 4.\n\n**2. Analyze the Grid and Frames:**\nThe grid is 5x5. Columns A-E, Rows 1-5.\n\n**Frame 1:**\n- P is at A2.\n- R is at C2.\n- Q is at B3.\n- T is at E3.\n- S is at D4.\n\n**Frame 2:**\n- Token at B2.\n- Token at C3.\n- Token at D3.\n- Token at B4.\n- Token at C4.\n\n**Frame 3:**\n- Token at B3.\n- Token at D3.\n- Token at E3.\n- Token at A4.\n- Token at B4.\n\n**Frame 4:**\n- Token at E2.\n- Token at B3.\n- Token at C3.\n- Token at B4.\n- Token at D4.\n\n**3. Track Each Token:**\n\n*   **Token P (starts at A2):**\n    *   Frame 1: A2\n    *   Frame 2: Must move to A1, A3, B2, or B1. Looking at Frame 2, there is a token at B2. Let's assume P -> B2.\n    *   Frame 3: From B2, can go to A2, A3, B1, B3, C2, C3.\n        *   Looking at Frame 3, tokens are at B3, D3, E3, A4, B4.\n        *   Wait, let's look at the movement again.\n        *   Frame 2 token at B2.\n        *   Frame 3 tokens: B3, D3, E3, A4, B4.\n        *   If P is at B2 (Frame 2), it could go to B3 (Frame 3).\n    *   Frame 4: From B3, can go to A3, A4, B2, B4, C2, C3, C4.\n        *   Looking at Frame 4 tokens: E2, B3, C3, B4, D4.\n        *   Wait, let's re-evaluate the path.\n        *   Let's look at the tokens in Frame 4.\n            - E2\n            - B3\n            - C3\n            - B4\n            - D4\n        *   Let's trace backwards from Frame 4 to Frame 1.\n\n*   **Token T (starts at E3):**\n    *   Frame 1: E3\n    *   Frame 2: Must move to D3, E2, E4.\n        *   Frame 2 has tokens at B2, C3, D3, B4, C4.\n        *   So T could be at D3.\n    *   Frame 3: From D3, can go to C3, D2, D4, E3.\n        *   Frame 3 has tokens at B3, D3, E3, A4, B4.\n        *   Wait, if T is at D3 in Frame 2, where is it in Frame 3?\n        *   Let's look at Frame 3 tokens: B3, D3, E3, A4, B4.\n        *   If T was at D3 (Frame 2), it could stay at D3? No, \"moves EXACTLY one cell\". So it must move.\n        *   So T cannot be at D3 in Frame 3 if it was at D3 in Frame 2.\n        *   Let's re-examine Frame 2 tokens.\n            - B2\n            - C3\n            - D3\n            - B4\n            - C4\n        *   Let's re-examine Frame 3 tokens.\n            - B3\n            - D3\n            - E3\n            - A4\n            - B4\n        *   Let's re-examine Frame 4 tokens.\n            - E2\n            - B3\n            - C3\n            - B4\n            - D4\n\n    Let's try to match specific tokens.\n\n    **Token P (A2):**\n    - F1: A2\n    - F2: Could be B2 (right).\n    - F3: From B2 -> B3 (down).\n    - F4: From B3 -> B4 (down) or C3 (right) or C2 (up - no token) or A3 (left - no token) or A2 (up - no token).\n        - Wait, let's look at Frame 4 tokens again.\n        - Tokens at: E2, B3, C3, B4, D4.\n        - If P is at B3 in F3, it could go to B4 in F4.\n        - Let's check if P -> B2 -> B3 -> B4 works.\n        - F1: A2 (P) -> F2: B2 (P) -> F3: B3 (P) -> F4: B4 (P).\n        - Let's check other tokens to see if this conflicts.\n\n    **Token R (C2):**\n    - F1: C2\n    - F2: Could be B2 (left), C1 (up), C3 (down), D2 (right).\n        - Tokens in F2: B2, C3, D3, B4, C4.\n        - So R could be at C3 (down).\n    - F3: From C3 -> B3 (left), C2 (up), C4 (down), D3 (right).\n        - Tokens in F3: B3, D3, E3, A4, B4.\n        - So R could be at D3 (right).\n    - F4: From D3 -> D2 (up), D4 (down), C3 (left), E3 (right).\n        - Tokens in F4: E2, B3, C3, B4, D4.\n        - So R could be at D4 (down).\n    - Let's check the path: R (C2) -> C3 (F2) -> D3 (F3) -> D4 (F4).\n    - This looks plausible. Let's verify.\n        - F1: C2 (R) -> F2: C3 (R). Move: Down. OK.\n        - F2: C3 (R) -> F3: D3 (R). Move: Right. OK.\n        - F3: D3 (R) -> F4: D4 (R). Move: Down. OK.\n    - So, **R is at D4 in Frame 4**.\n\n    **Token T (E3):**\n    - F1: E3\n    - F2: Could be D3 (left), E2 (up), E4 (down).\n        - Tokens in F2: B2, C3, D3, B4, C4.\n        - So T could be at D3.\n    - F3: From D3 -> D2, D4, C3, E3.\n        - Tokens in F3: B3, D3, E3, A4, B4.\n        - Wait, if T was at D3 in F2, it must move. So it can't be at D3 in F3.\n        - So T must be at E3 (right) or C3 (left) or D2 (up) or D4 (down).\n        - Tokens in F3 are at B3, D3, E3, A4, B4.\n        - So T could be at E3.\n    - F4: From E3 -> E2 (up), E4 (down), D3 (left).\n        - Tokens in F4: E2, B3, C3, B4, D4.\n        - So T could be at E2.\n    - Let's check the path: T (E3) -> D3 (F2) -> E3 (F3) -> E2 (F4).\n        - F1: E3 (T) -> F2: D3 (T). Move: Left. OK.\n        - F2: D3 (T) -> F3: E3 (T). Move: Right. OK.\n        - F3: E3 (T) -> F4: E2 (T). Move: Up. OK.\n    - So, **T is at E2 in Frame 4**.\n\n    **Token S (D4):**\n    - F1: D4\n    - F2: Could be C4 (left), D3 (up), D5 (down - no row 5 tokens), E4 (right).\n        - Tokens in F2: B2, C3, D3, B4, C4.\n        - So S could be at C4 or D3.\n    - F3:\n        - If S was at C4 (F2): Could go to B4, C3, C5, D4.\n            - Tokens in F3: B3, D3, E3, A4, B4.\n            - So S could be at B4.\n        - If S was at D3 (F2): Could go to D2, D4, C3, E3.\n            - Tokens in F3: B3, D3, E3, A4, B4.\n            - So S could be at E3.\n    - F4:\n        - If S was at B4 (F3): Could go to A4, B3, B5, C4.\n            - Tokens in F4: E2, B3, C3, B4, D4.\n            - So S could be at B3.\n        - If S was at E3 (F3): Could go to E2, E4, D3.\n            - Tokens in F4: E2, B3, C3, B4, D4.\n            - So S could be at E2. But T is at E2. Conflict.\n            - So S cannot be at E3 in F3.\n    - Let's re-evaluate S.\n    - Path option 1: S (D4) -> C4 (F2) -> B4 (F3) -> B3 (F4).\n        - F1: D4 (S) -> F2: C4 (S). Move: Left. OK.\n        - F2: C4 (S) -> F3: B4 (S). Move: Left. OK.\n        - F3: B4 (S) -> F4: B3 (S). Move: Up. OK.\n    - Path option 2: S (D4) -> D3 (F2) -> E3 (F3) -> E2 (F4).\n        - F1: D4 (S) -> F2: D3 (S). Move: Up. OK.\n        - F2: D3 (S) -> F3: E3 (S). Move: Right. OK.\n        - F3: E3 (S) -> F4: E2 (S). Move: Up. OK.\n        - But T is at E2. So S cannot be at E2.\n        - Wait, let's look at T again.\n        - T path: E3 -> D3 -> E3 -> E2.\n        - If S is at E3 in F3, and T is at E3 in F3, that's a collision. \"One token per cell\".\n        - So S cannot be at E3 in F3.\n        - Therefore, S must be at B4 in F3.\n    - So S path: D4 -> C4 -> B4 -> B3.\n    - So **S is at B3 in Frame 4**.\n\n    **Token Q (B3):**\n    - F1: B3\n    - F2: Could be A3, B2, B4, C3.\n        - Tokens in F2: B2, C3, D3, B4, C4.\n        - So Q could be at B2, B4, C3.\n    - F3:\n        - If Q was at B2 (F2): Could go to A2, A3, B1, B3, C2, C3.\n            - Tokens in F3: B3, D3, E3, A4, B4.\n            - So Q could be at B3.\n        - If Q was at B4 (F2): Could go to A4, B3, B5, C4.\n            - Tokens in F3: B3, D3, E3, A4, B4.\n            - So Q could be at B3 or A4.\n        - If Q was at C3 (F2): Could go to B3, C2, C4, D3.\n            - Tokens in F3: B3, D3, E3, A4, B4.\n            - So Q could be at B3 or D3.\n    - F4:\n        - Tokens in F4: E2, B3, C3, B4, D4.\n        - We need to place Q.\n        - Let's look at the remaining tokens for F4.\n        - We have identified:\n            - P -> B4 (F4)\n            - R -> D4 (F4)\n            - T -> E2 (F4)\n            - S -> B3 (F4)\n        - Wait, let's re-verify P.\n            - P path: A2 -> B2 -> B3 -> B4.\n            - F1: A2 (P) -> F2: B2 (P). Move: Right. OK.\n            - F2: B2 (P) -> F3: B3 (P). Move: Down. OK.\n            - F3: B3 (P) -> F4: B4 (P). Move: Down. OK.\n            - So P is at B4 in F4.\n        - We identified R -> D4.\n            - R path: C2 -> C3 -> D3 -> D4.\n            - F1: C2 (R) -> F2: C3 (R). Move: Down. OK.\n            - F2: C3 (R) -> F3: D3 (R). Move: Right. OK.\n            - F3: D3 (R) -> F4: D4 (R). Move: Down. OK.\n            - So R is at D4 in F4.\n        - We identified T -> E2.\n            - T path: E3 -> D3 -> E3 -> E2.\n            - F1: E3 (T) -> F2: D3 (T). Move: Left. OK.\n            - F2: D3 (T) -> F3: E3 (T). Move: Right. OK.\n            - F3: E3 (T) -> F4: E2 (T). Move: Up. OK.\n            - So T is at E2 in F4.\n        - We identified S -> B3.\n            - S path: D4 -> C4 -> B4 -> B3.\n            - F1: D4 (S) -> F2: C4 (S). Move: Left. OK.\n            - F2: C4 (S) -> F3: B4 (S). Move: Left. OK.\n            - F3: B4 (S) -> F4: B3 (S). Move: Up. OK.\n            - So S is at B3 in F4.\n\n    - Now let's look at Q.\n        - Remaining token in F4 is C3.\n        - So Q must be at C3 in F4.\n        - Let's trace Q back.\n        - F4: C3 (Q).\n        - F3: From C3 -> B3, C2, C4, D3.\n            - Tokens in F3: B3, D3, E3, A4, B4.\n            - So Q could be at B3 or D3.\n        - F2:\n            - If Q was at B3 (F3): From B3 -> A3, B2, B4, C3.\n                - Tokens in F2: B2, C3, D3, B4, C4.\n                - So Q could be at B2, B4, C3.\n            - If Q was at D3 (F3): From D3 -> C3, D2, D4, E3.\n                - Tokens in F2: B2, C3, D3, B4, C4.\n                - So Q could be at C3.\n        - F1:\n            - If Q was at C3 (F2): From C3 -> B3, C2, C4, D3.\n                - Tokens in F1: A2, C2, B3, E3, D4.\n                - So Q could be at B3.\n            - If Q was at B2 (F2): From B2 -> A2, B1, B3, C2.\n                - Tokens in F1: A2, C2, B3, E3, D4.\n                - So Q could be at A2 or B3. But P is at A"
+            }
+          }
+        ],
+        "created": 1789619201,
+        "model": "qwen3.5-4b-vl",
+        "system_fingerprint": "b1237-aa39d7a3e",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 4096,
+          "prompt_tokens": 1983,
+          "total_tokens": 6079,
+          "prompt_tokens_details": {
+            "cached_tokens": 1981
+          }
+        },
+        "id": "chatcmpl-B2MFFd9IwsnDgKM8qqCE3KAOnhNSn7Tt",
+        "timings": {
+          "cache_n": 1981,
+          "prompt_n": 2,
+          "prompt_ms": 25.707,
+          "prompt_per_token_ms": 12.8535,
+          "prompt_per_second": 77.79982106041156,
+          "predicted_n": 4096,
+          "predicted_ms": 28598.992,
+          "predicted_per_token_ms": 6.98388083028083,
+          "predicted_per_second": 143.1868647678212
+        }
+      },
+      "elapsed_s": 28.704,
+      "score": 0,
+      "max_score": 4,
+      "checks": {
+        "P_cell": false,
+        "R_cell": false,
+        "T_cell": false,
+        "token_at_B3": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 4096,
+    "chat_template_kwargs": {
+      "reasoning_effort": "low"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 4,
+  "tiers": {
+    "easy": {
+      "score": 0,
+      "max_score": 0
+    },
+    "medium": {
+      "score": 0,
+      "max_score": 0
+    },
+    "hard": {
+      "score": 13,
+      "max_score": 30
+    }
+  }
+}
