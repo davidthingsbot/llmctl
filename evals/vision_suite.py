@@ -18,7 +18,9 @@ def grade(text, expected):
     return {'score':sum(checks.values()), 'max_score':len(expected), 'checks':checks, 'parsed':answer}
 
 
-def run_suite(tasks, url, model, key_file, output):
+def run_suite(tasks, url, model, key_file, output, *, template_kwargs=None, max_tokens=1024):
+    """template_kwargs replaces the default {'reasoning_effort': 'low'} — that
+    default is GLM's knob; Qwen3.5 ignores it and thinks until max_tokens."""
     import base64
     import hashlib
     import time
@@ -27,7 +29,7 @@ def run_suite(tasks, url, model, key_file, output):
     from pathlib import Path
     from eval_runtime import atomic_write_json
     key=Path(key_file).read_text().strip()
-    result={'suite':'synthetic-vision-v1','model':model,'endpoint':url,'status':'partial','score':0,'max_score':sum(len(t['expected']) for t in tasks),'tasks':[], 'settings':{'temperature':0,'max_tokens':1024,'chat_template_kwargs':{'reasoning_effort':'low'},'retry':False}}
+    result={'suite':'synthetic-vision-v1','model':model,'endpoint':url,'status':'partial','score':0,'max_score':sum(len(t['expected']) for t in tasks),'tasks':[], 'settings':{'temperature':0,'max_tokens':max_tokens,'chat_template_kwargs':{'reasoning_effort':'low'} if template_kwargs is None else template_kwargs,'retry':False}}
     atomic_write_json(output,result)
     for task in tasks:
         data=Path(task['image']).read_bytes()
@@ -70,9 +72,13 @@ if __name__=='__main__':
     parser.add_argument('--model',required=True)
     parser.add_argument('--key-file',required=True)
     parser.add_argument('--output',required=True)
+    parser.add_argument('--template-kwargs',metavar='JSON',help="chat_template_kwargs to send instead of the default {'reasoning_effort': 'low'}; e.g. '{\"enable_thinking\": false}' for Qwen3.5")
+    parser.add_argument('--max-tokens',type=int,default=1024)
     args=parser.parse_args()
     manifest=Path(args.fixtures)/'manifest.json'
     tasks=json.loads(manifest.read_text())['tasks'] if manifest.exists() else build_suite(args.fixtures)
-    result=run_suite(tasks,args.url,args.model,args.key_file,args.output)
+    result=run_suite(tasks,args.url,args.model,args.key_file,args.output,
+                     template_kwargs=json.loads(args.template_kwargs) if args.template_kwargs else None,
+                     max_tokens=args.max_tokens)
     print(json.dumps({k:result.get(k) for k in ('status','score','max_score','perfect_tasks','tiers')}))
     raise SystemExit(0 if result['status']=='complete' else 1)
