@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 4.274356763999094,
+  "response": {
+    "id": "chatcmpl-83cb65255136b12a",
+    "object": "chat.completion",
+    "created": 1789660765,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"invalid length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Fix: length check exact 5+payload_len, little-endian, CRC over type+length+payload, use frame[3+payload_len:3+payload_len+2]."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 257,
+      "total_tokens": 423,
+      "completion_tokens": 166,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

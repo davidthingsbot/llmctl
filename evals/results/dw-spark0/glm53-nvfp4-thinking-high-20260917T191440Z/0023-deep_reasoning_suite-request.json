@@ -1,0 +1,27 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "Choose which models stay resident. TWO limits bind at once: 112 GiB of\nmemory AND 260 GB/s of memory bandwidth, shared by everything loaded.\n\n  name      size_gib   bandwidth_gbs   value\n  atlas        61            120         67\n  borealis     56            140         60\n  cinder       56            130         60\n  dunlin       27             80         28\n  ember        19             70         19\n  fennec       13             55         12\n\nA set is feasible only if total size <= 112 AND total bandwidth <= 260.\n\nReturn ONLY JSON with exactly these keys:\n  \"selection\"         array of names, the value-maximising feasible set\n  \"total_value\"       integer\n  \"total_size_gib\"    integer\n  \"total_bandwidth\"   integer\n  \"bandwidth_binds\"   true or false, whether the bandwidth limit rules out the\n                      set you would have picked on memory alone\n"
+    },
+    {
+      "role": "assistant",
+      "content": "```json\n{\n  \"selection\": [\"atlas\", \"ember\", \"fennec\"],\n  \"total_value\": 98,\n  \"total_size_gib\": 93,\n  \"total_bandwidth\": 245,\n  \"bandwidth_binds\": true\n}\n```\n\nReasoning summary:\n- **Memory-only optimum** (size \u2264 112): borealis + cinder = 112 GiB, value 120 \u2014 but its bandwidth is 270 GB/s > 260, so it is infeasible. Other high-value memory-feasible sets (atlas+dunlin+ember = 114; borealis+dunlin+ember and cinder+dunlin+ember = 107; borealis+dunlin+fennec and cinder+dunlin+fennec = 100) all also exceed 260 GB/s.\n- **Best bandwidth-feasible set**: atlas + ember + fennec \u2014 size 61+19+13 = 93 \u2264 112, bandwidth 120+70+55 = 245 \u2264 260, value 67+19+12 = 98. No other feasible set exceeds value 98 (next best: atlas+dunlin = 95; cinder+ember+fennec = 91).\n- Since the memory-alone pick (borealis+cinder) is ruled out by the bandwidth limit, bandwidth binds: **true**."
+    },
+    {
+      "role": "user",
+      "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: ignored_bandwidth, selection, total_bandwidth, total_size_gib, total_value"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

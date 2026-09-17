@@ -1,0 +1,21 @@
+{
+  "mode": "none",
+  "suite": "work_quality_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+      },
+      {
+        "role": "user",
+        "content": "Repair this Python function. Return ONLY the complete corrected `decode_frame` function, with no imports and no explanation.\n\nSpecification:\n- Frame layout: type:1 byte, payload_length:2 bytes little-endian, payload:N bytes,\n  CRC16:2 bytes little-endian.\n- The total frame length must be exactly 5 + payload_length; reject both truncation and trailing bytes.\n- `crc16` is already provided and must cover type + length + payload, excluding the stored CRC.\n- Raise ValueError for invalid length or CRC.\n- Return `(frame_type, payload)`.\n\nBroken code:\n```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 6:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"big\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"big\")\n    actual = crc16(payload)\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T02:25:24.726672+00:00"
+}

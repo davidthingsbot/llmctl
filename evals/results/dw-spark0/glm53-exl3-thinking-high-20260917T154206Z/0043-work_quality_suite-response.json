@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 15.396688148000976,
+  "response": {
+    "id": "chatcmpl-99370ee2a9ebdc49",
+    "object": "chat.completion",
+    "created": 1789661201,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\n\ndef init_params(n_in, n_hidden, seed):\n    \"\"\"Return a dict with keys W1, b1, W2, b2.\"\"\"\n    rng = np.random.RandomState(seed)\n    W1 = rng.randn(n_hidden, n_in) * 0.1\n    b1 = np.zeros(n_hidden)\n    W2 = rng.randn(n_hidden) * 0.1\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\n\ndef loss_and_grads(params, X, y):\n    \"\"\"Return (loss, grads) where grads has the same keys as params.\"\"\"\n    W1, b1, W2, b2 = params[\"W1\"], params[\"b1\"], params[\"W2\"], params[\"b2\"]\n\n    # Forward pass\n    A = X @ W1.T + b1              # (n, n_hidden)\n    H = np.tanh(A)                 # (n, n_hidden)\n    z = H @ W2 + b2                # (n,)\n\n    # Numerically stable binary cross-entropy:\n    # -(y*log(p) + (1-y)*log(1-p)) == logaddexp(0, z) - y*z\n    loss = np.mean(np.logaddexp(0.0, z) - y * z)\n\n    n = X.shape[0]\n\n    # Backward pass\n    dz = (1.0 / (1.0 + np.exp(-z))) - y   # sigmoid(z) - y, shape (n,)\n    dz = dz / n                            # mean over samples\n\n    gW2 = H.T @ dz                # (n_hidden,)\n    gb2 = np.sum(dz)              # scalar\n    dH = np.outer(dz, W2)         # (n, n_hidden)\n    dA = dH * (1.0 - H ** 2)      # tanh'\n    gW1 = dA.T @ X                # (n_hidden, n_in)\n    gb1 = np.sum(dA, axis=0)      # (n_hidden,)\n\n    grads = {\"W1\": gW1, \"b1\": gb1, \"W2\": gW2, \"b2\": gb2}\n    return loss, grads\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Standard implementation. Use np.random.RandomState(seed) or default_rng. Loss with clipping for log stability? Finite difference check: loss must be smooth; clipping could break gradient check if p near 0/1. Use stable log with np.logaddexp? loss = mean of logaddexp(0, z) - y*z gives -y log p - (1-y) log(1-p). That's numerically stable and smooth. Gradient: dz = p - y.\n\nWrite functions."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 379,
+      "total_tokens": 995,
+      "completion_tokens": 616,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

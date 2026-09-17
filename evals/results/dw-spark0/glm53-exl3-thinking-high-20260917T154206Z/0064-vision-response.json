@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 53.817031412996585,
+  "response": {
+    "id": "chatcmpl-a8c090853960b5a4",
+    "object": "chat.completion",
+    "created": 1789661587,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\"room\": \"R1\", \"technician\": \"Bo\", \"start\": \"10:15\", \"end\": \"11:15\"}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need appointment 60 min: room occupied whole [S, S+60], technician occupied setup [S,S+15] and finish [S+45,S+60], scanner occupied [S+15,S+45].\n\nEarliest completion: try start 09:00.\n\nStart 09:00:\n- R1 occupied 09:00-10:00. R2 occupied 09:00-09:30. Both rooms busy at 09:00. Fail.\n\nStart 09:15:\n- R1 busy 09:00-10:00. R2 free 09:30-11:30? R2 occupied 09:00-09:30, then free until 11:30. Room R2 [09:15,10:15] overlaps 09:00-09:30. Fail.\n\nStart 09:30:\n- R1 busy until 10:00. R2 free 09:30-11:30. Room ok [09:30,10:30].\n- Technician: Ada busy 09:00-09:45, then 10:30-11:30. Ada setup [09:30,09:45] overlaps Ada busy. Bo busy 09:00-10:00. Fail.\n\nStart 09:45:\n- R1 busy until 10:00. R2 free. Room [09:45,10:45] ok.\n- Ada: busy 09:00-09:45 (touching ok), then 10:30-11:30. Setup [09:45,10:00] free. Finish [10:30,10:45] overlaps Ada busy 10:30-11:30. Fail for Ada.\n- Bo: busy 09:00-10:00, setup overlaps. Fail.\n\nStart 10:00:\n- R1 free 10:00-11:15. R2 free until 11:30.\n- Ada: free 09:45-10:30, busy 10:30-11:30. Setup [10:00,10:15] ok. Finish [10:45,11:00] overlaps Ada busy. Fail.\n- Bo: busy 09:00-10:00 (touching), 10:45-11:00 busy. Setup [10:00,10:15] ok. Scanner [10:15,10:45] \u2014 Scanner busy 10:00-10:30, overlaps. Fail.\n\nStart 10:15:\n- R1 free until 11:15: room [10:15,11:15] ok (touching 11:15).\n- Ada: busy 10:30-11:30. Setup [10:15,10:30] ok (touching). Finish [11:00,11:15] overlaps Ada busy 10:30-11:30. Fail.\n- Bo: free 10:00-10:45, busy 10:45-11:00. Scanner [10:30,11:00] overlaps Bo busy? Scanner busy 10:00-10:30 (touching ok). Bo busy 10:45-11:00 overlaps scanner [10:30,11:00]? Technician free during scan, so Bo busy 10:45-11:00 conflicts with scan period. Fail.\n\nStart 10:30:\n- R1 free until 11:15: room [10:30,11:30] overlaps R1 busy 11:15-12:15. Fail. R2 free until 11:30: room [10:30,11:30] touching ok.\n- Ada: busy 10:30-11:30. Setup overlaps. Fail.\n- Bo: free 10:00-10:45, busy 10:45-11:00, free 11:00-11:45. Setup [10:30,10:45] ok. Scanner [10:45,11:15] \u2014 Scanner free 10:30-11:30. Bo busy 10:45-11:00 overlaps scan \u2014 technician must be free during scan. Fail.\n\nStart 10:45:\n- R2: room [10:45,11:45] overlaps R2 busy 11:30-12:00. Fail. R1 overlaps 11:15. Fail.\n\nStart 11:00:\n- R1 busy 11:15-12:15 overlaps [11:00,12:00]. R2 busy 11:30-12:00 overlaps. Fail.\n\nStart 11:15:\n- R1 busy 11:15-12:15. R2 busy 11:30-12:00 overlaps [11:15,12:15]. Fail.\n\nStart 11:30:\n- R1 busy until 12:15. R2 busy 11:30-12:00 overlaps. Fail.\n\nStart 11:45:\n- R1 busy until 12:15 overlaps. R2 free 12:00-12:30, but [11:45,12:45] overlaps 11:30-12:00. Fail.\n\nStart 12:00:\n- R1 busy until 12:15 overlaps. R2 free 12:00-12:30, room [12:00,13:00] overlaps R2 busy 12:30-13:00. Fail.\n\nStart 12:15:\n- R1 free 12:15-... R1 permits Ada only. Ada busy 12:00-13:00. Fail. R2 busy 12:30-13:00 overlaps [12:15,13:15] also exceeds 13:00. Fail.\n\nStart 12:30: ends 13:30 > 13:00. Fail.\n\nHmm, no solution? Recheck start 10:00 with R1 and Bo: Scanner busy 10:00-10:30, scan [10:15,10:45] overlaps. Fail.\n\nRecheck start 09:45 with Bo, R2: Bo busy 09:00-10:00, setup [09:45,10:00] overlaps. Fail.\n\nStart 10:15 with R1, Bo: room R1 [10:15,11:15] ok. Bo setup [10:15,10:30] free (Bo busy 10:45-11:00). Scanner [10:30,11:00]: Scanner busy 10:00-10:30 touching ok; Scanner free 10:30-11:30 ok. Bo busy 10:45-11:00 during scan \u2014 technician free during scan required. Fail.\n\nHmm. Did I misread Bo's 10:45-11:00 bar? Yes \"10:45 11:00\" small bar. And Bo 11:45-12:30.\n\nStart 11:00 with R2? R2 busy 11:30-12:00 overlaps [11:00,12:00]. Fail.\n\nWait \u2014 maybe technician \"free during scan\" means technician only needed setup and finish; busy during scan is fine? No \u2014 \"Technician: setup AND finish; free during scan.\" Means technician must be free during scan? Actually it says technician is occupied during setup and finish, and free (not occupied by this appointment) during scan \u2014 but if technician is busy with something else during scan, that's fine since appointment doesn't need them? Hmm, \"All required resources must be free\" \u2014 required resources during scan: room and scanner. Technician not required during scan. So technician being busy elsewhere during scan is OK!\n\nRecheck: technician required only [S,S+15] and [S+45,S+60].\n\nStart 10:00, R1, Bo: room R1 [10:00,11:00] free (R1 busy 09-10, 11:15-12:15). Bo setup [10:00,10:15]: Bo busy 09:00-10:00 touching ok. Bo finish [10:45,11:00]: Bo busy 10:45-11:00 \u2014 conflict! Fail.\n\nStart 10:00, R2, Ada: Ada finish [10:45,11:00] vs Ada busy 10:30-11:30 conflict. Fail.\n\nStart 10:15, R1, Bo: setup [10:15,10:30] ok; finish [11:00,11:15] \u2014 Bo free (busy 10:45-11:00 touching, 11:45-12:30). Scanner [10:30,11:00] free. Room R1 [10:15,11:15] ok. Works! Completion 11:15.\n\nBut check earlier: start 09:45, R2, Ada: setup [09:45,10:00] \u2014 Ada busy 09:00-09:45 touching ok. Finish [10:30,10:45] \u2014 Ada busy 10:30-11:30 conflict. Fail.\n\nStart 09:45, R2, Bo: setup overlaps Bo 09-10. Fail.\n\nStart 10:00, R1, Ada: finish [10:45,11:00] vs Ada 10:30-11:30 conflict. Fail.\n\nStart 10:00, R2, Bo: finish [10:45,11:00] vs Bo busy 10:45-11:00 conflict. Fail.\n\nSo earliest completion 11:15: R1, Bo, 10:15-11:15.\n\nCheck start 10:15 R2 Ada: Ada finish [11:00,11:15] vs busy 10:30-11:30 conflict. So unique: R1, Bo.\n\nVerify scanner [10:30,11:00]: Scanner busy 10:00-10:30 (touch), 11:30-12:00. OK."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 2097,
+      "total_tokens": 4239,
+      "completion_tokens": 2142,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

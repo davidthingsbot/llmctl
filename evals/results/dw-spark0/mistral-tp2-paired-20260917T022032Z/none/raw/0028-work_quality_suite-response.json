@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 27.354375773000356,
+  "response": {
+    "id": "chatcmpl-9bfa05745c65fc5c",
+    "object": "chat.completion",
+    "created": 1789611924,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) != 5 + int.from_bytes(frame[1:3], \"little\"):\n        raise ValueError(\"short\")\n    frame_type = frame[0]\n    payload_length = int.from_bytes(frame[1:3], \"little\")\n    payload = frame[3:3 + payload_length]\n    stored_crc = int.from_bytes(frame[-2:], \"little\")\n    actual_crc = crc16(frame[:3 + payload_length])\n    if actual_crc != stored_crc:\n        raise ValueError(\"crc\")\n    return (frame_type, payload)\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 274,
+      "total_tokens": 408,
+      "completion_tokens": 134,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

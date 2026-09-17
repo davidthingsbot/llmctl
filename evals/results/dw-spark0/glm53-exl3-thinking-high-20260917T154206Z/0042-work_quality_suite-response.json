@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 16.20979402300145,
+  "response": {
+    "id": "chatcmpl-82daa78125e517e7",
+    "object": "chat.completion",
+    "created": 1789661185,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\ndouble mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    const double* W1 = params;\n    const double* b1 = params + n_hidden * n_in;\n    const double* W2 = b1 + n_hidden;\n    const double b2 = W2[n_hidden];\n\n    double* gW1 = grad;\n    double* gb1 = grad + n_hidden * n_in;\n    double* gW2 = gb1 + n_hidden;\n    double* gb2 = gW2 + n_hidden;\n\n    double* hbuf = new double[n_hidden > 0 ? n_hidden : 1];\n\n    for (int i = 0; i < n_hidden * n_in; ++i) gW1[i] = 0.0;\n    for (int j = 0; j < n_hidden; ++j) { gb1[j] = 0.0; gW2[j] = 0.0; }\n    *gb2 = 0.0;\n\n    double loss = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n\n        // Forward pass\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* wrow = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) a += wrow[k] * x[k];\n            hbuf[j] = std::tanh(a);\n        }\n        double z = b2;\n        for (int j = 0; j < n_hidden; ++j) z += W2[j] * hbuf[j];\n        double p = 1.0 / (1.0 + std::exp(-z));\n\n        // Loss (clamp for numerical safety of log)\n        double pc = p < 1e-15 ? 1e-15 : (p > 1.0 - 1e-15 ? 1.0 - 1e-15 : p);\n        double ys = y[s];\n        loss += -(ys * std::log(pc) + (1.0 - ys) * std::log(1.0 - pc));\n\n        // Backward pass\n        double dz = p - ys;\n        for (int j = 0; j < n_hidden; ++j) {\n            double dh = dz * W2[j];\n            double da = dh * (1.0 - hbuf[j] * hbuf[j]);\n            double* grow = gW1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) grow[k] += da * x[k];\n            gb1[j] += da;\n            gW2[j] += dz * hbuf[j];\n        }\n        *gb2 += dz;\n    }\n\n    double inv = 1.0 / static_cast<double>(n_samples);\n    for (int i = 0; i < n_hidden * n_in; ++i) gW1[i] *= inv;\n    for (int j = 0; j < n_hidden; ++j) { gb1[j] *= inv; gW2[j] *= inv; }\n    *gb2 *= inv;\n\n    delete[] hbuf;\n\n    return loss * inv;\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Need to declare hbuf. Use std::vector? Not allowed beyond <cmath>. Use a fixed max or VLA\u2014use a local array with dynamic allocation via new/delete, or just recompute. Simplest: allocate with new[] and delete, or use a stack array with a reasonable max... n_hidden unknown. Use new/delete."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 1293,
+      "total_tokens": 2113,
+      "completion_tokens": 820,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

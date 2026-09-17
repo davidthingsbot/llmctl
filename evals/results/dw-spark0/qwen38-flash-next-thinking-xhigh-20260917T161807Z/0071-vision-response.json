@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 11.01230586899328,
+  "response": {
+    "id": "chatcmpl-ab86f1b605fa4210",
+    "object": "chat.completion",
+    "created": 1789672265,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"highest_usable\": \"West\",\n  \"total_usable\": 146,\n  \"quarantine_total\": 43\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Let me carefully read the values from each stack.\n\nLegend: / = allocated, o = ready, | = quarantine, x = rejected.\n\nUsable = allocated + ready.\n\nNorth stack (top to bottom): x 8, / 18, | 12, o 17.\n- allocated: 18\n- ready: 17\n- quarantine: 12\n- rejected: 8\nUsable North = 18 + 17 = 35.\n\nEast stack: o 23, | 8, / 12, x 10.\n- allocated: 12\n- ready: 23\n- quarantine: 8\n- rejected: 10\nUsable East = 12 + 23 = 35.\n\nSouth stack: / 15, x 7, o 19, | 14.\n- allocated: 15\n- ready: 19\n- quarantine: 14\n- rejected: 7\nUsable South = 15 + 19 = 34.\n\nWest stack: | 9, o 16, x 6, / 26.\n- allocated: 26\n- ready: 16\n- quarantine: 9\n- rejected: 6\nUsable West = 26 + 16 = 42.\n\nMost usable: West (42). North and East tie at 35, but West is highest.\n\nTotal usable across all sites = 35 + 35 + 34 + 42 = 146.\n\nQuarantine total = 12 + 8 + 14 + 9 = 43.\n\nLet me double check arithmetic.\n\nNorth usable: 18+17=35. East: 23+12=35. South: 15+19=34. West: 26+16=42. Sum = 35+35=70, +34=104, +42=146. Good.\n\nQuarantine: North 12, East 8, South 14, West 9. Sum = 12+8=20, +14=34, +9=43. Good.\n\nHighest usable site: West.\n\nReturn JSON with highest_usable (string), total_usable (integer), quarantine_total (integer).\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 1586,
+      "total_tokens": 2172,
+      "completion_tokens": 586,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 547
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

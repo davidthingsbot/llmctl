@@ -1,0 +1,818 @@
+{
+  "suite": "work_quality_v1+hard",
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "endpoint": "http://127.0.0.1:8007/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  },
+  "score": 397,
+  "max_score": 438,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 39662,
+    "completion_tokens": 151338,
+    "total_tokens": 191000,
+    "task_seconds": 3466.27,
+    "wall_seconds": 3471.99,
+    "generation_tok_s": 43.66,
+    "truncated_tasks": [
+      "stream_reassembler"
+    ],
+    "retries": 4,
+    "retry_completion_tokens": 80879
+  },
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "{\"scan_action\":\"transduce_only\",\"transform_command\":\"APPLY_TRANSFORM\",\"retained_read_command\":\"READ_FRAME\",\"crc_scope\":\"outer_packet\",\"acquisition_conflict\":\"reject_on_demand_scan\",\"event_mode_relation\":\"independent\"}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      },
+      "status": "complete",
+      "raw_response": "{\"scan_action\":\"transduce_only\",\"transform_command\":\"APPLY_TRANSFORM\",\"retained_read_command\":\"READ_FRAME\",\"crc_scope\":\"outer_packet\",\"acquisition_conflict\":\"reject_on_demand_scan\",\"event_mode_relation\":\"independent\"}",
+      "usage": {
+        "prompt_tokens": 214,
+        "total_tokens": 408,
+        "completion_tokens": 194,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 136
+        }
+      },
+      "elapsed_s": 5.0121
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 9,
+      "max_score": 10,
+      "max_tokens": 32768,
+      "response": "{\"selected_mpn\":\"GRM21BR71H104KA01L\",\"add_new_sku\":false,\"voltage_valid\":false,\"annual_unit_savings_usd\":16,\"setup_cost_usd\":0}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": false
+      },
+      "status": "complete",
+      "raw_response": "{\"selected_mpn\":\"GRM21BR71H104KA01L\",\"add_new_sku\":false,\"voltage_valid\":false,\"annual_unit_savings_usd\":16,\"setup_cost_usd\":0}",
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 941,
+        "completion_tokens": 675,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 626
+        }
+      },
+      "elapsed_s": 18.0897,
+      "score_first": 9,
+      "retry_feedback": "failed checks: setup_40",
+      "raw_retry_response": "{\"selected_mpn\":\"GRM21BR71H104KA01L\",\"add_new_sku\":false,\"voltage_valid\":false,\"annual_unit_savings_usd\":16,\"setup_cost_usd\":40}",
+      "retry_response": "{\"selected_mpn\":\"GRM21BR71H104KA01L\",\"add_new_sku\":false,\"voltage_valid\":false,\"annual_unit_savings_usd\":16,\"setup_cost_usd\":40}",
+      "retry_usage": {
+        "prompt_tokens": 358,
+        "total_tokens": 2069,
+        "completion_tokens": 1711,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1662
+        }
+      },
+      "retry_elapsed_s": 47.2167,
+      "score_retry": 10,
+      "retry_grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      },
+      "status": "complete",
+      "raw_response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    if len(frame) != 5 + payload_len:\n        raise ValueError(\"length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "usage": {
+        "prompt_tokens": 283,
+        "total_tokens": 566,
+        "completion_tokens": 283,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 154
+        }
+      },
+      "elapsed_s": 6.7325
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "1. **No bounds validation before reading/copying:** `rx[1]`, `rx[2+len]`, `rx[3+len]`, and `memcpy` are used without checking `rx_len`.  \n   **Correction:** Validate `rx != NULL`, `rx_len >= 4`, `len <= sizeof(payload)`, and `rx_len >= len + 4` before any access.\n\n2. **Stack buffer overflow:** `len` is `uint8_t` and can be up to 255, but `payload[32]` is only 32 bytes.  \n   **Correction:** Reject `len > sizeof(payload)` or size the buffer to the protocol maximum.\n\n3. **CRC coverage is wrong:** `crc16(payload, len)` covers only payload, but protocol requires CRC over command + length + payload.  \n   **Correction:** Compute CRC over `rx[0]`, `rx[1]`, and payload, e.g. `crc16(rx, 2 + len)` if contiguous.\n\n4. **CRC comparison uses assignment:** `if (calc = got)` assigns `got` to `calc` and tests nonzero, not equality.  \n   **Correction:** Use `if (calc == got)` and reject the frame on mismatch.\n\n5. **Authentication/order violation:** `sequence++` and `parse_command()` run before CRC verification and authentication; `authenticate()` return value is ignored.  \n   **Correction:** Verify CRC, require successful authentication, then parse command and update sequence/state.\n\n6. **Unsafe `printf` on binary payload:** `printf(\"payload=%s\\n\", payload)` assumes NUL-terminated string and may over-read.  \n   **Correction:** Use length-bounded output, e.g. `printf(\"%.*s\\n\", len, payload)`, or print as hex.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": true
+      },
+      "status": "complete",
+      "raw_response": "1. **No bounds validation before reading/copying:** `rx[1]`, `rx[2+len]`, `rx[3+len]`, and `memcpy` are used without checking `rx_len`.  \n   **Correction:** Validate `rx != NULL`, `rx_len >= 4`, `len <= sizeof(payload)`, and `rx_len >= len + 4` before any access.\n\n2. **Stack buffer overflow:** `len` is `uint8_t` and can be up to 255, but `payload[32]` is only 32 bytes.  \n   **Correction:** Reject `len > sizeof(payload)` or size the buffer to the protocol maximum.\n\n3. **CRC coverage is wrong:** `crc16(payload, len)` covers only payload, but protocol requires CRC over command + length + payload.  \n   **Correction:** Compute CRC over `rx[0]`, `rx[1]`, and payload, e.g. `crc16(rx, 2 + len)` if contiguous.\n\n4. **CRC comparison uses assignment:** `if (calc = got)` assigns `got` to `calc` and tests nonzero, not equality.  \n   **Correction:** Use `if (calc == got)` and reject the frame on mismatch.\n\n5. **Authentication/order violation:** `sequence++` and `parse_command()` run before CRC verification and authentication; `authenticate()` return value is ignored.  \n   **Correction:** Verify CRC, require successful authentication, then parse command and update sequence/state.\n\n6. **Unsafe `printf` on binary payload:** `printf(\"payload=%s\\n\", payload)` assumes NUL-terminated string and may over-read.  \n   **Correction:** Use length-bounded output, e.g. `printf(\"%.*s\\n\", len, payload)`, or print as hex.",
+      "usage": {
+        "prompt_tokens": 264,
+        "total_tokens": 2219,
+        "completion_tokens": 1955,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1559
+        }
+      },
+      "elapsed_s": 54.0598
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "**Replacement design: split `SCAN` into acquisition and processing; one owner per resource.**\n\n**Commands / responsibilities**\n- `ACQUIRE(source_id, params?) -> frame_id` \u2014 acquisition manager obtains one raw frame. No transform, no filter update, no event emission.\n- `STREAM_START(source_id, rate, params) / STREAM_STOP(source_id)` \u2014 continuous raw acquisition. Acquisition manager owns the source for the session.\n- `PROCESS(raw_frame_id, pipeline_version?) -> derived_frame_id` \u2014 processing engine applies shear/filter pipeline. Idempotent; no sensor access.\n- `CONFIG_SET(pipeline params) -> pipeline_version` \u2014 atomic snapshot of transform/filter configuration.\n- `EVENT_ENABLE / EVENT_DISABLE` \u2014 event broker subscription only.\n- `DOWNLOAD / AUDIT(frame_id | derived_frame_id)` \u2014 storage manager returns raw/derived data plus provenance.\n\n**Frame / source identity**\n- `source_id`: stable physical/logical source.\n- `frame_id = (source_id, acquisition_epoch, sequence)`: unique raw frame identity.\n- `derived_frame_id = (frame_id, pipeline_version, transform_id, filter_state_id)`.\n- `request_id`: correlates on-demand requests.\n- Metadata: timestamp, `acquisition_mode`, acquisition params, `pipeline_version`.\n\n**Continuous vs on-demand**\n- Continuous mode: acquisition manager produces raw frames in one source-owned stream.\n- On-demand `ACQUIRE` while continuous is active is queued to the same acquisition manager. It must not open a second source or issue concurrent sensor commands. It is serviced at the next frame boundary or coalesced with the next continuous frame. If different acquisition params are required, reject or require an explicit mode change.\n- On-demand frame is tagged `acquisition_mode=on-demand` for audit, but remains part of the source\u2019s sequence.\n- Processing is serialized per source. Continuous frames may auto-process if configured; on-demand frames process on request. Filter state is updated only by the processing engine, in frame order.\n\n**Event reporting**\n- Event reporting is orthogonal to acquisition mode. `EVENT_ENABLE` controls emission only; it does not gate acquisition, processing, or storage.\n- Continuous and on-demand frames both emit change events if enabled.\n- Events are emitted after processing commit and carry `source_id`, `frame_id`, `derived_frame_id`, `pipeline_version`, and change set.\n\n**Audit / download**\n- Store raw frames immutably. Store derived frames with a reference to the raw frame and `pipeline_version`, or allow recomputation from raw + `pipeline_version` + filter-state snapshot.\n- Download can request raw, derived, or both by ID. No rescanning is required.\n\n**Invariants**\n- Acquisition manager is sole owner of the sensor/source.\n- Processing engine is sole owner of transform/filter state.\n- Storage manager is sole owner of frame storage.\n- Event broker is sole owner of subscriptions.\n- No single command acquires, transforms, filters, stores, and emits.\n- On-demand never preempts continuous source ownership.\n- Event mode never controls acquisition.",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": true,
+        "event_independent": true,
+        "conflict_rejected_or_queued": true
+      },
+      "status": "complete",
+      "raw_response": "**Replacement design: split `SCAN` into acquisition and processing; one owner per resource.**\n\n**Commands / responsibilities**\n- `ACQUIRE(source_id, params?) -> frame_id` \u2014 acquisition manager obtains one raw frame. No transform, no filter update, no event emission.\n- `STREAM_START(source_id, rate, params) / STREAM_STOP(source_id)` \u2014 continuous raw acquisition. Acquisition manager owns the source for the session.\n- `PROCESS(raw_frame_id, pipeline_version?) -> derived_frame_id` \u2014 processing engine applies shear/filter pipeline. Idempotent; no sensor access.\n- `CONFIG_SET(pipeline params) -> pipeline_version` \u2014 atomic snapshot of transform/filter configuration.\n- `EVENT_ENABLE / EVENT_DISABLE` \u2014 event broker subscription only.\n- `DOWNLOAD / AUDIT(frame_id | derived_frame_id)` \u2014 storage manager returns raw/derived data plus provenance.\n\n**Frame / source identity**\n- `source_id`: stable physical/logical source.\n- `frame_id = (source_id, acquisition_epoch, sequence)`: unique raw frame identity.\n- `derived_frame_id = (frame_id, pipeline_version, transform_id, filter_state_id)`.\n- `request_id`: correlates on-demand requests.\n- Metadata: timestamp, `acquisition_mode`, acquisition params, `pipeline_version`.\n\n**Continuous vs on-demand**\n- Continuous mode: acquisition manager produces raw frames in one source-owned stream.\n- On-demand `ACQUIRE` while continuous is active is queued to the same acquisition manager. It must not open a second source or issue concurrent sensor commands. It is serviced at the next frame boundary or coalesced with the next continuous frame. If different acquisition params are required, reject or require an explicit mode change.\n- On-demand frame is tagged `acquisition_mode=on-demand` for audit, but remains part of the source\u2019s sequence.\n- Processing is serialized per source. Continuous frames may auto-process if configured; on-demand frames process on request. Filter state is updated only by the processing engine, in frame order.\n\n**Event reporting**\n- Event reporting is orthogonal to acquisition mode. `EVENT_ENABLE` controls emission only; it does not gate acquisition, processing, or storage.\n- Continuous and on-demand frames both emit change events if enabled.\n- Events are emitted after processing commit and carry `source_id`, `frame_id`, `derived_frame_id`, `pipeline_version`, and change set.\n\n**Audit / download**\n- Store raw frames immutably. Store derived frames with a reference to the raw frame and `pipeline_version`, or allow recomputation from raw + `pipeline_version` + filter-state snapshot.\n- Download can request raw, derived, or both by ID. No rescanning is required.\n\n**Invariants**\n- Acquisition manager is sole owner of the sensor/source.\n- Processing engine is sole owner of transform/filter state.\n- Storage manager is sole owner of frame storage.\n- Event broker is sole owner of subscriptions.\n- No single command acquires, transforms, filters, stores, and emits.\n- On-demand never preempts continuous source ownership.\n- Event mode never controls acquisition.",
+      "usage": {
+        "prompt_tokens": 181,
+        "total_tokens": 4701,
+        "completion_tokens": 4520,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 3858
+        }
+      },
+      "elapsed_s": 134.4789
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "{\"project\":\"Kestrel\",\"revision\":\"C7\",\"connector\":\"J14\",\"pullup_ohms\":4700,\"max_retries\":3,\"crc_polynomial\":\"0x1EDC6F41\",\"calibration_temperature_c\":42.75,\"owner\":\"Mira Chen\"}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      },
+      "status": "complete",
+      "raw_response": "{\"project\":\"Kestrel\",\"revision\":\"C7\",\"connector\":\"J14\",\"pullup_ohms\":4700,\"max_retries\":3,\"crc_polynomial\":\"0x1EDC6F41\",\"calibration_temperature_c\":42.75,\"owner\":\"Mira Chen\"}",
+      "usage": {
+        "prompt_tokens": 30547,
+        "total_tokens": 30930,
+        "completion_tokens": 383,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 315
+        }
+      },
+      "elapsed_s": 52.8743
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "max_tokens": 32768,
+      "response": "{\"files_to_modify\":[\"src/validator.py\",\"tests/test_validator.py\"],\"approved_change\":\"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in src/validator.py and add a regression assertion in tests/test_validator.py.\",\"deferred_items\":[\"Refactoring the parser\",\"Adding telemetry\",\"Changing error codes\",\"Updating every documentation page\",\"Renaming the validation API\"]}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      },
+      "status": "complete",
+      "raw_response": "{\"files_to_modify\":[\"src/validator.py\",\"tests/test_validator.py\"],\"approved_change\":\"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in src/validator.py and add a regression assertion in tests/test_validator.py.\",\"deferred_items\":[\"Refactoring the parser\",\"Adding telemetry\",\"Changing error codes\",\"Updating every documentation page\",\"Renaming the validation API\"]}",
+      "usage": {
+        "prompt_tokens": 182,
+        "total_tokens": 334,
+        "completion_tokens": 152,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 63
+        }
+      },
+      "elapsed_s": 4.1627
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 6,
+      "max_score": 6,
+      "max_tokens": 32768,
+      "response": "{\"bits_per_transaction\":48,\"bus_bit_rate\":768000,\"wire_time_ms_per_second\":96,\"chip_select_overhead_ms_per_second\":192,\"total_bus_utilization_percent\":28.8,\"remaining_margin_percent\":71.2}",
+      "grade_details": {
+        "bits_per_transaction": true,
+        "bus_bit_rate": true,
+        "wire_time_ms_per_second": true,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": true,
+        "remaining_margin_percent": true
+      },
+      "status": "complete",
+      "raw_response": "{\"bits_per_transaction\":48,\"bus_bit_rate\":768000,\"wire_time_ms_per_second\":96,\"chip_select_overhead_ms_per_second\":192,\"total_bus_utilization_percent\":28.8,\"remaining_margin_percent\":71.2}",
+      "usage": {
+        "prompt_tokens": 235,
+        "total_tokens": 673,
+        "completion_tokens": 438,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 378
+        }
+      },
+      "elapsed_s": 11.2617
+    },
+    {
+      "task": "cpp_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```cpp\nstruct RingBuffer {\n    int buf[1024];\n    int cap;\n    int head;\n    int tail;\n    int count;\n\n    RingBuffer(int capacity) : cap(capacity), head(0), tail(0), count(0) {}\n\n    bool push(int value) {\n        if (count == cap) return false;\n        buf[tail] = value;\n        tail = (tail + 1) % cap;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (count == 0) return false;\n        out = buf[head];\n        head = (head + 1) % cap;\n        --count;\n        return true;\n    }\n\n    int size() const { return count; }\n    bool empty() const { return count == 0; }\n    bool full() const { return count == cap; }\n};\n```",
+      "grade_details": {
+        "struct_present": true,
+        "compiles": true,
+        "starts_empty": true,
+        "pop_empty_false": true,
+        "push_then_size": true,
+        "fifo_order": true,
+        "empty_after_drain": true,
+        "fills_to_capacity": true,
+        "push_when_full_false": true,
+        "full_push_did_not_corrupt": true,
+        "wraps_repeatedly": true,
+        "capacity_one": true
+      },
+      "status": "complete",
+      "raw_response": "```cpp\nstruct RingBuffer {\n    int buf[1024];\n    int cap;\n    int head;\n    int tail;\n    int count;\n\n    RingBuffer(int capacity) : cap(capacity), head(0), tail(0), count(0) {}\n\n    bool push(int value) {\n        if (count == cap) return false;\n        buf[tail] = value;\n        tail = (tail + 1) % cap;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (count == 0) return false;\n        out = buf[head];\n        head = (head + 1) % cap;\n        --count;\n        return true;\n    }\n\n    int size() const { return count; }\n    bool empty() const { return count == 0; }\n    bool full() const { return count == cap; }\n};\n```",
+      "usage": {
+        "prompt_tokens": 252,
+        "total_tokens": 672,
+        "completion_tokens": 420,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 232
+        }
+      },
+      "elapsed_s": 9.6203
+    },
+    {
+      "task": "verilog_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```verilog\nmodule edge_detect(\n    input  clk,\n    input  rst_n,\n    input  sig,\n    output reg pulse\n);\n\n    reg sig_r;\n\n    always @(posedge clk or negedge rst_n) begin\n        if (!rst_n) begin\n            sig_r <= 1'b0;\n            pulse <= 1'b0;\n        end else begin\n            sig_r <= sig;\n            pulse <= sig & ~sig_r;\n        end\n    end\n\nendmodule\n```",
+      "grade_details": {
+        "module_present": true,
+        "lint_clean": true,
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "idle_low": true,
+        "one_cycle_pulse": true,
+        "not_a_level": true,
+        "no_pulse_on_falling": true,
+        "two_separate_edges": true,
+        "reset_clears": true
+      },
+      "status": "complete",
+      "raw_response": "```verilog\nmodule edge_detect(\n    input  clk,\n    input  rst_n,\n    input  sig,\n    output reg pulse\n);\n\n    reg sig_r;\n\n    always @(posedge clk or negedge rst_n) begin\n        if (!rst_n) begin\n            sig_r <= 1'b0;\n            pulse <= 1'b0;\n        end else begin\n            sig_r <= sig;\n            pulse <= sig & ~sig_r;\n        end\n    end\n\nendmodule\n```",
+      "usage": {
+        "prompt_tokens": 204,
+        "total_tokens": 886,
+        "completion_tokens": 682,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 572
+        }
+      },
+      "elapsed_s": 18.324
+    },
+    {
+      "task": "cuda_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```cuda\n__global__ void saxpy(int n, float a, const float* x, float* y)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    int stride = gridDim.x * blockDim.x;\n    for (; i < n; i += stride) {\n        y[i] = a * x[i] + y[i];\n    }\n}\n```",
+      "grade_details": {
+        "kernel_present": true,
+        "compiles": true,
+        "gpu": "used",
+        "n_1": true,
+        "n_33": true,
+        "n_256": true,
+        "n_1000": true,
+        "n_100000": true
+      },
+      "status": "complete",
+      "raw_response": "```cuda\n__global__ void saxpy(int n, float a, const float* x, float* y)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    int stride = gridDim.x * blockDim.x;\n    for (; i < n; i += stride) {\n        y[i] = a * x[i] + y[i];\n    }\n}\n```",
+      "usage": {
+        "prompt_tokens": 200,
+        "total_tokens": 291,
+        "completion_tokens": 91,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4
+        }
+      },
+      "elapsed_s": 2.5631
+    },
+    {
+      "task": "ml_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```python\nimport numpy as np\n\ndef softmax(Z):\n    \"\"\"Z is (n_samples, n_classes). Return row-wise softmax, same shape.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    if Z.ndim == 1:\n        Z = Z.reshape(1, -1)\n    Z_shifted = Z - np.max(Z, axis=1, keepdims=True)\n    exp_Z = np.exp(Z_shifted)\n    return exp_Z / np.sum(exp_Z, axis=1, keepdims=True)\n\ndef cross_entropy(Z, y):\n    \"\"\"Z is (n_samples, n_classes) LOGITS, y is (n_samples,) integer labels.\n    Return the mean cross-entropy loss as a float.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    y = np.asarray(y, dtype=np.int64)\n    if Z.ndim == 1:\n        Z = Z.reshape(1, -1)\n    n_samples = Z.shape[0]\n    Z_shifted = Z - np.max(Z, axis=1, keepdims=True)\n    log_sum_exp = np.log(np.sum(np.exp(Z_shifted), axis=1))\n    log_probs = Z_shifted - log_sum_exp[:, None]\n    loss = -log_probs[np.arange(n_samples), y]\n    return float(np.mean(loss))\n```",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": true,
+        "shape": true,
+        "rows_sum_to_one": true,
+        "matches_reference": true,
+        "stable_large_logits": true,
+        "single_row": true,
+        "cross_entropy_value": true,
+        "cross_entropy_stable": true
+      },
+      "status": "complete",
+      "raw_response": "```python\nimport numpy as np\n\ndef softmax(Z):\n    \"\"\"Z is (n_samples, n_classes). Return row-wise softmax, same shape.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    if Z.ndim == 1:\n        Z = Z.reshape(1, -1)\n    Z_shifted = Z - np.max(Z, axis=1, keepdims=True)\n    exp_Z = np.exp(Z_shifted)\n    return exp_Z / np.sum(exp_Z, axis=1, keepdims=True)\n\ndef cross_entropy(Z, y):\n    \"\"\"Z is (n_samples, n_classes) LOGITS, y is (n_samples,) integer labels.\n    Return the mean cross-entropy loss as a float.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    y = np.asarray(y, dtype=np.int64)\n    if Z.ndim == 1:\n        Z = Z.reshape(1, -1)\n    n_samples = Z.shape[0]\n    Z_shifted = Z - np.max(Z, axis=1, keepdims=True)\n    log_sum_exp = np.log(np.sum(np.exp(Z_shifted), axis=1))\n    log_probs = Z_shifted - log_sum_exp[:, None]\n    loss = -log_probs[np.arange(n_samples), y]\n    return float(np.mean(loss))\n```",
+      "usage": {
+        "prompt_tokens": 251,
+        "total_tokens": 558,
+        "completion_tokens": 307,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 5
+        }
+      },
+      "elapsed_s": 7.1031
+    },
+    {
+      "task": "cobs_codec",
+      "score": 17,
+      "max_score": 24,
+      "max_tokens": 32768,
+      "response": "def cobs_encode(data):\n    out = bytearray()\n    code_index = 0\n    out.append(0)\n    code = 1\n    for b in data:\n        if b == 0:\n            out[code_index] = code\n            code_index = len(out)\n            out.append(0)\n            code = 1\n        else:\n            out.append(b)\n            code += 1\n            if code == 255:\n                out[code_index] = 255\n                code_index = len(out)\n                out.append(0)\n                code = 1\n    out[code_index] = code\n    return bytes(out)\n\ndef cobs_decode(data):\n    if not data:\n        raise ValueError(\"empty input\")\n    if any(b == 0 for b in data):\n        raise ValueError(\"zero byte in encoded data\")\n    out = bytearray()\n    i = 0\n    n = len(data)\n    while i < n:\n        code = data[i]\n        i += 1\n        if code == 0:\n            raise ValueError(\"zero code byte\")\n        if i + code - 1 > n:\n            raise ValueError(\"group data runs past end\")\n        out.extend(data[i:i+code-1])\n        i += code - 1\n        if code < 255:\n            if i < n:\n                out.append(0)\n        else:\n            if i == n:\n                raise ValueError(\"trailing 255 code without next group\")\n    return bytes(out)",
+      "grade_details": {
+        "functions_only": true,
+        "vec_empty": true,
+        "vec_single_zero": true,
+        "vec_embedded_zero": true,
+        "vec_no_zero": true,
+        "vec_leading_trailing_zero": true,
+        "encode_never_emits_zero": true,
+        "overhead_bound": true,
+        "boundary_roundtrip": false,
+        "roundtrip": false,
+        "decode_rejects_zero_byte": false,
+        "decode_rejects_overrun": false
+      },
+      "status": "complete",
+      "raw_response": "def cobs_encode(data):\n    out = bytearray()\n    code_index = 0\n    out.append(0)\n    code = 1\n    for b in data:\n        if b == 0:\n            out[code_index] = code\n            code_index = len(out)\n            out.append(0)\n            code = 1\n        else:\n            out.append(b)\n            code += 1\n            if code == 255:\n                out[code_index] = 255\n                code_index = len(out)\n                out.append(0)\n                code = 1\n    out[code_index] = code\n    return bytes(out)\n\ndef cobs_decode(data):\n    if not data:\n        raise ValueError(\"empty input\")\n    if any(b == 0 for b in data):\n        raise ValueError(\"zero byte in encoded data\")\n    out = bytearray()\n    i = 0\n    n = len(data)\n    while i < n:\n        code = data[i]\n        i += 1\n        if code == 0:\n            raise ValueError(\"zero code byte\")\n        if i + code - 1 > n:\n            raise ValueError(\"group data runs past end\")\n        out.extend(data[i:i+code-1])\n        i += code - 1\n        if code < 255:\n            if i < n:\n                out.append(0)\n        else:\n            if i == n:\n                raise ValueError(\"trailing 255 code without next group\")\n    return bytes(out)",
+      "usage": {
+        "prompt_tokens": 414,
+        "total_tokens": 10597,
+        "completion_tokens": 10183,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9868
+        }
+      },
+      "elapsed_s": 239.989,
+      "score_first": 17,
+      "retry_feedback": "failed checks: boundary_roundtrip, decode_rejects_overrun, decode_rejects_zero_byte, roundtrip",
+      "raw_retry_response": "",
+      "retry_response": "",
+      "retry_usage": {
+        "prompt_tokens": 791,
+        "total_tokens": 33559,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "retry_elapsed_s": 722.6666,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "functions_only": false
+      }
+    },
+    {
+      "task": "stream_reassembler",
+      "score": 0,
+      "max_score": 24,
+      "max_tokens": 32768,
+      "response": "",
+      "grade_details": {
+        "class_only": false
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 343,
+        "total_tokens": 33111,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "elapsed_s": 714.9361,
+      "score_first": 0,
+      "retry_feedback": "failed checks: class_only",
+      "raw_retry_response": "",
+      "retry_response": "",
+      "retry_usage": {
+        "prompt_tokens": 387,
+        "total_tokens": 33155,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "retry_elapsed_s": 694.9794,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "class_only": false
+      }
+    },
+    {
+      "task": "verilog_medium",
+      "score": 26,
+      "max_score": 26,
+      "max_tokens": 32768,
+      "response": "module sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDR = clog2(DEPTH);\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n  reg [ADDR:0]    wr_ptr;\n  reg [ADDR:0]    rd_ptr;\n\n  wire [ADDR-1:0] wr_addr = wr_ptr[ADDR-1:0];\n  wire [ADDR-1:0] rd_addr = rd_ptr[ADDR-1:0];\n\n  assign full  = (wr_ptr[ADDR] != rd_ptr[ADDR]) &&\n                 (wr_ptr[ADDR-1:0] == rd_ptr[ADDR-1:0]);\n  assign empty = (wr_ptr == rd_ptr);\n\n  wire do_wr = wr_en && !full;\n  wire do_rd = rd_en && !empty;\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      wr_ptr <= {(ADDR+1){1'b0}};\n      rd_ptr <= {(ADDR+1){1'b0}};\n      dout   <= {WIDTH{1'b0}};\n    end else begin\n      if (do_wr) begin\n        mem[wr_addr] <= din;\n        wr_ptr       <= wr_ptr + 1'b1;\n      end\n      if (do_rd) begin\n        dout   <= mem[rd_addr];\n        rd_ptr <= rd_ptr + 1'b1;\n      end\n    end\n  end\n\nendmodule",
+      "grade_details": {
+        "module_present": true,
+        "lint_clean": true,
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "empty_after_reset": true,
+        "not_full_at_three": true,
+        "full_at_depth": true,
+        "write_while_full_ignored": true,
+        "first_out_is_first_in": true,
+        "second_out": true,
+        "not_full_after_reads": true,
+        "third_out": true,
+        "fourth_out": true,
+        "empty_after_draining": true,
+        "read_while_empty_ignored": true,
+        "full_after_wrap": true,
+        "wrap_first_out": true,
+        "empty_after_wrap_drain": true
+      },
+      "status": "complete",
+      "raw_response": "module sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDR = clog2(DEPTH);\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n  reg [ADDR:0]    wr_ptr;\n  reg [ADDR:0]    rd_ptr;\n\n  wire [ADDR-1:0] wr_addr = wr_ptr[ADDR-1:0];\n  wire [ADDR-1:0] rd_addr = rd_ptr[ADDR-1:0];\n\n  assign full  = (wr_ptr[ADDR] != rd_ptr[ADDR]) &&\n                 (wr_ptr[ADDR-1:0] == rd_ptr[ADDR-1:0]);\n  assign empty = (wr_ptr == rd_ptr);\n\n  wire do_wr = wr_en && !full;\n  wire do_rd = rd_en && !empty;\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      wr_ptr <= {(ADDR+1){1'b0}};\n      rd_ptr <= {(ADDR+1){1'b0}};\n      dout   <= {WIDTH{1'b0}};\n    end else begin\n      if (do_wr) begin\n        mem[wr_addr] <= din;\n        wr_ptr       <= wr_ptr + 1'b1;\n      end\n      if (do_rd) begin\n        dout   <= mem[rd_addr];\n        rd_ptr <= rd_ptr + 1'b1;\n      end\n    end\n  end\n\nendmodule",
+      "usage": {
+        "prompt_tokens": 333,
+        "total_tokens": 1754,
+        "completion_tokens": 1421,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 956
+        }
+      },
+      "elapsed_s": 33.594
+    },
+    {
+      "task": "cuda_medium",
+      "score": 26,
+      "max_score": 26,
+      "max_tokens": 32768,
+      "response": "```cuda\n__global__ void block_sum(const float* in, float* out, int n) {\n    extern __shared__ float sdata[];\n    int tid = threadIdx.x;\n    int i = blockIdx.x * blockDim.x + tid;\n    sdata[tid] = (i < n) ? in[i] : 0.0f;\n    __syncthreads();\n    for (int s = blockDim.x / 2; s > 0; s >>= 1) {\n        if (tid < s) sdata[tid] += sdata[tid + s];\n        __syncthreads();\n    }\n    if (tid == 0) out[blockIdx.x] = sdata[0];\n}\n```",
+      "grade_details": {
+        "kernel_present": true,
+        "compiles": true,
+        "gpu": "used",
+        "n_1": true,
+        "n_31": true,
+        "n_32": true,
+        "n_33": true,
+        "n_255": true,
+        "n_256": true,
+        "n_257": true,
+        "n_1000": true,
+        "n_4096": true,
+        "n_100000": true,
+        "all_cases_pass": true,
+        "barrier_divergence_clean": true,
+        "barrier_in_thread_conditional": false
+      },
+      "status": "complete",
+      "raw_response": "```cuda\n__global__ void block_sum(const float* in, float* out, int n) {\n    extern __shared__ float sdata[];\n    int tid = threadIdx.x;\n    int i = blockIdx.x * blockDim.x + tid;\n    sdata[tid] = (i < n) ? in[i] : 0.0f;\n    __syncthreads();\n    for (int s = blockDim.x / 2; s > 0; s >>= 1) {\n        if (tid < s) sdata[tid] += sdata[tid + s];\n        __syncthreads();\n    }\n    if (tid == 0) out[blockIdx.x] = sdata[0];\n}\n```",
+      "usage": {
+        "prompt_tokens": 276,
+        "total_tokens": 634,
+        "completion_tokens": 358,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 196
+        }
+      },
+      "elapsed_s": 7.8092
+    },
+    {
+      "task": "cpp_medium",
+      "score": 28,
+      "max_score": 28,
+      "max_tokens": 32768,
+      "response": "double mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    const double* W1 = params;\n    const double* b1 = params + n_hidden * n_in;\n    const double* W2 = b1 + n_hidden;\n    double b2 = W2[n_hidden];\n\n    int w1_size = n_hidden * n_in;\n    int b1_off = w1_size;\n    int w2_off = b1_off + n_hidden;\n    int b2_off = w2_off + n_hidden;\n    int total = b2_off + 1;\n\n    for (int i = 0; i < total; ++i) {\n        grad[i] = 0.0;\n    }\n\n    double total_loss = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n        double yv = y[s];\n\n        double z = b2;\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n            z += W2[j] * h;\n        }\n\n        double p, logp, log1mp;\n        if (z >= 0.0) {\n            double e = std::exp(-z);\n            p = 1.0 / (1.0 + e);\n            logp = -std::log(1.0 + e);\n            log1mp = -z - std::log(1.0 + e);\n        } else {\n            double e = std::exp(z);\n            p = e / (1.0 + e);\n            logp = z - std::log(1.0 + e);\n            log1mp = -std::log(1.0 + e);\n        }\n\n        double loss;\n        if (yv == 1.0) {\n            loss = -logp;\n        } else {\n            loss = -log1mp;\n        }\n        total_loss += loss;\n\n        double dz = p - yv;\n\n        grad[b2_off] += dz;\n\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n            double da = dz * W2[j] * (1.0 - h * h);\n\n            grad[w2_off + j] += dz * h;\n            grad[b1_off + j] += da;\n\n            double* gw1j = grad + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                gw1j[k] += da * x[k];\n            }\n        }\n    }\n\n    double inv_n = 1.0 / static_cast<double>(n_samples);\n    for (int i = 0; i < total; ++i) {\n        grad[i] *= inv_n;\n    }\n\n    return total_loss * inv_n;\n}",
+      "grade_details": {
+        "function_present": true,
+        "compiles": true,
+        "loss_is_finite": true,
+        "loss_positive": true,
+        "gradient_matches_numeric": true,
+        "gradients_not_accumulated": true,
+        "single_sample_ok": true,
+        "loss_decreased": true,
+        "xor_learned": true,
+        "worst_relative_gradient_error": 2.089e-09,
+        "final_loss": 0.000116
+      },
+      "status": "complete",
+      "raw_response": "double mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    const double* W1 = params;\n    const double* b1 = params + n_hidden * n_in;\n    const double* W2 = b1 + n_hidden;\n    double b2 = W2[n_hidden];\n\n    int w1_size = n_hidden * n_in;\n    int b1_off = w1_size;\n    int w2_off = b1_off + n_hidden;\n    int b2_off = w2_off + n_hidden;\n    int total = b2_off + 1;\n\n    for (int i = 0; i < total; ++i) {\n        grad[i] = 0.0;\n    }\n\n    double total_loss = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n        double yv = y[s];\n\n        double z = b2;\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n            z += W2[j] * h;\n        }\n\n        double p, logp, log1mp;\n        if (z >= 0.0) {\n            double e = std::exp(-z);\n            p = 1.0 / (1.0 + e);\n            logp = -std::log(1.0 + e);\n            log1mp = -z - std::log(1.0 + e);\n        } else {\n            double e = std::exp(z);\n            p = e / (1.0 + e);\n            logp = z - std::log(1.0 + e);\n            log1mp = -std::log(1.0 + e);\n        }\n\n        double loss;\n        if (yv == 1.0) {\n            loss = -logp;\n        } else {\n            loss = -log1mp;\n        }\n        total_loss += loss;\n\n        double dz = p - yv;\n\n        grad[b2_off] += dz;\n\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n            double da = dz * W2[j] * (1.0 - h * h);\n\n            grad[w2_off + j] += dz * h;\n            grad[b1_off + j] += da;\n\n            double* gw1j = grad + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                gw1j[k] += da * x[k];\n            }\n        }\n    }\n\n    double inv_n = 1.0 / static_cast<double>(n_samples);\n    for (int i = 0; i < total; ++i) {\n        grad[i] *= inv_n;\n    }\n\n    return total_loss * inv_n;\n}",
+      "usage": {
+        "prompt_tokens": 447,
+        "total_tokens": 4983,
+        "completion_tokens": 4536,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 3758
+        }
+      },
+      "elapsed_s": 108.3489
+    },
+    {
+      "task": "ml_medium",
+      "score": 26,
+      "max_score": 26,
+      "max_tokens": 32768,
+      "response": "```python\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    \"\"\"Return a dict with keys W1, b1, W2, b2.\"\"\"\n    rng = np.random.default_rng(seed)\n    W1 = rng.standard_normal((n_hidden, n_in)) * 0.01\n    b1 = np.zeros(n_hidden)\n    W2 = rng.standard_normal(n_hidden) * 0.01\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\n\ndef loss_and_grads(params, X, y):\n    \"\"\"Return (loss, grads) where grads has the same keys as params.\"\"\"\n    W1 = params[\"W1\"]\n    b1 = params[\"b1\"]\n    W2 = params[\"W2\"]\n    b2 = params[\"b2\"]\n\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = X.shape[0]\n\n    pre = X @ W1.T + b1\n    H = np.tanh(pre)\n    z = H @ W2 + b2\n    p = 1.0 / (1.0 + np.exp(-z))\n\n    eps = 1e-12\n    loss = -np.mean(y * np.log(p + eps) + (1.0 - y) * np.log(1.0 - p + eps))\n\n    dz = (p - y) / n\n    dW2 = H.T @ dz\n    db2 = float(np.sum(dz))\n    dH = np.outer(dz, W2)\n    dpre = dH * (1.0 - H * H)\n    dW1 = dpre.T @ X\n    db1 = dpre.sum(axis=0)\n\n    grads = {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n    return loss, grads\n```",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": true,
+        "shapes": true,
+        "deterministic": true,
+        "seed_changes_init": true,
+        "symmetry_broken": true,
+        "loss_finite": true,
+        "grad_keys": true,
+        "worst_relative_gradient_error": 5.548583057584316e-08,
+        "gradient_matches_numeric": true,
+        "final_loss": 0.05194410322396337,
+        "accuracy": 0.99,
+        "learns_circle": true,
+        "single_sample_ok": true
+      },
+      "status": "complete",
+      "raw_response": "```python\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    \"\"\"Return a dict with keys W1, b1, W2, b2.\"\"\"\n    rng = np.random.default_rng(seed)\n    W1 = rng.standard_normal((n_hidden, n_in)) * 0.01\n    b1 = np.zeros(n_hidden)\n    W2 = rng.standard_normal(n_hidden) * 0.01\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\n\ndef loss_and_grads(params, X, y):\n    \"\"\"Return (loss, grads) where grads has the same keys as params.\"\"\"\n    W1 = params[\"W1\"]\n    b1 = params[\"b1\"]\n    W2 = params[\"W2\"]\n    b2 = params[\"b2\"]\n\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = X.shape[0]\n\n    pre = X @ W1.T + b1\n    H = np.tanh(pre)\n    z = H @ W2 + b2\n    p = 1.0 / (1.0 + np.exp(-z))\n\n    eps = 1e-12\n    loss = -np.mean(y * np.log(p + eps) + (1.0 - y) * np.log(1.0 - p + eps))\n\n    dz = (p - y) / n\n    dW2 = H.T @ dz\n    db2 = float(np.sum(dz))\n    dH = np.outer(dz, W2)\n    dpre = dH * (1.0 - H * H)\n    dW1 = dpre.T @ X\n    db1 = dpre.sum(axis=0)\n\n    grads = {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n    return loss, grads\n```",
+      "usage": {
+        "prompt_tokens": 411,
+        "total_tokens": 1816,
+        "completion_tokens": 1405,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 945
+        }
+      },
+      "elapsed_s": 33.5916
+    },
+    {
+      "task": "cpp_hard",
+      "score": 30,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "```cpp\nstruct Tape {\n    struct Node {\n        double val;\n        int op;   // 0=const, 1=input, 2=add, 3=mul, 4=sin, 5=exp\n        int a, b;\n    };\n    std::vector<Node> nodes;\n    std::vector<double> grads;\n\n    int constant(double v) {\n        nodes.push_back({v, 0, -1, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int input(double v) {\n        nodes.push_back({v, 1, -1, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int add(int a, int b) {\n        nodes.push_back({nodes[a].val + nodes[b].val, 2, a, b});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int mul(int a, int b) {\n        nodes.push_back({nodes[a].val * nodes[b].val, 3, a, b});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int sin_(int a) {\n        nodes.push_back({std::sin(nodes[a].val), 4, a, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int exp_(int a) {\n        nodes.push_back({std::exp(nodes[a].val), 5, a, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    double value(int node) const { return nodes[node].val; }\n\n    void backward(int root) {\n        for (size_t i = 0; i < grads.size(); ++i) grads[i] = 0.0;\n        grads[root] = 1.0;\n        for (int i = root; i >= 0; --i) {\n            double g = grads[i];\n            if (g == 0.0) continue;\n            const Node& n = nodes[i];\n            switch (n.op) {\n                case 2:\n                    grads[n.a] += g;\n                    grads[n.b] += g;\n                    break;\n                case 3:\n                    grads[n.a] += g * nodes[n.b].val;\n                    grads[n.b] += g * nodes[n.a].val;\n                    break;\n                case 4:\n                    grads[n.a] += g * std::cos(nodes[n.a].val);\n                    break;\n                case 5:\n                    grads[n.a] += g * nodes[i].val;\n                    break;\n            }\n        }\n    }\n    double grad(int node) const { return grads[node]; }\n};\n```",
+      "grade_details": {
+        "tape_present": true,
+        "compiles": true,
+        "forward_value": true,
+        "grad_x": true,
+        "grad_y": true,
+        "reused_node_accumulates": true,
+        "deep_chain": true,
+        "constant_handled": true,
+        "matches_finite_difference": true
+      },
+      "status": "complete",
+      "raw_response": "```cpp\nstruct Tape {\n    struct Node {\n        double val;\n        int op;   // 0=const, 1=input, 2=add, 3=mul, 4=sin, 5=exp\n        int a, b;\n    };\n    std::vector<Node> nodes;\n    std::vector<double> grads;\n\n    int constant(double v) {\n        nodes.push_back({v, 0, -1, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int input(double v) {\n        nodes.push_back({v, 1, -1, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int add(int a, int b) {\n        nodes.push_back({nodes[a].val + nodes[b].val, 2, a, b});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int mul(int a, int b) {\n        nodes.push_back({nodes[a].val * nodes[b].val, 3, a, b});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int sin_(int a) {\n        nodes.push_back({std::sin(nodes[a].val), 4, a, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    int exp_(int a) {\n        nodes.push_back({std::exp(nodes[a].val), 5, a, -1});\n        grads.push_back(0.0);\n        return (int)nodes.size() - 1;\n    }\n    double value(int node) const { return nodes[node].val; }\n\n    void backward(int root) {\n        for (size_t i = 0; i < grads.size(); ++i) grads[i] = 0.0;\n        grads[root] = 1.0;\n        for (int i = root; i >= 0; --i) {\n            double g = grads[i];\n            if (g == 0.0) continue;\n            const Node& n = nodes[i];\n            switch (n.op) {\n                case 2:\n                    grads[n.a] += g;\n                    grads[n.b] += g;\n                    break;\n                case 3:\n                    grads[n.a] += g * nodes[n.b].val;\n                    grads[n.b] += g * nodes[n.a].val;\n                    break;\n                case 4:\n                    grads[n.a] += g * std::cos(nodes[n.a].val);\n                    break;\n                case 5:\n                    grads[n.a] += g * nodes[i].val;\n                    break;\n            }\n        }\n    }\n    double grad(int node) const { return grads[node]; }\n};\n```",
+      "usage": {
+        "prompt_tokens": 346,
+        "total_tokens": 2061,
+        "completion_tokens": 1715,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1075
+        }
+      },
+      "elapsed_s": 38.4837
+    },
+    {
+      "task": "verilog_hard",
+      "score": 21,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDRSIZE = clog2(DEPTH);\n  localparam ASIZE    = ADDRSIZE + 1;\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  reg [ASIZE-1:0] wbin, wgray, rbin, rgray;\n  reg [ASIZE-1:0] wq1_rgray, wq2_rgray;\n  reg [ASIZE-1:0] rq1_wgray, rq2_wgray;\n  reg             wfull_r, rempty_r;\n\n  wire [ASIZE-1:0] wbin_next, wgray_next;\n  wire [ASIZE-1:0] rbin_next, rgray_next;\n  wire [ASIZE-1:0] wfull_val;\n  wire             rempty_val;\n\n  assign wbin_next  = wbin + (winc & ~wfull_r);\n  assign wgray_next = (wbin_next >> 1) ^ wbin_next;\n  assign rbin_next  = rbin + (rinc & ~rempty_r);\n  assign rgray_next = (rbin_next >> 1) ^ rbin_next;\n\n  generate\n    if (ASIZE == 2) begin : g_full\n      assign wfull_val = ~wq2_rgray;\n    end else begin : g_full\n      assign wfull_val = {~wq2_rgray[ASIZE-1:ASIZE-2], wq2_rgray[ASIZE-3:0]};\n    end\n  endgenerate\n\n  assign rempty_val = (rgray_next == rq2_wgray);\n\n  // ---- write clock domain ----\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wbin    <= 0;\n      wgray   <= 0;\n      wfull_r <= 1'b0;\n    end else begin\n      wbin    <= wbin_next;\n      wgray   <= wgray_next;\n      wfull_r <= wfull_val;\n    end\n  end\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wq1_rgray <= 0;\n      wq2_rgray <= 0;\n    end else begin\n      wq1_rgray <= rgray;\n      wq2_rgray <= wq1_rgray;\n    end\n  end\n\n  // ---- read clock domain ----\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rbin     <= 0;\n      rgray    <= 0;\n      rempty_r <= 1'b1;\n    end else begin\n      rbin     <= rbin_next;\n      rgray    <= rgray_next;\n      rempty_r <= rempty_val;\n    end\n  end\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rq1_wgray <= 0;\n      rq2_wgray <= 0;\n    end else begin\n      rq1_wgray <= wgray;\n      rq2_wgray <= rq1_wgray;\n    end\n  end\n\n  // ---- memory ----\n  always @(posedge wclk) begin\n    if (winc & ~wfull_r)\n      mem[wbin[ADDRSIZE-1:0]] <= wdata;\n  end\n\n  assign rdata  = mem[rbin[ADDRSIZE-1:0]];\n  assign wfull  = wfull_r;\n  assign rempty = rempty_r;\n\nendmodule\n```",
+      "grade_details": {
+        "module_present": true,
+        "uses_gray_coding": true,
+        "has_two_flop_synchroniser": true,
+        "lint_clean": true,
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "empty_at_reset": true,
+        "all_data_arrived": true,
+        "no_corruption_or_reorder": true,
+        "drained": true,
+        "timed_out": false,
+        "items_read": 16,
+        "order_errors": 0
+      },
+      "status": "complete",
+      "raw_response": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDRSIZE = clog2(DEPTH);\n  localparam ASIZE    = ADDRSIZE + 1;\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  reg [ASIZE-1:0] wbin, wgray, rbin, rgray;\n  reg [ASIZE-1:0] wq1_rgray, wq2_rgray;\n  reg [ASIZE-1:0] rq1_wgray, rq2_wgray;\n  reg             wfull_r, rempty_r;\n\n  wire [ASIZE-1:0] wbin_next, wgray_next;\n  wire [ASIZE-1:0] rbin_next, rgray_next;\n  wire [ASIZE-1:0] wfull_val;\n  wire             rempty_val;\n\n  assign wbin_next  = wbin + (winc & ~wfull_r);\n  assign wgray_next = (wbin_next >> 1) ^ wbin_next;\n  assign rbin_next  = rbin + (rinc & ~rempty_r);\n  assign rgray_next = (rbin_next >> 1) ^ rbin_next;\n\n  generate\n    if (ASIZE == 2) begin : g_full\n      assign wfull_val = ~wq2_rgray;\n    end else begin : g_full\n      assign wfull_val = {~wq2_rgray[ASIZE-1:ASIZE-2], wq2_rgray[ASIZE-3:0]};\n    end\n  endgenerate\n\n  assign rempty_val = (rgray_next == rq2_wgray);\n\n  // ---- write clock domain ----\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wbin    <= 0;\n      wgray   <= 0;\n      wfull_r <= 1'b0;\n    end else begin\n      wbin    <= wbin_next;\n      wgray   <= wgray_next;\n      wfull_r <= wfull_val;\n    end\n  end\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wq1_rgray <= 0;\n      wq2_rgray <= 0;\n    end else begin\n      wq1_rgray <= rgray;\n      wq2_rgray <= wq1_rgray;\n    end\n  end\n\n  // ---- read clock domain ----\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rbin     <= 0;\n      rgray    <= 0;\n      rempty_r <= 1'b1;\n    end else begin\n      rbin     <= rbin_next;\n      rgray    <= rgray_next;\n      rempty_r <= rempty_val;\n    end\n  end\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rq1_wgray <= 0;\n      rq2_wgray <= 0;\n    end else begin\n      rq1_wgray <= wgray;\n      rq2_wgray <= rq1_wgray;\n    end\n  end\n\n  // ---- memory ----\n  always @(posedge wclk) begin\n    if (winc & ~wfull_r)\n      mem[wbin[ADDRSIZE-1:0]] <= wdata;\n  end\n\n  assign rdata  = mem[rbin[ADDRSIZE-1:0]];\n  assign wfull  = wfull_r;\n  assign rempty = rempty_r;\n\nendmodule\n```",
+      "usage": {
+        "prompt_tokens": 395,
+        "total_tokens": 6135,
+        "completion_tokens": 5740,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4777
+        }
+      },
+      "elapsed_s": 135.2029,
+      "score_first": 0,
+      "retry_feedback": "simulator exited 0; testbench did not complete successfully\nfailed checks: ran_to_completion",
+      "raw_retry_response": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDRSIZE = clog2(DEPTH);\n  localparam ASIZE    = ADDRSIZE + 1;\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  reg [ASIZE-1:0] wbin, wgray, rbin, rgray;\n  reg [ASIZE-1:0] wq1_rgray, wq2_rgray;\n  reg [ASIZE-1:0] rq1_wgray, rq2_wgray;\n  reg             wfull_r, rempty_r;\n\n  wire [ASIZE-1:0] wbin_next, wgray_next;\n  wire [ASIZE-1:0] rbin_next, rgray_next;\n  wire             wfull_val;\n  wire             rempty_val;\n\n  assign wbin_next  = wbin + (winc & ~wfull_r);\n  assign wgray_next = (wbin_next >> 1) ^ wbin_next;\n  assign rbin_next  = rbin + (rinc & ~rempty_r);\n  assign rgray_next = (rbin_next >> 1) ^ rbin_next;\n\n  generate\n    if (ASIZE == 2) begin : g_full\n      assign wfull_val = (wgray_next == {~wq2_rgray[1], wq2_rgray[0]});\n    end else begin : g_full\n      assign wfull_val = (wgray_next == {~wq2_rgray[ASIZE-1:ASIZE-2], wq2_rgray[ASIZE-3:0]});\n    end\n  endgenerate\n\n  assign rempty_val = (rgray_next == rq2_wgray);\n\n  // ---- write clock domain ----\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wbin    <= 0;\n      wgray   <= 0;\n      wfull_r <= 1'b0;\n    end else begin\n      wbin    <= wbin_next;\n      wgray   <= wgray_next;\n      wfull_r <= wfull_val;\n    end\n  end\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wq1_rgray <= 0;\n      wq2_rgray <= 0;\n    end else begin\n      wq1_rgray <= rgray;\n      wq2_rgray <= wq1_rgray;\n    end\n  end\n\n  // ---- read clock domain ----\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rbin     <= 0;\n      rgray    <= 0;\n      rempty_r <= 1'b1;\n    end else begin\n      rbin     <= rbin_next;\n      rgray    <= rgray_next;\n      rempty_r <= rempty_val;\n    end\n  end\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rq1_wgray <= 0;\n      rq2_wgray <= 0;\n    end else begin\n      rq1_wgray <= wgray;\n      rq2_wgray <= rq1_wgray;\n    end\n  end\n\n  // ---- memory ----\n  always @(posedge wclk) begin\n    if (winc & ~wfull_r)\n      mem[wbin[ADDRSIZE-1:0]] <= wdata;\n  end\n\n  assign rdata  = mem[rbin[ADDRSIZE-1:0]];\n  assign wfull  = wfull_r;\n  assign rempty = rempty_r;\n\nendmodule\n```",
+      "retry_response": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDRSIZE = clog2(DEPTH);\n  localparam ASIZE    = ADDRSIZE + 1;\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  reg [ASIZE-1:0] wbin, wgray, rbin, rgray;\n  reg [ASIZE-1:0] wq1_rgray, wq2_rgray;\n  reg [ASIZE-1:0] rq1_wgray, rq2_wgray;\n  reg             wfull_r, rempty_r;\n\n  wire [ASIZE-1:0] wbin_next, wgray_next;\n  wire [ASIZE-1:0] rbin_next, rgray_next;\n  wire             wfull_val;\n  wire             rempty_val;\n\n  assign wbin_next  = wbin + (winc & ~wfull_r);\n  assign wgray_next = (wbin_next >> 1) ^ wbin_next;\n  assign rbin_next  = rbin + (rinc & ~rempty_r);\n  assign rgray_next = (rbin_next >> 1) ^ rbin_next;\n\n  generate\n    if (ASIZE == 2) begin : g_full\n      assign wfull_val = (wgray_next == {~wq2_rgray[1], wq2_rgray[0]});\n    end else begin : g_full\n      assign wfull_val = (wgray_next == {~wq2_rgray[ASIZE-1:ASIZE-2], wq2_rgray[ASIZE-3:0]});\n    end\n  endgenerate\n\n  assign rempty_val = (rgray_next == rq2_wgray);\n\n  // ---- write clock domain ----\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wbin    <= 0;\n      wgray   <= 0;\n      wfull_r <= 1'b0;\n    end else begin\n      wbin    <= wbin_next;\n      wgray   <= wgray_next;\n      wfull_r <= wfull_val;\n    end\n  end\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wq1_rgray <= 0;\n      wq2_rgray <= 0;\n    end else begin\n      wq1_rgray <= rgray;\n      wq2_rgray <= wq1_rgray;\n    end\n  end\n\n  // ---- read clock domain ----\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rbin     <= 0;\n      rgray    <= 0;\n      rempty_r <= 1'b1;\n    end else begin\n      rbin     <= rbin_next;\n      rgray    <= rgray_next;\n      rempty_r <= rempty_val;\n    end\n  end\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rq1_wgray <= 0;\n      rq2_wgray <= 0;\n    end else begin\n      rq1_wgray <= wgray;\n      rq2_wgray <= rq1_wgray;\n    end\n  end\n\n  // ---- memory ----\n  always @(posedge wclk) begin\n    if (winc & ~wfull_r)\n      mem[wbin[ADDRSIZE-1:0]] <= wdata;\n  end\n\n  assign rdata  = mem[rbin[ADDRSIZE-1:0]];\n  assign wfull  = wfull_r;\n  assign rempty = rempty_r;\n\nendmodule\n```",
+      "retry_usage": {
+        "prompt_tokens": 1415,
+        "total_tokens": 15047,
+        "completion_tokens": 13632,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 12654
+        }
+      },
+      "retry_elapsed_s": 311.8719,
+      "score_retry": 30,
+      "retry_grade_details": {
+        "module_present": true,
+        "uses_gray_coding": true,
+        "has_two_flop_synchroniser": true,
+        "lint_clean": true,
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "empty_at_reset": true,
+        "all_data_arrived": true,
+        "no_corruption_or_reorder": true,
+        "drained": true,
+        "timed_out": false,
+        "items_read": 16,
+        "order_errors": 0
+      }
+    },
+    {
+      "task": "cuda_hard",
+      "score": 30,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "__global__ void matmul(const float* A, const float* B, float* C,\n                       int M, int N, int K)\n{\n    __shared__ float As[16][16];\n    __shared__ float Bs[16][16];\n\n    int tx = threadIdx.x;\n    int ty = threadIdx.y;\n    int row = blockIdx.y * 16 + ty;\n    int col = blockIdx.x * 16 + tx;\n\n    float sum = 0.0f;\n    int numTiles = (K + 15) / 16;\n\n    for (int t = 0; t < numTiles; ++t) {\n        int aCol = t * 16 + tx;\n        int bRow = t * 16 + ty;\n\n        As[ty][tx] = (row < M && aCol < K) ? A[row * K + aCol] : 0.0f;\n        Bs[ty][tx] = (bRow < K && col < N) ? B[bRow * N + col] : 0.0f;\n\n        __syncthreads();\n\n        #pragma unroll\n        for (int k = 0; k < 16; ++k) {\n            sum += As[ty][k] * Bs[k][tx];\n        }\n\n        __syncthreads();\n    }\n\n    if (row < M && col < N) {\n        C[row * N + col] = sum;\n    }\n}",
+      "grade_details": {
+        "kernel_present": true,
+        "uses_shared_memory": true,
+        "barrier_in_thread_conditional": false,
+        "compiles": true,
+        "gpu": "used",
+        "case_16x16x16": true,
+        "case_64x64x64": true,
+        "case_17x17x17": true,
+        "case_1x1x1": true,
+        "case_33x48x7": true,
+        "case_100x60x80": true
+      },
+      "status": "complete",
+      "raw_response": "__global__ void matmul(const float* A, const float* B, float* C,\n                       int M, int N, int K)\n{\n    __shared__ float As[16][16];\n    __shared__ float Bs[16][16];\n\n    int tx = threadIdx.x;\n    int ty = threadIdx.y;\n    int row = blockIdx.y * 16 + ty;\n    int col = blockIdx.x * 16 + tx;\n\n    float sum = 0.0f;\n    int numTiles = (K + 15) / 16;\n\n    for (int t = 0; t < numTiles; ++t) {\n        int aCol = t * 16 + tx;\n        int bRow = t * 16 + ty;\n\n        As[ty][tx] = (row < M && aCol < K) ? A[row * K + aCol] : 0.0f;\n        Bs[ty][tx] = (bRow < K && col < N) ? B[bRow * N + col] : 0.0f;\n\n        __syncthreads();\n\n        #pragma unroll\n        for (int k = 0; k < 16; ++k) {\n            sum += As[ty][k] * Bs[k][tx];\n        }\n\n        __syncthreads();\n    }\n\n    if (row < M && col < N) {\n        C[row * N + col] = sum;\n    }\n}",
+      "usage": {
+        "prompt_tokens": 320,
+        "total_tokens": 1354,
+        "completion_tokens": 1034,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 714
+        }
+      },
+      "elapsed_s": 23.2973
+    },
+    {
+      "task": "ml_hard",
+      "score": 30,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "import numpy as np\n\ndef attention_forward(Q, K, V):\n    d = Q.shape[1]\n    scale = 1.0 / np.sqrt(d)\n    S = (Q @ K.T) * scale\n    S_max = np.max(S, axis=1, keepdims=True)\n    exp_S = np.exp(S - S_max)\n    P = exp_S / np.sum(exp_S, axis=1, keepdims=True)\n    out = P @ V\n    cache = (Q, K, V, P, scale)\n    return out, cache\n\ndef attention_backward(dout, cache):\n    Q, K, V, P, scale = cache\n    dP = dout @ V.T\n    dV = P.T @ dout\n    dS = P * (dP - np.sum(dP * P, axis=1, keepdims=True))\n    dQ = scale * (dS @ K)\n    dK = scale * (dS.T @ Q)\n    return dQ, dK, dV",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": true,
+        "output_shape": true,
+        "forward_matches_reference": true,
+        "stable_large_scores": true,
+        "grad_shapes": true,
+        "worst_relative_gradient_error": 2.841281321068307e-08,
+        "gradients_match_numeric": true
+      },
+      "status": "complete",
+      "raw_response": "import numpy as np\n\ndef attention_forward(Q, K, V):\n    d = Q.shape[1]\n    scale = 1.0 / np.sqrt(d)\n    S = (Q @ K.T) * scale\n    S_max = np.max(S, axis=1, keepdims=True)\n    exp_S = np.exp(S - S_max)\n    P = exp_S / np.sum(exp_S, axis=1, keepdims=True)\n    out = P @ V\n    cache = (Q, K, V, P, scale)\n    return out, cache\n\ndef attention_backward(dout, cache):\n    Q, K, V, P, scale = cache\n    dP = dout @ V.T\n    dV = P.T @ dout\n    dS = P * (dP - np.sum(dP * P, axis=1, keepdims=True))\n    dQ = scale * (dS @ K)\n    dK = scale * (dS.T @ Q)\n    return dQ, dK, dV",
+      "usage": {
+        "prompt_tokens": 347,
+        "total_tokens": 1546,
+        "completion_tokens": 1199,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 971
+        }
+      },
+      "elapsed_s": 29.9968
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 22,
+  "planned_tasks": [
+    "strict_protocol_json",
+    "bom_consolidation",
+    "code_repair",
+    "embedded_c_review",
+    "protocol_architecture",
+    "long_context_retrieval",
+    "scope_control",
+    "acquisition_timing",
+    "cpp_easy",
+    "verilog_easy",
+    "cuda_easy",
+    "ml_easy",
+    "cobs_codec",
+    "stream_reassembler",
+    "verilog_medium",
+    "cuda_medium",
+    "cpp_medium",
+    "ml_medium",
+    "cpp_hard",
+    "verilog_hard",
+    "cuda_hard",
+    "ml_hard"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mode": "none",
+  "suite": "deep_reasoning_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+      },
+      {
+        "role": "user",
+        "content": "You have 112 GiB of unified memory and must choose which models stay resident.\nEach is all-or-nothing: you cannot load part of one. Maximise total value.\n\n  name       size_gib   value\n  atlas         61        67\n  borealis      56        60\n  cinder        56        60\n  dunlin        27        28\n  ember         19        19\n  fennec        13        12\n\nReturn ONLY JSON with exactly these keys:\n  \"selection\"      array of names, the value-maximising set that fits in 112 GiB\n  \"total_value\"    integer, its total value\n  \"total_size_gib\" integer, its total size\n  \"greedy_by_value_density_total\"  integer, the total value you would get by\n                   repeatedly taking the model with the highest value-per-GiB\n                   that still fits\n"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T03:09:29.195552+00:00"
+}

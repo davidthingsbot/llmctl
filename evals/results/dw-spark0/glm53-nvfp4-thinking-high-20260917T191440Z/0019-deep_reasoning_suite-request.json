@@ -1,0 +1,19 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "A causal DAG over observed variables. Arrows are direct causes.\n\n  C -> T      C -> Y\n  I -> T\n  T -> Y      T -> M      M -> Y\n  T -> Z      Y -> Z\n\nYou want to estimate the TOTAL causal effect of T on Y from observational data.\nReturn ONLY JSON with exactly these keys:\n\n  \"adjustment_set\"        array of variable names, the minimal sufficient set to\n                          condition on to identify the total effect; [] if none\n                          is needed. Use only C, I, M, Z.\n  \"conditioning_on_M\"     one of \"total\", \"direct\", \"unchanged\" \u2014 which effect of\n                          T on Y you are left estimating if you also condition on M\n  \"z_is_collider\"         true or false\n  \"conditioning_on_Z\"     one of \"removes_bias\", \"introduces_bias\", \"no_effect\"\n  \"i_is_instrument\"       true or false, whether I is a valid instrument for T\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

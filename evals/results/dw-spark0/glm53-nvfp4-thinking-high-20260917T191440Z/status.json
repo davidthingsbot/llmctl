@@ -1,0 +1,56 @@
+{
+  "status": "complete",
+  "model": "glm53-flash-nvfp4-vision",
+  "template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  },
+  "text_max_tokens": 32768,
+  "baseline_note": "Original NVFP4 baseline used low reasoning and12000 text tokens; this high run uses32768 text and16384 vision. Not equal compute.",
+  "vision": {
+    "score": 59,
+    "max_score": 78,
+    "output_limit": 16384
+  },
+  "suites": {
+    "deep_reasoning_suite": {
+      "score": 286,
+      "max_score": 302,
+      "cost": {
+        "prompt_tokens": 6401,
+        "completion_tokens": 12942,
+        "total_tokens": 19343,
+        "task_seconds": 921.39,
+        "wall_seconds": 921.94,
+        "generation_tok_s": 14.05,
+        "truncated_tasks": [],
+        "retries": 4,
+        "retry_completion_tokens": 2378
+      }
+    },
+    "work_quality_suite": {
+      "score": 378,
+      "max_score": 438,
+      "cost": {
+        "prompt_tokens": 42689,
+        "completion_tokens": 104297,
+        "total_tokens": 146986,
+        "task_seconds": 7388.15,
+        "wall_seconds": 7404.29,
+        "generation_tok_s": 14.12,
+        "truncated_tasks": [
+          "stream_reassembler"
+        ],
+        "retries": 6,
+        "retry_completion_tokens": 40679
+      }
+    }
+  },
+  "phase": "vision",
+  "smoke": {
+    "reasoning_nonempty": true,
+    "correct": true,
+    "finish_reason": "stop"
+  },
+  "tool_check": "passed"
+}

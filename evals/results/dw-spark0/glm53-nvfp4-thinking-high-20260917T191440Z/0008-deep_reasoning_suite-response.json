@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 32.32922255700396,
+  "response": {
+    "id": "chatcmpl-91077f62d76125f2",
+    "object": "chat.completion",
+    "created": 1789673286,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"launch_now_ev\": -12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase test\"\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Compute.\n\nPrior: P(G)=0.4, P(B)=0.6.\n\nLaunch now EV: 0.4*120 + 0.6*(-60) = 48 - 36 = -12. Decline = 0. So decline better; launch_now_ev = -12 (the EV of launching now, presumably). Key \"launch_now_ev\" = -12.\n\nTest: P(pos) = 0.4*0.8 + 0.6*0.2 = 0.32+0.12=0.44.\n\nP(G|pos) = 0.32/0.44 = 8/11 \u2248 0.7273.\n\nLaunch EV given positive: (8/11)*120 + (3/11)*(-60) = (960 - 180)/11 = 780/11 \u2248 70.91. Positive action: launch.\n\nP(G|neg) = 0.08/0.56 = 1/7 \u2248 0.1429. Launch EV given negative: (1/7)*120 + (6/7)*(-60) = (120-360)/7 = -240/7 \u2248 -34.29. Negative action: decline.\n\nTest policy EV after cost: 0.44*70.91 + 0.56*0 - 10 = 31.2 - 10 = 21.2. Actually 0.44*(780/11) = 31.2 exactly. Minus 10 = 21.2.\n\nBest initial policy: purchase test (21.2 > 0 > -12)."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 200,
+      "total_tokens": 653,
+      "completion_tokens": 453,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

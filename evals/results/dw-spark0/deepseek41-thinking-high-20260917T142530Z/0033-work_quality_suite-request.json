@@ -1,0 +1,19 @@
+{
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement a fixed-capacity circular buffer in C++. Return ONLY the struct,\nno main, no includes, no explanation. You may use nothing beyond <cstddef>.\n\n    struct RingBuffer {\n        RingBuffer(int capacity);      // capacity >= 1\n        bool push(int value);          // false if full, buffer unchanged\n        bool pop(int& out);            // false if empty, out untouched\n        int  size() const;\n        bool empty() const;\n        bool full() const;\n    };\n\nRequirements:\n- Fixed capacity given at construction. Store up to 1024 elements; you may use a\n  plain member array sized 1024.\n- FIFO order: the first value pushed is the first popped.\n- Pushing when full returns false and does not overwrite or lose data.\n- Popping when empty returns false and leaves `out` alone.\n- The buffer must wrap: after filling and draining repeatedly it keeps working.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

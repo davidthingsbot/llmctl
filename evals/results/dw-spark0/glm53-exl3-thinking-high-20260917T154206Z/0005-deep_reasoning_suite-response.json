@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 25.60149732499849,
+  "response": {
+    "id": "chatcmpl-8cf584528d7ef585",
+    "object": "chat.completion",
+    "created": 1789660420,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given disease status. In reality, repeated tests of the same type are often correlated: a false positive may stem from a factor common to both tests (e.g., cross-reacting antibodies, lab handling, assay bias, or a patient characteristic like an autoimmune condition), so a second positive result adds less new information than independence implies. The true post-two-test probability could therefore be substantially lower than 76.6%, making the independence-based calculation overconfident.\"\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "P(D)=0.01. One positive: P = 0.9*0.01 / (0.9*0.01 + 0.05*0.99) = 0.009/0.0585 = 0.1538 \u2192 15.4%.\n\nTwo positives: posterior after first = 0.1538. Second test: P = 0.9*0.1538 / (0.9*0.1538 + 0.05*0.8462) = 0.13846/(0.13846+0.04231)=0.13846/0.18077=0.766 \u2192 76.6%.\n\nExact: prior odds 1/99, \u00d79 = 9/99 = 1/11, \u00d718 = 18/11 \u2192 18/29 = 0.6207? Wait: LR+ = 0.9/0.05 = 18. Prior odds = 0.01/0.99 = 1/99. After two: 18/99 = 2/11 \u2192 probability 2/13 = 0.1538? No: 18/99 = 0.1818 odds \u2192 prob = 18/117 = 0.1538? That's one test. Two tests: odds = 1/99 \u00d7 18 \u00d7 18 = 324/99 = 3.2727 \u2192 prob = 324/423 = 0.766. Yes 76.6%."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 150,
+      "total_tokens": 631,
+      "completion_tokens": 481,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

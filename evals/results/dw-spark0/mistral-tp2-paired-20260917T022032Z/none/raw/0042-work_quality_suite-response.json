@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 83.70394352899893,
+  "response": {
+    "id": "chatcmpl-aecf7d00bc2485dc",
+    "object": "chat.completion",
+    "created": 1789612556,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nclass Reassembler:\n    def __init__(self):\n        self.buffer = bytearray()\n        self.state = 0\n        self.frame_length = 0\n        self.payload_xor = 0\n        self.payload_bytes = bytearray()\n\n    def feed(self, chunk):\n        result = []\n        self.buffer.extend(chunk)\n        i = 0\n        n = len(self.buffer)\n\n        while i < n:\n            if self.state == 0:\n                if i + 1 >= n:\n                    break\n                if self.buffer[i] == 0xAA and self.buffer[i + 1] == 0x55:\n                    self.state = 1\n                    i += 2\n                else:\n                    i += 1\n            elif self.state == 1:\n                if i + 1 >= n:\n                    break\n                self.frame_length = self.buffer[i] | (self.buffer[i + 1] << 8)\n                i += 2\n                if self.frame_length > 4096:\n                    self.state = 0\n                    self.payload_bytes = bytearray()\n                else:\n                    self.state = 2\n                    self.payload_xor = 0\n                    self.payload_bytes = bytearray()\n            elif self.state == 2:\n                needed = self.frame_length - len(self.payload_bytes)\n                if i + needed > n:\n                    break\n                self.payload_bytes.extend(self.buffer[i:i + needed])\n                for b in self.buffer[i:i + needed]:\n                    self.payload_xor ^= b\n                i += needed\n                self.state = 3\n            elif self.state == 3:\n                if i >= n:\n                    break\n                check_byte = self.buffer[i]\n                i += 1\n                if check_byte == self.payload_xor:\n                    result.append(bytes(self.payload_bytes))\n                self.state = 0\n                self.payload_bytes = bytearray()\n        self.buffer = self.buffer[i:]\n        return result\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 338,
+      "total_tokens": 752,
+      "completion_tokens": 414,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

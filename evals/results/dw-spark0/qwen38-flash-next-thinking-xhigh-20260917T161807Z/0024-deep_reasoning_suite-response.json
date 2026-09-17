@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 27.582500819000416,
+  "response": {
+    "id": "chatcmpl-b34bd15bee51d790",
+    "object": "chat.completion",
+    "created": 1789664196,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer user's request: solve reasoning problem, return ONLY JSON. Need compute KV cache cost.\n\nArchitecture: 48 layers, 12 full attention cache K and V. 36 linear contribute nothing. Each full-attention layer has 8 key/value heads with head dimension 128. K and V cached separately. q8_0 costs 1.0625 bytes per element. 1 GiB = 2^30 bytes.\n\nNeed keys:\nkv_bytes_per_token integer bytes of KV cache per token of context.\nkv_gib_at_262144 number GiB at 262144 tokens.\nmax_context_tokens_in_25gib integer largest context fits in 25 GiB round down.\nweights_87gib_and_262144_fits_in_112gib true/false whether 87 GiB weights plus KV at 262144 fits in 112 GiB.\n\nCompute per token:\nFor each full attention layer: K and V separately. Number of heads? \"8 key/value heads\" likely 8 K heads and 8 V heads? Each head dimension 128. K cached separately and V cached separately. Elements per token per layer = K: 8*128 = 1024, V: 8*128 = 1024, total 2048 elements. 12 layers => 24576 elements per token. q8_0 bytes per element 1.0625 => 24576 * 1.0625 = 24576 + 24576*0.0625 = 24576 + 1536 = 26112 bytes. integer 26112.\n\nCheck if \"8 key/value heads\" could mean 8 heads total for K and V? Usually key/value heads means 8 K heads and 8 V heads. K and V cached separately. If 8 key/value heads with head dim 128, K and V cached separately: 8*128*2*12 = 24576 elements. Yes.\n\nkv_gib_at_262144 = 26112 * 262144 / 2^30. 262144 = 2^18. 26112 * 2^18 / 2^30 = 26112 / 2^12 = 26112 / 4096 = 6.375? 4096*6=24576, remainder 1536, 1536/4096=0.375. Yes 6.375 GiB.\n\nmax_context_tokens_in_25gib = floor(25 GiB / bytes_per_token). 25*2^30 / 26112. Compute. 2^30=1073741824. *25 = 26843545600. Divide by 26112. Let's compute exact. 26112 =? 26112*1,000,000 = 26,112,000,000. Remainder 731,545,600. 26112*28,000 = 731,136,000. Remainder 409,600. 26112*15 = 391,680. Remainder 17,920. So 1,028,015? Wait 1,000,000+28,000+15=1,028,015. Check 26112*1,028,015 = 26,112,000,000 + 731,136,000 + 391,680 = 26,843,527,680? Let's sum: 26,112,000,000 + 731,136,000 = 26,843,136,000; +391,680 = 26,843,527,680. Target 26,843,545,600. Remainder 17,920. So floor 1,028,015. Could there be exact simplification: 25*2^30 / 26112. 26112 = 2^? *? 26112/1024=25.5? Actually 26112 = 2^? 26112 = 2^? *? Let's factor: 26112 = 24576*1.0625 = 24576*17/16 = 1536*17? 24576/16=1536, *17=26112. 1536=2^9*3. So 26112=2^9*3*17=512*51=26112. 25*2^30 / (2^9*51) = 25*2^21 /51 = 25*2097152/51 = 52428800/51 = 1,028,015.686... floor 1,028,015. Yes.\n\nweights_87gib_and_262144_fits_in_112gib: 87 + 6.375 = 93.375 <=112 true.\n\nNeed return ONLY JSON. Ensure number maybe 6.375. integer values. JSON keys exact. No markdown. final only JSON.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 402,
+      "total_tokens": 1937,
+      "completion_tokens": 1535,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1442
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

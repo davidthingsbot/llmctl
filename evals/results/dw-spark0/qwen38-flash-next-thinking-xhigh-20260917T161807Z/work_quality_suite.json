@@ -1,0 +1,812 @@
+{
+  "suite": "work_quality_v1+hard",
+  "model": "qwen38-flash-next-tp2",
+  "endpoint": "http://127.0.0.1:8004/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "xhigh"
+  },
+  "score": 357,
+  "max_score": 438,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 44040,
+    "completion_tokens": 346139,
+    "total_tokens": 390179,
+    "task_seconds": 7487.8,
+    "wall_seconds": 7523.79,
+    "generation_tok_s": 46.23,
+    "truncated_tasks": [
+      "ml_easy",
+      "cobs_codec",
+      "verilog_medium",
+      "verilog_hard"
+    ],
+    "retries": 4,
+    "retry_completion_tokens": 105612
+  },
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "\n\n{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "usage": {
+        "prompt_tokens": 231,
+        "total_tokens": 445,
+        "completion_tokens": 214,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 140
+        }
+      },
+      "elapsed_s": 3.9639
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 10,
+      "max_score": 10,
+      "max_tokens": 32768,
+      "response": "\n\n{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16,\n  \"setup_cost_usd\": 40\n}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16,\n  \"setup_cost_usd\": 40\n}",
+      "usage": {
+        "prompt_tokens": 323,
+        "total_tokens": 5524,
+        "completion_tokens": 5201,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 5128
+        }
+      },
+      "elapsed_s": 114.1555
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "\n\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"invalid frame length\")\n\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_len = 5 + payload_len\n\n    if len(frame) != expected_len:\n        raise ValueError(\"invalid frame length\")\n\n    payload = frame[3:3 + payload_len]\n    stored_crc = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n\n    if crc16(frame[:3 + payload_len]) != stored_crc:\n        raise ValueError(\"invalid crc\")\n\n    return frame[0], payload",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      },
+      "status": "complete",
+      "raw_response": "\n\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"invalid frame length\")\n\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_len = 5 + payload_len\n\n    if len(frame) != expected_len:\n        raise ValueError(\"invalid frame length\")\n\n    payload = frame[3:3 + payload_len]\n    stored_crc = int.from_bytes(frame[3 + payload_len:5 + payload_len], \"little\")\n\n    if crc16(frame[:3 + payload_len]) != stored_crc:\n        raise ValueError(\"invalid crc\")\n\n    return frame[0], payload",
+      "usage": {
+        "prompt_tokens": 318,
+        "total_tokens": 1167,
+        "completion_tokens": 849,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 705
+        }
+      },
+      "elapsed_s": 18.416
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "\n\n1. **No validation of `rx_len` before indexing.**  \n   Correction: Verify `rx_len >= 4` and that `rx_len == 2 + len + 2` before reading payload/CRC; reject otherwise.\n\n2. **`len` is not bounded before `memcpy`.**  \n   Correction: Reject if `len > sizeof(payload)` (32) before copying.\n\n3. **CRC is computed over the wrong data.**  \n   Correction: Compute CRC over command + length + payload, e.g. `crc16(rx, 2 + len)`, not just `payload`.\n\n4. **`if (calc = got)` assigns instead of comparing.**  \n   Correction: Use `if (calc == got)`.\n\n5. **Command parsing and state changes occur before CRC/authentication.**  \n   Correction: Validate CRC, then authenticate, then increment `sequence` and call `parse_command`.\n\n6. **`printf(\"payload=%s\\n\", payload)` treats binary payload as a C string.**  \n   Correction: Do not print as `%s`; use bounded/hex output or ensure null termination and use `%.*s` with `len`.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n1. **No validation of `rx_len` before indexing.**  \n   Correction: Verify `rx_len >= 4` and that `rx_len == 2 + len + 2` before reading payload/CRC; reject otherwise.\n\n2. **`len` is not bounded before `memcpy`.**  \n   Correction: Reject if `len > sizeof(payload)` (32) before copying.\n\n3. **CRC is computed over the wrong data.**  \n   Correction: Compute CRC over command + length + payload, e.g. `crc16(rx, 2 + len)`, not just `payload`.\n\n4. **`if (calc = got)` assigns instead of comparing.**  \n   Correction: Use `if (calc == got)`.\n\n5. **Command parsing and state changes occur before CRC/authentication.**  \n   Correction: Validate CRC, then authenticate, then increment `sequence` and call `parse_command`.\n\n6. **`printf(\"payload=%s\\n\", payload)` treats binary payload as a C string.**  \n   Correction: Do not print as `%s`; use bounded/hex output or ensure null termination and use `%.*s` with `len`.",
+      "usage": {
+        "prompt_tokens": 299,
+        "total_tokens": 2257,
+        "completion_tokens": 1958,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1712
+        }
+      },
+      "elapsed_s": 48.526
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "\n\n## Replacement design: split `SCAN` into acquisition, processing, and reporting\n\nReplace the monolithic `SCAN` with a three-stage pipeline:\n\n```text\nACQUIRE raw frame  ->  PROCESS derived frame  ->  REPORT event\n```\n\n`SCAN` becomes an acquisition request only. Transform, filtering, storage of derived data, and event emission are separate, versioned, owned operations.\n\n---\n\n## 1. Command and responsibility boundaries\n\n| Command | Owner | Responsibility | Must not do |\n|---|---|---|---|\n| `ACQ_SET_MODE` | Acquisition controller | Start/stop continuous acquisition, set cadence/priority | Apply transforms, emit events |\n| `SCAN` | Acquisition controller | Request one raw frame, return frame ID/lease | Apply shear, update filters, emit events |\n| `PROC_APPLY` | Processing pipeline | Apply versioned transform/filter to a stored raw frame, optionally update filter state, optionally request event | Access sensor directly |\n| `DATA_GET` | Storage service | Download raw frame, derived frame, or metadata | Rescan or reprocess implicitly |\n| `EVENT_SET_MODE` | Event/reporting service | Enable/disable event publication and select event profile | Control acquisition |\n\n### Normative behavior\n\n- `SCAN` MUST acquire or reference a raw sensor frame and return a `frame_id`.\n- `SCAN` MUST NOT mutate filter state.\n- `SCAN` MUST NOT be the only path that stores data.\n- `PROC_APPLY` MUST operate on an existing `frame_id`.\n- `PROC_APPLY` MUST record the transform and filter profile versions used.\n- Event emission MUST be a result of `PROC_APPLY` or the continuous processing pipeline, not a side effect of raw acquisition.\n\n---\n\n## 2. Frame and source identity\n\nEvery frame MUST have immutable identity and metadata sufficient for later audit.\n\n```text\nsource_id = {\n  bus,\n  address,\n  channel,\n  sensor_model,\n  calibration_id\n}\n\nframe_id = {\n  source_id,\n  capture_seq,\n  timestamp,\n  sensor_config_hash\n}\n```\n\nRaw frame metadata MUST include:\n\n```text\nraw_frame = {\n  frame_id,\n  exposure,\n  gain,\n  trigger_source,\n  sensor_config_hash,\n  capture_status\n}\n```\n\nDerived frame metadata MUST include:\n\n```text\nderived_frame = {\n  frame_id,\n  transform_id,\n  filter_profile_id,\n  filter_state_before_hash,\n  filter_state_after_hash,\n  derived_payload\n}\n```\n\nThe `transform_id` MUST identify the shear transform version and parameters. If the current shear changes, new frames use the new `transform_id`; old frames retain the transform ID under which they were originally processed.\n\n---\n\n## 3. Reproducible acquisition and audit\n\nThe canonical artifact is the raw frame, not the transformed frame.\n\n- The system MUST store the raw frame, or a lossless compressed equivalent, for the audit retention window.\n- The transformed frame MAY be cached, but it MUST be marked as derived.\n- A later `DATA_GET` MUST be able to retrieve:\n  - raw frame,\n  - derived frame,\n  - metadata,\n  - transform/filter profile IDs.\n- A later `PROC_APPLY` MUST be able to reprocess a stored raw frame with a different transform or filter profile without issuing a new `SCAN`.\n\nThis makes acquisition reproducible:\n\n```text\nraw frame + sensor_config_hash + transform_id + filter_profile_id + filter_state_before\n```\n\nis sufficient to reconstruct the derived result.\n\n---\n\n## 4. Continuous versus on-demand behavior\n\nAcquisition mode is independent of on-demand requests.\n\n### Acquisition modes\n\n```text\nACQ_SET_MODE(source, mode = OFF | CONTINUOUS, period, priority)\n```\n\n- `OFF`: sensor is idle unless a `SCAN` is issued.\n- `CONTINUOUS`: acquisition controller owns the sensor and captures at the configured cadence.\n\n### `SCAN` while continuous acquisition is active\n\n`SCAN` MUST NOT directly access the sensor if continuous acquisition already owns it.\n\nInstead, `SCAN` is a request to the acquisition controller:\n\n```text\nSCAN(source, wait = NEXT | LATEST | PRIORITY, timeout)\n```\n\nBehavior:\n\n- `wait = NEXT`  \n  Return the next completed continuous frame. Multiple `SCAN` requests MAY be coalesced to the same `frame_id`.\n\n- `wait = LATEST`  \n  Return the most recent completed frame without forcing a new capture.\n\n- `wait = PRIORITY`  \n  Request a one-shot capture at the next safe frame boundary. The controller MAY temporarily reorder or insert a capture, but MUST NOT run two sensor acquisitions concurrently.\n\nIf the controller cannot satisfy the request within `timeout`, it MUST return:\n\n```text\nBUSY\nNO_FRAME\nTIMEOUT\n```\n\ndepending on state.\n\n### Required invariant\n\nAt any instant, only one acquisition owner may access the sensor:\n\n```text\ncontinuous acquisition OR one-shot acquisition\n```\n\nnot both.\n\n---\n\n## 5. Filter ownership and update order\n\nFilter state MUST be owned by the processing pipeline, not by `SCAN`.\n\n- Filter state MUST be updated only by `PROC_APPLY` or the continuous processing pipeline.\n- Filter updates MUST occur in monotonic `capture_seq` order.\n- On-demand processing MUST NOT jump ahead of continuous frames if that would corrupt temporal filters.\n- Reprocessing an already processed frame MUST NOT update filter state unless explicitly requested in replay mode.\n\nRecommended rule:\n\n```text\nPROC_APPLY(frame_id, update_filters = true)\n```\n\nis allowed only if:\n\n```text\nframe_id.capture_seq == expected_next_filter_seq\n```\n\nOtherwise the request MUST be queued or rejected.\n\nThis prevents races where an on-demand `SCAN` and a continuous frame both try to update the same filter state.\n\n---\n\n## 6. Event reporting relationship\n\nAcquisition mode and event reporting MUST be orthogonal.\n\n```text\nACQ_SET_MODE(...) controls whether frames are captured.\nEVENT_SET_MODE(...) controls whether processed changes are published.\n```\n\n### Rules\n\n- Continuous acquisition MAY run with event reporting disabled.\n- On-demand `SCAN` MAY run with event reporting enabled.\n- Event reporting MUST NOT cause acquisition.\n- Acquisition MUST NOT directly cause event emission.\n- Events MUST be emitted only after processing produces a change result.\n\nExample:\n\n```text\nACQ_SET_MODE(source, CONTINUOUS)\nEVENT_SET_MODE(source, OFF)\n```\n\ncaptures frames continuously but emits no events.\n\n```text\nACQ_SET_MODE(source, OFF)\nEVENT_SET_MODE(source, ON)\nSCAN(source)\nPROC_APPLY(frame_id, emit = true)\n```\n\ncaptures one frame on demand and may emit an event.\n\n### Duplicate suppression\n\nEach event MUST be associated with:\n\n```text\nevent_id = {\n  frame_id,\n  filter_profile_id,\n  event_profile_id\n}\n```\n\nIf the same frame is reprocessed with the same profile, the system MUST NOT emit a duplicate event unless explicitly requested.\n\n---\n\n## 7. Storage and ownership races\n\nFrames MUST be managed as immutable, reference-counted objects.\n\n- `SCAN` returns a frame lease or frame ID.\n- The raw buffer MUST NOT be overwritten while a lease is active.\n- Ring-buffer eviction MUST respect leases.\n- Command handlers MUST NOT directly manipulate sensor buffers or filter state.\n- All sensor and filter mutations MUST be serialized through the owning service.\n\nRecommended ownership model:\n\n```text\nAcquisition controller owns sensor and raw frame creation.\nProcessing pipeline owns transform/filter state.\nEvent service owns event publication.\nStorage service owns frame retention and download.\n```\n\nThis avoids ownership races between continuous acquisition, on-demand `SCAN`, filter updates, and event emission.\n\n---\n\n## 8. Resulting protocol shape\n\nA minimal replacement command set:\n\n```text\nACQ_SET_MODE(source, mode, period, priority)\nSCAN(source, wait, timeout) -> {status, frame_id, lease}\nPROC_APPLY(frame_id, transform_id, filter_profile_id, update_filters, emit)\n    -> {status, derived_id, event_id?}\nDATA_GET(frame_id, view = RAW | DERIVED | META, offset, length)\nEVENT_SET_MODE(source, enabled, event_profile_id)\n```\n\nThe key change is:\n\n```text\nSCAN no longer means \u201ccapture, transform, filter, store, and emit.\u201d\nSCAN means \u201cobtain a reproducible raw frame.\u201d\n```\n\nTransform, filtering, storage, and event reporting are separate, auditable, race-free operations.",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": true,
+        "event_independent": true,
+        "conflict_rejected_or_queued": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n## Replacement design: split `SCAN` into acquisition, processing, and reporting\n\nReplace the monolithic `SCAN` with a three-stage pipeline:\n\n```text\nACQUIRE raw frame  ->  PROCESS derived frame  ->  REPORT event\n```\n\n`SCAN` becomes an acquisition request only. Transform, filtering, storage of derived data, and event emission are separate, versioned, owned operations.\n\n---\n\n## 1. Command and responsibility boundaries\n\n| Command | Owner | Responsibility | Must not do |\n|---|---|---|---|\n| `ACQ_SET_MODE` | Acquisition controller | Start/stop continuous acquisition, set cadence/priority | Apply transforms, emit events |\n| `SCAN` | Acquisition controller | Request one raw frame, return frame ID/lease | Apply shear, update filters, emit events |\n| `PROC_APPLY` | Processing pipeline | Apply versioned transform/filter to a stored raw frame, optionally update filter state, optionally request event | Access sensor directly |\n| `DATA_GET` | Storage service | Download raw frame, derived frame, or metadata | Rescan or reprocess implicitly |\n| `EVENT_SET_MODE` | Event/reporting service | Enable/disable event publication and select event profile | Control acquisition |\n\n### Normative behavior\n\n- `SCAN` MUST acquire or reference a raw sensor frame and return a `frame_id`.\n- `SCAN` MUST NOT mutate filter state.\n- `SCAN` MUST NOT be the only path that stores data.\n- `PROC_APPLY` MUST operate on an existing `frame_id`.\n- `PROC_APPLY` MUST record the transform and filter profile versions used.\n- Event emission MUST be a result of `PROC_APPLY` or the continuous processing pipeline, not a side effect of raw acquisition.\n\n---\n\n## 2. Frame and source identity\n\nEvery frame MUST have immutable identity and metadata sufficient for later audit.\n\n```text\nsource_id = {\n  bus,\n  address,\n  channel,\n  sensor_model,\n  calibration_id\n}\n\nframe_id = {\n  source_id,\n  capture_seq,\n  timestamp,\n  sensor_config_hash\n}\n```\n\nRaw frame metadata MUST include:\n\n```text\nraw_frame = {\n  frame_id,\n  exposure,\n  gain,\n  trigger_source,\n  sensor_config_hash,\n  capture_status\n}\n```\n\nDerived frame metadata MUST include:\n\n```text\nderived_frame = {\n  frame_id,\n  transform_id,\n  filter_profile_id,\n  filter_state_before_hash,\n  filter_state_after_hash,\n  derived_payload\n}\n```\n\nThe `transform_id` MUST identify the shear transform version and parameters. If the current shear changes, new frames use the new `transform_id`; old frames retain the transform ID under which they were originally processed.\n\n---\n\n## 3. Reproducible acquisition and audit\n\nThe canonical artifact is the raw frame, not the transformed frame.\n\n- The system MUST store the raw frame, or a lossless compressed equivalent, for the audit retention window.\n- The transformed frame MAY be cached, but it MUST be marked as derived.\n- A later `DATA_GET` MUST be able to retrieve:\n  - raw frame,\n  - derived frame,\n  - metadata,\n  - transform/filter profile IDs.\n- A later `PROC_APPLY` MUST be able to reprocess a stored raw frame with a different transform or filter profile without issuing a new `SCAN`.\n\nThis makes acquisition reproducible:\n\n```text\nraw frame + sensor_config_hash + transform_id + filter_profile_id + filter_state_before\n```\n\nis sufficient to reconstruct the derived result.\n\n---\n\n## 4. Continuous versus on-demand behavior\n\nAcquisition mode is independent of on-demand requests.\n\n### Acquisition modes\n\n```text\nACQ_SET_MODE(source, mode = OFF | CONTINUOUS, period, priority)\n```\n\n- `OFF`: sensor is idle unless a `SCAN` is issued.\n- `CONTINUOUS`: acquisition controller owns the sensor and captures at the configured cadence.\n\n### `SCAN` while continuous acquisition is active\n\n`SCAN` MUST NOT directly access the sensor if continuous acquisition already owns it.\n\nInstead, `SCAN` is a request to the acquisition controller:\n\n```text\nSCAN(source, wait = NEXT | LATEST | PRIORITY, timeout)\n```\n\nBehavior:\n\n- `wait = NEXT`  \n  Return the next completed continuous frame. Multiple `SCAN` requests MAY be coalesced to the same `frame_id`.\n\n- `wait = LATEST`  \n  Return the most recent completed frame without forcing a new capture.\n\n- `wait = PRIORITY`  \n  Request a one-shot capture at the next safe frame boundary. The controller MAY temporarily reorder or insert a capture, but MUST NOT run two sensor acquisitions concurrently.\n\nIf the controller cannot satisfy the request within `timeout`, it MUST return:\n\n```text\nBUSY\nNO_FRAME\nTIMEOUT\n```\n\ndepending on state.\n\n### Required invariant\n\nAt any instant, only one acquisition owner may access the sensor:\n\n```text\ncontinuous acquisition OR one-shot acquisition\n```\n\nnot both.\n\n---\n\n## 5. Filter ownership and update order\n\nFilter state MUST be owned by the processing pipeline, not by `SCAN`.\n\n- Filter state MUST be updated only by `PROC_APPLY` or the continuous processing pipeline.\n- Filter updates MUST occur in monotonic `capture_seq` order.\n- On-demand processing MUST NOT jump ahead of continuous frames if that would corrupt temporal filters.\n- Reprocessing an already processed frame MUST NOT update filter state unless explicitly requested in replay mode.\n\nRecommended rule:\n\n```text\nPROC_APPLY(frame_id, update_filters = true)\n```\n\nis allowed only if:\n\n```text\nframe_id.capture_seq == expected_next_filter_seq\n```\n\nOtherwise the request MUST be queued or rejected.\n\nThis prevents races where an on-demand `SCAN` and a continuous frame both try to update the same filter state.\n\n---\n\n## 6. Event reporting relationship\n\nAcquisition mode and event reporting MUST be orthogonal.\n\n```text\nACQ_SET_MODE(...) controls whether frames are captured.\nEVENT_SET_MODE(...) controls whether processed changes are published.\n```\n\n### Rules\n\n- Continuous acquisition MAY run with event reporting disabled.\n- On-demand `SCAN` MAY run with event reporting enabled.\n- Event reporting MUST NOT cause acquisition.\n- Acquisition MUST NOT directly cause event emission.\n- Events MUST be emitted only after processing produces a change result.\n\nExample:\n\n```text\nACQ_SET_MODE(source, CONTINUOUS)\nEVENT_SET_MODE(source, OFF)\n```\n\ncaptures frames continuously but emits no events.\n\n```text\nACQ_SET_MODE(source, OFF)\nEVENT_SET_MODE(source, ON)\nSCAN(source)\nPROC_APPLY(frame_id, emit = true)\n```\n\ncaptures one frame on demand and may emit an event.\n\n### Duplicate suppression\n\nEach event MUST be associated with:\n\n```text\nevent_id = {\n  frame_id,\n  filter_profile_id,\n  event_profile_id\n}\n```\n\nIf the same frame is reprocessed with the same profile, the system MUST NOT emit a duplicate event unless explicitly requested.\n\n---\n\n## 7. Storage and ownership races\n\nFrames MUST be managed as immutable, reference-counted objects.\n\n- `SCAN` returns a frame lease or frame ID.\n- The raw buffer MUST NOT be overwritten while a lease is active.\n- Ring-buffer eviction MUST respect leases.\n- Command handlers MUST NOT directly manipulate sensor buffers or filter state.\n- All sensor and filter mutations MUST be serialized through the owning service.\n\nRecommended ownership model:\n\n```text\nAcquisition controller owns sensor and raw frame creation.\nProcessing pipeline owns transform/filter state.\nEvent service owns event publication.\nStorage service owns frame retention and download.\n```\n\nThis avoids ownership races between continuous acquisition, on-demand `SCAN`, filter updates, and event emission.\n\n---\n\n## 8. Resulting protocol shape\n\nA minimal replacement command set:\n\n```text\nACQ_SET_MODE(source, mode, period, priority)\nSCAN(source, wait, timeout) -> {status, frame_id, lease}\nPROC_APPLY(frame_id, transform_id, filter_profile_id, update_filters, emit)\n    -> {status, derived_id, event_id?}\nDATA_GET(frame_id, view = RAW | DERIVED | META, offset, length)\nEVENT_SET_MODE(source, enabled, event_profile_id)\n```\n\nThe key change is:\n\n```text\nSCAN no longer means \u201ccapture, transform, filter, store, and emit.\u201d\nSCAN means \u201cobtain a reproducible raw frame.\u201d\n```\n\nTransform, filtering, storage, and event reporting are separate, auditable, race-free operations.",
+      "usage": {
+        "prompt_tokens": 203,
+        "total_tokens": 6435,
+        "completion_tokens": 6232,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 4364
+        }
+      },
+      "elapsed_s": 155.5411
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "\n\n{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "usage": {
+        "prompt_tokens": 35452,
+        "total_tokens": 35808,
+        "completion_tokens": 356,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 253
+        }
+      },
+      "elapsed_s": 19.1071
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "max_tokens": 32768,
+      "response": "\n\n{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo \\\"invaild frame\\\" to \\\"invalid frame\\\" in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 203,
+        "total_tokens": 402,
+        "completion_tokens": 199,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 80
+        }
+      },
+      "elapsed_s": 3.8464
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 6,
+      "max_score": 6,
+      "max_tokens": 32768,
+      "response": "\n\n{\n  \"bits_per_transaction\": 48,\n  \"bus_bit_rate\": 768000,\n  \"wire_time_ms_per_second\": 96,\n  \"chip_select_overhead_ms_per_second\": 192,\n  \"total_bus_utilization_percent\": 28.8,\n  \"remaining_margin_percent\": 71.2\n}",
+      "grade_details": {
+        "bits_per_transaction": true,
+        "bus_bit_rate": true,
+        "wire_time_ms_per_second": true,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": true,
+        "remaining_margin_percent": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n{\n  \"bits_per_transaction\": 48,\n  \"bus_bit_rate\": 768000,\n  \"wire_time_ms_per_second\": 96,\n  \"chip_select_overhead_ms_per_second\": 192,\n  \"total_bus_utilization_percent\": 28.8,\n  \"remaining_margin_percent\": 71.2\n}",
+      "usage": {
+        "prompt_tokens": 262,
+        "total_tokens": 945,
+        "completion_tokens": 683,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 595
+        }
+      },
+      "elapsed_s": 13.2208
+    },
+    {
+      "task": "cpp_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "\n\nstruct RingBuffer {\nprivate:\n    int cap;\n    int head;\n    int tail;\n    int count;\n    int data[1024];\n\npublic:\n    RingBuffer(int capacity)\n        : cap(capacity > 1024 ? 1024 : (capacity < 1 ? 1 : capacity)),\n          head(0),\n          tail(0),\n          count(0) {}\n\n    bool push(int value) {\n        if (count == cap) return false;\n        data[tail] = value;\n        tail = (tail + 1) % cap;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (count == 0) return false;\n        out = data[head];\n        head = (head + 1) % cap;\n        --count;\n        return true;\n    }\n\n    int size() const {\n        return count;\n    }\n\n    bool empty() const {\n        return count == 0;\n    }\n\n    bool full() const {\n        return count == cap;\n    }\n};",
+      "grade_details": {
+        "struct_present": true,
+        "compiles": true,
+        "starts_empty": true,
+        "pop_empty_false": true,
+        "push_then_size": true,
+        "fifo_order": true,
+        "empty_after_drain": true,
+        "fills_to_capacity": true,
+        "push_when_full_false": true,
+        "full_push_did_not_corrupt": true,
+        "wraps_repeatedly": true,
+        "capacity_one": true
+      },
+      "status": "complete",
+      "raw_response": "\n\nstruct RingBuffer {\nprivate:\n    int cap;\n    int head;\n    int tail;\n    int count;\n    int data[1024];\n\npublic:\n    RingBuffer(int capacity)\n        : cap(capacity > 1024 ? 1024 : (capacity < 1 ? 1 : capacity)),\n          head(0),\n          tail(0),\n          count(0) {}\n\n    bool push(int value) {\n        if (count == cap) return false;\n        data[tail] = value;\n        tail = (tail + 1) % cap;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (count == 0) return false;\n        out = data[head];\n        head = (head + 1) % cap;\n        --count;\n        return true;\n    }\n\n    int size() const {\n        return count;\n    }\n\n    bool empty() const {\n        return count == 0;\n    }\n\n    bool full() const {\n        return count == cap;\n    }\n};",
+      "usage": {
+        "prompt_tokens": 288,
+        "total_tokens": 1988,
+        "completion_tokens": 1700,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1440
+        }
+      },
+      "elapsed_s": 36.3808
+    },
+    {
+      "task": "verilog_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "\n\nmodule edge_detect(input clk, input rst_n, input sig, output reg pulse);\n  reg sig_d;\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      sig_d <= 1'b0;\n      pulse <= 1'b0;\n    end else begin\n      sig_d <= sig;\n      pulse <= sig & ~sig_d;\n    end\n  end\nendmodule",
+      "grade_details": {
+        "module_present": true,
+        "lint_clean": true,
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "idle_low": true,
+        "one_cycle_pulse": true,
+        "not_a_level": true,
+        "no_pulse_on_falling": true,
+        "two_separate_edges": true,
+        "reset_clears": true
+      },
+      "status": "complete",
+      "raw_response": "\n\nmodule edge_detect(input clk, input rst_n, input sig, output reg pulse);\n  reg sig_d;\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      sig_d <= 1'b0;\n      pulse <= 1'b0;\n    end else begin\n      sig_d <= sig;\n      pulse <= sig & ~sig_d;\n    end\n  end\nendmodule",
+      "usage": {
+        "prompt_tokens": 230,
+        "total_tokens": 9507,
+        "completion_tokens": 9277,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9179
+        }
+      },
+      "elapsed_s": 222.3233
+    },
+    {
+      "task": "cuda_easy",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "\n\n__global__ void saxpy(int n, float a, const float* x, float* y)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    int stride = blockDim.x * gridDim.x;\n\n    for (; i < n; i += stride) {\n        y[i] = a * x[i] + y[i];\n    }\n}",
+      "grade_details": {
+        "kernel_present": true,
+        "compiles": true,
+        "gpu": "used",
+        "n_1": true,
+        "n_33": true,
+        "n_256": true,
+        "n_1000": true,
+        "n_100000": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n__global__ void saxpy(int n, float a, const float* x, float* y)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    int stride = blockDim.x * gridDim.x;\n\n    for (; i < n; i += stride) {\n        y[i] = a * x[i] + y[i];\n    }\n}",
+      "usage": {
+        "prompt_tokens": 226,
+        "total_tokens": 501,
+        "completion_tokens": 275,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 190
+        }
+      },
+      "elapsed_s": 6.1177
+    },
+    {
+      "task": "ml_easy",
+      "score": 0,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": false
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 276,
+        "total_tokens": 33044,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "elapsed_s": 703.5719,
+      "score_first": 0,
+      "retry_feedback": "failed checks: both_functions",
+      "raw_retry_response": "",
+      "retry_response": "",
+      "retry_usage": {
+        "prompt_tokens": 331,
+        "total_tokens": 33099,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "retry_elapsed_s": 591.1976,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": false
+      }
+    },
+    {
+      "task": "cobs_codec",
+      "score": 0,
+      "max_score": 24,
+      "max_tokens": 32768,
+      "response": "",
+      "grade_details": {
+        "functions_only": false
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 491,
+        "total_tokens": 33259,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "elapsed_s": 713.4616,
+      "score_first": 0,
+      "retry_feedback": "failed checks: functions_only",
+      "raw_retry_response": "",
+      "retry_response": "",
+      "retry_usage": {
+        "prompt_tokens": 546,
+        "total_tokens": 33314,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "retry_elapsed_s": 716.2426,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "functions_only": false
+      }
+    },
+    {
+      "task": "stream_reassembler",
+      "score": 24,
+      "max_score": 24,
+      "max_tokens": 32768,
+      "response": "\n\nclass Reassembler:\n    def __init__(self):\n        self._buf = bytearray()\n\n    def feed(self, chunk: bytes) -> list[bytes]:\n        frames = []\n        try:\n            if chunk:\n                self._buf.extend(chunk)\n        except Exception:\n            pass\n\n        buf = self._buf\n        pos = 0\n\n        while pos < len(buf):\n            idx = buf.find(b'\\xAA\\x55', pos)\n            if idx == -1:\n                if buf[-1] == 0xAA:\n                    pos = len(buf) - 1\n                else:\n                    pos = len(buf)\n                break\n\n            pos = idx\n            if len(buf) - pos < 4:\n                break\n\n            length = buf[pos + 2] | (buf[pos + 3] << 8)\n            if length > 4096:\n                pos += 2\n                continue\n\n            frame_len = 4 + length + 1\n            if len(buf) - pos < frame_len:\n                break\n\n            payload = bytes(buf[pos + 4:pos + 4 + length])\n            check = buf[pos + 4 + length]\n\n            xor = 0\n            for b in payload:\n                xor ^= b\n\n            if xor == check:\n                frames.append(payload)\n\n            pos += frame_len\n\n        if pos:\n            del buf[:pos]\n\n        return frames",
+      "grade_details": {
+        "class_only": true,
+        "single_frame": true,
+        "empty_payload": true,
+        "two_frames_one_chunk": true,
+        "split_byte_by_byte": true,
+        "split_across_two_chunks": true,
+        "garbage_before_sync": true,
+        "resync_after_bad_check": true,
+        "oversize_length_rejected": true,
+        "payload_containing_sync": true,
+        "no_frame_no_output": true,
+        "stateful_across_calls": true
+      },
+      "status": "complete",
+      "raw_response": "\n\nclass Reassembler:\n    def __init__(self):\n        self._buf = bytearray()\n\n    def feed(self, chunk: bytes) -> list[bytes]:\n        frames = []\n        try:\n            if chunk:\n                self._buf.extend(chunk)\n        except Exception:\n            pass\n\n        buf = self._buf\n        pos = 0\n\n        while pos < len(buf):\n            idx = buf.find(b'\\xAA\\x55', pos)\n            if idx == -1:\n                if buf[-1] == 0xAA:\n                    pos = len(buf) - 1\n                else:\n                    pos = len(buf)\n                break\n\n            pos = idx\n            if len(buf) - pos < 4:\n                break\n\n            length = buf[pos + 2] | (buf[pos + 3] << 8)\n            if length > 4096:\n                pos += 2\n                continue\n\n            frame_len = 4 + length + 1\n            if len(buf) - pos < frame_len:\n                break\n\n            payload = bytes(buf[pos + 4:pos + 4 + length])\n            check = buf[pos + 4 + length]\n\n            xor = 0\n            for b in payload:\n                xor ^= b\n\n            if xor == check:\n                frames.append(payload)\n\n            pos += frame_len\n\n        if pos:\n            del buf[:pos]\n\n        return frames",
+      "usage": {
+        "prompt_tokens": 376,
+        "total_tokens": 24864,
+        "completion_tokens": 24488,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 24167
+        }
+      },
+      "elapsed_s": 553.3398
+    },
+    {
+      "task": "verilog_medium",
+      "score": 15,
+      "max_score": 26,
+      "max_tokens": 32768,
+      "response": "",
+      "grade_details": {
+        "module_present": true,
+        "lint_clean": false,
+        "lint_first": [
+          "%Warning-WIDTHTRUNC: /tmp/verilog-vye7cuzp/sync_fifo.v:29:14: Operator ASSIGNDLY expects 2 bits on the Assign RHS, but Assign RHS's AND generates 32 or 3 bits.",
+          "%Warning-WIDTHTRUNC: /tmp/verilog-vye7cuzp/sync_fifo.v:34:14: Operator ASSIGNDLY expects 2 bits on the Assign RHS, but Assign RHS's AND generates 32 or 3 bits.",
+          "%Error: Exiting due to 2 warning(s)"
+        ],
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "empty_after_reset": true,
+        "not_full_at_three": true,
+        "full_at_depth": true,
+        "write_while_full_ignored": true,
+        "first_out_is_first_in": true,
+        "second_out": true,
+        "not_full_after_reads": true,
+        "third_out": true,
+        "fourth_out": true,
+        "empty_after_draining": true,
+        "read_while_empty_ignored": true,
+        "full_after_wrap": true,
+        "wrap_first_out": true,
+        "empty_after_wrap_drain": true
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 363,
+        "total_tokens": 33131,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "elapsed_s": 640.5966,
+      "score_first": 0,
+      "retry_feedback": "failed checks: module_present",
+      "raw_retry_response": "\n\nmodule sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\n  localparam PTR_BITS = (DEPTH <= 1) ? 1 : $clog2(DEPTH);\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n  reg [PTR_BITS-1:0] wptr;\n  reg [PTR_BITS-1:0] rptr;\n  reg [PTR_BITS:0] count;\n\n  wire wr_ok = wr_en && !full;\n  wire rd_ok = rd_en && !empty;\n\n  assign full = (count == DEPTH);\n  assign empty = (count == 0);\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      wptr <= {PTR_BITS{1'b0}};\n      rptr <= {PTR_BITS{1'b0}};\n      count <= {(PTR_BITS+1){1'b0}};\n      dout <= {WIDTH{1'b0}};\n    end else begin\n      if (wr_ok) begin\n        mem[wptr] <= din;\n        wptr <= (wptr + 1'b1) & (DEPTH - 1);\n      end\n\n      if (rd_ok) begin\n        dout <= mem[rptr];\n        rptr <= (rptr + 1'b1) & (DEPTH - 1);\n      end\n\n      if (wr_ok && !rd_ok) begin\n        count <= count + 1'b1;\n      end else if (rd_ok && !wr_ok) begin\n        count <= count - 1'b1;\n      end\n    end\n  end\n\nendmodule",
+      "retry_response": "\n\nmodule sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\n  localparam PTR_BITS = (DEPTH <= 1) ? 1 : $clog2(DEPTH);\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n  reg [PTR_BITS-1:0] wptr;\n  reg [PTR_BITS-1:0] rptr;\n  reg [PTR_BITS:0] count;\n\n  wire wr_ok = wr_en && !full;\n  wire rd_ok = rd_en && !empty;\n\n  assign full = (count == DEPTH);\n  assign empty = (count == 0);\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      wptr <= {PTR_BITS{1'b0}};\n      rptr <= {PTR_BITS{1'b0}};\n      count <= {(PTR_BITS+1){1'b0}};\n      dout <= {WIDTH{1'b0}};\n    end else begin\n      if (wr_ok) begin\n        mem[wptr] <= din;\n        wptr <= (wptr + 1'b1) & (DEPTH - 1);\n      end\n\n      if (rd_ok) begin\n        dout <= mem[rptr];\n        rptr <= (rptr + 1'b1) & (DEPTH - 1);\n      end\n\n      if (wr_ok && !rd_ok) begin\n        count <= count + 1'b1;\n      end else if (rd_ok && !wr_ok) begin\n        count <= count - 1'b1;\n      end\n    end\n  end\n\nendmodule",
+      "retry_usage": {
+        "prompt_tokens": 418,
+        "total_tokens": 7726,
+        "completion_tokens": 7308,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 6887
+        }
+      },
+      "retry_elapsed_s": 159.9612,
+      "score_retry": 22,
+      "retry_grade_details": {
+        "module_present": true,
+        "lint_clean": false,
+        "lint_first": [
+          "%Warning-WIDTHTRUNC: /tmp/verilog-vye7cuzp/sync_fifo.v:29:14: Operator ASSIGNDLY expects 2 bits on the Assign RHS, but Assign RHS's AND generates 32 or 3 bits.",
+          "%Warning-WIDTHTRUNC: /tmp/verilog-vye7cuzp/sync_fifo.v:34:14: Operator ASSIGNDLY expects 2 bits on the Assign RHS, but Assign RHS's AND generates 32 or 3 bits.",
+          "%Error: Exiting due to 2 warning(s)"
+        ],
+        "simulator": "iverilog",
+        "compiles": true,
+        "simulator_returncode": 0,
+        "ran_to_completion": true,
+        "empty_after_reset": true,
+        "not_full_at_three": true,
+        "full_at_depth": true,
+        "write_while_full_ignored": true,
+        "first_out_is_first_in": true,
+        "second_out": true,
+        "not_full_after_reads": true,
+        "third_out": true,
+        "fourth_out": true,
+        "empty_after_draining": true,
+        "read_while_empty_ignored": true,
+        "full_after_wrap": true,
+        "wrap_first_out": true,
+        "empty_after_wrap_drain": true
+      }
+    },
+    {
+      "task": "cuda_medium",
+      "score": 26,
+      "max_score": 26,
+      "max_tokens": 32768,
+      "response": "\n\n__global__ void block_sum(const float* in, float* out, int n)\n{\n    extern __shared__ float sdata[];\n\n    const int tid = threadIdx.x;\n    const long long idx = (long long)blockIdx.x * blockDim.x + tid;\n\n    sdata[tid] = (n > 0 && idx < (long long)n) ? in[idx] : 0.0f;\n\n    __syncthreads();\n\n    for (int s = blockDim.x / 2; s > 0; s >>= 1) {\n        if (tid < s) {\n            sdata[tid] += sdata[tid + s];\n        }\n        __syncthreads();\n    }\n\n    if (tid == 0) {\n        out[blockIdx.x] = sdata[0];\n    }\n}",
+      "grade_details": {
+        "kernel_present": true,
+        "compiles": true,
+        "gpu": "used",
+        "n_1": true,
+        "n_31": true,
+        "n_32": true,
+        "n_33": true,
+        "n_255": true,
+        "n_256": true,
+        "n_257": true,
+        "n_1000": true,
+        "n_4096": true,
+        "n_100000": true,
+        "all_cases_pass": true,
+        "barrier_divergence_clean": true,
+        "barrier_in_thread_conditional": false
+      },
+      "status": "complete",
+      "raw_response": "\n\n__global__ void block_sum(const float* in, float* out, int n)\n{\n    extern __shared__ float sdata[];\n\n    const int tid = threadIdx.x;\n    const long long idx = (long long)blockIdx.x * blockDim.x + tid;\n\n    sdata[tid] = (n > 0 && idx < (long long)n) ? in[idx] : 0.0f;\n\n    __syncthreads();\n\n    for (int s = blockDim.x / 2; s > 0; s >>= 1) {\n        if (tid < s) {\n            sdata[tid] += sdata[tid + s];\n        }\n        __syncthreads();\n    }\n\n    if (tid == 0) {\n        out[blockIdx.x] = sdata[0];\n    }\n}",
+      "usage": {
+        "prompt_tokens": 303,
+        "total_tokens": 8105,
+        "completion_tokens": 7802,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 7614
+        }
+      },
+      "elapsed_s": 176.1827
+    },
+    {
+      "task": "cpp_medium",
+      "score": 28,
+      "max_score": 28,
+      "max_tokens": 32768,
+      "response": "\n\ndouble mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    const int w1_size = n_hidden * n_in;\n    const int b1_off = w1_size;\n    const int w2_off = b1_off + n_hidden;\n    const int b2_off = w2_off + n_hidden;\n    const int total = b2_off + 1;\n\n    for (int i = 0; i < total; ++i) {\n        grad[i] = 0.0;\n    }\n\n    if (n_samples <= 0) {\n        return 0.0;\n    }\n\n    const double* W1 = params;\n    const double* b1 = params + b1_off;\n    const double* W2 = params + w2_off;\n    const double b2 = params[b2_off];\n\n    const double inv_n = 1.0 / static_cast<double>(n_samples);\n    double loss_sum = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n        const double target = y[s];\n\n        double z = b2;\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n            z += W2[j] * h;\n        }\n\n        double p;\n        double loss;\n\n        if (z >= 0.0) {\n            double e = std::exp(-z);\n            p = 1.0 / (1.0 + e);\n            if (target > 0.5) {\n                loss = std::log1p(e);\n            } else {\n                loss = z + std::log1p(e);\n            }\n        } else {\n            double e = std::exp(z);\n            p = e / (1.0 + e);\n            if (target > 0.5) {\n                loss = -z + std::log1p(e);\n            } else {\n                loss = std::log1p(e);\n            }\n        }\n\n        loss_sum += loss * inv_n;\n\n        double delta = (p - target) * inv_n;\n        grad[b2_off] += delta;\n\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n\n            grad[w2_off + j] += delta * h;\n\n            double dz1 = delta * W2[j] * (1.0 - h * h);\n            grad[b1_off + j] += dz1;\n\n            double* gW1 = grad + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                gW1[k] += dz1 * x[k];\n            }\n        }\n    }\n\n    return loss_sum;\n}",
+      "grade_details": {
+        "function_present": true,
+        "compiles": true,
+        "loss_is_finite": true,
+        "loss_positive": true,
+        "gradient_matches_numeric": true,
+        "gradients_not_accumulated": true,
+        "single_sample_ok": true,
+        "loss_decreased": true,
+        "xor_learned": true,
+        "worst_relative_gradient_error": 2.089e-09,
+        "final_loss": 0.000116
+      },
+      "status": "complete",
+      "raw_response": "\n\ndouble mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    const int w1_size = n_hidden * n_in;\n    const int b1_off = w1_size;\n    const int w2_off = b1_off + n_hidden;\n    const int b2_off = w2_off + n_hidden;\n    const int total = b2_off + 1;\n\n    for (int i = 0; i < total; ++i) {\n        grad[i] = 0.0;\n    }\n\n    if (n_samples <= 0) {\n        return 0.0;\n    }\n\n    const double* W1 = params;\n    const double* b1 = params + b1_off;\n    const double* W2 = params + w2_off;\n    const double b2 = params[b2_off];\n\n    const double inv_n = 1.0 / static_cast<double>(n_samples);\n    double loss_sum = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n        const double target = y[s];\n\n        double z = b2;\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n            z += W2[j] * h;\n        }\n\n        double p;\n        double loss;\n\n        if (z >= 0.0) {\n            double e = std::exp(-z);\n            p = 1.0 / (1.0 + e);\n            if (target > 0.5) {\n                loss = std::log1p(e);\n            } else {\n                loss = z + std::log1p(e);\n            }\n        } else {\n            double e = std::exp(z);\n            p = e / (1.0 + e);\n            if (target > 0.5) {\n                loss = -z + std::log1p(e);\n            } else {\n                loss = std::log1p(e);\n            }\n        }\n\n        loss_sum += loss * inv_n;\n\n        double delta = (p - target) * inv_n;\n        grad[b2_off] += delta;\n\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = b1[j];\n            const double* w1j = W1 + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                a += w1j[k] * x[k];\n            }\n            double h = std::tanh(a);\n\n            grad[w2_off + j] += delta * h;\n\n            double dz1 = delta * W2[j] * (1.0 - h * h);\n            grad[b1_off + j] += dz1;\n\n            double* gW1 = grad + j * n_in;\n            for (int k = 0; k < n_in; ++k) {\n                gW1[k] += dz1 * x[k];\n            }\n        }\n    }\n\n    return loss_sum;\n}",
+      "usage": {
+        "prompt_tokens": 477,
+        "total_tokens": 9985,
+        "completion_tokens": 9508,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 8697
+        }
+      },
+      "elapsed_s": 210.4003
+    },
+    {
+      "task": "ml_medium",
+      "score": 26,
+      "max_score": 26,
+      "max_tokens": 32768,
+      "response": "\n\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    rng = np.random.RandomState(seed)\n    W1 = rng.normal(0.0, 0.01, size=(n_hidden, n_in))\n    b1 = np.zeros(n_hidden, dtype=float)\n    W2 = rng.normal(0.0, 0.01, size=(n_hidden,))\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\ndef loss_and_grads(params, X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float).reshape(-1)\n\n    W1 = np.asarray(params[\"W1\"], dtype=float)\n    b1 = np.asarray(params[\"b1\"], dtype=float).reshape(-1)\n    W2 = np.asarray(params[\"W2\"], dtype=float).reshape(-1)\n    b2 = np.asarray(params[\"b2\"], dtype=float).item()\n\n    n_samples = X.shape[0]\n    if n_samples == 0:\n        grads = {\n            \"W1\": np.zeros_like(W1, dtype=float),\n            \"b1\": np.zeros_like(b1, dtype=float),\n            \"W2\": np.zeros_like(W2, dtype=float),\n            \"b2\": 0.0,\n        }\n        return 0.0, grads\n\n    A1 = X @ W1.T + b1\n    H = np.tanh(A1)\n    z = H @ W2 + b2\n\n    logp = -np.logaddexp(0.0, -z)\n    log1mp = -np.logaddexp(0.0, z)\n    p = np.exp(logp)\n\n    loss = -np.mean(y * logp + (1.0 - y) * log1mp)\n\n    dz = (p - y) / n_samples\n\n    dW2 = H.T @ dz\n    db2 = float(dz.sum())\n\n    dH = dz[:, None] * W2[None, :]\n    dA1 = dH * (1.0 - H * H)\n\n    dW1 = dA1.T @ X\n    db1 = dA1.sum(axis=0)\n\n    grads = {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n    return float(loss), grads",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": true,
+        "shapes": true,
+        "deterministic": true,
+        "seed_changes_init": true,
+        "symmetry_broken": true,
+        "loss_finite": true,
+        "grad_keys": true,
+        "worst_relative_gradient_error": 1.25057068580891e-07,
+        "gradient_matches_numeric": true,
+        "final_loss": 0.05231706595077133,
+        "accuracy": 0.99,
+        "learns_circle": true,
+        "single_sample_ok": true
+      },
+      "status": "complete",
+      "raw_response": "\n\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    rng = np.random.RandomState(seed)\n    W1 = rng.normal(0.0, 0.01, size=(n_hidden, n_in))\n    b1 = np.zeros(n_hidden, dtype=float)\n    W2 = rng.normal(0.0, 0.01, size=(n_hidden,))\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\ndef loss_and_grads(params, X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float).reshape(-1)\n\n    W1 = np.asarray(params[\"W1\"], dtype=float)\n    b1 = np.asarray(params[\"b1\"], dtype=float).reshape(-1)\n    W2 = np.asarray(params[\"W2\"], dtype=float).reshape(-1)\n    b2 = np.asarray(params[\"b2\"], dtype=float).item()\n\n    n_samples = X.shape[0]\n    if n_samples == 0:\n        grads = {\n            \"W1\": np.zeros_like(W1, dtype=float),\n            \"b1\": np.zeros_like(b1, dtype=float),\n            \"W2\": np.zeros_like(W2, dtype=float),\n            \"b2\": 0.0,\n        }\n        return 0.0, grads\n\n    A1 = X @ W1.T + b1\n    H = np.tanh(A1)\n    z = H @ W2 + b2\n\n    logp = -np.logaddexp(0.0, -z)\n    log1mp = -np.logaddexp(0.0, z)\n    p = np.exp(logp)\n\n    loss = -np.mean(y * logp + (1.0 - y) * log1mp)\n\n    dz = (p - y) / n_samples\n\n    dW2 = H.T @ dz\n    db2 = float(dz.sum())\n\n    dH = dz[:, None] * W2[None, :]\n    dA1 = dH * (1.0 - H * H)\n\n    dW1 = dA1.T @ X\n    db1 = dA1.sum(axis=0)\n\n    grads = {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n    return float(loss), grads",
+      "usage": {
+        "prompt_tokens": 431,
+        "total_tokens": 12692,
+        "completion_tokens": 12261,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 11694
+        }
+      },
+      "elapsed_s": 270.3003
+    },
+    {
+      "task": "cpp_hard",
+      "score": 30,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "\n\nstruct Tape {\n    struct Node {\n        double val;\n        double grad;\n        int op;\n        int a;\n        int b;\n    };\n\n    std::vector<Node> nodes;\n\n    int constant(double v) {\n        nodes.push_back({v, 0.0, 0, -1, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    int input(double v) {\n        nodes.push_back({v, 0.0, 1, -1, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    int add(int a, int b) {\n        double v = nodes[a].val + nodes[b].val;\n        nodes.push_back({v, 0.0, 2, a, b});\n        return (int)nodes.size() - 1;\n    }\n\n    int mul(int a, int b) {\n        double v = nodes[a].val * nodes[b].val;\n        nodes.push_back({v, 0.0, 3, a, b});\n        return (int)nodes.size() - 1;\n    }\n\n    int sin_(int a) {\n        double v = std::sin(nodes[a].val);\n        nodes.push_back({v, 0.0, 4, a, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    int exp_(int a) {\n        double v = std::exp(nodes[a].val);\n        nodes.push_back({v, 0.0, 5, a, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    double value(int node) const {\n        return nodes[node].val;\n    }\n\n    void add_grad(int node, double g) {\n        if (nodes[node].op != 0) {\n            nodes[node].grad += g;\n        }\n    }\n\n    void backward(int root) {\n        for (auto &n : nodes) {\n            n.grad = 0.0;\n        }\n\n        nodes[root].grad = 1.0;\n\n        for (int i = (int)nodes.size() - 1; i >= 0; --i) {\n            double g = nodes[i].grad;\n            if (g == 0.0) continue;\n\n            switch (nodes[i].op) {\n                case 2:\n                    add_grad(nodes[i].a, g);\n                    add_grad(nodes[i].b, g);\n                    break;\n                case 3:\n                    add_grad(nodes[i].a, g * nodes[nodes[i].b].val);\n                    add_grad(nodes[i].b, g * nodes[nodes[i].a].val);\n                    break;\n                case 4:\n                    add_grad(nodes[i].a, g * std::cos(nodes[nodes[i].a].val));\n                    break;\n                case 5:\n                    add_grad(nodes[i].a, g * nodes[i].val);\n                    break;\n                default:\n                    break;\n            }\n        }\n    }\n\n    double grad(int node) const {\n        return nodes[node].grad;\n    }\n};",
+      "grade_details": {
+        "tape_present": true,
+        "compiles": true,
+        "forward_value": true,
+        "grad_x": true,
+        "grad_y": true,
+        "reused_node_accumulates": true,
+        "deep_chain": true,
+        "constant_handled": true,
+        "matches_finite_difference": true
+      },
+      "status": "complete",
+      "raw_response": "\n\nstruct Tape {\n    struct Node {\n        double val;\n        double grad;\n        int op;\n        int a;\n        int b;\n    };\n\n    std::vector<Node> nodes;\n\n    int constant(double v) {\n        nodes.push_back({v, 0.0, 0, -1, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    int input(double v) {\n        nodes.push_back({v, 0.0, 1, -1, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    int add(int a, int b) {\n        double v = nodes[a].val + nodes[b].val;\n        nodes.push_back({v, 0.0, 2, a, b});\n        return (int)nodes.size() - 1;\n    }\n\n    int mul(int a, int b) {\n        double v = nodes[a].val * nodes[b].val;\n        nodes.push_back({v, 0.0, 3, a, b});\n        return (int)nodes.size() - 1;\n    }\n\n    int sin_(int a) {\n        double v = std::sin(nodes[a].val);\n        nodes.push_back({v, 0.0, 4, a, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    int exp_(int a) {\n        double v = std::exp(nodes[a].val);\n        nodes.push_back({v, 0.0, 5, a, -1});\n        return (int)nodes.size() - 1;\n    }\n\n    double value(int node) const {\n        return nodes[node].val;\n    }\n\n    void add_grad(int node, double g) {\n        if (nodes[node].op != 0) {\n            nodes[node].grad += g;\n        }\n    }\n\n    void backward(int root) {\n        for (auto &n : nodes) {\n            n.grad = 0.0;\n        }\n\n        nodes[root].grad = 1.0;\n\n        for (int i = (int)nodes.size() - 1; i >= 0; --i) {\n            double g = nodes[i].grad;\n            if (g == 0.0) continue;\n\n            switch (nodes[i].op) {\n                case 2:\n                    add_grad(nodes[i].a, g);\n                    add_grad(nodes[i].b, g);\n                    break;\n                case 3:\n                    add_grad(nodes[i].a, g * nodes[nodes[i].b].val);\n                    add_grad(nodes[i].b, g * nodes[nodes[i].a].val);\n                    break;\n                case 4:\n                    add_grad(nodes[i].a, g * std::cos(nodes[nodes[i].a].val));\n                    break;\n                case 5:\n                    add_grad(nodes[i].a, g * nodes[i].val);\n                    break;\n                default:\n                    break;\n            }\n        }\n    }\n\n    double grad(int node) const {\n        return nodes[node].grad;\n    }\n};",
+      "usage": {
+        "prompt_tokens": 379,
+        "total_tokens": 17852,
+        "completion_tokens": 17473,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 16748
+        }
+      },
+      "elapsed_s": 390.7087
+    },
+    {
+      "task": "verilog_hard",
+      "score": 0,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "",
+      "grade_details": {
+        "module_present": false
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 413,
+        "total_tokens": 33181,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "elapsed_s": 724.8007,
+      "score_first": 0,
+      "retry_feedback": "failed checks: module_present",
+      "raw_retry_response": "",
+      "retry_response": "",
+      "retry_usage": {
+        "prompt_tokens": 468,
+        "total_tokens": 33236,
+        "completion_tokens": 32768,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "retry_elapsed_s": 748.4949,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "module_present": false
+      }
+    },
+    {
+      "task": "cuda_hard",
+      "score": 30,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "\n\n__global__ void matmul(const float* A, const float* B, float* C,\n                       int M, int N, int K)\n{\n    __shared__ float As[16][16];\n    __shared__ float Bs[16][16];\n\n    const int TILE_DIM = 16;\n    int row = blockIdx.y * TILE_DIM + threadIdx.y;\n    int col = blockIdx.x * TILE_DIM + threadIdx.x;\n    float sum = 0.0f;\n\n    for (int tile = 0; tile < K; tile += TILE_DIM) {\n        int aCol = tile + threadIdx.x;\n        int bRow = tile + threadIdx.y;\n\n        As[threadIdx.y][threadIdx.x] = (row < M && aCol < K) ? A[(long long)row * K + aCol] : 0.0f;\n        Bs[threadIdx.y][threadIdx.x] = (bRow < K && col < N) ? B[(long long)bRow * N + col] : 0.0f;\n\n        __syncthreads();\n\n        for (int k = 0; k < TILE_DIM; ++k) {\n            sum += As[threadIdx.y][k] * Bs[k][threadIdx.x];\n        }\n\n        __syncthreads();\n    }\n\n    if (row < M && col < N) {\n        C[(long long)row * N + col] = sum;\n    }\n}",
+      "grade_details": {
+        "kernel_present": true,
+        "uses_shared_memory": true,
+        "barrier_in_thread_conditional": false,
+        "compiles": true,
+        "gpu": "used",
+        "case_16x16x16": true,
+        "case_64x64x64": true,
+        "case_17x17x17": true,
+        "case_1x1x1": true,
+        "case_33x48x7": true,
+        "case_100x60x80": true
+      },
+      "status": "complete",
+      "raw_response": "\n\n__global__ void matmul(const float* A, const float* B, float* C,\n                       int M, int N, int K)\n{\n    __shared__ float As[16][16];\n    __shared__ float Bs[16][16];\n\n    const int TILE_DIM = 16;\n    int row = blockIdx.y * TILE_DIM + threadIdx.y;\n    int col = blockIdx.x * TILE_DIM + threadIdx.x;\n    float sum = 0.0f;\n\n    for (int tile = 0; tile < K; tile += TILE_DIM) {\n        int aCol = tile + threadIdx.x;\n        int bRow = tile + threadIdx.y;\n\n        As[threadIdx.y][threadIdx.x] = (row < M && aCol < K) ? A[(long long)row * K + aCol] : 0.0f;\n        Bs[threadIdx.y][threadIdx.x] = (bRow < K && col < N) ? B[(long long)bRow * N + col] : 0.0f;\n\n        __syncthreads();\n\n        for (int k = 0; k < TILE_DIM; ++k) {\n            sum += As[threadIdx.y][k] * Bs[k][threadIdx.x];\n        }\n\n        __syncthreads();\n    }\n\n    if (row < M && col < N) {\n        C[(long long)row * N + col] = sum;\n    }\n}",
+      "usage": {
+        "prompt_tokens": 356,
+        "total_tokens": 9976,
+        "completion_tokens": 9620,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9291
+        }
+      },
+      "elapsed_s": 215.9526
+    },
+    {
+      "task": "ml_hard",
+      "score": 30,
+      "max_score": 30,
+      "max_tokens": 32768,
+      "response": "\n\nimport numpy as np\n\ndef attention_forward(Q, K, V):\n    d = Q.shape[1]\n    scale = 1.0 / np.sqrt(d)\n\n    S = (Q @ K.T) * scale\n    S_max = np.max(S, axis=1, keepdims=True)\n    exp_S = np.exp(S - S_max)\n    P = exp_S / np.sum(exp_S, axis=1, keepdims=True)\n\n    out = P @ V\n    cache = (Q, K, V, P, scale)\n    return out, cache\n\ndef attention_backward(dout, cache):\n    Q, K, V, P, scale = cache\n\n    dV = P.T @ dout\n    dP = dout @ V.T\n\n    row_sum = np.sum(dP * P, axis=1, keepdims=True)\n    dS = P * (dP - row_sum)\n\n    dQ = (dS @ K) * scale\n    dK = (dS.T @ Q) * scale\n\n    return dQ, dK, dV",
+      "grade_details": {
+        "only_numpy_imported": true,
+        "both_functions": true,
+        "output_shape": true,
+        "forward_matches_reference": true,
+        "stable_large_scores": true,
+        "grad_shapes": true,
+        "worst_relative_gradient_error": 2.841281321068307e-08,
+        "gradients_match_numeric": true
+      },
+      "status": "complete",
+      "raw_response": "\n\nimport numpy as np\n\ndef attention_forward(Q, K, V):\n    d = Q.shape[1]\n    scale = 1.0 / np.sqrt(d)\n\n    S = (Q @ K.T) * scale\n    S_max = np.max(S, axis=1, keepdims=True)\n    exp_S = np.exp(S - S_max)\n    P = exp_S / np.sum(exp_S, axis=1, keepdims=True)\n\n    out = P @ V\n    cache = (Q, K, V, P, scale)\n    return out, cache\n\ndef attention_backward(dout, cache):\n    Q, K, V, P, scale = cache\n\n    dV = P.T @ dout\n    dP = dout @ V.T\n\n    row_sum = np.sum(dP * P, axis=1, keepdims=True)\n    dS = P * (dP - row_sum)\n\n    dQ = (dS @ K) * scale\n    dK = (dS.T @ Q) * scale\n\n    return dQ, dK, dV",
+      "usage": {
+        "prompt_tokens": 377,
+        "total_tokens": 1736,
+        "completion_tokens": 1359,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1119
+        }
+      },
+      "elapsed_s": 30.9863
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 22,
+  "planned_tasks": [
+    "strict_protocol_json",
+    "bom_consolidation",
+    "code_repair",
+    "embedded_c_review",
+    "protocol_architecture",
+    "long_context_retrieval",
+    "scope_control",
+    "acquisition_timing",
+    "cpp_easy",
+    "verilog_easy",
+    "cuda_easy",
+    "ml_easy",
+    "cobs_codec",
+    "stream_reassembler",
+    "verilog_medium",
+    "cuda_medium",
+    "cpp_medium",
+    "ml_medium",
+    "cpp_hard",
+    "verilog_hard",
+    "cuda_hard",
+    "ml_hard"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "A teammate proposes one `SCAN` command that acquires a sensor frame, applies the current shear transform, updates all filters, stores only the transformed frame, and emits changes if event mode is enabled. They also want on-demand SCAN to run while continuous acquisition is active.\n\nWrite a concise replacement design suitable for an embedded protocol specification. It must make acquisition reproducible, permit later audit/download without rescanning, and avoid ownership races. Include command/responsibility boundaries, frame/source identity, continuous versus on-demand behavior, and the relationship between acquisition mode and event reporting. Do not merely rephrase the proposal."
+    },
+    {
+      "role": "assistant",
+      "content": "# Acquisition and Processing Design\n\n## 1. Principle: separate acquisition from processing\n\nThe proposal conflates four responsibilities in one command. Split them:\n\n| Responsibility | Owner |\n|---|---|\n| Sensor access and raw frame capture | Acquisition engine (sole owner of the sensor) |\n| Raw frame storage | Frame store (ring buffer, raw + derived) |\n| Transform and filtering | Processing pipeline, run against a stored raw frame |\n| Change notification | Event layer, driven by frame-store commits |\n\n`SCAN` becomes a trigger that submits an acquisition request to the engine; it does not itself touch the sensor or the pipeline.\n\n## 2. Identity\n\n- Every source has a stable `source_id`.\n- Every captured frame gets a monotonically increasing `frame_id` (per source), assigned by the acquisition engine at capture time.\n- A frame record contains: `frame_id`, `source_id`, timestamp, raw payload, and a snapshot of the pipeline configuration (transform parameters, filter set, config version) in effect at capture time.\n- Derived (transformed/filtered) frames reference the `frame_id` of their raw parent. Raw frames are retained, not overwritten.\n\nThis makes processing reproducible: any derived frame can be regenerated bit-exactly from `(raw frame, config snapshot)`, and later audit or download reads stored data instead of rescanning.\n\n## 3. Command boundaries\n\n- `ACQ_START` / `ACQ_STOP` \u2014 enter/exit continuous acquisition on a source.\n- `SCAN` \u2014 request a single acquisition on a source. Returns `frame_id` (synchronously or via event).\n- `SET_TRANSFORM` / `SET_FILTERS` \u2014 modify pipeline configuration. Takes effect for frames captured after the change; does not retroactively alter stored frames.\n- `GET_FRAME frame_id [raw|derived]` \u2014 retrieve stored frames for audit/download.\n- `EVENT_SUBSCRIBE` / `EVENT_UNSUBSCRIBE` \u2014 control event reporting.\n\n## 4. Continuous vs. on-demand\n\n- The acquisition engine is the single owner of the sensor. There is no second code path.\n- While continuous acquisition is active, an on-demand `SCAN` is **rejected** with `BUSY` (or, if the protocol prefers, enqueued as an extra trigger \u2014 pick one and specify it; rejection is simpler and avoids interleaving ambiguity). It must never run concurrently with the continuous loop.\n- When idle, `SCAN` is the only way to capture. Same engine, same `frame_id` assignment, same storage path in both modes.\n\n## 5. Acquisition mode vs. event reporting\n\nEvent reporting is **orthogonal** to acquisition mode:\n\n- An event is emitted whenever a new frame (raw or derived, per subscription) is committed to the frame store \u2014 regardless of whether the commit came from the continuous loop or an on-demand `SCAN`.\n- Event mode changes (`EVENT_SUBSCRIBE`) never start, stop, or throttle acquisition.\n- Events carry `frame_id`, `source_id`, and record type \u2014 not payloads. Payloads are fetched with `GET_FRAME`, so event consumers cannot become an ownership path to the sensor or a bottleneck in the acquisition loop.\n\n## 6. Race avoidance summary\n\n- One sensor owner: the acquisition engine. All triggers (timer, `SCAN`) enter through its request queue.\n- Frame store commits are atomic per `frame_id`; events are published only after commit.\n- Configuration changes are applied between frames, never mid-frame, and are snapshotted per frame."
+    },
+    {
+      "role": "user",
+      "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: physical_frame_id, scan_transduces_only"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 109.65894343100081,
+  "response": {
+    "id": "chatcmpl-ba3ed2762f46053a",
+    "object": "chat.completion",
+    "created": 1789611999,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "**Replacement Design:**\n\n1. **Commands:**\n   - `ACQUIRE_START`: Begins continuous acquisition. Generates frames with monotonically increasing IDs.\n   - `ACQUIRE_STOP`: Ends continuous acquisition.\n   - `ACQUIRE_SINGLE`: Triggers a single acquisition (on-demand). Generates a frame with a unique ID.\n   - `TRANSFORM_APPLY <shear_params>`: Sets the current shear transform. Does not modify stored frames.\n   - `EVENT_MODE_SET <enable>`: Enables/disables event reporting.\n\n2. **Responsibilities:**\n   - **Acquisition Module:**\n     - Owns sensor interface.\n     - On `ACQUIRE_START`/`ACQUIRE_SINGLE`, captures raw frame, assigns unique ID (timestamp + counter), stores raw frame + metadata (ID, source, transform ID at capture time).\n     - Emits `FRAME_CAPTURED <id>` on completion.\n   - **Transform Module:**\n     - Owns shear parameters.\n     - On `TRANSFORM_APPLY`, stores parameters with a unique transform ID. Emits `TRANSFORM_UPDATED <id>`.\n   - **Filter Module:**\n     - Subscribes to `FRAME_CAPTURED`.\n     - Applies current transform (by ID) to raw frame, updates filters, stores transformed frame with same ID + transform ID used.\n   - **Event Module:**\n     - If enabled, subscribes to filter outputs. Emits `EVENT <data>` on changes.\n\n3. **Frame Identity:**\n   - Each frame has:\n     - Unique `frame_id` (source: acquisition module).\n     - `source` (continuous/on-demand).\n     - `raw_data`, `transform_id` (at capture), `transformed_data` (after filtering).\n\n4. **Behavior:**\n   - Continuous: `ACQUIRE_START` \u2192 repeated `FRAME_CAPTURED` \u2192 filtering \u2192 event reporting (if enabled).\n   - On-demand: `ACQUIRE_SINGLE` \u2192 one `FRAME_CAPTURED` \u2192 filtering \u2192 event reporting (if enabled).\n   - Transform changes apply to subsequent frames only. Past frames remain unchanged but can be re-transformed offline using stored `transform_id`.\n\n5. **Audit/Download:**\n   - Raw and transformed frames are stored with immutable IDs and transform references. Full history can be downloaded and reprocessed.\n\n6. **Race Avoidance:**\n   - Acquisition and transform modules are decoupled (no shared ownership).\n   - Commands are atomic; modules process sequentially.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 167,
+      "total_tokens": 710,
+      "completion_tokens": 543,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

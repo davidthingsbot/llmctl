@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 81.27081624999119,
+  "response": {
+    "id": "chatcmpl-9363aaad09a6ca17",
+    "object": "chat.completion",
+    "created": 1789673893,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Full layers: 12, 8 heads, head dim 128, K and V: elements per token = 12 * 8 * 128 * 2 = 24576. Bytes = 24576 * 1.0625 = 26112 bytes per token.\n\nAt 262144 tokens: 26112 * 262144 = 6,845,713,408 bytes = 6.375 GiB (26112/1024 = 25.5 KiB per token; 25.5 * 262144 / 1024 = 25.5*256 = 6528 KiB... let me compute: 25.5 KiB/token * 262144 tokens = 6,688,256 KiB = 6528 MiB = 6.375 GiB). Yes 6.375.\n\nMax context in 25 GiB: 25 * 2^30 = 26,843,545,600 bytes. Divide by 26112: 26843545600 / 26112 = ?\n\n26112 * 1,000,000 = 26,112,000,000. Remainder 731,545,600. 26112 * 28,000 = 731,136,000. Remainder 409,600. 26112*15 = 367,680. Remainder 41,920. So 1,028,015 tokens, remainder 41920 < 26112. So max = 1,028,015.\n\nCheck: 26112 * 1,028,015 = 26112*1,028,000 = 26,843,136,000; plus 26112*15=367,680 \u2192 26,843,503,680. 25 GiB = 26,843,545,600. Fits. Next token adds 26112 \u2192 26,843,529,792 \u2264 26,843,545,600? Wait that's still less! Let me recheck remainder.\n\n26,843,545,600 \u2212 26,843,503,680 = 41,920. Adding one more token: 26,843,503,680 + 26,112 = 26,843,529,792 which is \u2264 26,843,545,600. So 1,028,016 fits. Remainder now 41,920 \u2212 26,112 = 15,808. Next token: 26,843,529,792 + 26,112 = 26,843,555,904 > limit. So max = 1,028,016.\n\nHmm, my division: 26843545600/26112. Let me redo: 26112 * 1028016 = ?\n\n26112 * 1,000,000 = 26,112,000,000\n26112 * 28,016 = 26112*28,000 = 731,136,000; 26112*16 = 367,792. Sum = 731,503,792.\nTotal = 26,843,503,792. Limit 26,843,545,600. Difference 41,808. Add one token 26,112 \u2192 26,843,529,904 \u2264 limit. Difference 15,696. Add another \u2192 26,843,556,016 > limit. So max = 1,028,017.\n\nLet me be careful: 26112*16 = 417,792? 26112*16 = 26112*10=261,120 + 26112*6=156,672 \u2192 417,792. Yes I made error. So 26112*28,016 = 731,136,000 + 417,792 = 731,553,792. Total = 26,112,000,000 + 731,553,792 = 26,843,553,792 > 26,843,545,600. So 1,028,016 exceeds. Then max = 1,028,015.\n\nCheck 1,028,015: 26,843,553,792 \u2212 26,112 = 26,843,527,680 \u2264 limit. Yes. So max = 1,028,015.\n\nWeights + KV: 87 + 6.375 = 93.375 \u2264 112 \u2192 true."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 324,
+      "total_tokens": 1474,
+      "completion_tokens": 1150,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

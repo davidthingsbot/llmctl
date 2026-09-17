@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 10.228247897000983,
+  "response": {
+    "id": "chatcmpl-897e74236b005e82",
+    "object": "chat.completion",
+    "created": 1789671771,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"released_net_units\": 835,\n  \"most_rejected_batches\": [\n    \"L05\",\n    \"L10\",\n    \"L15\"\n  ],\n  \"l14_units\": 79\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "1.  **Filter RELEASE rows**: Identify all rows where the Status is \"RELEASE\".\n    *   L02: Units 43, Rejected 1\n    *   L03: Units 46, Rejected 2\n    *   L04: Units 49, Rejected 3\n    *   L06: Units 55, Rejected 0\n    *   L07: Units 58, Rejected 1\n    *   L08: Units 61, Rejected 2\n    *   L10: Units 67, Rejected 4\n    *   L11: Units 70, Rejected 0\n    *   L12: Units 73, Rejected 1\n    *   L14: Units 79, Rejected 3\n    *   L15: Units 82, Rejected 4\n    *   L16: Units 85, Rejected 0\n    *   L18: Units 91, Rejected 2\n2.  **Calculate `released_net_units`**: Sum the Units and Rejected for these rows, then subtract.\n    *   Sum of Units = 43 + 46 + 49 + 55 + 58 + 61 + 67 + 70 + 73 + 79 + 82 + 85 + 91 = 858\n    *   Sum of Rejected = 1 + 2 + 3 + 0 + 1 + 2 + 4 + 0 + 1 + 3 + 4 + 0 + 2 = 23\n    *   Net = 858 - 23 = 835\n3.  **Identify `most_rejected_batches`**: Find the maximum Rejected value across all rows (including HOLD).\n    *   Max Rejected is 4.\n    *   Batches with 4 rejected: L05, L10, L15.\n4.  **Read `l14_units`**: Look at the Units column for L14.\n    *   L14 Units = 79.\n5.  **Format JSON**: Construct the final JSON object.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 1179,
+      "total_tokens": 1751,
+      "completion_tokens": 572,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 510
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

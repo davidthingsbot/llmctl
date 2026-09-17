@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 23.461776947006,
+  "response": {
+    "id": "chatcmpl-9b7617230d662bec",
+    "object": "chat.completion",
+    "created": 1789673598,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "DAG: C\u2192T, C\u2192Y, I\u2192T, T\u2192Y, T\u2192M, M\u2192Y, T\u2192Z, Y\u2192Z.\n\nTotal effect of T on Y. Backdoor paths: T\u2190C\u2192Y (open, need C). T\u2190I? I only points to T, so I is not a cause of anything else \u2014 no backdoor via I. T\u2192M\u2192Y is a causal path (part of total effect), must not block. T\u2192Z\u2190Y is a collider path, not open unless conditioned on Z.\n\nMinimal adjustment set: {C}. I is not needed (no backdoor). M is mediator, Z is collider.\n\nConditioning on M: blocks mediated path, leaving direct effect T\u2192Y (but C still conditioned). So \"direct\".\n\nZ is collider: true.\n\nConditioning on Z: opens collider path T\u2192Z\u2190Y, introducing bias. \"introduces_bias\".\n\nI is instrument: I\u2192T, I affects Y only through T, no confounding between I and Y? I has no parents, no other causes. I\u2192T\u2192Y, I\u2192T\u2190C\u2192Y \u2014 I is associated with C? No, I and C are independent (no common cause). So I is a valid instrument: true."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 256,
+      "total_tokens": 584,
+      "completion_tokens": 328,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement reverse-mode automatic differentiation in C++. Return ONLY the\nstruct, no main, no includes, no explanation. You may use <cmath> and <vector>.\n\n    struct Tape {\n        int constant(double v);   // a value with no gradient\n        int input(double v);      // a value you will want the gradient of\n        int add(int a, int b);    // returns the id of the new node\n        int mul(int a, int b);\n        int sin_(int a);\n        int exp_(int a);\n        double value(int node) const;\n        void backward(int root);  // seed d(root)/d(root) = 1 and sweep back\n        double grad(int node) const;\n    };\n\nEach call records a node and returns its integer id. `backward(root)` computes\nthe derivative of `root` with respect to every node.\n\nRequirements:\n- Gradients are checked against finite differences to 1e-5.\n- A node used more than once must ACCUMULATE gradient from every path that uses\n  it: for g = x*x + x, dg/dx is 2x + 1, not 2x and not 1.\n- The reverse sweep must visit nodes in an order where every consumer is\n  processed before its inputs; recording order makes this easy.\n- Constants take part in the forward value but need no gradient.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

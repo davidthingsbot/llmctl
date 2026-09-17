@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 7.910711873002583,
+  "response": {
+    "id": "chatcmpl-a3f247e679c7a2f2",
+    "object": "chat.completion",
+    "created": 1789663430,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer user's request. Need compute KV cache. Need return ONLY JSON with exactly keys. Need be careful: \"standard grouped-query attention\" but given 8 key/value heads per layer, head dimension 128. KV cache per token: for each layer, K and V each have num_kv_heads * head_dim elements. fp16 2 bytes. So bytes per token = layers * 2 (K,V) * kv_heads * head_dim * bytes = 32*2*8*128*2 =? 32*2=64; 64*8=512; 512*128=65536; *2=131072 bytes per token. That's 128 KiB per token. At 8192 tokens: 131072*8192 = 1,073,741,824 bytes = 1 GiB exactly (since 2^17 * 2^13 = 2^30). At 131072 tokens: 131072*131072 = 17,179,869,184 bytes = 16 GiB (2^17*2^17=2^34; /2^30=16). Need JSON numbers. kv_bytes_per_token integer 131072. kv_gib_at_8192 number 1. kv_gib_at_131072 number 16. Ensure only JSON. No markdown.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 235,
+      "total_tokens": 650,
+      "completion_tokens": 415,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 359
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

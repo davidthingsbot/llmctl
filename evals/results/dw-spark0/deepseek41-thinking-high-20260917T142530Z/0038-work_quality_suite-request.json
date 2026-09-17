@@ -1,0 +1,27 @@
+{
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement COBS (Consistent Overhead Byte Stuffing). Return ONLY the two\ncomplete functions `cobs_encode` and `cobs_decode`, no imports, no explanation.\n\nEncoding removes every zero byte from the payload so 0x00 can delimit frames.\n\nRules:\n- The encoded output contains no zero bytes and never includes the delimiter itself.\n- Output is a sequence of groups. Each group is one code byte `n` (1..255) followed\n  by `n - 1` non-zero data bytes.\n- A code byte `n < 255` means: those `n - 1` data bytes were followed by a zero byte\n  in the input, and that zero is consumed by the encoding.\n- A code byte of exactly 255 means: 254 data bytes NOT followed by a zero. Encoding\n  continues with a new group.\n- The empty input encodes to a single byte 0x01.\n\n`cobs_decode` must invert `cobs_encode` exactly, and must raise ValueError on input\nthat no encoder could have produced (a zero byte anywhere, a group whose data runs\npast the end of the input, or a trailing code byte promising bytes that are absent).\n\nWorked examples:\n  b\"\"                     -> b\"\\x01\"\n  b\"\\x00\"                 -> b\"\\x01\\x01\"\n  b\"\\x11\\x22\\x00\\x33\"      -> b\"\\x03\\x11\\x22\\x02\\x33\"\n  b\"\\x11\\x22\\x33\\x44\"      -> b\"\\x05\\x11\\x22\\x33\\x44\"\n  b\"\\x00\\x11\\x00\"          -> b\"\\x01\\x02\\x11\\x01\"\n"
+    },
+    {
+      "role": "assistant",
+      "content": "def cobs_encode(data):\n    out = bytearray()\n    code_index = 0\n    out.append(0)\n    code = 1\n    for b in data:\n        if b == 0:\n            out[code_index] = code\n            code_index = len(out)\n            out.append(0)\n            code = 1\n        else:\n            out.append(b)\n            code += 1\n            if code == 255:\n                out[code_index] = 255\n                code_index = len(out)\n                out.append(0)\n                code = 1\n    out[code_index] = code\n    return bytes(out)\n\ndef cobs_decode(data):\n    if not data:\n        raise ValueError(\"empty input\")\n    if any(b == 0 for b in data):\n        raise ValueError(\"zero byte in encoded data\")\n    out = bytearray()\n    i = 0\n    n = len(data)\n    while i < n:\n        code = data[i]\n        i += 1\n        if code == 0:\n            raise ValueError(\"zero code byte\")\n        if i + code - 1 > n:\n            raise ValueError(\"group data runs past end\")\n        out.extend(data[i:i+code-1])\n        i += code - 1\n        if code < 255:\n            if i < n:\n                out.append(0)\n        else:\n            if i == n:\n                raise ValueError(\"trailing 255 code without next group\")\n    return bytes(out)"
+    },
+    {
+      "role": "user",
+      "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: boundary_roundtrip, decode_rejects_overrun, decode_rejects_zero_byte, roundtrip"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

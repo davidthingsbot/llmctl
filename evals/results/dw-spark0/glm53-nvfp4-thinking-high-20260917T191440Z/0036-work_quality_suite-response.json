@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 12.555799798006774,
+  "response": {
+    "id": "chatcmpl-b6db57ff700b7e88",
+    "object": "chat.completion",
+    "created": 1789674364,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\nstruct RingBuffer {\n    RingBuffer(int capacity) : cap(capacity), head(0), count(0) {}\n\n    bool push(int value) {\n        if (full()) return false;\n        data[(head + count) % cap] = value;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (empty()) return false;\n        out = data[head];\n        head = (head + 1) % cap;\n        --count;\n        return true;\n    }\n\n    int size() const { return count; }\n    bool empty() const { return count == 0; }\n    bool full() const { return count == cap; }\n\nprivate:\n    int data[1024];\n    int cap;\n    int head;\n    int count;\n};\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Simple implementation."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 232,
+      "total_tokens": 405,
+      "completion_tokens": 173,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

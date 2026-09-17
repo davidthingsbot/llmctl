@@ -1,0 +1,19 @@
+{
+  "model": "qwen38-flash-next-tp2",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "Three hypotheses might explain why compound X reduces signaling through receptor R:\nH1: X directly binds and blocks R.\nH2: X causes R protein to be degraded through the proteasome.\nH3: The original signaling assay is an artifact.\n\nNew observations:\n- X has the same effect in an orthogonal signaling assay.\n- A validated occupancy assay detects no binding of X to R.\n- R protein falls after X treatment, but R mRNA is unchanged.\n- A proteasome inhibitor prevents both the R-protein decline and the signaling effect.\n\nReturn ONLY JSON with keys `best_hypothesis`, `evidence_chain`, and `decisive_falsifier`. Use one of `direct_block`, `proteasomal_degradation`, or `assay_artifact` for `best_hypothesis`. `evidence_chain` must be an array. State a future result that would decisively undermine the selected mechanism."
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "xhigh"
+  }
+}

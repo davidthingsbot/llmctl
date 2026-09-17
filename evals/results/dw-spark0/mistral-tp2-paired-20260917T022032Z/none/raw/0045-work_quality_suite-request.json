@@ -1,0 +1,21 @@
+{
+  "mode": "none",
+  "suite": "work_quality_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+      },
+      {
+        "role": "user",
+        "content": "Write a CUDA kernel that reduces an array of floats to one partial sum per\nblock. Return ONLY the kernel, no host code, no main, no includes, no explanation.\n\n    __global__ void block_sum(const float* in, float* out, int n)\n\nContract:\n- Launched as block_sum<<<blocks, threads, threads * sizeof(float)>>>(in, out, n)\n  with threads = 256 and blocks = ceil(n / threads).\n- Each block sums the elements it is responsible for and writes that single\n  partial sum to out[blockIdx.x]. The host adds the partials afterwards.\n- `n` is NOT necessarily a multiple of the block size, and may be smaller than one\n  block. Out-of-range elements must contribute nothing.\n- Use the dynamically allocated shared memory (declare it `extern __shared__`).\n- Every thread in the block must reach every __syncthreads(). Placing a barrier\n  where only some threads arrive is undefined behaviour, even when it appears to\n  work.\n"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T02:39:33.431851+00:00"
+}

@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 20.22593100499944,
+  "response": {
+    "id": "chatcmpl-bd0d1c76dce1965f",
+    "object": "chat.completion",
+    "created": 1789660643,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72450\n}\n```\n\nSupporting reasoning:\n- Per token per sequence: 40 layers \u00d7 2 (K+V) \u00d7 8 heads \u00d7 128 dims \u00d7 1.0625 B = 87,040 bytes.\n- At 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB per sequence.\n- Four sequences: 10.625 GiB; total = 24.5 + 10.625 = 35.125 GiB (fits in 48 GiB).\n- KV budget: 48 \u2212 24.5 = 23.5 GiB = 25,224,306,688 B; per sequence 6,306,076,672 B; \u00f7 87,040 = 72,450.09\u2026 \u2192 72,450 tokens (4 \u00d7 72,450 \u00d7 87,040 = 25,224,272,000 B, which fits; one more token does not).",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "KV per token per sequence: 40 layers \u00d7 2 (K,V) \u00d7 8 heads \u00d7 128 dim \u00d7 1.0625 bytes = 40\u00d72\u00d78\u00d7128 = 81920 elements \u00d7 1.0625 = 87040 bytes.\n\nPer sequence at 32768: 87040 \u00d7 32768 = 2,852,126,720 bytes. In GiB: /2^30 = 2.65625 GiB. Check: 87040/2^30 = 0.00008106... \u00d732768 = 2.65625. Yes.\n\nFour sequences: 10.625 GiB. Total: 24.5 + 10.625 = 35.125 GiB.\n\nMax context: budget for KV = 48 \u2212 24.5 = 23.5 GiB = 23.5 \u00d7 2^30 = 25,224,306,688 bytes. Per sequence: /4 = 6,306,076,672 bytes. Tokens: /87040 = 72,448.0? Compute: 87040 \u00d7 72448 = 87040\u00d772000=6,266,880,000; 87040\u00d7448=39,013,920; total 6,305,893,920. Slightly less than 6,306,076,672. Difference: 182,752 bytes \u2192 /87040 \u2248 2.099. So 72,450 tokens? Check 87040\u00d772450 = 6,305,893,920 + 174,080 = 6,306,068,000. Still \u2264 6,306,076,672. Difference 8,672 \u2192 less than one token. So 72,450 tokens per sequence.\n\nVerify total: 4 \u00d7 72450 \u00d7 87040 = 4\u00d76,306,068,000 = 25,224,272,000 bytes = 23.49996... GiB. Plus 24.5 = 47.99996 \u2264 48. Good.\n\nCheck 72451: adds 87040\u00d74=348,160 bytes \u2192 25,224,620,160 > 25,224,306,688. Yes exceeds. So max = 72450."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 258,
+      "total_tokens": 1095,
+      "completion_tokens": 837,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

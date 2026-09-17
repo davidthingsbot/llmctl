@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 27.607208278001053,
+  "response": {
+    "id": "chatcmpl-821862a1263f44ee",
+    "object": "chat.completion",
+    "created": 1789612421,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\ndef softmax(Z):\n    Z_shifted = Z - np.max(Z, axis=1, keepdims=True)\n    exp_Z = np.exp(Z_shifted)\n    return exp_Z / np.sum(exp_Z, axis=1, keepdims=True)\n\ndef cross_entropy(Z, y):\n    Z_shifted = Z - np.max(Z, axis=1, keepdims=True)\n    log_probs = Z_shifted - np.log(np.sum(np.exp(Z_shifted), axis=1, keepdims=True))\n    return -np.mean(log_probs[np.arange(len(y)), y])\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 244,
+      "total_tokens": 380,
+      "completion_tokens": 136,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

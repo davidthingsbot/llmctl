@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 19.52618240499578,
+  "response": {
+    "id": "chatcmpl-8bc4ae4f0fa96c62",
+    "object": "chat.completion",
+    "created": 1789672109,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"node\": \"N4\",\n  \"probe\": \"P7\",\n  \"revision\": 3,\n  \"adjusted\": 56,\n  \"destination\": \"BAY-6\"\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Let me carefully follow the procedure.\n\nStep 1: Begin at IN. Follow a TRIANGLE edge, then a SQUARE edge; use solid arrows only. Dashed arrows are archived.\n\nLooking at the routing diagram. IN has three outgoing edges:\n- To H1: solid arrow with a blue triangle symbol.\n- To H2: dashed arrow with a blue triangle symbol.\n- To H3: solid arrow with a green circle symbol.\n\nWe need a TRIANGLE edge that is solid. The edge IN->H1 is solid with triangle. The edge IN->H2 is dashed with triangle (archived, so not usable). So we must go IN->H1 via the solid triangle edge.\n\nNow from H1, we need a SQUARE edge, solid. H1 has two outgoing edges:\n- To N4: solid arrow with orange square symbol.\n- To N7: solid arrow with purple diamond symbol.\n\nWe need a SQUARE edge. So H1->N4 via the orange square.\n\nThus the reached node is N4.\n\nStep 2: At the reached node, read Unit / Lot and raw. N4 shows \"K2 / L8\" and \"raw = 17\".\n\nSo Unit = K2, Lot = L8, raw = 17.\n\nStep 3: Match BOTH Unit and Lot to the LIVE registry row.\n\nLook at device registry:\n- Row 1: K2, L3, LIVE, P7, 2, S2\n- Row 2: K8, L8, LIVE, P7, 4, S5\n- Row 3: K2, L8, OLD, P9, 5, S2\n- Row 4: K2, L8, LIVE, P7, 3, S2\n- Row 5: K3, L8, LIVE, P9, 3, S5\n\nWe need Unit=K2, Lot=L8, and State=LIVE. Row 3 is K2/L8 but OLD. Row 4 is K2/L8 LIVE. So match row 4: Probe=P7, Rev=3, Rack=S2.\n\nStep 4: Use that row's exact Probe AND Rev in the calibration table; do not pick the latest revision.\n\nProbe=P7, Rev=3. Look at calibration table:\n- P7, 1, -4, 2\n- P7, 2, 3, 2\n- P9, 3, 1, 5\n- P7, 3, -3, 4\n- P7, 4, 2, 3\n- P9, 5, -2, 3\n\nSo P7 Rev 3: Offset = -3, Gain = 4.\n\nStep 5: Compute adjusted = Gain x (raw + Offset) = 4 x (17 + (-3)) = 4 x 14 = 56.\n\nStep 6: Match the registry Rack and the adjusted band.\n\nRack = S2. Adjusted = 56.\n\nDispatch bands:\n- S2, 0-49, BAY-1\n- S5, 50-59, BAY-9\n- S2, 60-99, BAY-3\n- S2, 50-59, BAY-6\n\nWe need Rack=S2 and adjusted=56 in band. S2 bands: 0-49 (BAY-1), 60-99 (BAY-3), 50-59 (BAY-6). 56 falls in 50-59 with Rack S2 -> BAY-6.\n\nNote S5 50-59 is BAY-9 but rack mismatch. So destination = BAY-6.\n\nThus:\nnode = \"N4\"\nprobe = \"P7\"\nrevision = 3\nadjusted = 56\ndestination = \"BAY-6\"\n\nLet me double check the routing. The procedure says \"Follow a TRIANGLE edge, then a SQUARE edge\". The first edge from IN must be a triangle edge (solid). IN->H1 is solid triangle. Good. Then from H1 a square edge solid: H1->N4 is square. Good.\n\nBut wait, also consider IN->H2 is triangle but dashed, archived. So not allowed. IN->H3 is circle, not triangle. So only H1 path. Good.\n\nThus reached node N4.\n\nEverything consistent.\n\nReturn JSON.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 2151,
+      "total_tokens": 3191,
+      "completion_tokens": 1040,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 988
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

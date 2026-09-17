@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 6.4047881070000585,
+  "response": {
+    "id": "chatcmpl-8dfa32a98947dd09",
+    "object": "chat.completion",
+    "created": 1789660597,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per token per layer, K and V each store 8 heads \u00d7 128 dims = 1024 elements; at 2 bytes each that's 2048 bytes per tensor, 4096 bytes for K+V, and \u00d7 32 layers = 131072 bytes/token. At 8192 tokens: 131072 \u00d7 8192 = 2\u00b3\u2070 bytes = 1 GiB. At 131072 tokens: 131072 \u00d7 131072 = 2\u00b3\u2074 bytes = 16 GiB.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Per token per layer: 2 (K,V) \u00d7 8 heads \u00d7 128 dim \u00d7 2 bytes = 4096 bytes. \u00d7 32 layers = 131072 bytes per token.\n\n8192 tokens: 131072 \u00d7 8192 = 2^17 \u00d7 2^13 = 2^30 = 1 GiB.\n131072 tokens: 2^17 \u00d7 2^17 = 2^34 = 16 GiB."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 177,
+      "total_tokens": 450,
+      "completion_tokens": 273,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

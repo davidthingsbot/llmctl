@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 8.703649244998815,
+  "response": {
+    "id": "chatcmpl-aca8b818810d9f8d",
+    "object": "chat.completion",
+    "created": 1789661311,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cuda\n#define TILE 16\n\n__global__ void matmul(const float* A, const float* B, float* C,\n                       int M, int N, int K)\n{\n    __shared__ float As[TILE][TILE];\n    __shared__ float Bs[TILE][TILE];\n\n    int row = blockIdx.y * TILE + threadIdx.y;\n    int col = blockIdx.x * TILE + threadIdx.x;\n\n    float acc = 0.0f;\n\n    int numTiles = (K + TILE - 1) / TILE;\n    for (int t = 0; t < numTiles; ++t) {\n        int aCol = t * TILE + threadIdx.x;\n        int bRow = t * TILE + threadIdx.y;\n\n        As[threadIdx.y][threadIdx.x] =\n            (row < M && aCol < K) ? A[row * K + aCol] : 0.0f;\n        Bs[threadIdx.y][threadIdx.x] =\n            (bRow < K && col < N) ? B[bRow * N + col] : 0.0f;\n\n        __syncthreads();\n\n        #pragma unroll\n        for (int k = 0; k < TILE; ++k) {\n            acc += As[threadIdx.y][k] * Bs[k][threadIdx.x];\n        }\n\n        __syncthreads();\n    }\n\n    if (row < M && col < N) {\n        C[row * N + col] = acc;\n    }\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Write standard tiled matmul kernel with bounds checks, all threads load tiles (with zero fill), sync, accumulate, write with bounds check."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 297,
+      "total_tokens": 642,
+      "completion_tokens": 345,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

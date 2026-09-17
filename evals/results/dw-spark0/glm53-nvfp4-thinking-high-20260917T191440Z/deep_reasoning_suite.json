@@ -1,0 +1,675 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "glm53-flash-nvfp4-vision",
+  "endpoint": "http://127.0.0.1:8006/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  },
+  "score": 286,
+  "max_score": 302,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 6401,
+    "completion_tokens": 12942,
+    "total_tokens": 19343,
+    "task_seconds": 921.39,
+    "wall_seconds": 921.94,
+    "generation_tok_s": 14.05,
+    "truncated_tasks": [],
+    "retries": 4,
+    "retry_completion_tokens": 2378
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "{\n  \"Ada\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}",
+      "grade_details": {
+        "Ada": true,
+        "Ben": true,
+        "Cara": true,
+        "Dion": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"Ada\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}",
+      "usage": {
+        "prompt_tokens": 152,
+        "total_tokens": 1322,
+        "completion_tokens": 1170,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 82.2648
+    },
+    {
+      "task": "causal_inference",
+      "score": 12,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity (RD) design\",\n  \"instrument\": \"Crossing the eligibility threshold (score >= 70), which sharply raises the probability of participation but does not deterministically assign it\",\n  \"estimand\": \"Local average treatment effect (LATE) of program participation for compliers at the score cutoff of 70 \u2014 i.e., the effect for those whose participation status changes because of crossing the threshold\",\n  \"global_generalization\": \"No. The estimate is local to the cutoff; it applies to units near the threshold (and specifically to compliers there), not automatically to everyone, including far-below-cutoff individuals or always/never-takers near the threshold.\",\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all confounders) vary smoothly through the score of 70 absent treatment, so units just above and just below the cutoff are comparable\",\n    \"Exclusion restriction: the score affects employment only through program participation (no direct effect of the score or eligibility itself on outcomes)\",\n    \"Monotonicity: crossing the cutoff can only increase (never decrease) the probability of participation \u2014 no defiers\",\n    \"No other policy changes or treatments discontinuously at the threshold of 70\",\n    \"The score cannot be precisely manipulated, so no sorting of units to one side of the cutoff\",\n    \"SUTVA / no interference: one unit's participation does not affect another unit's outcomes\"\n  ]\n}\n```",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": false,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity (RD) design\",\n  \"instrument\": \"Crossing the eligibility threshold (score >= 70), which sharply raises the probability of participation but does not deterministically assign it\",\n  \"estimand\": \"Local average treatment effect (LATE) of program participation for compliers at the score cutoff of 70 \u2014 i.e., the effect for those whose participation status changes because of crossing the threshold\",\n  \"global_generalization\": \"No. The estimate is local to the cutoff; it applies to units near the threshold (and specifically to compliers there), not automatically to everyone, including far-below-cutoff individuals or always/never-takers near the threshold.\",\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all confounders) vary smoothly through the score of 70 absent treatment, so units just above and just below the cutoff are comparable\",\n    \"Exclusion restriction: the score affects employment only through program participation (no direct effect of the score or eligibility itself on outcomes)\",\n    \"Monotonicity: crossing the cutoff can only increase (never decrease) the probability of participation \u2014 no defiers\",\n    \"No other policy changes or treatments discontinuously at the threshold of 70\",\n    \"The score cannot be precisely manipulated, so no sorting of units to one side of the cutoff\",\n    \"SUTVA / no interference: one unit's participation does not affect another unit's outcomes\"\n  ]\n}\n```",
+      "usage": {
+        "prompt_tokens": 188,
+        "total_tokens": 595,
+        "completion_tokens": 407,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 29.1044,
+      "score_first": 12,
+      "retry_feedback": "failed checks: not_global",
+      "raw_retry_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity (RD) design\",\n  \"instrument\": \"Crossing the eligibility threshold (score >= 70), which sharply raises the probability of participation but does not deterministically assign it\",\n  \"estimand\": \"Local average treatment effect (LATE) of program participation for compliers at the score cutoff of 70 \u2014 i.e., the effect for those whose participation status changes because of crossing the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all confounders) vary smoothly through the score of 70 absent treatment, so units just above and just below the cutoff are comparable\",\n    \"Exclusion restriction: the score affects employment only through program participation (no direct effect of the score or eligibility itself on outcomes)\",\n    \"Monotonicity: crossing the cutoff can only increase (never decrease) the probability of participation \u2014 no defiers\",\n    \"No other policy changes or treatments discontinuously at the threshold of 70\",\n    \"The score cannot be precisely manipulated, so no sorting of units to one side of the cutoff\",\n    \"SUTVA / no interference: one unit's participation does not affect another unit's outcomes\"\n  ]\n}\n```",
+      "retry_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity (RD) design\",\n  \"instrument\": \"Crossing the eligibility threshold (score >= 70), which sharply raises the probability of participation but does not deterministically assign it\",\n  \"estimand\": \"Local average treatment effect (LATE) of program participation for compliers at the score cutoff of 70 \u2014 i.e., the effect for those whose participation status changes because of crossing the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all confounders) vary smoothly through the score of 70 absent treatment, so units just above and just below the cutoff are comparable\",\n    \"Exclusion restriction: the score affects employment only through program participation (no direct effect of the score or eligibility itself on outcomes)\",\n    \"Monotonicity: crossing the cutoff can only increase (never decrease) the probability of participation \u2014 no defiers\",\n    \"No other policy changes or treatments discontinuously at the threshold of 70\",\n    \"The score cannot be precisely manipulated, so no sorting of units to one side of the cutoff\",\n    \"SUTVA / no interference: one unit's participation does not affect another unit's outcomes\"\n  ]\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 542,
+        "total_tokens": 873,
+        "completion_tokens": 331,
+        "prompt_tokens_details": null
+      },
+      "retry_elapsed_s": 24.0906,
+      "score_retry": 14,
+      "retry_grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given true disease status. In reality, repeating the same type of test often produces correlated errors: shared patient characteristics, the same assay technology, the same lab or sample handling, and the disease spectrum in the population can make false positives recur together more often than independence predicts. If errors are positively correlated, the effective specificity after two positives is lower than 1 - 0.05^2, so the true post-two-positive probability would be lower than 76.6%, making this calculation overconfident.\"\n}\n```",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": true,
+        "conditional_independence": true,
+        "correlated_errors": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given true disease status. In reality, repeating the same type of test often produces correlated errors: shared patient characteristics, the same assay technology, the same lab or sample handling, and the disease spectrum in the population can make false positives recur together more often than independence predicts. If errors are positively correlated, the effective specificity after two positives is lower than 1 - 0.05^2, so the true post-two-positive probability would be lower than 76.6%, making this calculation overconfident.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 150,
+        "total_tokens": 530,
+        "completion_tokens": 380,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 27.1644
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reproduces the signaling reduction in an orthogonal assay, so the effect is not specific to the original assay format, disfavoring H3 (assay_artifact).\",\n    \"A validated occupancy assay detects no binding of X to R, disfavoring H1 (direct_block).\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating a post-transcriptional effect consistent with protein degradation rather than transcriptional repression.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, linking the signaling effect causally to proteasome-dependent loss of R protein and supporting H2 (proteasomal_degradation).\"\n  ],\n  \"decisive_falsifier\": \"Express a proteasome-resistant R variant (e.g., a mutant that cannot be ubiquitinated or otherwise targeted to the proteasome) that retains normal signaling activity: if X still reduces signaling through this degradation-resistant R, the proteasomal_degradation mechanism is decisively undermined, implying the inhibitor's rescue was off-target or that X acts by another route.\"\n}\n```",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reproduces the signaling reduction in an orthogonal assay, so the effect is not specific to the original assay format, disfavoring H3 (assay_artifact).\",\n    \"A validated occupancy assay detects no binding of X to R, disfavoring H1 (direct_block).\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating a post-transcriptional effect consistent with protein degradation rather than transcriptional repression.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, linking the signaling effect causally to proteasome-dependent loss of R protein and supporting H2 (proteasomal_degradation).\"\n  ],\n  \"decisive_falsifier\": \"Express a proteasome-resistant R variant (e.g., a mutant that cannot be ubiquitinated or otherwise targeted to the proteasome) that retains normal signaling activity: if X still reduces signaling through this degradation-resistant R, the proteasomal_degradation mechanism is decisively undermined, implying the inhibitor's rescue was off-target or that X acts by another route.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 227,
+        "total_tokens": 671,
+        "completion_tokens": 444,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 31.8027
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "**Assessment: belief in the claim should remain low but not zero, and should not rise on the strength of S1, S2, or S4.**\n\n**Source dependence.** S2 and S4 add no independent evidential weight. S2 cites only S1; S4 cites S2 or its siblings. All derivative testimony collapses into a single originating source: the rival's diary. Five modern repetitions are one witness heard five times, not five witnesses.\n\n**Incentives.** S1 is contemporaneous and authenticated, which makes it genuine evidence *that the accusation was made in 1892* \u2014 but its author was a political rival with motive to smear. Rivalrous accusations are not worthless, but they carry a built-in risk of exaggeration or fabrication, and S1 offers no transaction details that could be checked. Its probative value on the underlying facts is therefore weak.\n\n**What S3 does and does not establish.** S3 is the only independent, primary-source evidence. Its reconciling totals establish that the disputed funds were actually paid to named grain suppliers \u2014 i.e., the money reached the relief system rather than vanishing into the mayor's pocket in a crude sense. It does *not* establish that the transactions were arm's-length: suppliers could have paid kickbacks, prices could have been inflated, or deliveries could have been short \u2014 none of which a ledger total alone would reveal.\n\n**Cousin evidence.** The cousin link is a genuine conflict of interest and keeps suspicion alive, but the price matching other suppliers that month undercuts the most testable version of wrongdoing (overcharging). It is consistent with both innocent favoritism in contract award and with subtler corruption; it slightly raises, but does not confirm, probability.\n\n**Highest-value next evidence.** Seek (a) the suppliers' own business records or correspondence (kickbacks, delivery quantities), (b) independent inspection or distribution reports from the famine zones, and (c) any audit or treasury correspondence beyond the ledger totals. These directly test the channels S3 leaves open.\n\n**Conclusion:** low-confidence skepticism, revisable upward only by primary evidence of the transaction's inner mechanics.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      },
+      "status": "complete",
+      "raw_response": "**Assessment: belief in the claim should remain low but not zero, and should not rise on the strength of S1, S2, or S4.**\n\n**Source dependence.** S2 and S4 add no independent evidential weight. S2 cites only S1; S4 cites S2 or its siblings. All derivative testimony collapses into a single originating source: the rival's diary. Five modern repetitions are one witness heard five times, not five witnesses.\n\n**Incentives.** S1 is contemporaneous and authenticated, which makes it genuine evidence *that the accusation was made in 1892* \u2014 but its author was a political rival with motive to smear. Rivalrous accusations are not worthless, but they carry a built-in risk of exaggeration or fabrication, and S1 offers no transaction details that could be checked. Its probative value on the underlying facts is therefore weak.\n\n**What S3 does and does not establish.** S3 is the only independent, primary-source evidence. Its reconciling totals establish that the disputed funds were actually paid to named grain suppliers \u2014 i.e., the money reached the relief system rather than vanishing into the mayor's pocket in a crude sense. It does *not* establish that the transactions were arm's-length: suppliers could have paid kickbacks, prices could have been inflated, or deliveries could have been short \u2014 none of which a ledger total alone would reveal.\n\n**Cousin evidence.** The cousin link is a genuine conflict of interest and keeps suspicion alive, but the price matching other suppliers that month undercuts the most testable version of wrongdoing (overcharging). It is consistent with both innocent favoritism in contract award and with subtler corruption; it slightly raises, but does not confirm, probability.\n\n**Highest-value next evidence.** Seek (a) the suppliers' own business records or correspondence (kickbacks, delivery quantities), (b) independent inspection or distribution reports from the famine zones, and (c) any audit or treasury correspondence beyond the ledger totals. These directly test the channels S3 leaves open.\n\n**Conclusion:** low-confidence skepticism, revisable upward only by primary evidence of the transaction's inner mechanics.",
+      "usage": {
+        "prompt_tokens": 221,
+        "total_tokens": 765,
+        "completion_tokens": 544,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 38.7086
+    },
+    {
+      "task": "value_of_information",
+      "score": 11,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"launch_now_ev\": -12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase test\"\n}\n```",
+      "grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": true,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"launch_now_ev\": -12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase test\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 200,
+        "total_tokens": 653,
+        "completion_tokens": 453,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 32.3438,
+      "score_first": 11,
+      "retry_feedback": "failed checks: launch_now_ev",
+      "raw_retry_response": "```json\n{\n  \"launch_now_ev\": 0.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase test\"\n}\n```",
+      "retry_response": "```json\n{\n  \"launch_now_ev\": 0.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase test\"\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 349,
+        "total_tokens": 1334,
+        "completion_tokens": 985,
+        "prompt_tokens_details": null
+      },
+      "retry_elapsed_s": 69.8421,
+      "score_retry": 11,
+      "retry_grade_details": {
+        "launch_now_ev": false,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": true,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 6,
+      "max_score": 10,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"4\"],\n  \"reason\": \"The rule 'If a card has a vowel on one side, then it has an even number on the other side' is a conditional: vowel \u2192 even. It is violated only by a card with a vowel on one side AND an odd number on the other. (1) Card A: shows a vowel, so its hidden side must be checked \u2014 if it is an odd number (e.g., 7), the rule is falsified. (2) Card 4: shows an even number, so its hidden side must be checked \u2014 if it is a vowel, the rule is falsified, because the rule requires every vowel to be paired with an even number regardless of which side the vowel is on. (3) Card D: shows a consonant, which is not a vowel, so the rule makes no claim about what is on its other side; turning it could not falsify the rule. (4) Card 7: shows an odd number. The rule only constrains cards with vowels; an odd number paired with a consonant is fully consistent with it. The only way card 7 could matter is if its hidden side were a vowel \u2014 but that possibility is already covered by turning card 4's logic in reverse? No: strictly, if card 7's hidden side were a vowel, the rule would be violated. However, since every card has a letter on one side and a number on the other, card 7's hidden side must be a letter, and the rule is only tested by checking vowels (A) and even numbers (4); the 7 card is not required because the rule's antecedent concerns vowels, and the standard logical test requires turning only cards that could reveal a vowel-with-odd-number or even-with-vowel combination \u2014 which are A and 4.\"\n}\n```",
+      "grade_details": {
+        "exact_cards": false,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"turn_cards\": [\"A\", \"4\"],\n  \"reason\": \"The rule 'If a card has a vowel on one side, then it has an even number on the other side' is a conditional: vowel \u2192 even. It is violated only by a card with a vowel on one side AND an odd number on the other. (1) Card A: shows a vowel, so its hidden side must be checked \u2014 if it is an odd number (e.g., 7), the rule is falsified. (2) Card 4: shows an even number, so its hidden side must be checked \u2014 if it is a vowel, the rule is falsified, because the rule requires every vowel to be paired with an even number regardless of which side the vowel is on. (3) Card D: shows a consonant, which is not a vowel, so the rule makes no claim about what is on its other side; turning it could not falsify the rule. (4) Card 7: shows an odd number. The rule only constrains cards with vowels; an odd number paired with a consonant is fully consistent with it. The only way card 7 could matter is if its hidden side were a vowel \u2014 but that possibility is already covered by turning card 4's logic in reverse? No: strictly, if card 7's hidden side were a vowel, the rule would be violated. However, since every card has a letter on one side and a number on the other, card 7's hidden side must be a letter, and the rule is only tested by checking vowels (A) and even numbers (4); the 7 card is not required because the rule's antecedent concerns vowels, and the standard logical test requires turning only cards that could reveal a vowel-with-odd-number or even-with-vowel combination \u2014 which are A and 4.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 138,
+        "total_tokens": 582,
+        "completion_tokens": 444,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 31.6024,
+      "score_first": 6,
+      "retry_feedback": "failed checks: exact_cards",
+      "raw_retry_response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule 'If a card has a vowel on one side, then it has an even number on the other side' is a conditional: vowel \u2192 even. It is violated only by a card with a vowel on one side AND an odd number on the other. (1) Card A: shows a vowel, so its hidden side must be checked \u2014 if it is an odd number (e.g., 7), the rule is falsified. (2) Card 7: shows an odd number, so its hidden side must be checked \u2014 if it is a vowel, the rule is falsified, because the rule requires every vowel to be paired with an even number regardless of which side the vowel is on. (3) Card D: shows a consonant, which is not a vowel, so the rule makes no claim about what is on its other side; turning it could not falsify the rule. (4) Card 4: shows an even number. The rule only constrains cards with vowels; an even number paired with a consonant is fully consistent with it, so turning card 4 could not falsify the rule. Therefore only A and 7 must be turned.\"\n}\n```",
+      "retry_response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule 'If a card has a vowel on one side, then it has an even number on the other side' is a conditional: vowel \u2192 even. It is violated only by a card with a vowel on one side AND an odd number on the other. (1) Card A: shows a vowel, so its hidden side must be checked \u2014 if it is an odd number (e.g., 7), the rule is falsified. (2) Card 7: shows an odd number, so its hidden side must be checked \u2014 if it is a vowel, the rule is falsified, because the rule requires every vowel to be paired with an even number regardless of which side the vowel is on. (3) Card D: shows a consonant, which is not a vowel, so the rule makes no claim about what is on its other side; turning it could not falsify the rule. (4) Card 4: shows an even number. The rule only constrains cards with vowels; an even number paired with a consonant is fully consistent with it, so turning card 4 could not falsify the rule. Therefore only A and 7 must be turned.\"\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 573,
+        "total_tokens": 903,
+        "completion_tokens": 330,
+        "prompt_tokens_details": null
+      },
+      "retry_elapsed_s": 23.8355,
+      "score_retry": 9,
+      "retry_grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "**Recommendation: Do not adopt automatic restrictive supervision at a fixed threshold. Permit, at most, a narrowly constrained, audited pilot with human review.**\n\n**What calibration does and does not justify.** Calibration within demographic groups means that among defendants scored above the threshold, roughly the stated fraction reoffend. It does *not* justify automatic sanctions: calibration is a property of aggregate predictions, not of any individual, and with severe offenses rare, even a well-calibrated high-risk group will contain many false positives. Low base rates make precision poor and positive predictive value unstable; small miscalibration or distribution shift can swing it substantially. Because the two error types are asymmetric\u2014false positives impose liberty restrictions on innocent people; false negatives may leave genuine risks unmonitored\u2014threshold choice is a value judgment requiring public deliberation, not a technical default.\n\n**Causation versus prediction.** The model predicts observed arrest/conviction patterns, not future violence. Police deployment determines who is observed and arrested, so \"labels\" are selectively collected: over-policed groups appear riskier, and feedback loops (more surveillance \u2192 more arrests \u2192 higher scores) can entrench disparities. Features known to defendants invite strategic adaptation\u2014gaming inputs in either direction\u2014degrading validity unpredictably. Expected economic and social shifts mean the training distribution will not match deployment conditions; calibration claims from historical data do not transfer automatically.\n\n**Rights and due process.** Liberty-restricting sanctions triggered by a statistical score raise due-process concerns: defendants cannot meaningfully contest opaque features, and group-level accuracy is not individualized proof. Automatic action removes the human judgment that due process ordinarily requires.\n\n**Constrained deployment design.**\n1. Use scores only as one input to human review, never as an automatic trigger; require documented, contestable reasons for any restrictive decision, with a right to challenge the score and its features.\n2. Restrict features to those plausibly causal, resistant to gaming, and not proxies for policing intensity; audit for disparate impact across groups.\n3. Pilot with a randomized or staged rollout where feasible, comparing outcomes against a control; pre-register metrics.\n4. Measure *ground-truth* violence where possible (victimization surveys, hospital data), not arrests alone, to detect selective-label bias; monitor score calibration, false-positive/false-negative rates, and feedback-loop indicators (e.g., score inflation in heavily patrolled areas) continuously, by demographic group.\n5. Set a high, publicly justified threshold with periodic review; cap sanction severity and duration.\n\n**Stopping/revision conditions.** Suspend or revise if calibration degrades materially, error rates or disparities exceed pre-registered bounds, strategic gaming is detected, or human reviewers routinely override scores\u2014each indicating the model's claims no longer support its use. Absent such evidence, uncertainty remains; the burden of proof lies with the system, not the defendant.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      },
+      "status": "complete",
+      "raw_response": "**Recommendation: Do not adopt automatic restrictive supervision at a fixed threshold. Permit, at most, a narrowly constrained, audited pilot with human review.**\n\n**What calibration does and does not justify.** Calibration within demographic groups means that among defendants scored above the threshold, roughly the stated fraction reoffend. It does *not* justify automatic sanctions: calibration is a property of aggregate predictions, not of any individual, and with severe offenses rare, even a well-calibrated high-risk group will contain many false positives. Low base rates make precision poor and positive predictive value unstable; small miscalibration or distribution shift can swing it substantially. Because the two error types are asymmetric\u2014false positives impose liberty restrictions on innocent people; false negatives may leave genuine risks unmonitored\u2014threshold choice is a value judgment requiring public deliberation, not a technical default.\n\n**Causation versus prediction.** The model predicts observed arrest/conviction patterns, not future violence. Police deployment determines who is observed and arrested, so \"labels\" are selectively collected: over-policed groups appear riskier, and feedback loops (more surveillance \u2192 more arrests \u2192 higher scores) can entrench disparities. Features known to defendants invite strategic adaptation\u2014gaming inputs in either direction\u2014degrading validity unpredictably. Expected economic and social shifts mean the training distribution will not match deployment conditions; calibration claims from historical data do not transfer automatically.\n\n**Rights and due process.** Liberty-restricting sanctions triggered by a statistical score raise due-process concerns: defendants cannot meaningfully contest opaque features, and group-level accuracy is not individualized proof. Automatic action removes the human judgment that due process ordinarily requires.\n\n**Constrained deployment design.**\n1. Use scores only as one input to human review, never as an automatic trigger; require documented, contestable reasons for any restrictive decision, with a right to challenge the score and its features.\n2. Restrict features to those plausibly causal, resistant to gaming, and not proxies for policing intensity; audit for disparate impact across groups.\n3. Pilot with a randomized or staged rollout where feasible, comparing outcomes against a control; pre-register metrics.\n4. Measure *ground-truth* violence where possible (victimization surveys, hospital data), not arrests alone, to detect selective-label bias; monitor score calibration, false-positive/false-negative rates, and feedback-loop indicators (e.g., score inflation in heavily patrolled areas) continuously, by demographic group.\n5. Set a high, publicly justified threshold with periodic review; cap sanction severity and duration.\n\n**Stopping/revision conditions.** Suspend or revise if calibration degrades materially, error rates or disparities exceed pre-registered bounds, strategic gaming is detected, or human reviewers routinely override scores\u2014each indicating the model's claims no longer support its use. Absent such evidence, uncertainty remains; the burden of proof lies with the system, not the defendant.",
+      "usage": {
+        "prompt_tokens": 204,
+        "total_tokens": 865,
+        "completion_tokens": 661,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 46.9172
+    },
+    {
+      "task": "physics_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}\n```",
+      "grade_details": {
+        "expected_energy_kwh": 0.84,
+        "expected_cost_usd": 0.2352,
+        "expected_heat_watts": 240.0,
+        "expected_amps_at_240v": 1.0,
+        "parsed": true,
+        "energy_kwh": true,
+        "cost_usd": true,
+        "heat_watts": true,
+        "amps_at_240v": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}\n```",
+      "usage": {
+        "prompt_tokens": 139,
+        "total_tokens": 258,
+        "completion_tokens": 119,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 8.7644
+    },
+    {
+      "task": "optimization_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}\n```",
+      "grade_details": {
+        "expected_choice": "bravo",
+        "expected_quality": 91,
+        "expected_memory_left_gib": 8,
+        "expected_alpha_fits": false,
+        "parsed": true,
+        "choice": true,
+        "quality": true,
+        "memory_left_gib": true,
+        "alpha_fits": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}\n```",
+      "usage": {
+        "prompt_tokens": 168,
+        "total_tokens": 249,
+        "completion_tokens": 81,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 6.092
+    },
+    {
+      "task": "causal_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}\n```",
+      "grade_details": {
+        "parsed": true,
+        "relationship": true,
+        "confounder": true,
+        "adjust_for": true,
+        "ice_cream_causes_drowning": true,
+        "banning_ice_cream_helps": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}\n```",
+      "usage": {
+        "prompt_tokens": 215,
+        "total_tokens": 278,
+        "completion_tokens": 63,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 4.8595
+    },
+    {
+      "task": "sizing_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per layer, K and V each take 8 heads \u00d7 128 dims \u00d7 2 bytes = 2048 bytes, so both together are 4096 bytes per layer. Across 32 layers: 32 \u00d7 4096 = 131072 bytes per token (2^17). At 8192 tokens: 2^17 \u00d7 2^13 = 2^30 = 1 GiB. At 131072 tokens: 2^17 \u00d7 2^17 = 2^34 = 16 GiB.",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 131072,
+        "expected_kv_gib_at_8192": 1.0,
+        "expected_kv_gib_at_131072": 16.0,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "kv_gib_at_8192": true,
+        "kv_gib_at_131072": true,
+        "cached_k_only": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per layer, K and V each take 8 heads \u00d7 128 dims \u00d7 2 bytes = 2048 bytes, so both together are 4096 bytes per layer. Across 32 layers: 32 \u00d7 4096 = 131072 bytes per token (2^17). At 8192 tokens: 2^17 \u00d7 2^13 = 2^30 = 1 GiB. At 131072 tokens: 2^17 \u00d7 2^17 = 2^34 = 16 GiB.",
+      "usage": {
+        "prompt_tokens": 177,
+        "total_tokens": 449,
+        "completion_tokens": 272,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 19.4958
+    },
+    {
+      "task": "physics_medium",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.48\n}\n```",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": true,
+        "gave_rise_not_temperature": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.48\n}\n```",
+      "usage": {
+        "prompt_tokens": 245,
+        "total_tokens": 433,
+        "completion_tokens": 188,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 13.7091
+    },
+    {
+      "task": "optimization_medium",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}",
+      "usage": {
+        "prompt_tokens": 239,
+        "total_tokens": 1006,
+        "completion_tokens": 767,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 54.4104
+    },
+    {
+      "task": "causal_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": true,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```",
+      "usage": {
+        "prompt_tokens": 256,
+        "total_tokens": 584,
+        "completion_tokens": 328,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 23.4855
+    },
+    {
+      "task": "sizing_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72479\n}\n```\n\nSupporting derivation:\n- Per token, per layer: 2 (K+V) \u00d7 8 heads \u00d7 128 \u00d7 1.0625 B = 2176 B; across 40 layers = 87,040 B/token/sequence.\n- One sequence at 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB.\n- Four sequences: 4 \u00d7 2.65625 = 10.625 GiB; total = 24.5 + 10.625 = 35.125 GiB (fits in 48 GiB).\n- Max context: KV budget = 48 \u2212 24.5 = 23.5 GiB = 25,234,435,072 B; per-token cost for four sequences = 4 \u00d7 87,040 = 348,160 B; 25,234,435,072 \u00f7 348,160 = 72,479.53\u2026 \u2192 72,479 tokens (72,480 would exceed the budget).",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "gib_per_sequence_at_32768": true,
+        "total_gib_at_32768": true,
+        "max_context_per_sequence": true,
+        "forgot_four_sequences": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72479\n}\n```\n\nSupporting derivation:\n- Per token, per layer: 2 (K+V) \u00d7 8 heads \u00d7 128 \u00d7 1.0625 B = 2176 B; across 40 layers = 87,040 B/token/sequence.\n- One sequence at 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB.\n- Four sequences: 4 \u00d7 2.65625 = 10.625 GiB; total = 24.5 + 10.625 = 35.125 GiB (fits in 48 GiB).\n- Max context: KV budget = 48 \u2212 24.5 = 23.5 GiB = 25,234,435,072 B; per-token cost for four sequences = 4 \u00d7 87,040 = 348,160 B; 25,234,435,072 \u00f7 348,160 = 72,479.53\u2026 \u2192 72,479 tokens (72,480 would exceed the budget).",
+      "usage": {
+        "prompt_tokens": 258,
+        "total_tokens": 978,
+        "completion_tokens": 720,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 51.2174
+    },
+    {
+      "task": "physics_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.71\n}\n```",
+      "grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": true,
+        "sustainable_power_w": true,
+        "used_tau_from_ambient": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.71\n}\n```",
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 657,
+        "completion_tokens": 391,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 27.9227
+    },
+    {
+      "task": "optimization_hard",
+      "score": 13,
+      "max_score": 22,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"selection\": [\"atlas\", \"ember\", \"fennec\"],\n  \"total_value\": 98,\n  \"total_size_gib\": 93,\n  \"total_bandwidth\": 245,\n  \"bandwidth_binds\": true\n}\n```\n\nReasoning summary:\n- **Memory-only optimum** (size \u2264 112): borealis + cinder = 112 GiB, value 120 \u2014 but its bandwidth is 270 GB/s > 260, so it is infeasible. Other high-value memory-feasible sets (atlas+dunlin+ember = 114; borealis+dunlin+ember and cinder+dunlin+ember = 107; borealis+dunlin+fennec and cinder+dunlin+fennec = 100) all also exceed 260 GB/s.\n- **Best bandwidth-feasible set**: atlas + ember + fennec \u2014 size 61+19+13 = 93 \u2264 112, bandwidth 120+70+55 = 245 \u2264 260, value 67+19+12 = 98. No other feasible set exceeds value 98 (next best: atlas+dunlin = 95; cinder+ember+fennec = 91).\n- Since the memory-alone pick (borealis+cinder) is ruled out by the bandwidth limit, bandwidth binds: **true**.",
+      "grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "total_bandwidth": false,
+        "bandwidth_binds": true,
+        "ignored_bandwidth": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"selection\": [\"atlas\", \"ember\", \"fennec\"],\n  \"total_value\": 98,\n  \"total_size_gib\": 93,\n  \"total_bandwidth\": 245,\n  \"bandwidth_binds\": true\n}\n```\n\nReasoning summary:\n- **Memory-only optimum** (size \u2264 112): borealis + cinder = 112 GiB, value 120 \u2014 but its bandwidth is 270 GB/s > 260, so it is infeasible. Other high-value memory-feasible sets (atlas+dunlin+ember = 114; borealis+dunlin+ember and cinder+dunlin+ember = 107; borealis+dunlin+fennec and cinder+dunlin+fennec = 100) all also exceed 260 GB/s.\n- **Best bandwidth-feasible set**: atlas + ember + fennec \u2014 size 61+19+13 = 93 \u2264 112, bandwidth 120+70+55 = 245 \u2264 260, value 67+19+12 = 98. No other feasible set exceeds value 98 (next best: atlas+dunlin = 95; cinder+ember+fennec = 91).\n- Since the memory-alone pick (borealis+cinder) is ruled out by the bandwidth limit, bandwidth binds: **true**.",
+      "usage": {
+        "prompt_tokens": 263,
+        "total_tokens": 1982,
+        "completion_tokens": 1719,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 121.352,
+      "score_first": 4,
+      "retry_feedback": "failed checks: ignored_bandwidth, selection, total_bandwidth, total_size_gib, total_value",
+      "raw_retry_response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 235,\n  \"bandwidth_binds\": true\n}\n```",
+      "retry_response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 235,\n  \"bandwidth_binds\": true\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 614,
+        "total_tokens": 1346,
+        "completion_tokens": 732,
+        "prompt_tokens_details": null
+      },
+      "retry_elapsed_s": 52.1418,
+      "score_retry": 19,
+      "retry_grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "total_bandwidth": false,
+        "bandwidth_binds": true,
+        "ignored_bandwidth": false
+      }
+    },
+    {
+      "task": "causal_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```",
+      "grade_details": {
+        "parsed": true,
+        "backdoor_identifiable": true,
+        "frontdoor_identifiable": true,
+        "frontdoor_mediator": true,
+        "adjust_for_m_directly": true,
+        "effect_identifiable": true,
+        "said_unidentifiable": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```",
+      "usage": {
+        "prompt_tokens": 293,
+        "total_tokens": 556,
+        "completion_tokens": 263,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 18.9634
+    },
+    {
+      "task": "sizing_hard",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": true,
+        "gib_at_262144": true,
+        "max_context": true,
+        "fits": true,
+        "counted_all_48_layers": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "usage": {
+        "prompt_tokens": 324,
+        "total_tokens": 1474,
+        "completion_tokens": 1150,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 81.2952
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 20,
+  "planned_tasks": [
+    "logic_grid",
+    "causal_inference",
+    "bayesian_reasoning",
+    "hypothesis_discrimination",
+    "adversarial_epistemology",
+    "value_of_information",
+    "wason_selection",
+    "complex_policy_reasoning",
+    "physics_easy",
+    "optimization_easy",
+    "causal_easy",
+    "sizing_easy",
+    "physics_medium",
+    "optimization_medium",
+    "causal_medium",
+    "sizing_medium",
+    "physics_hard",
+    "optimization_hard",
+    "causal_hard",
+    "sizing_hard"
+  ]
+}

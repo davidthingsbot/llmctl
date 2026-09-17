@@ -1,0 +1,19 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Make a BOM-consolidation decision and return ONLY JSON with exactly these keys:\nselected_mpn, add_new_sku, voltage_valid, annual_unit_savings_usd, setup_cost_usd.\n\nExisting preferred line:\n- MPN GRM21BR71H104KA01L, 100 nF, 50 V, X7R, 0805, +/-10%, $0.006 each.\nCandidate new line:\n- MPN GRM21BR71E104KA01L, 100 nF, 25 V, X7R, 0805, +/-10%, $0.004 each.\nUse: 8,000 units/year on a rail that is normally 24 V but has a verified 36 V transient.\nIntroducing any new SKU costs $40 once in setup/qualification effort.\n\nSelect the technically valid and economically sensible part. annual_unit_savings_usd means\n8,000 times the candidate's per-unit price advantage before setup cost."
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

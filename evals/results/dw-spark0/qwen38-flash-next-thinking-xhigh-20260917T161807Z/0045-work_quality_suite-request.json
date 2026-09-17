@@ -1,0 +1,19 @@
+{
+  "model": "qwen38-flash-next-tp2",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement a two-layer neural network's forward pass, loss and analytic\ngradients with numpy. Return ONLY the two functions, no training loop, no\nexplanation. `import numpy as np` is the only import permitted.\n\n    def init_params(n_in, n_hidden, seed):\n        \"\"\"Return a dict with keys W1, b1, W2, b2.\"\"\"\n\n    def loss_and_grads(params, X, y):\n        \"\"\"Return (loss, grads) where grads has the same keys as params.\"\"\"\n\nShapes:\n  W1 (n_hidden, n_in)   b1 (n_hidden,)   W2 (n_hidden,)   b2 scalar float\n  X  (n_samples, n_in)  y  (n_samples,) of 0.0 or 1.0\n\nNetwork:\n  H = tanh(X @ W1.T + b1)          shape (n_samples, n_hidden)\n  z = H @ W2 + b2                  shape (n_samples,)\n  p = sigmoid(z)\n  loss = mean over samples of -( y*log(p) + (1-y)*log(1-p) )\n\n`grads[k]` must be d(loss)/d(params[k]) with the same shape as params[k], and\ngrads[\"b2\"] a scalar. They are checked against finite differences to a relative\ntolerance of 1e-5, so they must be the true analytic derivatives.\n\n`init_params` must be deterministic for a given seed, and must NOT initialise\nevery weight to the same value \u2014 identical hidden units cannot learn different\nfeatures. Keep the initial weights small.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "xhigh"
+  }
+}

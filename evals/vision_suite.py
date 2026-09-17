@@ -18,7 +18,7 @@ def grade(text, expected):
     return {'score':sum(checks.values()), 'max_score':len(expected), 'checks':checks, 'parsed':answer}
 
 
-def run_suite(tasks, url, model, key_file, output):
+def run_suite(tasks, url, model, key_file, output, request_settings=None):
     import base64
     import hashlib
     import time
@@ -28,6 +28,11 @@ def run_suite(tasks, url, model, key_file, output):
     from eval_runtime import atomic_write_json
     key=Path(key_file).read_text().strip()
     result={'suite':'synthetic-vision-v1','model':model,'endpoint':url,'status':'partial','score':0,'max_score':sum(len(t['expected']) for t in tasks),'tasks':[], 'settings':{'temperature':0,'max_tokens':1024,'chat_template_kwargs':{'reasoning_effort':'low'},'retry':False}}
+    if request_settings:
+        allowed = {'temperature', 'max_tokens', 'chat_template_kwargs'}
+        if set(request_settings) - allowed:
+            raise ValueError('Unsupported vision request setting')
+        result['settings'].update(request_settings)
     atomic_write_json(output,result)
     for task in tasks:
         data=Path(task['image']).read_bytes()

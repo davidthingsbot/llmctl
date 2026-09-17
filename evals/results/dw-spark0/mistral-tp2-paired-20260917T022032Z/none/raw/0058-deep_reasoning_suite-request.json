@@ -1,0 +1,29 @@
+{
+  "mode": "none",
+  "suite": "deep_reasoning_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+      },
+      {
+        "role": "user",
+        "content": "Four researchers\u2014Ada, Ben, Cara and Dion\u2014each present on a different day Monday through Thursday and on a different topic: Logic, Biology, History or Economics.\n\nClues:\n1. Dion presents Logic.\n2. Ada presents exactly one day after the Economics presentation.\n3. Ben presents earlier than Cara.\n4. History is presented Monday.\n5. Cara does not present Biology.\n6. Logic is presented exactly one day after Ben presents.\n\nReturn ONLY JSON. Keys must be the four names. Each value must contain `day` and `topic`."
+      },
+      {
+        "role": "assistant",
+        "content": "```json\n{\n  \"Ada\": {\"day\": \"Wednesday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Tuesday\", \"topic\": \"Economics\"},\n  \"Cara\": {\"day\": \"Thursday\", \"topic\": \"History\"},\n  \"Dion\": {\"day\": \"Monday\", \"topic\": \"Logic\"}\n}\n```"
+      },
+      {
+        "role": "user",
+        "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: Ada, Ben, Cara, Dion"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T03:00:38.493197+00:00"
+}

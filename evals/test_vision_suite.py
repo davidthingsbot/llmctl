@@ -54,7 +54,9 @@ class RunnerTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmp:
                 p=pathlib.Path(tmp); (p/'x.png').write_bytes(b'fixture'); (p/'key').write_text('test-key')
                 tasks=[{'id':'ocr','difficulty':'easy','image':str(p/'x.png'),'question':'Read the code.','expected':{'code':'R7K2'}}]
-                r=v.run_suite(tasks, f'http://127.0.0.1:{server.server_port}', 'test-model', p/'key', p/'result.json')
+                r=v.run_suite(tasks, f'http://127.0.0.1:{server.server_port}', 'test-model', p/'key', p/'result.json', request_settings={'max_tokens':4096,'chat_template_kwargs':{'enable_thinking':False}})
+                self.assertEqual(received[0]['max_tokens'],4096)
+                self.assertEqual(received[0]['chat_template_kwargs'],{'enable_thinking':False})
                 self.assertEqual(r['score'],1); self.assertEqual(r['status'],'complete')
                 self.assertEqual(json.loads((p/'result.json').read_text())['score'],1)
                 self.assertNotIn('R7K2',json.dumps(received))

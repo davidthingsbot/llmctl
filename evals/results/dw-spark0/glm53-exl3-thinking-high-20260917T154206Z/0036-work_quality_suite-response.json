@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 6.71390143300232,
+  "response": {
+    "id": "chatcmpl-8a7a7d3ae85f5344",
+    "object": "chat.completion",
+    "created": 1789660905,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\n\ndef softmax(Z):\n    \"\"\"Z is (n_samples, n_classes). Return row-wise softmax, same shape.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    if Z.ndim == 1:\n        Z = Z.reshape(1, -1)\n    Z_shift = Z - np.max(Z, axis=1, keepdims=True)\n    np.clip(Z_shift, -700, 700, out=Z_shift)\n    E = np.exp(Z_shift)\n    return E / np.sum(E, axis=1, keepdims=True)\n\n\ndef cross_entropy(Z, y):\n    \"\"\"Z is (n_samples, n_classes) LOGITS, y is (n_samples,) integer labels.\n    Return the mean cross-entropy loss as a float.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    y = np.asarray(y).reshape(-1)\n    if Z.ndim == 1:\n        Z = Z.reshape(1, -1)\n    n = Z.shape[0]\n    Z_shift = Z - np.max(Z, axis=1, keepdims=True)\n    np.clip(Z_shift, -700, 700, out=Z_shift)\n    log_sum_exp = np.log(np.sum(np.exp(Z_shift), axis=1))\n    correct = Z_shift[np.arange(n), y]\n    loss = np.mean(log_sum_exp - correct)\n    return float(loss)\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Return only two functions."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 222,
+      "total_tokens": 523,
+      "completion_tokens": 301,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

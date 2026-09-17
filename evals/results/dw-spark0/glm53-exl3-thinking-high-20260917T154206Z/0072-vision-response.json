@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 12.504200160998153,
+  "response": {
+    "id": "chatcmpl-b15648dd4b653e7b",
+    "object": "chat.completion",
+    "created": 1789661719,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"q_after_edges\": \"011011\", \"q_rises\": 2, \"final_q\": 1}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Edges at t=2,6,10,14,18,22.\n\nSignals (left-inclusive, right-exclusive):\nRESET: 1 from 0 to 3, 0 from 3 to 14, 1 from 14 to 15, 0 from 15 on.\nENABLE: 1 from 0 to 7, 0 from 7 to 13, 1 from 13 to 19, 0 from 19 on.\nD: 0 from 0 to 4, 1 from 4 to 10, 0 from 10 to 16, 1 from 16 to 22, 0 from 22 on.\n\nAt coincident transitions use levels just after transition.\n\nEdge t=2: RESET just after 2 = 1 (RESET falls at 3). So Q=0.\nEdge t=6: RESET=0, ENABLE just after 6 = 1 (falls at 7). Q=D just after 6 = 1 (D rises at 4). Q=1.\nEdge t=10: RESET=0, ENABLE=0 (0 since 7). Q holds = 1.\nEdge t=14: RESET just after 14 = 1 (rises at 14). Q=0.\nEdge t=18: RESET=0, ENABLE=1 (1 until 19). D just after 18 = 1. Q=1.\nEdge t=22: RESET=0, ENABLE=0 (0 since 19). Q holds = 1.\n\nBit string: 0 1 1 0 1 1 \u2192 \"011011\".\n\nQ rises 0\u21921 at edges: initial Q=1. Edge2: 1\u21920 no. Edge6: 0\u21921 yes. Edge10: 1\u21921 no. Edge14: 1\u21920 no. Edge18: 0\u21921 yes. Edge22: 1\u21921 no. Rises = 2.\n\nFinal Q = 1."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 2052,
+      "total_tokens": 2505,
+      "completion_tokens": 453,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

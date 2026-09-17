@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 14.404844876000425,
+  "response": {
+    "id": "chatcmpl-831bf3272f1204b8",
+    "object": "chat.completion",
+    "created": 1789660734,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Full attention layers: 12, heads 8, head dim 128, K and V: elements per token = 12 * 8 * 128 * 2 = 24576. Bytes = 24576 * 1.0625 = 26112 bytes per token.\n\nAt 262144 tokens: 26112 * 262144 = 6,845,731,840 bytes. /2^30 = 6.375 GiB.\n\nMax context in 25 GiB: 25*2^30 = 26,843,545,600 / 26112 = 1,027,840? Compute: 26112 * 1,000,000 = 26,112,000,000. Remaining 731,545,600 / 26112 \u2248 28,016. So ~1,027,? Let's compute precisely: 26112 * 1,027,000 = 26,817,? 26112*1,000,000=26,112,000,000; 26112*27,000=705,024,000 \u2192 26,817,024,000. Remaining 26,521,600 / 26112 = 1015.6... 26112*1015 = 26,503,680; remaining 17,920 < 26112. So total 1,028,015. Check: 26112*1,028,015 = 26,112,000,000 + 26112*28,015 = 26112*28,000=731,136,000; 26112*15=391,680 \u2192 731,527,680. Sum = 26,843,527,680. 25 GiB = 26,843,545,600. Remaining 17,920. So max = 1,028,015.\n\nWeights + KV: 87 + 6.375 = 93.375 \u2264 112 \u2192 true."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 324,
+      "total_tokens": 875,
+      "completion_tokens": 551,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

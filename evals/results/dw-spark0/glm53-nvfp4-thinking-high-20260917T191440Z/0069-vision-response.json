@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 75.03813918300148,
+  "response": {
+    "id": "chatcmpl-ad77a5278f65efaa",
+    "object": "chat.completion",
+    "created": 1789682865,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"room\": \"R2\", \"technician\": \"Bo\", \"start\": \"10:15\", \"end\": \"11:15\"}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need a 60-min appointment: setup 15 (room+tech), scan 30 (room+scanner), finish 15 (room+tech). Start on 15-min tick, within 09:00\u201313:00. Earliest completion.\n\nOccupied:\nR1: 09:00\u201310:00, 11:15\u201312:15\nR2: 09:00\u201309:30, 11:30\u201312:00, 12:30\u201313:00\nAda: 09:00\u201309:45, 10:30\u201311:30, 12:00\u201313:00\nBo: 09:00\u201310:00, 10:45\u201311:00, 11:45\u201312:30\nScanner: 09:00\u201309:30, 10:00\u201310:30, 11:30\u201312:00\n\nTry earliest start 09:00: R1 busy 09:00\u201310:00. R2 busy 09:00\u201309:30. No.\n\n09:15: R1 busy until 10:00. R2 busy until 09:30. No.\n\n09:30: R1 busy until 10:00. R2 free 09:30\u201311:30. Tech: Ada busy until 09:45. Bo busy until 10:00. No.\n\n09:45: not a tick.\n\n10:00: R1 free 10:00\u201311:15. R2 free 10:00\u201311:30. Tech: Ada busy 10:30\u201311:30; Bo busy 10:45\u201311:00. Setup 10:00\u201310:15: Ada free (10:00\u201310:30 free), Bo free. Scan 10:15\u201310:45: scanner free 10:15\u201310:30? Scanner busy 10:00\u201310:30, so scan 10:15\u201310:45 overlaps scanner until 10:30. Fail. Finish 10:45\u201311:00: Bo busy 10:45\u201311:00. Ada busy 10:30\u201311:30. Fail.\n\nSo 10:00 fails for both techs.\n\nNext: 10:15. R1 free until 11:15. R2 free until 11:30. Setup 10:15\u201310:30: Ada free until 10:30 (touching ok), Bo free. Scan 10:30\u201311:00: scanner busy 10:30? Scanner busy 10:00\u201310:30, free 10:30\u201311:30. OK. Finish 11:00\u201311:15: Ada busy 10:30\u201311:30 \u2014 fail. Bo: busy 10:45\u201311:00, free 11:00\u201311:15? Bo busy 11:45\u201312:30, so 11:00\u201311:15 free. OK. So R2+Bo, 10:15\u201311:15 works? Check R2: free 10:00\u201311:30, appointment 10:15\u201311:15 fits. Scanner 10:30\u201311:00 free. Bo setup 10:15\u201310:30 free, finish 11:00\u201311:15 free. Yes!\n\nCompletion 11:15. Is there anything earlier? 10:00 failed. So optimal is 10:15\u201311:15, R2, Bo.\n\nWait \u2014 check R1 with Bo at 10:15: R1 free 10:00\u201311:15, also works. But R2+Bo also works. Objective earliest completion; both complete 11:15. \"Unique optimal plan\" \u2014 hmm. Maybe R1+Bo at 10:15: R1 free 10:00\u201311:15, appointment ends 11:15, touching R1's 11:15 start \u2014 ok. Both valid. But instance claims unique. Maybe I misread something. Let me recheck Ada at 10:15: setup 10:15\u201310:30, Ada busy 10:30\u201311:30 \u2014 setup ends at 10:30, touching allowed. Scan 10:30\u201311:00 scanner free. Finish 11:00\u201311:15 Ada busy. Fail. So Ada fails.\n\nBo with R1 or R2 both work. Hmm, uniqueness claim... maybe R1 has constraint \"R1 permits Ada only\". Yes! R1 permits Ada only. So R1+Bo invalid. Unique: R2+Bo 10:15\u201311:15."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 2325,
+      "total_tokens": 3347,
+      "completion_tokens": 1022,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 32.252379279991146,
+  "response": {
+    "id": "chatcmpl-a1dc7a102b4e5310",
+    "object": "chat.completion",
+    "created": 1789663547,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72475\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer user's request. Need solve carefully. Need output ONLY JSON with exact keys. Need compute.\n\nGiven:\nWeights: 24.5 GiB.\n40 layers, every layer caches K and V.\n8 key/value heads per layer, head dimension 128.\nKV cache quantised q8_0 costs 1.0625 bytes per element.\nFour concurrent sequences, each needing own full-length cache.\n1 GiB = 2^30 bytes.\n\nNeed:\n\"kv_bytes_per_token\" integer, per token for ONE sequence\n\"gib_per_sequence_at_32768\" number, GiB for one sequence at 32768 tokens\n\"total_gib_at_32768\" number, weights plus all four sequences at 32768\n\"max_context_per_sequence\" integer, largest per-sequence context where weights plus four sequences still fits in 48 GiB (round down)\n\nCompute per token for one sequence:\nEach token per layer: K and V. For each K/V? key/value heads per layer = 8, head dimension 128. Usually elements per token per layer = 2 (K and V) * num_kv_heads * head_dim = 2*8*128 = 2048 elements. Across 40 layers = 81920 elements per token. q8_0 bytes per element = 1.0625 = 17/16. bytes = 81920 * 1.0625 = 81920 + 5120 = 87040? Let's calculate: 81920*17/16 = 5120*17 = 87040. integer.\n\nGiB per sequence at 32768 tokens: bytes = 87040 * 32768. 32768=2^15. 87040*32768 =? 87040*32768 = 87040 <<15. 87040*32768 = 2,852,126,720? Let's compute: 87,040 * 32,768. 87,040*32,000=2,785,280,000; *768=66,846,720; sum=2,852,126,720. Divide by 2^30=1,073,741,824 = 2.65625? 2,852,126,720 / 1,073,741,824. 1,073,741,824*2=2,147,483,648 remainder 704,643,072. 704,643,072 / 1,073,741,824 = 0.65625? 0.65625=21/32; 1,073,741,824*21/32 = 33,554,432*21=704,643,072 yes. So 2.65625 GiB.\n\nTotal at 32768: weights 24.5 + 4*2.65625 = 24.5 + 10.625 = 35.125 GiB.\n\nMax context per sequence: Need largest integer C such that weights + 4 * (bytes_per_token*C / 2^30) <= 48.\nAvailable for KV = 48 - 24.5 = 23.5 GiB.\nPer sequence GiB per token = 87040 / 2^30 =? 87040 / 1073741824 = simplify. 87040 = 85*1024? 85*1024=87040. So = 85*1024 / 1024^3 = 85 / 1024^2 = 85 / 1,048,576 = 0.00008106231689453125 GiB per token. Four sequences per token = 340 / 1,048,576 = 85 / 262,144 = 0.000324249267578125 GiB per token.\nC_max = floor(23.5 / (85/262144)) = floor(23.5 * 262144 / 85). 23.5 = 47/2. So = floor(47*262144/(2*85)) = floor(47*131072/85). 131072*47 = 131072*40=5,242,880; *7=917,504; sum=6,160,384. Divide by 85 =? 85*72,475 = 6,160,375? Let's compute: 72,475*85 = 72,475*100 - *15 = 7,247,500 - 1,087,125 = 6,160,375. Remainder 9. So 72,475.10588. floor 72475. Check if 72476 exceeds? 72476*85=6,160,460 > 6,160,384. So max 72475.\n\nNeed output JSON only. Ensure keys exactly. Values: integer, number, number, integer. Could use 2.65625, 35.125. Need maybe total_gib_at_32768 number. JSON valid. No extra text.\n\nDouble-check assumptions: q8_0 costs 1.0625 bytes per element. Does K and V each have 8 heads? yes. \"8 key/value heads per layer\" could mean 8 heads for K and 8 for V? Usually key/value heads per layer = 8, each head dimension 128, caches K and V, so elements = 2*8*128. If \"key/value heads\" means combined? But phrase every layer caches K and V, 8 key/value heads per layer, head dimension 128. Standard: num_kv_heads=8, head_dim=128, K and V each 8*128. So 2*8*128. Good.\n\nNeed maybe bytes per token integer: 87040.\n\nPotential issue: q8_0 block quantization overhead? They explicitly costs 1.0625 bytes per element, so use that.\n\nNeed final only JSON. Ensure no markdown.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 322,
+      "total_tokens": 2117,
+      "completion_tokens": 1795,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1714
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 13.207718497011228,
+  "response": {
+    "id": "chatcmpl-b1924e1fb97d6db4",
+    "object": "chat.completion",
+    "created": 1789664588,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"bits_per_transaction\": 48,\n  \"bus_bit_rate\": 768000,\n  \"wire_time_ms_per_second\": 96,\n  \"chip_select_overhead_ms_per_second\": 192,\n  \"total_bus_utilization_percent\": 28.8,\n  \"remaining_margin_percent\": 71.2\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer user's request: Return ONLY JSON with exactly numeric keys: bits_per_transaction, bus_bit_rate, wire_time_ms_per_second, chip_select_overhead_ms_per_second, total_bus_utilization_percent, remaining_margin_percent.\n\nNeed compute.\nGiven 8 channels, each sampled 2000 times/sec. Total samples/sec = 8*2000=16000.\nEach sample transaction carries 24 data bits, 8 status bits, 16 framing bits. bits_per_transaction = 24+8+16=48.\nbus_bit_rate = bits_per_transaction * total samples per second = 48*16000=768000 bits/sec.\nSPI clock 8,000,000 bits/sec. wire_time_ms_per_second: total wire time per second = bus_bit_rate / SPI clock seconds = 768000/8000000 = 0.096 s = 96 ms per second. Alternatively per transaction wire time 48/8e6=6e-6s=0.006ms *16000=96ms.\nchip_select_overhead_ms_per_second: every sample adds 12 microseconds overhead beyond wire time. 12us = 0.012ms. *16000 = 192 ms per second.\ntotal_bus_utilization_percent: (wire + overhead) / 1000ms? Since per second total time = 96+192=288 ms/s. Utilization percent = 288/1000*100=28.8%. Or bus_bit_rate/clock plus overhead fraction: 9.6% + 19.2% = 28.8%.\nremaining_margin_percent = 100 - 28.8 = 71.2.\nNeed output only JSON numeric keys. Ensure no rounding to integer. Values can be numbers. Maybe bits_per_transaction integer 48, bus_bit_rate 768000, wire_time_ms_per_second 96, chip_select_overhead_ms_per_second 192, total_bus_utilization_percent 28.8, remaining_margin_percent 71.2.\nDouble-check wording: \"bits_per_transaction is EVERY bit clocked out for one sample: data, status and framing together.\" yes 48. \"bus_bit_rate is bits_per_transaction times the total samples per second across all channels.\" yes.\nPotential nuance: chip-select/setup overhead beyond wire time maybe per sample transaction adds 12 microseconds, independent of channels. yes.\nNeed final only JSON. No markdown. Ensure exactly keys.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 262,
+      "total_tokens": 945,
+      "completion_tokens": 683,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 595
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

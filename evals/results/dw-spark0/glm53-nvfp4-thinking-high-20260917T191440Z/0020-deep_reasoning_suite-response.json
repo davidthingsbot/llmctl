@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 51.19387523199839,
+  "response": {
+    "id": "chatcmpl-b2302bc593320f9a",
+    "object": "chat.completion",
+    "created": 1789673621,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72479\n}\n```\n\nSupporting derivation:\n- Per token, per layer: 2 (K+V) \u00d7 8 heads \u00d7 128 \u00d7 1.0625 B = 2176 B; across 40 layers = 87,040 B/token/sequence.\n- One sequence at 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB.\n- Four sequences: 4 \u00d7 2.65625 = 10.625 GiB; total = 24.5 + 10.625 = 35.125 GiB (fits in 48 GiB).\n- Max context: KV budget = 48 \u2212 24.5 = 23.5 GiB = 25,234,435,072 B; per-token cost for four sequences = 4 \u00d7 87,040 = 348,160 B; 25,234,435,072 \u00f7 348,160 = 72,479.53\u2026 \u2192 72,479 tokens (72,480 would exceed the budget).",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "KV per token per layer: 2 (K and V) \u00d7 8 heads \u00d7 128 dim \u00d7 1.0625 bytes = 2048 \u00d7 1.0625 = 2176 bytes. 40 layers: 2176 \u00d7 40 = 87040 bytes per token per sequence.\n\nPer sequence at 32768: 87040 \u00d7 32768 = 2,852,126,720 bytes = /2^30 = 2.65625 GiB.\n\nFour sequences: 10.625 GiB. Plus weights 24.5 = 35.125 GiB.\n\nMax context: budget 48 \u2212 24.5 = 23.5 GiB for KV. Per sequence per token bytes = 87040; four sequences: 348160 bytes/token total. 23.5 GiB = 23.5 \u00d7 2^30 = 25,234,435,072 bytes. Divide: 25,234,435,072 / 348,160 = ?\n\n348160 \u00d7 72,000 = 25,067,520,000. Remainder 166,915,072. /348160 \u2248 479.4. So 72,479 tokens. Check: 348160 \u00d7 72,479 = 348160\u00d772,000=25,067,520,000 + 348160\u00d7479=166,728,640 \u2192 25,234,248,640. Remainder 186,432 < 348,160. So 72,479.\n\nVerify 72,480: adds 348,160 \u2192 25,234,596,800 > 25,234,435,072. Yes, max = 72,479."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 258,
+      "total_tokens": 978,
+      "completion_tokens": 720,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

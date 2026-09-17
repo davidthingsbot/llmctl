@@ -1,0 +1,19 @@
+{
+  "model": "qwen38-flash-next-tp2",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "Ice cream sales and drowning deaths rise and fall together across the year.\nTemperature causes both: hot weather drives ice cream sales, and hot weather\ndrives swimming, which causes drownings. Ice cream does not cause drowning.\n\nReturn ONLY JSON with exactly these keys:\n  \"relationship\"        one of \"causal\", \"confounded\", \"collider\" \u2014 how ice cream\n                        sales and drownings are related\n  \"confounder\"          string, the variable responsible; \"none\" if there is none\n  \"adjust_for\"          array of variable names to condition on to remove the\n                        spurious association; [] if none is needed\n  \"ice_cream_causes_drowning\"   true or false\n  \"banning_ice_cream_helps\"     true or false, whether banning ice cream would\n                                reduce drownings\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "xhigh"
+  }
+}

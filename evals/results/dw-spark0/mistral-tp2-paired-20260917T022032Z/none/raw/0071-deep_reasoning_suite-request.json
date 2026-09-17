@@ -1,0 +1,29 @@
+{
+  "mode": "none",
+  "suite": "deep_reasoning_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+      },
+      {
+        "role": "user",
+        "content": "A compute module draws 240 W continuously for 3 hours 30 minutes.\n\nReturn ONLY JSON with exactly these keys:\n  \"energy_kwh\"        number, energy consumed in kilowatt-hours\n  \"cost_usd\"          number, cost at 0.28 USD per kWh\n  \"heat_watts\"        number, steady heat dumped into the room, in watts\n  \"amps_at_240v\"      number, current drawn from a 240 V supply\n"
+      },
+      {
+        "role": "assistant",
+        "content": "```json\n{\n  \"energy_kwh\": 0.825,\n  \"cost_usd\": 0.231,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1\n}\n```"
+      },
+      {
+        "role": "user",
+        "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: energy_kwh"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T03:07:58.634474+00:00"
+}

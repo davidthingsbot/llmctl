@@ -398,15 +398,44 @@ is_healthy() {
 }
 
 wait_health_timed() { # wait_health_timed <name> <timeout> [est] — stdout: elapsed seconds
-  local name="$1" timeout="$2" est="${3:-}" i
+  local name="$1" timeout="$2" est="${3:-}" i unit snapshot key value
+  local active sub job result terminal previous_terminal=0
+  unit="$(unit_of "$name")"
   for ((i=0; i<timeout; i++)); do
     is_healthy "$name" && { echo "$i"; return 0; }
+    terminal=0
+    # Read one snapshot; is-active alone also rejects legitimate activation
+    # and auto-restart delays. --all keeps the empty Job= (no pending job).
+    if snapshot="$(systemctl --user show "$unit" --all \
+        --property=ActiveState,SubState,Job,Result 2>/dev/null)"; then
+      active="" sub="" job=unknown result=""
+      while IFS='=' read -r key value; do
+        case "$key" in
+          ActiveState) active="$value";;
+          SubState) sub="$value";;
+          Job) job="$value";;
+          Result) result="$value";;
+        esac
+      done <<< "$snapshot"
+      case "$active/$sub" in
+        failed/failed|inactive/dead)
+          [[ -z "$job" || "$job" == 0 ]] && terminal=1;;
+      esac
+    fi
+    # A normal restart can briefly pass through failed/inactive. Confirm on
+    # the next poll, resetting on transitions, queued jobs or query failures.
+    if (( terminal && previous_terminal )); then
+      err "'$name': $unit is $active ($sub${result:+, result=$result}) before health became ready (${i}s elapsed). Check: systemctl --user status $unit; llmctl logs $name"
+      return 1
+    fi
+    previous_terminal="$terminal"
     if (( i > 0 && i % 10 == 0 )); then
       printf '\033[1;36m[llmctl]\033[0m   … loading: %ss elapsed%s\n' \
         "$i" "${est:+ (typical ~${est}s)}" >&2
     fi
     sleep 1
   done
+  err "'$name' not healthy after ${timeout}s. Check: systemctl --user status $unit; llmctl logs $name"
   return 1
 }
 
@@ -604,7 +633,10 @@ start_model() { # start_model <name> — write unit, timed start, health-wait, b
   else
     log "starting $name (:${PORT[$name]}) — no load-time history yet, timeout ${TIMEOUT[$name]}s"
   fi
-  systemctl --user start "$(unit_of "$name")"
+  if ! systemctl --user start "$(unit_of "$name")"; then
+    err "could not start $(unit_of "$name"). Check: systemctl --user status $(unit_of "$name"); llmctl logs $name"
+    return 1
+  fi
   elapsed="$(wait_health_timed "$name" "${TIMEOUT[$name]}" "$est")" || return 1
   log "READY in ${elapsed}s: ${ID[$name]} @ $(url_of "$name")"
   if [[ "${STATS:-1}" == 1 ]]; then
@@ -1325,7 +1357,7 @@ cmd_up() { # cmd_up [--no-point] <model>... — start alongside what's running; 
       log "UP: $name — enabled on boot"
       last="$name"
     else
-      err "'$name' not healthy after ${TIMEOUT[$name]}s — stopping it. Logs: llmctl logs $name"
+      err "'$name' startup failed — stopping it. Logs: llmctl logs $name"
       systemctl --user stop "$(unit_of "$name")" || true
       return 1
     fi
@@ -1370,7 +1402,7 @@ cmd_set() { # exclusive switch + agents; rolls back on failure
     log "'$name' already up on :${PORT[$name]}"
   else
     if ! start_model "$name"; then
-      err "'$name' failed to become healthy in ${TIMEOUT[$name]}s. Logs: llmctl logs $name"
+      err "'$name' startup failed. Logs: llmctl logs $name"
       systemctl --user stop "$(unit_of "$name")" || true
       if ((${#prev[@]})); then
         err "rolling back: restarting ${prev[*]} (agents left untouched)"

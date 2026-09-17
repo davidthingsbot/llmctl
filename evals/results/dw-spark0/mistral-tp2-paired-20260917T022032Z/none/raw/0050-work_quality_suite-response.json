@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 123.67974820900417,
+  "response": {
+    "id": "chatcmpl-8a5b880684aed208",
+    "object": "chat.completion",
+    "created": 1789613271,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\n#include <vector>\n#include <cmath>\n\nstruct Tape {\n    struct Node {\n        double value;\n        double grad = 0.0;\n        bool is_input = false;\n        char op = 0;\n        int arg1 = -1, arg2 = -1;\n    };\n\n    std::vector<Node> nodes;\n\n    int constant(double v) {\n        nodes.push_back({v, 0.0, false, 0, -1, -1});\n        return nodes.size() - 1;\n    }\n\n    int input(double v) {\n        nodes.push_back({v, 0.0, true, 0, -1, -1});\n        return nodes.size() - 1;\n    }\n\n    int add(int a, int b) {\n        double val = nodes[a].value + nodes[b].value;\n        nodes.push_back({val, 0.0, false, '+', a, b});\n        return nodes.size() - 1;\n    }\n\n    int mul(int a, int b) {\n        double val = nodes[a].value * nodes[b].value;\n        nodes.push_back({val, 0.0, false, '*', a, b});\n        return nodes.size() - 1;\n    }\n\n    int sin_(int a) {\n        double val = std::sin(nodes[a].value);\n        nodes.push_back({val, 0.0, false, 's', a, -1});\n        return nodes.size() - 1;\n    }\n\n    int exp_(int a) {\n        double val = std::exp(nodes[a].value);\n        nodes.push_back({val, 0.0, false, 'e', a, -1});\n        return nodes.size() - 1;\n    }\n\n    double value(int node) const {\n        return nodes[node].value;\n    }\n\n    void backward(int root) {\n        nodes[root].grad = 1.0;\n        for (int i = nodes.size() - 1; i >= 0; --i) {\n            Node& n = nodes[i];\n            if (n.op == '+') {\n                nodes[n.arg1].grad += n.grad;\n                nodes[n.arg2].grad += n.grad;\n            } else if (n.op == '*') {\n                nodes[n.arg1].grad += nodes[n.arg2].value * n.grad;\n                nodes[n.arg2].grad += nodes[n.arg1].value * n.grad;\n            } else if (n.op == 's') {\n                nodes[n.arg1].grad += std::cos(nodes[n.arg1].value) * n.grad;\n            } else if (n.op == 'e') {\n                nodes[n.arg1].grad += nodes[n.arg1].value * n.grad;\n            }\n        }\n    }\n\n    double grad(int node) const {\n        return nodes[node].grad;\n    }\n};\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 338,
+      "total_tokens": 950,
+      "completion_tokens": 612,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

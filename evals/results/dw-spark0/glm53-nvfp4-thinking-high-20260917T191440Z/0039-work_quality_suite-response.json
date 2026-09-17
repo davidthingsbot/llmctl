@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 19.386471518009785,
+  "response": {
+    "id": "chatcmpl-ac2a7f503ac8cd78",
+    "object": "chat.completion",
+    "created": 1789674399,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\n\ndef softmax(Z):\n    \"\"\"Z is (n_samples, n_classes). Return row-wise softmax, same shape.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    Zmax = np.max(Z, axis=1, keepdims=True)\n    Zmax = np.where(np.isfinite(Zmax), Zmax, 0.0)\n    E = np.exp(Z - Zmax)\n    return E / np.sum(E, axis=1, keepdims=True)\n\n\ndef cross_entropy(Z, y):\n    \"\"\"Z is (n_samples, n_classes) LOGITS, y is (n_samples,) integer labels.\n    Return the mean cross-entropy loss as a float.\"\"\"\n    Z = np.asarray(Z, dtype=np.float64)\n    y = np.asarray(y).ravel()\n    n = Z.shape[0]\n    Zmax = np.max(Z, axis=1, keepdims=True)\n    Zmax = np.where(np.isfinite(Zmax), Zmax, 0.0)\n    shifted = Z - Zmax\n    logsumexp = np.log(np.sum(np.exp(shifted), axis=1)) + Zmax.ravel()\n    correct = shifted[np.arange(n), y]\n    return float(np.mean(logsumexp - correct))\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 222,
+      "total_tokens": 490,
+      "completion_tokens": 268,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

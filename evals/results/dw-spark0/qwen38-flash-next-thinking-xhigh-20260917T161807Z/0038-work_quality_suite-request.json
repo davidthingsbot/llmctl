@@ -1,0 +1,19 @@
+{
+  "model": "qwen38-flash-next-tp2",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement COBS (Consistent Overhead Byte Stuffing). Return ONLY the two\ncomplete functions `cobs_encode` and `cobs_decode`, no imports, no explanation.\n\nEncoding removes every zero byte from the payload so 0x00 can delimit frames.\n\nRules:\n- The encoded output contains no zero bytes and never includes the delimiter itself.\n- Output is a sequence of groups. Each group is one code byte `n` (1..255) followed\n  by `n - 1` non-zero data bytes.\n- A code byte `n < 255` means: those `n - 1` data bytes were followed by a zero byte\n  in the input, and that zero is consumed by the encoding.\n- A code byte of exactly 255 means: 254 data bytes NOT followed by a zero. Encoding\n  continues with a new group.\n- The empty input encodes to a single byte 0x01.\n\n`cobs_decode` must invert `cobs_encode` exactly, and must raise ValueError on input\nthat no encoder could have produced (a zero byte anywhere, a group whose data runs\npast the end of the input, or a trailing code byte promising bytes that are absent).\n\nWorked examples:\n  b\"\"                     -> b\"\\x01\"\n  b\"\\x00\"                 -> b\"\\x01\\x01\"\n  b\"\\x11\\x22\\x00\\x33\"      -> b\"\\x03\\x11\\x22\\x02\\x33\"\n  b\"\\x11\\x22\\x33\\x44\"      -> b\"\\x05\\x11\\x22\\x33\\x44\"\n  b\"\\x00\\x11\\x00\"          -> b\"\\x01\\x02\\x11\\x01\"\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "xhigh"
+  }
+}

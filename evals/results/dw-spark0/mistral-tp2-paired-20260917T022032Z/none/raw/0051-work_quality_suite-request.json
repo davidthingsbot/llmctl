@@ -1,0 +1,29 @@
+{
+  "mode": "none",
+  "suite": "work_quality_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+      },
+      {
+        "role": "user",
+        "content": "Implement reverse-mode automatic differentiation in C++. Return ONLY the\nstruct, no main, no includes, no explanation. You may use <cmath> and <vector>.\n\n    struct Tape {\n        int constant(double v);   // a value with no gradient\n        int input(double v);      // a value you will want the gradient of\n        int add(int a, int b);    // returns the id of the new node\n        int mul(int a, int b);\n        int sin_(int a);\n        int exp_(int a);\n        double value(int node) const;\n        void backward(int root);  // seed d(root)/d(root) = 1 and sweep back\n        double grad(int node) const;\n    };\n\nEach call records a node and returns its integer id. `backward(root)` computes\nthe derivative of `root` with respect to every node.\n\nRequirements:\n- Gradients are checked against finite differences to 1e-5.\n- A node used more than once must ACCUMULATE gradient from every path that uses\n  it: for g = x*x + x, dg/dx is 2x + 1, not 2x and not 1.\n- The reverse sweep must visit nodes in an order where every consumer is\n  processed before its inputs; recording order makes this easy.\n- Constants take part in the forward value but need no gradient.\n"
+      },
+      {
+        "role": "assistant",
+        "content": "```cpp\n#include <vector>\n#include <cmath>\n\nstruct Tape {\n    struct Node {\n        double value;\n        double grad = 0.0;\n        bool is_input = false;\n        char op = 0;\n        int arg1 = -1, arg2 = -1;\n    };\n\n    std::vector<Node> nodes;\n\n    int constant(double v) {\n        nodes.push_back({v, 0.0, false, 0, -1, -1});\n        return nodes.size() - 1;\n    }\n\n    int input(double v) {\n        nodes.push_back({v, 0.0, true, 0, -1, -1});\n        return nodes.size() - 1;\n    }\n\n    int add(int a, int b) {\n        double val = nodes[a].value + nodes[b].value;\n        nodes.push_back({val, 0.0, false, '+', a, b});\n        return nodes.size() - 1;\n    }\n\n    int mul(int a, int b) {\n        double val = nodes[a].value * nodes[b].value;\n        nodes.push_back({val, 0.0, false, '*', a, b});\n        return nodes.size() - 1;\n    }\n\n    int sin_(int a) {\n        double val = std::sin(nodes[a].value);\n        nodes.push_back({val, 0.0, false, 's', a, -1});\n        return nodes.size() - 1;\n    }\n\n    int exp_(int a) {\n        double val = std::exp(nodes[a].value);\n        nodes.push_back({val, 0.0, false, 'e', a, -1});\n        return nodes.size() - 1;\n    }\n\n    double value(int node) const {\n        return nodes[node].value;\n    }\n\n    void backward(int root) {\n        nodes[root].grad = 1.0;\n        for (int i = nodes.size() - 1; i >= 0; --i) {\n            Node& n = nodes[i];\n            if (n.op == '+') {\n                nodes[n.arg1].grad += n.grad;\n                nodes[n.arg2].grad += n.grad;\n            } else if (n.op == '*') {\n                nodes[n.arg1].grad += nodes[n.arg2].value * n.grad;\n                nodes[n.arg2].grad += nodes[n.arg1].value * n.grad;\n            } else if (n.op == 's') {\n                nodes[n.arg1].grad += std::cos(nodes[n.arg1].value) * n.grad;\n            } else if (n.op == 'e') {\n                nodes[n.arg1].grad += nodes[n.arg1].value * n.grad;\n            }\n        }\n    }\n\n    double grad(int node) const {\n        return nodes[node].grad;\n    }\n};\n```"
+      },
+      {
+        "role": "user",
+        "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: deep_chain, grad_y"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T02:49:55.807692+00:00"
+}

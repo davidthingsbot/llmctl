@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 54.29771244299627,
+  "response": {
+    "id": "chatcmpl-b1a45c58ef093d0a",
+    "object": "chat.completion",
+    "created": 1789612502,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef cobs_encode(data):\n    if not data:\n        return b'\\x01'\n    result = bytearray()\n    i = 0\n    n = len(data)\n    while i < n:\n        code = 1\n        j = i\n        while j < n and code < 0xFF and data[j] != 0:\n            code += 1\n            j += 1\n        result.append(code)\n        result.extend(data[i:j])\n        i = j + 1 if j < n and data[j] == 0 else j\n    return bytes(result)\n\ndef cobs_decode(data):\n    if not data:\n        raise ValueError\n    result = bytearray()\n    i = 0\n    n = len(data)\n    while i < n:\n        if i >= n:\n            raise ValueError\n        code = data[i]\n        if code == 0:\n            raise ValueError\n        i += 1\n        if code > 1:\n            if i + code - 2 >= n:\n                raise ValueError\n            result.extend(data[i:i + code - 1])\n            i += code - 1\n        if code < 0xFF:\n            result.append(0)\n    return bytes(result)\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 776,
+      "total_tokens": 1044,
+      "completion_tokens": 268,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

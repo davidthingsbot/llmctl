@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 163.62306345000252,
+  "response": {
+    "id": "chatcmpl-9a2f86b73c7631ca",
+    "object": "chat.completion",
+    "created": 1789613523,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  localparam ADDR_WIDTH = $clog2(DEPTH);\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  // Write domain\n  reg [ADDR_WIDTH:0] wptr_bin;\n  reg [ADDR_WIDTH:0] wptr_gray;\n  reg [ADDR_WIDTH:0] rptr_gray_sync1;\n  reg [ADDR_WIDTH:0] rptr_gray_sync2;\n  reg [ADDR_WIDTH:0] rptr_bin;\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wptr_bin <= 0;\n      wptr_gray <= 0;\n      rptr_gray_sync1 <= 0;\n      rptr_gray_sync2 <= 0;\n    end else begin\n      if (winc && !wfull) begin\n        mem[wptr_bin[ADDR_WIDTH-1:0]] <= wdata;\n        wptr_bin <= wptr_bin + 1;\n        wptr_gray <= (wptr_bin >> 1) ^ wptr_bin;\n      end\n      rptr_gray_sync1 <= rptr_gray;\n      rptr_gray_sync2 <= rptr_gray_sync1;\n      rptr_bin <= (rptr_gray_sync2 >> 1) ^ rptr_gray_sync2;\n    end\n  end\n\n  assign wfull = (wptr_gray == {~rptr_gray_sync2[ADDR_WIDTH:ADDR_WIDTH-1]});\n  assign wfull = wfull || (wptr_bin[ADDR_WIDTH-1:0] == (DEPTH-1));\n\n  // Read domain\n  reg [ADDR_WIDTH:0] rptr_bin_sync;\n  reg [ADDR_WIDTH:0] wptr_gray_sync1;\n  reg [ADDR_WIDTH:0] wptr_gray_sync2;\n  reg [ADDR_WIDTH:0] wptr_bin_sync;\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rptr_bin_sync <= 0;\n      wptr_gray_sync1 <= 0;\n      wptr_gray_sync2 <= 0;\n      wptr_bin_sync <= 0;\n    end else begin\n      if (rinc && !rempty) begin\n        rdata <= mem[rptr_bin_sync[ADDR_WIDTH-1:0]];\n        rptr_bin_sync <= rptr_bin_sync + 1;\n      end\n      wptr_gray_sync1 <= wptr_gray;\n      wptr_gray_sync2 <= wptr_gray_sync1;\n      wptr_bin_sync <= (wptr_gray_sync2 >> 1) ^ wptr_gray_sync2;\n    end\n  end\n\n  assign rempty = (rptr_bin_sync[ADDR_WIDTH-1:0] == wptr_bin_sync[ADDR_WIDTH-1:0]);\n\n  // Gray code generation for read pointer\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rptr_gray <= 0;\n    end else begin\n      rptr_gray <= (rptr_bin_sync >> 1) ^ rptr_bin_sync;\n    end\n  end\n\nendmodule\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 385,
+      "total_tokens": 1195,
+      "completion_tokens": 810,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

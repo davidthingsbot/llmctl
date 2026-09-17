@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 53.32734172799974,
+  "response": {
+    "id": "chatcmpl-ab5768df490f642b",
+    "object": "chat.completion",
+    "created": 1789613920,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\ndef attention_forward(Q, K, V):\n    d = Q.shape[1]\n    S = Q @ K.T / np.sqrt(d)\n    max_S = np.max(S, axis=1, keepdims=True)\n    exp_S = np.exp(S - max_S)\n    sum_exp_S = np.sum(exp_S, axis=1, keepdims=True)\n    P = exp_S / sum_exp_S\n    out = P @ V\n    cache = (Q, K, V, P, S, max_S, exp_S, sum_exp_S, d)\n    return out, cache\n\ndef attention_backward(dout, cache):\n    Q, K, V, P, S, max_S, exp_S, sum_exp_S, d = cache\n    T = Q.shape[0]\n\n    dV = P.T @ dout\n\n    dP = dout @ V.T\n    dS = P * (dP - np.sum(dP * P, axis=1, keepdims=True))\n\n    dK = (Q / np.sqrt(d)) @ dS\n    dQ = (K / np.sqrt(d)) @ dS.T\n\n    return dQ, dK, dV\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 333,
+      "total_tokens": 596,
+      "completion_tokens": 263,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}
