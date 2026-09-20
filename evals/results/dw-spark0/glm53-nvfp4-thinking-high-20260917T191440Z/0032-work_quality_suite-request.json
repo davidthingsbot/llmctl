@@ -1,0 +1,27 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "A teammate proposes one `SCAN` command that acquires a sensor frame, applies the current shear transform, updates all filters, stores only the transformed frame, and emits changes if event mode is enabled. They also want on-demand SCAN to run while continuous acquisition is active.\n\nWrite a concise replacement design suitable for an embedded protocol specification. It must make acquisition reproducible, permit later audit/download without rescanning, and avoid ownership races. Include command/responsibility boundaries, frame/source identity, continuous versus on-demand behavior, and the relationship between acquisition mode and event reporting. Do not merely rephrase the proposal."
+    },
+    {
+      "role": "assistant",
+      "content": "# Acquisition, Processing, and Frame Store \u2014 Protocol Design\n\n## 1. Separation of responsibilities\n\nThe proposal conflates four distinct operations. They are separated as follows:\n\n| Concern | Rule |\n|---|---|\n| **Acquisition** | Capture of a raw frame from a named source into the frame store. Deterministic; no transform, no filter update, no event emission. |\n| **Processing** | Shear transform + filter chain is a pure function of `(raw frame, config snapshot)`. Applied only when a processed result is explicitly requested or during session-driven event evaluation. Never a side effect of capture. |\n| **Storage** | The frame store holds **raw frames only**, append-only. Processed outputs are derived artifacts and are never written back. Storing only the transformed frame is prohibited: the transform is config-dependent and potentially lossy, so audit requires the raw data. |\n| **Eventing** | Reporting of processed deltas. Controlled solely by `EVENT_ENABLE`/`EVENT_DISABLE`. |\n\n## 2. Command boundaries\n\n- **`SCAN source`** \u2014 captures one raw frame into the store; returns `frame_id`. Does not apply transforms, update filters, or emit events.\n- **`SESSION_START source` / `SESSION_STOP`** \u2014 starts/stops continuous acquisition. The session is the **single owner** of the acquisition engine.\n- **`GET_FRAME frame_id, variant=RAW|PROCESSED`** \u2014 `RAW` returns stored data; `PROCESSED` computes the transform/filter result against the current config snapshot. `PROCESSED` is a read: it does not mutate the store and does not emit events.\n- **`DOWNLOAD range`** \u2014 bulk retrieval of stored raw frames (plus the config snapshots recorded with them) by id or time range. No rescan is required for audit.\n- **`CONFIG_SET`** \u2014 the only path for changing transform/filter parameters; each change bumps a monotonically increasing `config_version`. Filters are never updated inside `SCAN`.\n\n## 3. Frame identity\n\n`frame_id = (source_id, seq)` where `seq` is monotonic per source and never reused within a power cycle. Each stored frame records:\n\n- capture timestamp,\n- capture parameters (exposure, gain, source mode),\n- `config_version` at capture time.\n\nBecause processing is a pure function of the raw frame and a config snapshot, any processed output is **reproducible**: an auditor can recompute or re-download results under any later configuration without touching the sensor.\n\n## 4. Continuous vs. on-demand\n\n- On-demand `SCAN` is permitted **only when no session owns the engine**. If a session is active, the device returns `ERR_BUSY` with the owner id. Captures may not be interleaved into a running session.\n- A continuous session stores every frame it captures automatically; audit/download needs during continuous operation are met by downloading session frames, not by injecting on-demand scans.\n- `SESSION_STOP` is the only operation that releases ownership; after it returns, on-demand `SCAN` is available again.\n\n## 5. Acquisition mode vs. event reporting\n\nEvent mode is **orthogonal** to acquisition mode:\n\n- Enabling events never starts acquisition; starting a session never enables events.\n- Events are generated **only** by the session loop: with events enabled, each stored frame is processed against the config snapshot and deltas are emitted, referencing `frame_id`. With events disabled, frames are stored silently.\n- On-demand reads (`GET_FRAME PROCESSED`) never emit events \u2014 they are host-driven queries, not device-driven reports.\n- Consequently, event mode with no active session produces no output; event reporting requires continuous acquisition to evaluate, and never triggers it.\n\n## 6. Race avoidance\n\n- Single-owner rule on the acquisition engine (Section 4) eliminates capture-ownership races.\n- The frame store is append-only keyed by `(source_id, seq)`; there are no read-modify-write paths.\n- Processed results are never persisted, so no store consistency issues arise between processing and download."
+    },
+    {
+      "role": "user",
+      "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: scan_transduces_only"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

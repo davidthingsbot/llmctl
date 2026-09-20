@@ -1,0 +1,21 @@
+{
+  "mode": "none",
+  "suite": "deep_reasoning_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+      },
+      {
+        "role": "user",
+        "content": "Size this model against a 48 GiB budget.\n\n  - Weights: 24.5 GiB.\n  - 40 layers, every layer caches K and V.\n  - 8 key/value heads per layer, head dimension 128.\n  - The KV cache is quantised to q8_0, which costs 1.0625 bytes per element.\n  - Four concurrent sequences are served, EACH needing its own full-length cache.\n  - 1 GiB = 2**30 bytes.\n\nReturn ONLY JSON with exactly these keys:\n  \"kv_bytes_per_token\"      integer, per token for ONE sequence\n  \"gib_per_sequence_at_32768\"  number, GiB for one sequence at 32768 tokens\n  \"total_gib_at_32768\"      number, weights plus all four sequences at 32768\n  \"max_context_per_sequence\"  integer, the largest per-sequence context where\n                            weights plus four sequences still fits in 48 GiB\n                            (round down)\n"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T03:10:22.271137+00:00"
+}

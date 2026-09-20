@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 29.090043016010895,
+  "response": {
+    "id": "chatcmpl-a4e6df993479a1d1",
+    "object": "chat.completion",
+    "created": 1789673135,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity (RD) design\",\n  \"instrument\": \"Crossing the eligibility threshold (score >= 70), which sharply raises the probability of participation but does not deterministically assign it\",\n  \"estimand\": \"Local average treatment effect (LATE) of program participation for compliers at the score cutoff of 70 \u2014 i.e., the effect for those whose participation status changes because of crossing the threshold\",\n  \"global_generalization\": \"No. The estimate is local to the cutoff; it applies to units near the threshold (and specifically to compliers there), not automatically to everyone, including far-below-cutoff individuals or always/never-takers near the threshold.\",\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all confounders) vary smoothly through the score of 70 absent treatment, so units just above and just below the cutoff are comparable\",\n    \"Exclusion restriction: the score affects employment only through program participation (no direct effect of the score or eligibility itself on outcomes)\",\n    \"Monotonicity: crossing the cutoff can only increase (never decrease) the probability of participation \u2014 no defiers\",\n    \"No other policy changes or treatments discontinuously at the threshold of 70\",\n    \"The score cannot be precisely manipulated, so no sorting of units to one side of the cutoff\",\n    \"SUTVA / no interference: one unit's participation does not affect another unit's outcomes\"\n  ]\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Sharp vs fuzzy RD: participation jumps but not universal above cutoff, some below participate \u2192 fuzzy RD. Instrument: crossing the cutoff (score \u2265 70). Estimand: LATE for compliers at the threshold (local average treatment effect at cutoff). Global generalization: no, only local to cutoff. Assumptions: continuity of potential outcomes, monotonicity, exclusion restriction (score affects outcome only through participation), no other changes at threshold, SUTVA."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 188,
+      "total_tokens": 595,
+      "completion_tokens": 407,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

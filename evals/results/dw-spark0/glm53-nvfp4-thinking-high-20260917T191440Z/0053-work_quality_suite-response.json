@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 27.893895903995144,
+  "response": {
+    "id": "chatcmpl-8ca8d734348ed3f0",
+    "object": "chat.completion",
+    "created": 1789681351,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\n\ndef attention_forward(Q, K, V):\n    \"\"\"Q, K, V are (T, d). Return (out, cache).\"\"\"\n    d = Q.shape[1]\n    scale = 1.0 / np.sqrt(d)\n    S = (Q @ K.T) * scale          # (T, T)\n    S_max = S.max(axis=1, keepdims=True)\n    S_shift = S - S_max\n    E = np.exp(S_shift)\n    P = E / E.sum(axis=1, keepdims=True)   # (T, T), row-wise softmax\n    out = P @ V                    # (T, d)\n    cache = (Q, K, V, P, scale)\n    return out, cache\n\n\ndef attention_backward(dout, cache):\n    \"\"\"dout is (T, d). Return (dQ, dK, dV), each shaped like Q, K, V.\"\"\"\n    Q, K, V, P, scale = cache\n    T = P.shape[0]\n\n    # out = P @ V\n    dP = dout @ V.T                # (T, T)\n    dV = P.T @ dout                # (T, d)\n\n    # softmax backward: for each row p, dS = P * (dP - sum(dP * P, axis=1))\n    dS = P * (dP - np.sum(dP * P, axis=1, keepdims=True))   # (T, T)\n\n    # S = scale * Q @ K.T\n    dQ = (dS @ K) * scale          # (T, d)\n    dK = (dS.T @ Q) * scale        # (T, d)\n\n    return dQ, dK, dV\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Standard implementation."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 322,
+      "total_tokens": 712,
+      "completion_tokens": 390,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

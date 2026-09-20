@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 76.40282854100224,
+  "response": {
+    "id": "chatcmpl-8b57aa66deffb286",
+    "object": "chat.completion",
+    "created": 1789613195,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    rng = np.random.default_rng(seed)\n    W1 = rng.standard_normal((n_hidden, n_in)) * 0.1\n    b1 = np.zeros(n_hidden)\n    W2 = rng.standard_normal(n_hidden) * 0.1\n    b2 = 0.0\n    return {'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2}\n\ndef loss_and_grads(params, X, y):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    H = np.tanh(X @ W1.T + b1)\n    z = H @ W2 + b2\n    p = 1.0 / (1.0 + np.exp(-z))\n    loss = -np.mean(y * np.log(p + 1e-10) + (1 - y) * np.log(1 - p + 1e-10))\n\n    dp = (p - y) / len(y)\n    dW2 = H.T @ dp\n    db2 = np.sum(dp)\n    dH = dp[:, np.newaxis] * W2[np.newaxis, :]\n    dW1 = dH.T @ X\n    db1 = np.sum(dH * (1 - H ** 2), axis=0)\n\n    grads = {\n        'W1': dW1,\n        'b1': db1,\n        'W2': dW2,\n        'b2': float(db2)\n    }\n    return (loss, grads)\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 801,
+      "total_tokens": 1179,
+      "completion_tokens": 378,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

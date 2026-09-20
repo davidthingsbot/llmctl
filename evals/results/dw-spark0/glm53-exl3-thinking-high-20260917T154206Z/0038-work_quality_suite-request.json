@@ -1,0 +1,19 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement a framing reassembler for a byte stream that arrives in arbitrary\nchunks. Return ONLY the complete class `Reassembler`, no imports, no explanation.\n\nWire format, repeated back to back:\n  sync   : 2 bytes, 0xAA 0x55\n  length : 2 bytes, little-endian, the payload length in bytes\n  payload: `length` bytes\n  check  : 1 byte, the XOR of every payload byte (0x00 for an empty payload)\n\n`Reassembler().feed(chunk: bytes) -> list[bytes]` returns the payloads of every\nframe completed by that chunk, in order. State carries across calls: a frame may\nbe split across any number of chunks, including one byte at a time.\n\nRequirements:\n- A chunk may contain several whole frames, or none.\n- Bytes before a sync word are garbage and are discarded silently.\n- A frame whose check byte does not match is discarded, and the stream must\n  resync so that a valid frame immediately following it is still returned.\n- `length` may be 0. A `length` above 4096 is invalid: discard and resync.\n- The payload may itself contain 0xAA 0x55; length governs, not scanning.\n- No exceptions: malformed input yields fewer frames, never a raised error.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

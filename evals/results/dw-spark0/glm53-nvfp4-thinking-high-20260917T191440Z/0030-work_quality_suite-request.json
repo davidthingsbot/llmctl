@@ -1,0 +1,19 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Review this embedded C receive path. Return a numbered list of the six most important concrete defects. Be concise and state the required correction for each.\n\nProtocol facts: rx[0] is command, rx[1] is payload length, then payload, then a two-byte CRC. CRC covers command + length + payload. Authentication must complete before command parsing or state changes.\n\n```c\nvoid receive(const uint8_t *rx, size_t rx_len) {\n    uint8_t payload[32];\n    uint8_t len = rx[1];\n    memcpy(payload, &rx[2], len);\n    uint16_t got = (rx[2 + len] << 8) | rx[3 + len];\n    uint16_t calc = crc16(payload, len);\n    sequence++;\n    parse_command(rx[0], payload, len);\n    if (calc = got) {\n        authenticate(payload, len);\n        printf(\"payload=%s\\n\", payload);\n    }\n}\n```"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

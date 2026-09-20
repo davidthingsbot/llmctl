@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 8.50134243699722,
+  "response": {
+    "id": "chatcmpl-836a2c2c39028345",
+    "object": "chat.completion",
+    "created": 1789663438,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.47850155\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer user's request. Need solve simple thermal calculations and return ONLY JSON with exact keys. Need ensure numbers. Let's compute carefully.\n\nGiven steady-state power 240 W, junction-to-ambient thermal resistance 0.28 K/W, ambient 22 C. Thermal mass 900 J/K. tau = Rth * C = 0.28 * 900 = 252 s.\n\nSteady-state junction = ambient + P*R = 22 + 240*0.28 = 22 + 67.2 = 89.2 C.\n\nPower for 85C limit: P = (85-22)/0.28 = 63/0.28 = 225 W exactly? 0.28*225=63 yes.\n\nJunction after one tau switching on from ambient at full 240 W: exponential approach: T(t)=T_ambient + (T_ss - T_ambient)*(1 - exp(-t/tau)). At t=tau: T = 22 + (89.2-22)*(1 - e^-1) = 22 + 67.2*(1 - 0.3678794412) = 22 + 67.2*0.6321205588 = 22 + 42.47850155 = 64.47850155 C. Need number maybe 64.4785. Could round? JSON numbers. Maybe include enough precision. Need only JSON. Ensure keys exactly. No markdown. Final only JSON.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 302,
+      "total_tokens": 752,
+      "completion_tokens": 450,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 380
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

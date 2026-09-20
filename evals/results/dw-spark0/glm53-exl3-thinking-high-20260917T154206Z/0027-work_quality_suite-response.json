@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 19.646677371987607,
+  "response": {
+    "id": "chatcmpl-9d4813101c1e2a20",
+    "object": "chat.completion",
+    "created": 1789660769,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "1. **Missing length validation / buffer overflow.** `len` is attacker-controlled and `memcpy` writes up to 255 bytes into a 32-byte buffer; `rx_len` is never checked, so the CRC bytes may also be read out of bounds. Required: validate `rx_len >= 4` and `2 + len + 2 <= rx_len` and `len <= sizeof(payload)` before any access.\n\n2. **CRC computed over the wrong data.** Per the protocol, CRC covers command + length + payload, but `crc16(payload, len)` covers only the payload. Required: compute CRC over `rx[0]`, `rx[1]`, and payload (e.g., `crc16_init(); update(rx[0]); update(rx[1]); update(payload, len);`).\n\n3. **Assignment instead of comparison.** `if (calc = got)` assigns and treats the result as true, so the CRC check never rejects a frame. Required: `if (calc == got)`.\n\n4. **Command parsing before authentication.** `parse_command()` runs before the CRC check and `authenticate()`, violating the requirement that authentication precede parsing/state changes. Required: verify CRC, then authenticate, then call `parse_command()`.\n\n5. **State mutation on unvalidated input.** `sequence++` executes unconditionally, even for malformed or CRC-failed frames, corrupting sequence tracking. Required: increment (and use it for replay checking) only after CRC and authentication pass.\n\n6. **Unbounded string print.** `printf(\"payload=%s\\n\", payload)` reads past the buffer since `payload` is not NUL-terminated and may contain embedded NULs/binary data. Required: print with a bounded format, e.g. `printf(\"payload=%.*s\\n\", (int)len, payload)`, or use a length-aware hex dump.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Let me identify defects:\n\n1. No bounds check: rx_len not validated; len can exceed 32 \u2192 buffer overflow in memcpy. Must check rx_len >= 4 and len <= 32 and 2+len+2 <= rx_len.\n2. CRC computed over payload only, but spec says CRC covers command + length + payload. Must include rx[0], rx[1].\n3. CRC check uses `=` (assignment) instead of `==`.\n4. Authentication happens after parse_command \u2014 must authenticate before parsing/state changes.\n5. sequence++ unconditional \u2014 increments even on invalid frames; also sequence not used/checked (replay?). Main point: state change before validation.\n6. printf(\"%s\", payload) \u2014 payload not null-terminated \u2192 out-of-bounds read. Also printing sensitive/authenticated data regardless.\n\nAlso CRC read rx[2+len], rx[3+len] may read out of bounds \u2014 covered by bounds check.\n\nPick six."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 240,
+      "total_tokens": 827,
+      "completion_tokens": 587,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

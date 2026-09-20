@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 63.80992068300111,
+  "response": {
+    "id": "chatcmpl-a40024397dce0fe6",
+    "object": "chat.completion",
+    "created": 1789613855,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cuda\n__global__ void matmul(const float* A, const float* B, float* C,\n                       int M, int N, int K) {\n    __shared__ float sA[16][16];\n    __shared__ float sB[16][16];\n\n    int tx = threadIdx.x;\n    int ty = threadIdx.y;\n    int row = blockIdx.y * 16 + ty;\n    int col = blockIdx.x * 16 + tx;\n\n    float sum = 0.0f;\n    for (int k = 0; k < K; k += 16) {\n        if (row < M && k + tx < K)\n            sA[ty][tx] = A[row * K + (k + tx)];\n        else\n            sA[ty][tx] = 0.0f;\n\n        if (col < N && k + ty < K)\n            sB[ty][tx] = B[(k + ty) * N + col];\n        else\n            sB[ty][tx] = 0.0f;\n\n        __syncthreads();\n\n        for (int i = 0; i < 16; ++i)\n            sum += sA[ty][i] * sB[i][tx];\n\n        __syncthreads();\n    }\n\n    if (row < M && col < N)\n        C[row * N + col] = sum;\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 319,
+      "total_tokens": 634,
+      "completion_tokens": 315,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

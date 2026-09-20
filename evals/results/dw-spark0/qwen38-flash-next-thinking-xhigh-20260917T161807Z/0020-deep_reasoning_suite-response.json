@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 25.36262049099605,
+  "response": {
+    "id": "chatcmpl-a629b593e9ef408d",
+    "object": "chat.completion",
+    "created": 1789663579,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.5681668,\n  \"sustainable_power_w\": 260.7142857\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer user's request. Need solve carefully and return ONLY JSON with exact keys. Let's analyze.\n\nProblem: compute module at thermal equilibrium in 22 C room drawing 120 W. Junction-to-ambient thermal resistance 0.28 K/W, lumped heat capacity 900 J/K, time constant = R*C. At t=0 load steps to 300 W. Junction temp rises exponentially towards new steady state with same time constant. Firmware throttles moment junction reaches 95 C.\n\nNeed JSON keys:\ninitial_junction_c number, junction temp just before step.\ntarget_junction_c number, steady state heading towards at 300 W.\nthrottles true/false whether reaches 95 C at all.\nseconds_to_95c number seconds after step until hits 95 C; -1 if never.\nsustainable_power_w number highest constant power that holds junction at or below 95 C in this ambient.\n\nCompute:\nAmbient T_a = 22 C.\nInitial power P_i=120 W. Thermal resistance R=0.28 K/W. Initial junction T_i = T_a + P_i*R = 22 + 120*0.28 = 22 + 33.6 = 55.6 C.\nTarget at 300 W: T_ss = 22 + 300*0.28 = 22 + 84 = 106 C.\nTime constant tau = R*C = 0.28*900 = 252 s.\nTransient: T(t) = T_ss + (T_i - T_ss) exp(-t/tau) = 106 + (55.6-106) e^{-t/252} = 106 - 50.4 e^{-t/252}.\nReaches 95 if target > 95 and initial <95. Yes. Solve 95 = 106 - 50.4 e^{-t/tau}. 50.4 e^{-t/tau} = 11. e^{-t/tau}=11/50.4 = 0.21825396825396826. t = -tau ln(11/50.4) = tau ln(50.4/11). 50.4/11 = 4.5818181818. ln =? Let's compute accurately. ln(4.58181818). ln 4.58 ~1.521? Let's calculate. Need number maybe 383.3? tau 252*1.521 = 383.3. Let's do precise.\n\nCompute ln(50.4/11). 50.4/11 = 4.581818181818182.\nln 4.58181818. Use ln(4.5) + correction. ln4.5=1.5040773967762742. ratio 4.581818/4.5=1.0181818. ln(1.0181818)=0.018018? series x=0.0181818, ln=0.018018? x - x^2/2 + x^3/3 =0.0181818 -0.0001653 +0.0000020=0.0180185. sum=1.5220959. times 252 = 383.568? 1.5220959*250=380.523975; +*2=3.0441918 total 383.5681668. Let's verify with direct maybe. 50.4/11 = 4.5818181818. ln maybe 1.52209589. t=383.568. So seconds_to_95c ~383.57.\n\nSustainable power highest constant power holds junction at or below 95 C in ambient: P_max = (95-22)/0.28 = 73/0.28 = 260.714285714 W. Since 300 target >95, throttles.\n\nNeed output ONLY JSON. Ensure numbers. Could include decimals. Need exactly keys. No markdown. JSON valid.\n\nDouble-check assumptions: thermal equilibrium initial drawing 120 W, junction-to-ambient thermal resistance. Yes.\n\nPotential nuance: \"time constant is resistance times capacity\" R*C = 0.28 K/W * 900 J/K = 252 s. Good.\n\nNeed maybe initial_junction_c 55.6, target 106.0, throttles true, seconds 383.568..., sustainable 260.714...\n\nShould we round? Not specified. Use reasonable precision. JSON numbers. Could use 383.5681668. sustainable 260.7142857.\n\nNeed ensure no extra text. Final only JSON.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 325,
+      "total_tokens": 1662,
+      "completion_tokens": 1337,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1250
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

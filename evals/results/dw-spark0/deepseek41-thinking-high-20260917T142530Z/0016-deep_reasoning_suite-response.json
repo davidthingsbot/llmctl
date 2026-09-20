@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 15.604149176986539,
+  "response": {
+    "id": "chatcmpl-a4fe30fbe43dfc5f",
+    "object": "chat.completion",
+    "created": 1789655801,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"steady_state_junction_c\":89.2,\"tau_seconds\":252,\"power_for_85c_limit_w\":225,\"junction_after_one_tau_c\":64.4785015533}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer only JSON. Need solve. Need be careful. We need compute.\n\nGiven steady power 240 W, Rja=0.28 K/W, ambient 22 C. Steady junction = ambient + P*R = 22 + 240*0.28 = 22 + 67.2 = 89.2 C.\n\ntau = R * C = 0.28 K/W * 900 J/K = 252 seconds? Units K/W * J/K = J/W = s. yes 252.\n\nPower for 85C limit: Tj <=85, ambient 22, delta=63 K. Pmax = delta/R = 63/0.28 = 225 W. Check 225*0.28=63. yes.\n\nJunction after one tau from ambient at full 240 W. Exponential approach: T(t)=T_amb + (T_ss - T_amb)*(1 - e^{-t/tau}). At t=tau, factor 1 - e^-1 = 0.6321205588. Delta steady = 67.2. Increase = 67.2*(1 - 1/e). T = 22 + 67.2*(1 - e^-1). Compute. e^-1=0.36787944117. 1-e^-1=0.63212055883. 67.2*0.63212055883. Let's calculate accurately.\n\n67.2 * 0.6321205588285577.\n67.2*0.6=40.32.\n67.2*0.0321205588285577 = 67.2*0.03=2.016; *0.0021205588285577=?\n67.2*0.002=0.1344.\n67.2*0.0001205588285577=0.008101? Let's do exact.\n\n0.6321205588285577 * 672 /10? 0.6321205588285577*67.2 = 0.6321205588285577*(60+7.2)\n*60=37.92723352971346\n*7.2=4.551268023565615? 0.6321205588285577*7=4.424843911799904; *0.2=0.1264241117657115; sum=4.551268023565615. total=42.47850155327908. Add 22 = 64.47850155327908. So 64.4785015533 C.\n\nNeed return JSON exactly keys. Ensure numbers. Could round? likely enough. Use number. JSON only."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 266,
+      "total_tokens": 876,
+      "completion_tokens": 610,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 566
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

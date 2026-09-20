@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 42.424809012998594,
+  "response": {
+    "id": "chatcmpl-992cbff0d7698dd0",
+    "object": "chat.completion",
+    "created": 1789655947,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selection\":[\"atlas\",\"dunlin\",\"fennec\"],\"total_value\":107,\"total_size_gib\":101,\"total_bandwidth\":255,\"bandwidth_binds\":true}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer only JSON. Need solve knapsack with two constraints. Need determine value-maximizing feasible set. Need be careful. Items:\natlas size61 bw120 value67\nborealis 56 bw140 value60\ncinder 56 bw130 value60\ndunlin 27 bw80 value28\nember 19 bw70 value19\nfennec 13 bw55 value12\n\nConstraints size <=112, bw <=260. Need maximize value. Need also bandwidth_binds true/false whether bandwidth limit rules out set you would have picked on memory alone. Need interpret: \"whether the bandwidth limit rules out the set you would have picked on memory alone\" Means if ignoring bandwidth, choose max value under size only; if that set violates bandwidth, then true. Need compute.\n\nLet's enumerate. Total all size 232 bw595. Need select.\n\nItems values roughly. Need max value under both.\n\nLet's list combinations. Since size limit 112. Bandwidth limit 260. Values.\n\nPotential high value atlas 67 size61 bw120. Can add others up to size 51, bw 140. Options:\n- atlas + dunlin (27,80) total size88 bw200 value95. Can add fennec? size101 bw255 value107. Add ember? size107 bw270 >260 value114? atlas+dunlin+ember size107 bw270 no. atlas+ember+fennec size93 bw245 value98. atlas+dunlin+fennec value107 size101 bw255. atlas+borealis size117 >112. atlas+cinder size117 >. atlas+ember size80 bw190 value86; +fennec size93 bw245 value98; +dunlin size107 bw270 no. atlas+fennec size74 bw175 value79; +dunlin size101 bw255 value107; +ember size93 bw245 value98. atlas+dunlin+fennec best with atlas =107.\n\nWithout atlas, can combine borealis+cinder? size112 bw270 >260 value120. Not feasible due bw. borealis+dunlin size83 bw220 value88; +ember size102 bw290 >; +fennec size96 bw275 >. borealis+ember+fennec size88 bw265 >260 value91? 56+19+13=88 bw140+70+55=265 >. borealis+fennec size69 bw195 value72; +dunlin size96 bw275 >. borealis+ember size75 bw210 value79; +fennec size88 bw265 no. cinder+dunlin size83 bw210 value88; +ember size102 bw280 no; +fennec size96 bw265 no. cinder+ember+fennec size88 bw255 value91 feasible! cinder 56+19+13=88 bw130+70+55=255 value60+19+12=91. cinder+dunlin+fennec size96 bw265 >. cinder+dunlin+ember size102 bw280 >. dunlin+ember+fennec size59 bw205 value59. borealis+cinder not feasible bw270. borealis+dunlin+? no. cinder+dunlin+? no. Maybe borealis+ember+fennec bw265 just over by 5, value91. cinder+ember+fennec value91. Atlas+dunlin+fennec value107. Could there be atlas + borealis? no size. atlas + cinder no. atlas + dunlin + ember? bw270 no. atlas + dunlin + fennec yes 107. atlas + ember + fennec 98. atlas + dunlin alone 95. atlas + cinder? no. atlas + borealis? no.\n\nWhat about no atlas: borealis + cinder? size112 bw270 no. If bandwidth limit 260, cannot. Could choose borealis + dunlin + fennec? size96 bw275 no. borealis + ember + fennec bw265 no. cinder + dunlin + fennec bw265 no. cinder + ember + fennec 91. borealis + dunlin + ember? size102 bw290 no. borealis + dunlin + fennec no. borealis + ember + fennec no. cinder + dunlin + ember no. cinder + dunlin + fennec no. So max 107.\n\nNeed check if any combination value >107 maybe atlas + cinder? size117 no. atlas + borealis no. atlas + dunlin + fennec =107. What about atlas + dunlin + ember? value114 but bw270 >260. atlas + ember + fennec +? size93, can add? dunlin would size120 >112. no. atlas + fennec + dunlin =107. atlas + dunlin + ember not feasible. atlas + cinder? no. atlas + borealis? no. atlas + dunlin + fennec +? no size 101, remaining 11 none. bw255 remaining 5 none. So 107.\n\nNeed total_size 61+27+13=101. total_bandwidth 120+80+55=255. total_value 67+28+12=107.\n\nNow bandwidth_binds: \"whether the bandwidth limit rules out the set you would have picked on memory alone\". Need determine memory-only optimum under size <=112 ignoring bandwidth. Let's compute max value by size only. Items values. Need choose subset size <=112 max value. Could be atlas + dunlin + ember? size61+27+19=107 value67+28+19=114. Or atlas + dunlin + fennec =101 value107. atlas + ember + fennec =93 value98. atlas + borealis? size117 no. atlas + cinder no. Without atlas: borealis+cinder size112 value120! That's higher than 114. Also borealis+dunlin+ember? size102 value60+28+19=107. cinder+dunlin+ember size102 value107. borealis+cinder value120. Could there be borealis+cinder+? no size112 full. So memory-only optimum is borealis+cinder value120 size112 bw270. This violates bandwidth 260. Thus bandwidth limit rules out memory-only set. So bandwidth_binds true. Need ensure if there are ties? Memory-only max value 120. Set borealis+cinder. Bandwidth 270 >260. So true.\n\nNeed return JSON exactly keys. Selection array names. Order? Could be atlas,dunlin,fennec. Need total_value integer etc. bandwidth_binds true.\n\nNeed ensure no other feasible set value 120? borealis+cinder not feasible. What about atlas+dunlin+ember value114 bw270 not feasible. atlas+dunlin+fennec 107. Could there be atlas+borealis? no. cinder+borealis bw270 no. So yes.\n\nNeed final only JSON."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 263,
+      "total_tokens": 1783,
+      "completion_tokens": 1520,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1477
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 74.33967570099776,
+  "response": {
+    "id": "chatcmpl-95ae539cc228aae2",
+    "object": "chat.completion",
+    "created": 1789613120,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    rng = np.random.default_rng(seed)\n    W1 = rng.standard_normal((n_hidden, n_in)) * 0.01\n    b1 = np.zeros(n_hidden)\n    W2 = rng.standard_normal(n_hidden) * 0.01\n    b2 = 0.0\n    return {'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2}\n\ndef loss_and_grads(params, X, y):\n    W1, b1, W2, b2 = params['W1'], params['b1'], params['W2'], params['b2']\n    H = np.tanh(X @ W1.T + b1)\n    z = H @ W2 + b2\n    p = 1.0 / (1.0 + np.exp(-z))\n    loss = -np.mean(y * np.log(p) + (1 - y) * np.log(1 - p))\n\n    dp = p - y\n    dW2 = H.T @ dp / len(y)\n    db2 = np.sum(dp) / len(y)\n    dH = np.outer(dp, W2) / len(y)\n    dW1 = dH.T @ X\n    db1 = np.sum(dH * (1 - H * H), axis=0) / len(y)\n\n    grads = {\n        'W1': dW1,\n        'b1': db1,\n        'W2': dW2,\n        'b2': float(db2)\n    }\n    return (loss, grads)\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 391,
+      "total_tokens": 758,
+      "completion_tokens": 367,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

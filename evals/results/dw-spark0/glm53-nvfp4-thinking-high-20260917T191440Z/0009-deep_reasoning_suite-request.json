@@ -1,0 +1,27 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "A decision maker may launch a project or decline it. The state is Good with probability 0.4 and Bad with probability 0.6. Launch pays +120 in Good and -60 in Bad; declining pays 0.\n\nBefore deciding, an optional test costs 10. It returns positive with probability 0.8 in Good and 0.2 in Bad. If purchased, the decision maker may condition the launch decision on the result.\n\nReturn ONLY JSON with numeric keys `launch_now_ev`, `positive_probability`, `good_given_positive`, `launch_ev_given_positive`, `launch_ev_given_negative`, `test_policy_ev_after_cost`; string keys `positive_action`, `negative_action`, and `best_initial_policy`. Give probabilities as decimals and expected values to within 0.1."
+    },
+    {
+      "role": "assistant",
+      "content": "```json\n{\n  \"launch_now_ev\": -12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase test\"\n}\n```"
+    },
+    {
+      "role": "user",
+      "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nfailed checks: launch_now_ev"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 19.16749951199745,
+  "response": {
+    "id": "chatcmpl-a9b99f1a83fe7a45",
+    "object": "chat.completion",
+    "created": 1789660608,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer JSON only. Need solve knapsack 0/1 maximize value capacity 112. Items:\natlas 61 67\nborealis 56 60\ncinder 56 60\ndunlin 27 28\nember 19 19\nfennec 13 12\n\nNeed selection value-maximizing set fits 112. Also greedy by value density total.\n\nLet's compute densities:\natlas 67/61=1.09836\nborealis 60/56=1.07143\ncinder same\ndunlin 28/27=1.03704\nember 19/19=1\nfennec 12/13=0.923\n\nGreedy by density that fits:\ncapacity 112. Take atlas (61,67), remaining 51. Next borealis/cinder 56 doesn't fit. dunlin 27 fits (28), rem 24. ember 19 fits (19), rem 5. fennec 13 no. total value 67+28+19=114, size 107. Need check if any tie? Highest density after atlas: borealis/cinder no fit, dunlin yes. Good.\n\nOptimal knapsack: enumerate. Items sizes 61,56,56,27,19,13 values 67,60,60,28,19,12.\n\nCapacity 112. Candidate atlas+dunlin+ember = 61+27+19=107 value 114. atlas+dunlin+fennec=101 value 107. atlas+ember+fennec=93 value 98. atlas+dunlin+ember+fennec=120 >112. borealis+dunlin+ember=102 value 107. borealis+dunlin+fennec=96 value100. borealis+ember+fennec=88 value91. borealis+dunlin+ember+fennec=115 >112. cinder same. borealis+cinder=112 value120! Ah capacity exactly 112, value 120. That's better. atlas+borealis=117 >. atlas+cinder >. borealis+dunlin+cinder=139 >. So optimal likely borealis+cinder value 120. Could atlas + something else: atlas+ember+dunlin 114 as above. atlas+fennec+dunlin 107. atlas+ember+fennec 98. atlas+dunlin+ember+fennec 120 size >112. no. borealis+cinder+? none (remaining 0). So optimal 120.\n\nNeed return only JSON exactly keys. total_size_gib integer 112. selection array names maybe [\"borealis\",\"cinder\"]. greedy total 114. Ensure \"total_value\" integer. JSON valid. No extra text."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 239,
+      "total_tokens": 874,
+      "completion_tokens": 635,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 140.42144871600613,
+  "response": {
+    "id": "chatcmpl-8fb88f0781836d29",
+    "object": "chat.completion",
+    "created": 1789612980,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\ndouble mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad) {\n    const double* W1 = params;\n    const double* b1 = params + n_hidden * n_in;\n    const double* W2 = b1 + n_hidden;\n    const double b2 = W2[n_hidden];\n\n    double* grad_W1 = grad;\n    double* grad_b1 = grad + n_hidden * n_in;\n    double* grad_W2 = grad_b1 + n_hidden;\n    double* grad_b2 = grad_W2 + n_hidden;\n\n    for (int i = 0; i < n_hidden * n_in; ++i) grad_W1[i] = 0.0;\n    for (int i = 0; i < n_hidden; ++i) grad_b1[i] = 0.0;\n    for (int i = 0; i < n_hidden; ++i) grad_W2[i] = 0.0;\n    *grad_b2 = 0.0;\n\n    double total_loss = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + s * n_in;\n        double ys = y[s];\n\n        double h[n_hidden];\n        for (int j = 0; j < n_hidden; ++j) {\n            double sum = b1[j];\n            for (int k = 0; k < n_in; ++k) {\n                sum += W1[j * n_in + k] * x[k];\n            }\n            h[j] = tanh(sum);\n        }\n\n        double z = b2;\n        for (int j = 0; j < n_hidden; ++j) {\n            z += W2[j] * h[j];\n        }\n\n        double p = 1.0 / (1.0 + exp(-z));\n        double loss = -(ys * log(p + 1e-10) + (1 - ys) * log(1 - p + 1e-10));\n        total_loss += loss;\n\n        double dp_dz = p * (1 - p);\n        double dL_dz = (p - ys) / n_samples;\n\n        *grad_b2 += dp_dz * dL_dz;\n\n        for (int j = 0; j < n_hidden; ++j) {\n            double dhj_dzj = 1.0 - h[j] * h[j];\n            double dL_dhj = dp_dz * dL_dz * W2[j];\n            double dL_dzj = dL_dhj * dhj_dzj;\n            grad_W2[j] += h[j] * dp_dz * dL_dz;\n            grad_b1[j] += dL_dzj / n_samples;\n            for (int k = 0; k < n_in; ++k) {\n                grad_W1[j * n_in + k] += x[k] * dL_dzj / n_samples;\n            }\n        }\n    }\n\n    double avg_loss = total_loss / n_samples;\n    return avg_loss;\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 1380,
+      "total_tokens": 2074,
+      "completion_tokens": 694,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

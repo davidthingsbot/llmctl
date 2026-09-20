@@ -1,0 +1,923 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "qwen38-flash-next-tp2",
+  "endpoint": "http://127.0.0.1:8004/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": false
+  },
+  "score": 214,
+  "max_score": 302,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 9831,
+    "completion_tokens": 4465,
+    "total_tokens": 14296,
+    "task_seconds": 96.57,
+    "wall_seconds": 97.31,
+    "generation_tok_s": 46.24,
+    "truncated_tasks": [],
+    "retries": 11,
+    "retry_completion_tokens": 1875
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 0,
+      "max_score": 12,
+      "max_tokens": 12000,
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "usage": {
+        "prompt_tokens": 164,
+        "total_tokens": 271,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.9404,
+      "score_first": 0,
+      "retry_feedback": "failed checks: Ada, Ben, Cara, Dion",
+      "raw_retry_response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "retry_response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"History\"\n  },\n  \"Dion\": {\n    \"day\": \"Monday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "retry_usage": {
+        "prompt_tokens": 330,
+        "total_tokens": 437,
+        "completion_tokens": 107,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 2.0322,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "Ada": false,
+        "Ben": false,
+        "Cara": false,
+        "Dion": false
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (Fuzzy)\",\n  \"instrument\": \"The eligibility score cutoff at 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for compliers near the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity of potential outcomes at the cutoff\",\n    \"No manipulation of the running variable (score)\",\n    \"Monotonicity (no defiers)\",\n    \"Exclusion restriction (eligibility affects employment only through participation)\",\n    \"Independence of treatment assignment from potential outcomes conditional on the score\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"design\": \"Regression Discontinuity Design (Fuzzy)\",\n  \"instrument\": \"The eligibility score cutoff at 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for compliers near the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity of potential outcomes at the cutoff\",\n    \"No manipulation of the running variable (score)\",\n    \"Monotonicity (no defiers)\",\n    \"Exclusion restriction (eligibility affects employment only through participation)\",\n    \"Independence of treatment assignment from potential outcomes conditional on the score\"\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 338,
+        "completion_tokens": 143,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 3.2949
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 8,
+      "max_score": 12,
+      "max_tokens": 12000,
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 63.0,\n  \"independence_caveat\": \"The calculation assumes conditional independence of test errors, but in reality, tests often share common failure modes (e.g., similar biological mechanisms or systematic biases), meaning a second positive result provides less additional evidence than the independent model predicts, leading to overconfidence.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 63.0,\n  \"independence_caveat\": \"The calculation assumes conditional independence of test errors, but in reality, tests often share common failure modes (e.g., similar biological mechanisms or systematic biases), meaning a second positive result provides less additional evidence than the independent model predicts, leading to overconfidence.\"\n}",
+      "usage": {
+        "prompt_tokens": 157,
+        "total_tokens": 247,
+        "completion_tokens": 90,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 2.3477,
+      "score_first": 8,
+      "retry_feedback": "failed checks: two_positive",
+      "raw_retry_response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 63.0,\n  \"independence_caveat\": \"The calculation assumes conditional independence of test errors, but in reality, tests often share common failure modes (e.g., similar biological mechanisms or systematic biases), meaning a second positive result provides less additional evidence than the independent model predicts, leading to overconfidence.\"\n}",
+      "retry_response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 63.0,\n  \"independence_caveat\": \"The calculation assumes conditional independence of test errors, but in reality, tests often share common failure modes (e.g., similar biological mechanisms or systematic biases), meaning a second positive result provides less additional evidence than the independent model predicts, leading to overconfidence.\"\n}",
+      "retry_usage": {
+        "prompt_tokens": 301,
+        "total_tokens": 391,
+        "completion_tokens": 90,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.7579,
+      "score_retry": 8,
+      "retry_grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 12000,
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The orthogonal assay confirms the signaling reduction is a real biological effect, falsifying H3 (assay artifact).\",\n    \"The occupancy assay showing no binding of X to R falsifies H1 (direct block).\",\n    \"R protein levels decrease while R mRNA remains unchanged, indicating post-transcriptional regulation.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect, directly linking the mechanism to proteasomal degradation.\"\n  ],\n  \"decisive_falsifier\": \"If X treatment leads to a decrease in R protein levels that is NOT prevented by a proteasome inhibitor, or if R protein levels remain stable despite the signaling effect, the proteasomal degradation mechanism would be decisively undermined.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"The orthogonal assay confirms the signaling reduction is a real biological effect, falsifying H3 (assay artifact).\",\n    \"The occupancy assay showing no binding of X to R falsifies H1 (direct block).\",\n    \"R protein levels decrease while R mRNA remains unchanged, indicating post-transcriptional regulation.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling effect, directly linking the mechanism to proteasomal degradation.\"\n  ],\n  \"decisive_falsifier\": \"If X treatment leads to a decrease in R protein levels that is NOT prevented by a proteasome inhibitor, or if R protein levels remain stable despite the signaling effect, the proteasomal degradation mechanism would be decisively undermined.\"\n}",
+      "usage": {
+        "prompt_tokens": 240,
+        "total_tokens": 426,
+        "completion_tokens": 186,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 4.0799
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 12,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "Belief in the claim that the mayor secretly diverted famine relief should decrease significantly, though not to zero. The primary accusation rests on S1, a diary by a political rival. This source has high incentive bias; rivals often fabricate or exaggerate scandals to damage opponents. Crucially, S1 lacks transaction details, making it a weak primary source for specific financial misconduct.\n\nS2 and S4 are entirely dependent on S1. S2 is a secondary report citing only S1, and S4 consists of modern websites recycling S2. These sources provide no independent corroboration; they merely amplify the initial biased claim. Therefore, the weight of evidence against the mayor is effectively limited to S1\u2019s unsubstantiated assertion.\n\nS3, the treasury ledger, is an independent, contemporaneous primary source. It establishes that funds were disbursed to named grain suppliers and that totals reconcile. This directly contradicts the notion of \"secret diversion\" where funds vanish or are misappropriated without record. However, S3 does not prove the mayor\u2019s innocence regarding *quality* or *collusion*. It only proves the money left the treasury for grain.\n\nThe cousin evidence is ambiguous. While nepotism is a concern, the fact that the listed price matched other suppliers mitigates the suspicion of financial fraud. It suggests the transaction was at market rate, reducing the likelihood that the mayor enriched himself through inflated prices, though it does not rule out other forms of favoritism.\n\nThe highest-value next evidence would be independent verification of the grain\u2019s delivery and quality. Specifically, finding supplier receipts, warehouse logs, or contemporaneous reports from the grain suppliers themselves would confirm if the mayor\u2019s cousin actually delivered the grain. If the grain was delivered and of good quality, the claim of diversion collapses. If the grain was never delivered or was spoiled, the ledger\u2019s reconciliation would be exposed as a cover-up, reviving the suspicion. Without this, the claim remains weakly supported by a biased source and strongly contradicted by financial records.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": false,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      },
+      "status": "complete",
+      "raw_response": "Belief in the claim that the mayor secretly diverted famine relief should decrease significantly, though not to zero. The primary accusation rests on S1, a diary by a political rival. This source has high incentive bias; rivals often fabricate or exaggerate scandals to damage opponents. Crucially, S1 lacks transaction details, making it a weak primary source for specific financial misconduct.\n\nS2 and S4 are entirely dependent on S1. S2 is a secondary report citing only S1, and S4 consists of modern websites recycling S2. These sources provide no independent corroboration; they merely amplify the initial biased claim. Therefore, the weight of evidence against the mayor is effectively limited to S1\u2019s unsubstantiated assertion.\n\nS3, the treasury ledger, is an independent, contemporaneous primary source. It establishes that funds were disbursed to named grain suppliers and that totals reconcile. This directly contradicts the notion of \"secret diversion\" where funds vanish or are misappropriated without record. However, S3 does not prove the mayor\u2019s innocence regarding *quality* or *collusion*. It only proves the money left the treasury for grain.\n\nThe cousin evidence is ambiguous. While nepotism is a concern, the fact that the listed price matched other suppliers mitigates the suspicion of financial fraud. It suggests the transaction was at market rate, reducing the likelihood that the mayor enriched himself through inflated prices, though it does not rule out other forms of favoritism.\n\nThe highest-value next evidence would be independent verification of the grain\u2019s delivery and quality. Specifically, finding supplier receipts, warehouse logs, or contemporaneous reports from the grain suppliers themselves would confirm if the mayor\u2019s cousin actually delivered the grain. If the grain was delivered and of good quality, the claim of diversion collapses. If the grain was never delivered or was spoiled, the ledger\u2019s reconciliation would be exposed as a cover-up, reviving the suspicion. Without this, the claim remains weakly supported by a biased source and strongly contradicted by financial records.",
+      "usage": {
+        "prompt_tokens": 238,
+        "total_tokens": 650,
+        "completion_tokens": 412,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 11.026,
+      "score_first": 12,
+      "retry_feedback": "failed checks: websites_not_independent",
+      "raw_retry_response": "Belief in the claim should decrease substantially, though not to absolute certainty. The accusation originates in S1, a diary by a political rival. This source carries high incentive bias, as rivals have strong motivations to fabricate or exaggerate scandals. S1 provides no transaction details, limiting its evidentiary weight.\n\nS2 and S4 are not independent sources. S2 is a 1920 article citing only S1, and S4 consists of modern websites citing S2 or each other. These sources create a circular echo chamber rather than corroborating evidence. Consequently, the claim rests solely on the biased, unverified assertion in S1.\n\nS3, an independently preserved treasury ledger, is a strong primary source. It establishes that funds were disbursed to named suppliers and that totals reconcile. This directly contradicts the idea of \"secret diversion\" where funds vanish without record. However, S3 does not prove the mayor\u2019s innocence regarding the *quality* of goods or potential collusion; it only proves the money left the treasury.\n\nThe cousin evidence is ambiguous. While nepotism is a concern, the fact that the listed price matched other suppliers mitigates suspicion of financial fraud via inflated costs. It suggests the transaction was at market rate, reducing the likelihood of direct embezzlement, though it does not rule out other forms of favoritism.\n\nThe highest-value next evidence would be independent verification of grain delivery and quality. Specifically, finding supplier receipts, warehouse logs, or contemporaneous reports from the grain suppliers themselves would confirm if the mayor\u2019s cousin actually delivered the grain. If the grain was delivered and of good quality, the claim of diversion collapses. If the grain was never delivered or was spoiled, the ledger\u2019s reconciliation would be exposed as a cover-up, reviving the suspicion. Without this, the claim remains weakly supported by a biased source and strongly contradicted by financial records.",
+      "retry_response": "Belief in the claim should decrease substantially, though not to absolute certainty. The accusation originates in S1, a diary by a political rival. This source carries high incentive bias, as rivals have strong motivations to fabricate or exaggerate scandals. S1 provides no transaction details, limiting its evidentiary weight.\n\nS2 and S4 are not independent sources. S2 is a 1920 article citing only S1, and S4 consists of modern websites citing S2 or each other. These sources create a circular echo chamber rather than corroborating evidence. Consequently, the claim rests solely on the biased, unverified assertion in S1.\n\nS3, an independently preserved treasury ledger, is a strong primary source. It establishes that funds were disbursed to named suppliers and that totals reconcile. This directly contradicts the idea of \"secret diversion\" where funds vanish without record. However, S3 does not prove the mayor\u2019s innocence regarding the *quality* of goods or potential collusion; it only proves the money left the treasury.\n\nThe cousin evidence is ambiguous. While nepotism is a concern, the fact that the listed price matched other suppliers mitigates suspicion of financial fraud via inflated costs. It suggests the transaction was at market rate, reducing the likelihood of direct embezzlement, though it does not rule out other forms of favoritism.\n\nThe highest-value next evidence would be independent verification of grain delivery and quality. Specifically, finding supplier receipts, warehouse logs, or contemporaneous reports from the grain suppliers themselves would confirm if the mayor\u2019s cousin actually delivered the grain. If the grain was delivered and of good quality, the claim of diversion collapses. If the grain was never delivered or was spoiled, the ledger\u2019s reconciliation would be exposed as a cover-up, reviving the suspicion. Without this, the claim remains weakly supported by a biased source and strongly contradicted by financial records.",
+      "retry_usage": {
+        "prompt_tokens": 706,
+        "total_tokens": 1094,
+        "completion_tokens": 388,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 8.0262,
+      "score_retry": 14,
+      "retry_grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 10,
+      "max_score": 12,
+      "max_tokens": 12000,
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -10.9,\n  \"test_policy_ev_after_cost\": 24.8,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -10.9,\n  \"test_policy_ev_after_cost\": 24.8,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "usage": {
+        "prompt_tokens": 210,
+        "total_tokens": 325,
+        "completion_tokens": 115,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 2.1882,
+      "score_first": 10,
+      "retry_feedback": "failed checks: launch_ev_given_negative, test_policy_ev_after_cost",
+      "raw_retry_response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -10.9,\n  \"test_policy_ev_after_cost\": 24.8,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "retry_response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -10.9,\n  \"test_policy_ev_after_cost\": 24.8,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}",
+      "retry_usage": {
+        "prompt_tokens": 387,
+        "total_tokens": 502,
+        "completion_tokens": 115,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 2.0772,
+      "score_retry": 10,
+      "retry_grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "max_tokens": 12000,
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side' (P -> Q), we must look for cases that violate the rule (P and not Q). Card 'A' is a vowel (P), so we must turn it to check if the other side is an even number (Q); if it is odd, the rule is broken. Card '7' is an odd number (not Q), so we must turn it to check if the other side is a vowel (P); if it is a vowel, the rule is broken. Card 'D' is a consonant (not P), so the rule does not apply to it regardless of the number on the other side. Card '4' is an even number (Q), so the rule is satisfied regardless of whether the other side is a vowel or consonant (the rule does not state that even numbers must have vowels).\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side' (P -> Q), we must look for cases that violate the rule (P and not Q). Card 'A' is a vowel (P), so we must turn it to check if the other side is an even number (Q); if it is odd, the rule is broken. Card '7' is an odd number (not Q), so we must turn it to check if the other side is a vowel (P); if it is a vowel, the rule is broken. Card 'D' is a consonant (not P), so the rule does not apply to it regardless of the number on the other side. Card '4' is an even number (Q), so the rule is satisfied regardless of whether the other side is a vowel or consonant (the rule does not state that even numbers must have vowels).\"\n}",
+      "usage": {
+        "prompt_tokens": 143,
+        "total_tokens": 359,
+        "completion_tokens": 216,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 4.1069,
+      "score_first": 9,
+      "retry_feedback": "failed checks: four_not_converse",
+      "raw_retry_response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side' (P -> Q), we must look for cases that violate the rule (P and not Q). Card 'A' is a vowel (P), so we must turn it to check if the other side is an even number (Q); if it is odd, the rule is broken. Card '7' is an odd number (not Q), so we must turn it to check if the other side is a vowel (P); if it is a vowel, the rule is broken. Card 'D' is a consonant (not P), so the rule does not apply to it regardless of the number on the other side. Card '4' is an even number (Q), so the rule is satisfied regardless of whether the other side is a vowel or consonant (the rule does not state that even numbers must have vowels).\"\n}",
+      "retry_response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the rule 'If a card has a vowel on one side, then it has an even number on the other side' (P -> Q), we must look for cases that violate the rule (P and not Q). Card 'A' is a vowel (P), so we must turn it to check if the other side is an even number (Q); if it is odd, the rule is broken. Card '7' is an odd number (not Q), so we must turn it to check if the other side is a vowel (P); if it is a vowel, the rule is broken. Card 'D' is a consonant (not P), so the rule does not apply to it regardless of the number on the other side. Card '4' is an even number (Q), so the rule is satisfied regardless of whether the other side is a vowel or consonant (the rule does not state that even numbers must have vowels).\"\n}",
+      "retry_usage": {
+        "prompt_tokens": 415,
+        "total_tokens": 631,
+        "completion_tokens": 216,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 3.8208,
+      "score_retry": 9,
+      "retry_grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 12,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "The proposal to automatically impose restrictive supervision based on a fixed risk threshold is fundamentally flawed and should be rejected in its current form. While the system is calibrated within demographic groups, calibration only ensures that predicted probabilities match observed frequencies for those groups; it does not justify the *use* of those predictions for punitive or restrictive actions. Calibration does not address the ethical implications of using race-correlated features or the potential for disparate impact, nor does it validate the causal link between the prediction and the outcome.\n\nSevere offenses are rare, creating a base rate problem. Even with high precision, the absolute number of false positives will be significant relative to true positives. Given the asymmetric costs\u2014where the harm of incorrectly restricting a defendant\u2019s liberty is severe and immediate, while the harm of missing a rare violent event is also severe but probabilistic\u2014automated high-threshold interventions risk massive over-policing. This violates due process by substituting algorithmic probability for individualized judicial assessment, denying defendants the right to contest the specific evidence against them.\n\nFurthermore, the system suffers from selective labels and feedback loops. Police deployment changes who is observed and arrested, meaning the training data reflects enforcement patterns rather than underlying crime rates. If the model predicts high risk for certain neighborhoods, increased policing there leads to more arrests, reinforcing the model\u2019s bias. Defendants may also strategically adapt their behavior or features if they know how the system works, rendering the model obsolete. Economic and social shifts will cause distribution drift, making historical calibration irrelevant to future contexts.\n\nA constrained, human-in-the-loop deployment is the only viable alternative. The system should serve solely as a decision-support tool for judges, not an automated trigger. Recommendations must be accompanied by clear explanations of the features driving the score and a confidence interval. Crucially, the threshold for \"high risk\" should not be fixed but dynamically adjusted based on ongoing monitoring of false positive rates and disparate impact metrics.\n\nSafeguards must include:\n1. **Mandatory Human Review:** No restriction can be imposed without a judge\u2019s explicit, reasoned justification that considers the algorithmic score alongside other evidence.\n2. **Continuous Auditing:** Regular checks for calibration drift, demographic disparities, and feedback loop effects.\n3. **Stop Conditions:** Immediate suspension of the tool if false positive rates exceed a predefined ethical threshold, if disparate impact is detected, or if distribution shift renders the model unreliable.\n4. **Right to Contest:** Defendants must have access to the model\u2019s logic and the ability to challenge its use in their specific case.\n\nThis approach respects due process, acknowledges the limits of prediction, and mitigates the harms of automation while potentially aiding resource allocation.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      },
+      "status": "complete",
+      "raw_response": "The proposal to automatically impose restrictive supervision based on a fixed risk threshold is fundamentally flawed and should be rejected in its current form. While the system is calibrated within demographic groups, calibration only ensures that predicted probabilities match observed frequencies for those groups; it does not justify the *use* of those predictions for punitive or restrictive actions. Calibration does not address the ethical implications of using race-correlated features or the potential for disparate impact, nor does it validate the causal link between the prediction and the outcome.\n\nSevere offenses are rare, creating a base rate problem. Even with high precision, the absolute number of false positives will be significant relative to true positives. Given the asymmetric costs\u2014where the harm of incorrectly restricting a defendant\u2019s liberty is severe and immediate, while the harm of missing a rare violent event is also severe but probabilistic\u2014automated high-threshold interventions risk massive over-policing. This violates due process by substituting algorithmic probability for individualized judicial assessment, denying defendants the right to contest the specific evidence against them.\n\nFurthermore, the system suffers from selective labels and feedback loops. Police deployment changes who is observed and arrested, meaning the training data reflects enforcement patterns rather than underlying crime rates. If the model predicts high risk for certain neighborhoods, increased policing there leads to more arrests, reinforcing the model\u2019s bias. Defendants may also strategically adapt their behavior or features if they know how the system works, rendering the model obsolete. Economic and social shifts will cause distribution drift, making historical calibration irrelevant to future contexts.\n\nA constrained, human-in-the-loop deployment is the only viable alternative. The system should serve solely as a decision-support tool for judges, not an automated trigger. Recommendations must be accompanied by clear explanations of the features driving the score and a confidence interval. Crucially, the threshold for \"high risk\" should not be fixed but dynamically adjusted based on ongoing monitoring of false positive rates and disparate impact metrics.\n\nSafeguards must include:\n1. **Mandatory Human Review:** No restriction can be imposed without a judge\u2019s explicit, reasoned justification that considers the algorithmic score alongside other evidence.\n2. **Continuous Auditing:** Regular checks for calibration drift, demographic disparities, and feedback loop effects.\n3. **Stop Conditions:** Immediate suspension of the tool if false positive rates exceed a predefined ethical threshold, if disparate impact is detected, or if distribution shift renders the model unreliable.\n4. **Right to Contest:** Defendants must have access to the model\u2019s logic and the ability to challenge its use in their specific case.\n\nThis approach respects due process, acknowledges the limits of prediction, and mitigates the harms of automation while potentially aiding resource allocation.",
+      "usage": {
+        "prompt_tokens": 211,
+        "total_tokens": 752,
+        "completion_tokens": 541,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 14.4209,
+      "score_first": 12,
+      "retry_feedback": "failed checks: reversible_evaluation",
+      "raw_retry_response": "The proposal to automatically impose restrictive supervision based on a fixed risk threshold is fundamentally flawed and should be rejected. Calibration within demographic groups ensures that predicted probabilities match observed frequencies for those groups, but it does not justify the *use* of those predictions for punitive actions. Calibration is a statistical property, not an ethical or legal warrant; it does not address disparate impact, the validity of causal inferences, or the moral weight of restricting liberty based on probability.\n\nSevere offenses are rare, creating a base rate problem where even high-precision models generate significant absolute numbers of false positives. Given the asymmetric costs\u2014where the harm of incorrectly restricting a defendant\u2019s liberty is severe and immediate, while the harm of missing a rare violent event is probabilistic\u2014automated high-threshold interventions risk massive over-policing. This violates due process by substituting algorithmic probability for individualized judicial assessment, denying defendants the right to contest the specific evidence against them.\n\nFurthermore, the system suffers from selective labels and feedback loops. Police deployment changes who is observed and arrested, meaning training data reflects enforcement patterns rather than underlying crime rates. If the model predicts high risk for certain neighborhoods, increased policing there leads to more arrests, reinforcing the model\u2019s bias. Defendants may also strategically adapt their behavior or features if they know how the system works, rendering the model obsolete. Economic and social shifts will cause distribution drift, making historical calibration irrelevant to future contexts.\n\nA constrained, human-in-the-loop deployment is the only viable alternative. The system should serve solely as a decision-support tool for judges, not an automated trigger. Recommendations must be accompanied by clear explanations of the features driving the score and a confidence interval. Crucially, the threshold for \"high risk\" should not be fixed but dynamically adjusted based on ongoing monitoring of false positive rates and disparate impact metrics.\n\nSafeguards must include:\n1. **Mandatory Human Review:** No restriction can be imposed without a judge\u2019s explicit, reasoned justification that considers the algorithmic score alongside other evidence.\n2. **Continuous Auditing:** Regular checks for calibration drift, demographic disparities, and feedback loop effects.\n3. **Reversible Evaluation Design:** Implement a \"shadow mode\" or randomized controlled trial structure where the system\u2019s recommendations are logged but not acted upon for a subset of cases. This allows for the measurement of counterfactual outcomes and the isolation of the model\u2019s impact from other variables. If the evaluation shows that the model\u2019s recommendations do not improve public safety outcomes or increase disparate harm, the deployment must be immediately halted and the model retrained or discarded.\n4. **Right to Contest:** Defendants must have access to the model\u2019s logic and the ability to challenge its use in their specific case.\n\nThis approach respects due process, acknowledges the limits of prediction, and mitigates the harms of automation while potentially aiding resource allocation.",
+      "retry_response": "The proposal to automatically impose restrictive supervision based on a fixed risk threshold is fundamentally flawed and should be rejected. Calibration within demographic groups ensures that predicted probabilities match observed frequencies for those groups, but it does not justify the *use* of those predictions for punitive actions. Calibration is a statistical property, not an ethical or legal warrant; it does not address disparate impact, the validity of causal inferences, or the moral weight of restricting liberty based on probability.\n\nSevere offenses are rare, creating a base rate problem where even high-precision models generate significant absolute numbers of false positives. Given the asymmetric costs\u2014where the harm of incorrectly restricting a defendant\u2019s liberty is severe and immediate, while the harm of missing a rare violent event is probabilistic\u2014automated high-threshold interventions risk massive over-policing. This violates due process by substituting algorithmic probability for individualized judicial assessment, denying defendants the right to contest the specific evidence against them.\n\nFurthermore, the system suffers from selective labels and feedback loops. Police deployment changes who is observed and arrested, meaning training data reflects enforcement patterns rather than underlying crime rates. If the model predicts high risk for certain neighborhoods, increased policing there leads to more arrests, reinforcing the model\u2019s bias. Defendants may also strategically adapt their behavior or features if they know how the system works, rendering the model obsolete. Economic and social shifts will cause distribution drift, making historical calibration irrelevant to future contexts.\n\nA constrained, human-in-the-loop deployment is the only viable alternative. The system should serve solely as a decision-support tool for judges, not an automated trigger. Recommendations must be accompanied by clear explanations of the features driving the score and a confidence interval. Crucially, the threshold for \"high risk\" should not be fixed but dynamically adjusted based on ongoing monitoring of false positive rates and disparate impact metrics.\n\nSafeguards must include:\n1. **Mandatory Human Review:** No restriction can be imposed without a judge\u2019s explicit, reasoned justification that considers the algorithmic score alongside other evidence.\n2. **Continuous Auditing:** Regular checks for calibration drift, demographic disparities, and feedback loop effects.\n3. **Reversible Evaluation Design:** Implement a \"shadow mode\" or randomized controlled trial structure where the system\u2019s recommendations are logged but not acted upon for a subset of cases. This allows for the measurement of counterfactual outcomes and the isolation of the model\u2019s impact from other variables. If the evaluation shows that the model\u2019s recommendations do not improve public safety outcomes or increase disparate harm, the deployment must be immediately halted and the model retrained or discarded.\n4. **Right to Contest:** Defendants must have access to the model\u2019s logic and the ability to challenge its use in their specific case.\n\nThis approach respects due process, acknowledges the limits of prediction, and mitigates the harms of automation while potentially aiding resource allocation.",
+      "retry_usage": {
+        "prompt_tokens": 806,
+        "total_tokens": 1385,
+        "completion_tokens": 579,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 11.5276,
+      "score_retry": 14,
+      "retry_grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    },
+    {
+      "task": "physics_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}",
+      "grade_details": {
+        "expected_energy_kwh": 0.84,
+        "expected_cost_usd": 0.2352,
+        "expected_heat_watts": 240.0,
+        "expected_amps_at_240v": 1.0,
+        "parsed": true,
+        "energy_kwh": true,
+        "cost_usd": true,
+        "heat_watts": true,
+        "amps_at_240v": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}",
+      "usage": {
+        "prompt_tokens": 152,
+        "total_tokens": 211,
+        "completion_tokens": 59,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.2035
+    },
+    {
+      "task": "optimization_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}",
+      "grade_details": {
+        "expected_choice": "bravo",
+        "expected_quality": 91,
+        "expected_memory_left_gib": 8,
+        "expected_alpha_fits": false,
+        "parsed": true,
+        "choice": true,
+        "quality": true,
+        "memory_left_gib": true,
+        "alpha_fits": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}",
+      "usage": {
+        "prompt_tokens": 182,
+        "total_tokens": 223,
+        "completion_tokens": 41,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 0.9582
+    },
+    {
+      "task": "causal_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"Temperature\",\n  \"adjust_for\": [\n    \"Temperature\"\n  ],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}",
+      "grade_details": {
+        "parsed": true,
+        "relationship": true,
+        "confounder": true,
+        "adjust_for": true,
+        "ice_cream_causes_drowning": true,
+        "banning_ice_cream_helps": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"Temperature\",\n  \"adjust_for\": [\n    \"Temperature\"\n  ],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}",
+      "usage": {
+        "prompt_tokens": 221,
+        "total_tokens": 284,
+        "completion_tokens": 63,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.3359
+    },
+    {
+      "task": "sizing_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 12000,
+      "response": "{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1.0,\n  \"kv_gib_at_131072\": 16.0\n}",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 131072,
+        "expected_kv_gib_at_8192": 1.0,
+        "expected_kv_gib_at_131072": 16.0,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "kv_gib_at_8192": true,
+        "kv_gib_at_131072": true,
+        "cached_k_only": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1.0,\n  \"kv_gib_at_131072\": 16.0\n}",
+      "usage": {
+        "prompt_tokens": 199,
+        "total_tokens": 257,
+        "completion_tokens": 58,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.1766
+    },
+    {
+      "task": "physics_medium",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 12000,
+      "response": "{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 64.6\n}",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": true,
+        "gave_rise_not_temperature": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252.0,\n  \"power_for_85c_limit_w\": 225.0,\n  \"junction_after_one_tau_c\": 64.6\n}",
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 331,
+        "completion_tokens": 65,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.3643
+    },
+    {
+      "task": "optimization_medium",
+      "score": 12,
+      "max_score": 16,
+      "max_tokens": 12000,
+      "response": "{\n  \"selection\": [\n    \"borealis\",\n    \"cinder\"\n  ],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 119\n}",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": false,
+        "reported_greedy_as_optimal": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"selection\": [\n    \"borealis\",\n    \"cinder\"\n  ],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 119\n}",
+      "usage": {
+        "prompt_tokens": 261,
+        "total_tokens": 325,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.2612,
+      "score_first": 12,
+      "retry_feedback": "failed checks: greedy_total, reported_greedy_as_optimal",
+      "raw_retry_response": "{\n  \"selection\": [\n    \"borealis\",\n    \"cinder\"\n  ],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 120\n}",
+      "retry_response": "{\n  \"selection\": [\n    \"borealis\",\n    \"cinder\"\n  ],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 120\n}",
+      "retry_usage": {
+        "prompt_tokens": 387,
+        "total_tokens": 451,
+        "completion_tokens": 64,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.3637,
+      "score_retry": 12,
+      "retry_grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": false,
+        "reported_greedy_as_optimal": false
+      }
+    },
+    {
+      "task": "causal_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 12000,
+      "response": "{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": true,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}",
+      "usage": {
+        "prompt_tokens": 264,
+        "total_tokens": 322,
+        "completion_tokens": 58,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.2567
+    },
+    {
+      "task": "sizing_medium",
+      "score": 0,
+      "max_score": 18,
+      "max_tokens": 12000,
+      "response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"gib_per_sequence_at_32768\": 0.515625,\n  \"total_gib_at_32768\": 26.5625,\n  \"max_context_per_sequence\": 163840\n}",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": false,
+        "gib_per_sequence_at_32768": false,
+        "total_gib_at_32768": false,
+        "max_context_per_sequence": false,
+        "forgot_four_sequences": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"gib_per_sequence_at_32768\": 0.515625,\n  \"total_gib_at_32768\": 26.5625,\n  \"max_context_per_sequence\": 163840\n}",
+      "usage": {
+        "prompt_tokens": 286,
+        "total_tokens": 368,
+        "completion_tokens": 82,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.6535,
+      "score_first": 0,
+      "retry_feedback": "failed checks: forgot_four_sequences, gib_per_sequence_at_32768, kv_bytes_per_token, max_context_per_sequence, total_gib_at_32768",
+      "raw_retry_response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"gib_per_sequence_at_32768\": 0.515625,\n  \"total_gib_at_32768\": 26.5625,\n  \"max_context_per_sequence\": 163840\n}",
+      "retry_response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"gib_per_sequence_at_32768\": 0.515625,\n  \"total_gib_at_32768\": 26.5625,\n  \"max_context_per_sequence\": 163840\n}",
+      "retry_usage": {
+        "prompt_tokens": 455,
+        "total_tokens": 537,
+        "completion_tokens": 82,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.5848,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": false,
+        "gib_per_sequence_at_32768": false,
+        "total_gib_at_32768": false,
+        "max_context_per_sequence": false,
+        "forgot_four_sequences": false
+      }
+    },
+    {
+      "task": "physics_hard",
+      "score": 12,
+      "max_score": 20,
+      "max_tokens": 12000,
+      "response": "{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 10.39,\n  \"sustainable_power_w\": 260.71\n}",
+      "grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": false,
+        "sustainable_power_w": true,
+        "used_tau_from_ambient": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 10.39,\n  \"sustainable_power_w\": 260.71\n}",
+      "usage": {
+        "prompt_tokens": 289,
+        "total_tokens": 363,
+        "completion_tokens": 74,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.6671,
+      "score_first": 12,
+      "retry_feedback": "failed checks: seconds_to_95c, used_tau_from_ambient",
+      "raw_retry_response": "{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 10.39,\n  \"sustainable_power_w\": 260.71\n}",
+      "retry_response": "{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 10.39,\n  \"sustainable_power_w\": 260.71\n}",
+      "retry_usage": {
+        "prompt_tokens": 427,
+        "total_tokens": 501,
+        "completion_tokens": 74,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.4771,
+      "score_retry": 12,
+      "retry_grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": false,
+        "sustainable_power_w": true,
+        "used_tau_from_ambient": false
+      }
+    },
+    {
+      "task": "optimization_hard",
+      "score": 0,
+      "max_score": 22,
+      "max_tokens": 12000,
+      "response": "{\n  \"selection\": [\n    \"atlas\",\n    \"borealis\"\n  ],\n  \"total_value\": 127,\n  \"total_size_gib\": 117,\n  \"total_bandwidth\": 260,\n  \"bandwidth_binds\": false\n}",
+      "grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": false,
+        "total_value": false,
+        "total_size_gib": false,
+        "total_bandwidth": false,
+        "bandwidth_binds": false,
+        "ignored_bandwidth": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"selection\": [\n    \"atlas\",\n    \"borealis\"\n  ],\n  \"total_value\": 127,\n  \"total_size_gib\": 117,\n  \"total_bandwidth\": 260,\n  \"bandwidth_binds\": false\n}",
+      "usage": {
+        "prompt_tokens": 298,
+        "total_tokens": 369,
+        "completion_tokens": 71,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.4009,
+      "score_first": 0,
+      "retry_feedback": "failed checks: bandwidth_binds, ignored_bandwidth, selection, total_bandwidth, total_size_gib, total_value",
+      "raw_retry_response": "{\n  \"selection\": [\n    \"atlas\",\n    \"cinder\"\n  ],\n  \"total_value\": 127,\n  \"total_size_gib\": 117,\n  \"total_bandwidth\": 250,\n  \"bandwidth_binds\": false\n}",
+      "retry_response": "{\n  \"selection\": [\n    \"atlas\",\n    \"cinder\"\n  ],\n  \"total_value\": 127,\n  \"total_size_gib\": 117,\n  \"total_bandwidth\": 250,\n  \"bandwidth_binds\": false\n}",
+      "retry_usage": {
+        "prompt_tokens": 442,
+        "total_tokens": 512,
+        "completion_tokens": 70,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.4259,
+      "score_retry": 0,
+      "retry_grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": false,
+        "total_value": false,
+        "total_size_gib": false,
+        "total_bandwidth": false,
+        "bandwidth_binds": false,
+        "ignored_bandwidth": false
+      }
+    },
+    {
+      "task": "causal_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 12000,
+      "response": "{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}",
+      "grade_details": {
+        "parsed": true,
+        "backdoor_identifiable": true,
+        "frontdoor_identifiable": true,
+        "frontdoor_mediator": true,
+        "adjust_for_m_directly": true,
+        "effect_identifiable": true,
+        "said_unidentifiable": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}",
+      "usage": {
+        "prompt_tokens": 302,
+        "total_tokens": 357,
+        "completion_tokens": 55,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.166
+    },
+    {
+      "task": "sizing_hard",
+      "score": 3,
+      "max_score": 16,
+      "max_tokens": 12000,
+      "response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"kv_gib_at_262144\": 4.25,\n  \"max_context_tokens_in_25gib\": 1540160,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": false,
+        "gib_at_262144": false,
+        "max_context": false,
+        "fits": true,
+        "counted_all_48_layers": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"kv_gib_at_262144\": 4.25,\n  \"max_context_tokens_in_25gib\": 1540160,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+      "usage": {
+        "prompt_tokens": 366,
+        "total_tokens": 456,
+        "completion_tokens": 90,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.8951,
+      "score_first": 3,
+      "retry_feedback": "failed checks: bytes_per_token, counted_all_48_layers, gib_at_262144, max_context",
+      "raw_retry_response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"kv_gib_at_262144\": 4.25,\n  \"max_context_tokens_in_25gib\": 1540160,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+      "retry_response": "{\n  \"kv_bytes_per_token\": 17408,\n  \"kv_gib_at_262144\": 4.25,\n  \"max_context_tokens_in_25gib\": 1540160,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}",
+      "retry_usage": {
+        "prompt_tokens": 531,
+        "total_tokens": 621,
+        "completion_tokens": 90,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.7332,
+      "score_retry": 3,
+      "retry_grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": false,
+        "gib_at_262144": false,
+        "max_context": false,
+        "fits": true,
+        "counted_all_48_layers": false
+      }
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 20,
+  "planned_tasks": [
+    "logic_grid",
+    "causal_inference",
+    "bayesian_reasoning",
+    "hypothesis_discrimination",
+    "adversarial_epistemology",
+    "value_of_information",
+    "wason_selection",
+    "complex_policy_reasoning",
+    "physics_easy",
+    "optimization_easy",
+    "causal_easy",
+    "sizing_easy",
+    "physics_medium",
+    "optimization_medium",
+    "causal_medium",
+    "sizing_medium",
+    "physics_hard",
+    "optimization_hard",
+    "causal_hard",
+    "sizing_hard"
+  ]
+}

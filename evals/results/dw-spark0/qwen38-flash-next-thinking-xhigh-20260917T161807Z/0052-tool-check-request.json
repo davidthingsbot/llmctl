@@ -1,0 +1,59 @@
+{
+  "model": "qwen38-flash-next-tp2",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Use get_weather to check the current weather in Seattle."
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "refusal": null,
+      "annotations": null,
+      "audio": null,
+      "function_call": null,
+      "tool_calls": [
+        {
+          "id": "chatcmpl-tool-80fe7b8cc3c3a2b7",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"city\": \"Seattle\"}"
+          }
+        }
+      ],
+      "reasoning": "We need to respond to user: \"Use get_weather to check the current weather in Seattle.\" Need call tool get_weather city Seattle. Then final answer likely weather. Need ensure final concise.\n"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "chatcmpl-tool-80fe7b8cc3c3a2b7",
+      "content": "{\"condition\":\"rain\",\"temperature_c\":12}"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "xhigh"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Get current weather for a city",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "city"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 21.68447171000298,
+  "response": {
+    "id": "chatcmpl-b34190f6a59d5e88",
+    "object": "chat.completion",
+    "created": 1789655816,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selection\":[\"borealis\",\"cinder\"],\"total_value\":120,\"total_size_gib\":112,\"greedy_by_value_density_total\":114}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer only JSON. Need solve knapsack. Need be careful. Items:\natlas 61 value67 density 1.09836\nborealis 56 value60 density 1.07143\ncinder 56 value60 density 1.07143\ndunlin 27 value28 density 1.03704\nember 19 value19 density 1.0\nfennec 13 value12 density 0.92308\nCapacity 112.\n\nNeed maximize total value all-or-nothing. Need selection, total value, size, greedy_by_value_density_total.\n\nLet's enumerate. Items sizes/values. Capacity 112.\n\nPossible combinations:\nAtlas 61 + Borealis 56 =117 >112. Atlas+Cinder same >. Atlas+Dunlin 27=88 value95, can add Ember19=107 value114, add Fennec13=101 value107? Let's systematically.\nAtlas + Dunlin + Ember =61+27+19=107 value67+28+19=114. Add fennec would 120 >. Atlas+Dunlin+Fennec=101 value107. Atlas+Ember+Fennec=93 value98. Atlas+Borealis no. Atlas+Cinder no. Atlas + Borealis? no. Atlas + Dunlin + Ember best with atlas maybe 114. Atlas + Dunlin + Fennec +? 61+27+13=101, can add? Ember 19 ->120 no. value107. Atlas + Ember + Fennec =93 value98. Atlas + Dunlin + Ember +? no.\n\nWithout atlas: Borealis 56 + Cinder 56 =112 value120. That's good. Borealis + Dunlin 27 + Ember19 + Fennec13 =115 >112? 56+27+19+13=115. Borealis+Dunlin+Ember=102 value60+28+19=107. Borealis+Dunlin+Fennec=96 value100. Borealis+Ember+Fennec=88 value91. Borealis+Cinder=120. Cinder+Dunlin+Ember+Fennec=56+27+19+13=115 >. Cinder+Dunlin+Ember=102 value107. Cinder+Dunlin+Fennec=96 value100. Cinder+Ember+Fennec=88 value91. Dunlin+Ember+Fennec=59 value59. Borealis+Cinder value120 size112. Is there any >120? Atlas+Dunlin+Ember=114. Borealis+Cinder=120. Maybe Borealis+Dunlin+Ember+Fennec doesn't fit by 3. Could replace? no. Total max 120.\n\nNeed greedy_by_value_density_total: repeatedly take highest value-per-GiB that still fits. Need simulate. Densities:\natlas 67/61 \u22481.09836 highest.\nTake atlas, remaining 51. Next highest among remaining that fits: borealis 56 no, cinder 56 no, dunlin 27 fits density 1.037, take dunlin, remaining 24. Next ember 19 fits density 1.0, take ember, remaining 5. Fennec 13 no. Total value 67+28+19=114. Size 107. Greedy total value 114. Need ensure if after atlas, highest density that still fits: dunlin yes. Then ember. Yes.\n\nNeed return JSON exactly keys. Selection array names value-maximising set. Could be [\"borealis\",\"cinder\"] total_value 120 total_size_gib 112 greedy_by_value_density_total 114. Need only JSON. Ensure no markdown."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 246,
+      "total_tokens": 1072,
+      "completion_tokens": 826,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 790
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

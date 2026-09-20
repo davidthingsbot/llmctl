@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 167.70941033400595,
+  "response": {
+    "id": "chatcmpl-8bfb60a73d03e965",
+    "object": "chat.completion",
+    "created": 1789613687,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  localparam ADDR_WIDTH = $clog2(DEPTH);\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  reg [ADDR_WIDTH:0] wptr_bin;\n  reg [ADDR_WIDTH:0] wptr_gray;\n  reg [ADDR_WIDTH:0] rptr_gray_w;\n  reg [ADDR_WIDTH:0] rptr_gray_sync1_w;\n  reg [ADDR_WIDTH:0] rptr_gray_sync2_w;\n  reg [ADDR_WIDTH:0] rptr_bin_w;\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wptr_bin <= 0;\n      wptr_gray <= 0;\n      rptr_gray_sync1_w <= 0;\n      rptr_gray_sync2_w <= 0;\n      rptr_bin_w <= 0;\n    end else begin\n      rptr_gray_sync1_w <= rptr_gray_w;\n      rptr_gray_sync2_w <= rptr_gray_sync1_w;\n      rptr_bin_w <= (rptr_gray_sync2_w >> 1) ^ rptr_gray_sync2_w;\n      if (winc && !wfull) begin\n        mem[wptr_bin[ADDR_WIDTH-1:0]] <= wdata;\n        wptr_bin <= wptr_bin + 1;\n        wptr_gray <= (wptr_bin >> 1) ^ wptr_bin;\n      end\n    end\n  end\n\n  assign wfull = (wptr_gray[ADDR_WIDTH-1:0] == {~rptr_gray_sync2_w[ADDR_WIDTH-1:0]});\n\n  reg [ADDR_WIDTH:0] rptr_bin;\n  reg [ADDR_WIDTH:0] rptr_gray;\n  reg [ADDR_WIDTH:0] wptr_gray_sync1_r;\n  reg [ADDR_WIDTH:0] wptr_gray_sync2_r;\n  reg [ADDR_WIDTH:0] wptr_bin_r;\n  reg [WIDTH-1:0] rdata_reg;\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rptr_bin <= 0;\n      rptr_gray <= 0;\n      wptr_gray_sync1_r <= 0;\n      wptr_gray_sync2_r <= 0;\n      wptr_bin_r <= 0;\n      rdata_reg <= 0;\n    end else begin\n      wptr_gray_sync1_r <= wptr_gray;\n      wptr_gray_sync2_r <= wptr_gray_sync1_r;\n      wptr_bin_r <= (wptr_gray_sync2_r >> 1) ^ wptr_gray_sync2_r;\n      if (rinc && !rempty) begin\n        rdata_reg <= mem[rptr_bin[ADDR_WIDTH-1:0]];\n        rptr_bin <= rptr_bin + 1;\n        rptr_gray <= (rptr_bin >> 1) ^ rptr_bin;\n      end\n    end\n  end\n\n  assign rdata = rdata_reg;\n  assign rempty = (rptr_bin[ADDR_WIDTH-1:0] == wptr_bin_r[ADDR_WIDTH-1:0]);\n  assign rptr_gray_w = rptr_gray;\n\nendmodule\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 1370,
+      "total_tokens": 2199,
+      "completion_tokens": 829,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

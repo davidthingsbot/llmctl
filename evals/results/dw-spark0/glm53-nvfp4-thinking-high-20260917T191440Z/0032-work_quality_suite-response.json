@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 77.87022075800633,
+  "response": {
+    "id": "chatcmpl-9d7965c325378c2f",
+    "object": "chat.completion",
+    "created": 1789674233,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "# Acquisition, Processing, and Frame Store \u2014 Protocol Design\n\n## 1. Separation of responsibilities\n\nThe proposal conflates four distinct operations. They are separated as follows:\n\n| Concern | Rule |\n|---|---|\n| **Acquisition + transduction** | `SCAN` captures a raw frame from a named source and applies the current shear transform. It performs **only** these two steps: no filter update, no event emission, no session control. |\n| **Filter maintenance** | Filter updates are never a side effect of `SCAN`. They occur only via an explicit configuration command, so filter state changes are deliberate, ordered, and auditable. |\n| **Storage** | The frame store is append-only and holds **both** the raw frame and its transformed counterpart, keyed by the same `frame_id`. Storing only the transformed frame is prohibited: the raw frame is required for later audit and reproducible reprocessing. |\n| **Eventing** | Reporting of deltas. Controlled solely by `EVENT_ENABLE`/`EVENT_DISABLE`; never triggered by `SCAN` or by reads. |\n\n## 2. Command boundaries\n\n- **`SCAN source`** \u2014 captures one raw frame, applies the current shear transform, stores both raw and transformed frames; returns `frame_id`. Does not update filters and does not emit events.\n- **`FILTER_UPDATE`** \u2014 the only path that changes filter state; bumps a monotonically increasing `config_version`. `SCAN` never touches filters.\n- **`SESSION_START source` / `SESSION_STOP`** \u2014 starts/stops continuous acquisition. The session is the **single owner** of the acquisition engine.\n- **`GET_FRAME frame_id, variant=RAW|TRANSFORMED`** \u2014 retrieval only. Neither variant read mutates the store, re-triggers processing, or emits events.\n- **`DOWNLOAD range`** \u2014 bulk retrieval of stored raw and transformed frames (with the config snapshots recorded with them) by id or time range. No rescan is required for audit.\n\n## 3. Frame identity\n\n`frame_id = (source_id, seq)` where `seq` is monotonic per source and never reused within a power cycle. Each stored pair records:\n\n- capture timestamp,\n- capture parameters (exposure, gain, source mode),\n- `config_version` at capture time.\n\nBecause the raw frame and the transform parameters at capture time are both retained, any transformed output is **reproducible**: an auditor can recompute or re-download results under any later configuration without touching the sensor.\n\n## 4. Continuous vs. on-demand\n\n- On-demand `SCAN` is permitted **only when no session owns the engine**. If a session is active, the device returns `ERR_BUSY` with the owner id. Captures may not be interleaved into a running session.\n- A continuous session runs the same `SCAN` step (capture + transduce + store both variants) automatically on its schedule; audit/download needs during continuous operation are met by downloading session frames, not by injecting on-demand scans.\n- `SESSION_STOP` is the only operation that releases ownership; after it returns, on-demand `SCAN` is available again.\n\n## 5. Acquisition mode vs. event reporting\n\nEvent mode is **orthogonal** to acquisition mode:\n\n- Enabling events never starts acquisition; starting a session never enables events.\n- Events are generated **only** by the session loop: with events enabled, each stored frame pair is evaluated and deltas are emitted, referencing `frame_id`. With events disabled, frames are stored silently.\n- On-demand `SCAN` and `GET_FRAME` never emit events \u2014 they are host-driven operations, not device-driven reports.\n- Consequently, event mode with no active session produces no output; event reporting requires continuous acquisition to evaluate, and never triggers it.\n\n## 6. Race avoidance\n\n- Single-owner rule on the acquisition engine (Section 4) eliminates capture-ownership races.\n- The frame store is append-only keyed by `(source_id, seq)`; there are no read-modify-write paths.\n- Both raw and transformed frames are persisted at capture time, so no consistency issue arises between transduction and later download.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "The checker failed \"scan_transduces_only\" \u2014 meaning SCAN should transduce (apply transform) only... Actually the check name suggests SCAN must transduce only \u2014 i.e., SCAN applies the transform only, not filters? Or SCAN's role is transduction only. Hmm. The original proposal: SCAN acquires frame, applies shear transform, updates filters, stores only transformed frame, emits changes. The failed check \"scan_transduces_only\" likely means the design must keep SCAN as the transducer \u2014 SCAN acquires and applies the shear transform (transduction) only, but not filter updates, not event emission, and must store raw too? Or \"scan_transduces_only\" = SCAN does only transduction (acquire + transform), nothing else.\n\nSo the corrected design: SCAN acquires a raw frame, applies the shear transform, stores both raw and transformed frames, does not update filters, does not emit events. Filters updated via separate command. Keep other sections.\n\nRewrite with SCAN = acquire + transduce (shear only), store both raw and transformed, no filter update, no events. Keep identity, session ownership, event orthogonality."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 1050,
+      "total_tokens": 2144,
+      "completion_tokens": 1094,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

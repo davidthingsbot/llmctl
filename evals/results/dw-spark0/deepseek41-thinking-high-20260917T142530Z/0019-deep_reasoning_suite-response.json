@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 40.32750846800627,
+  "response": {
+    "id": "chatcmpl-80c189f99d37829f",
+    "object": "chat.completion",
+    "created": 1789655876,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"kv_bytes_per_token\":87040,\"gib_per_sequence_at_32768\":2.65625,\"total_gib_at_32768\":35.125,\"max_context_per_sequence\":72475}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer only JSON. Need solve carefully. Need compute.\n\nWe need parse. Weights 24.5 GiB. 40 layers, every layer caches K and V. 8 key/value heads per layer, head dimension 128. KV cache quantized q8_0 costs 1.0625 bytes per element. Four concurrent sequences each own full-length cache. 1 GiB = 2^30 bytes.\n\nNeed keys:\nkv_bytes_per_token integer per token for ONE sequence.\ngib_per_sequence_at_32768 number GiB for one sequence at 32768 tokens.\ntotal_gib_at_32768 number weights plus all four sequences at 32768.\nmax_context_per_sequence integer largest per-sequence context where weights plus four sequences fits in 48 GiB round down.\n\nNeed compute.\n\nKV per token per sequence: For each layer, K and V. Number elements per token = layers * 2 * kv_heads * head_dim. = 40*2*8*128 = 40*2*1024? 8*128=1024. *2=2048 per layer? Wait per layer K+V elements = 2*8*128=2048. 40 layers = 81920 elements per token. Quantized bytes = elements * 1.0625. 81920 * 1.0625 = 81920 + 0.0625*81920. 0.0625=1/16. 81920/16=5120. Sum=87040 bytes. Integer. Check: 1.0625 = 17/16. 81920*17/16 = 5120*17? 81920/16=5120, *17=87040. Yes.\n\ngib_per_sequence_at_32768: bytes = 87040 * 32768. Compute. 87040*32768. 32768=2^15. 87040*32768 = 87040*32000? Let's compute exact. 87,040 * 32,768.\n\n87,040*32768 = 87,040*(32768). 87,040*30000=2,611,200,000? Let's do binary: 87040*32768 = 87040 << 15. 87040*32768 = 87040* (2^15). 87040*32768 = 2,852,? Compute 87,040*32,000 = 2,785,280,000. plus 87,040*768 = 66,846,720? 87,040*700=60,928,000; *68=5,918,720; sum 66,846,720. total 2,852,126,720. Let's verify with shift: 87040*32768 = 87040* (32768) yes 2,852,126,720 bytes.\n\nConvert to GiB: divide by 2^30 = 1,073,741,824. 2,852,126,720 / 1,073,741,824. Need number. 2.65625? Let's compute. 1 GiB = 1,073,741,824. 2 GiB = 2,147,483,648. Difference = 704,643,072. 0.65625 GiB = 0.65625*1,073,741,824. 0.65625 = 21/32? 0.65625 yes 21/32. 1,073,741,824/32=33,554,432; *21=704,643,072. Exactly. So 2.65625 GiB. Nice.\n\nTotal at 32768: weights 24.5 + 4*2.65625 = 24.5 + 10.625 = 35.125 GiB. Need number. 35.125.\n\nMax context per sequence: Need largest integer C such that 24.5 + 4 * (kv_bytes_per_token * C / 2^30) <= 48. Let's solve.\n\nAvailable for KV = 48 - 24.5 = 23.5 GiB. For four sequences, per sequence available = 23.5/4 = 5.875 GiB. Bytes per sequence = 5.875 * 2^30. Need C <= floor( bytes / kv_bytes_per_token ).\n\nkv_bytes_per_token = 87040 bytes. 5.875 GiB =? 5.875 = 47/8? 5.875 = 5 + 7/8 = 47/8. 2^30 /8 = 134,217,728. *47 = 6,308,? Compute 134,217,728*47 = 134,217,728*40=5,368,709,120; *7=939,524,096; sum=6,308,233,216 bytes. Divide by 87,040.\n\nC = floor(6,308,233,216 / 87,040). Need compute.\n\nLet's calculate. 87,040 * 72,000 = 87,040*72 *1000. 87,040*72 = 87,040*70=6,092,800; *2=174,080; sum=6,266,880; *1000=6,266,880,000. Difference = 41,353,216. Divide by 87,040 \u2248 475.0? 87,040*475 = 87,040*(500-25)=43,520,000 - 2,176,000 = 41,344,000. Difference 9,216. So 72,475 remainder 9,216. Thus floor 72,475. Check if 72,476 would exceed by 87,040-9,216=77,824. So max 72,475.\n\nNeed ensure total fits exactly? At C=72475, KV per seq bytes = 87040*72475. Compute maybe. Total KV bytes = 4*87040*72475. Available bytes = 23.5 GiB = 25,? Let's compute 23.5*2^30 = 23.5*1,073,741,824 = 25,? 1,073,741,824*23 = 24,696,? Let's compute: 1,073,741,824*20=21,474,836,480; *3=3,221,225,472; sum=24,696,061,952. *0.5=536,870,912. total=25,232,932,864. Four seq bytes at 72475: 4*87040*72475. 87040*72475 = 87040*(72400+75)? Let's compute from above: 87,040*72,475 = 87,040*72,000 + 87,040*475 = 6,266,880,000 + 41,344,000 = 6,308,224,000. Times 4 = 25,232,896,000. Available 25,232,932,864. Difference 36,864 bytes. Fits. At 72476: per seq 6,308,311,040? Actually add 87,040 = 6,308,311,040. Times 4 = 25,233,244,160 > available by 311,296. So max 72475.\n\nNeed output JSON exactly keys. Values: kv_bytes_per_token integer 87040. gib_per_sequence_at_32768 number 2.65625. total_gib_at_32768 number 35.125. max_context_per_sequence integer 72475.\n\nNeed ensure \"number\" maybe JSON number. Return only JSON. No markdown. Use exact keys. Need maybe total_gib_at_32768 = weights plus all four sequences at 32768 = 24.5 + 4*2.65625 = 35.125. Good.\n\nLet's final."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 272,
+      "total_tokens": 2051,
+      "completion_tokens": 1779,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1732
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

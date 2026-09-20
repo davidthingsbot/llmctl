@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 7.465428000999964,
+  "response": {
+    "id": "chatcmpl-92d01de58fd978e7",
+    "object": "chat.completion",
+    "created": 1789661321,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\n\ndef attention_forward(Q, K, V):\n    \"\"\"Q, K, V are (T, d). Return (out, cache).\n    S    = Q @ K.T / sqrt(d)        (T, T)\n    P    = row-wise softmax of S    (T, T)\n    out  = P @ V                    (T, d)\n    \"\"\"\n    T, d = Q.shape\n    scale = 1.0 / np.sqrt(d)\n    S = Q @ K.T * scale\n    S_max = np.max(S, axis=1, keepdims=True)\n    E = np.exp(S - S_max)\n    P = E / np.sum(E, axis=1, keepdims=True)\n    out = P @ V\n    cache = (Q, K, V, P, scale)\n    return out, cache\n\n\ndef attention_backward(dout, cache):\n    \"\"\"dout is (T, d), the gradient of a scalar loss w.r.t. out.\n    Return (dQ, dK, dV), each the same shape as Q, K, V.\n    \"\"\"\n    Q, K, V, P, scale = cache\n    T, d = Q.shape\n\n    dV = P.T @ dout\n    dP = dout @ V.T\n\n    # Softmax Jacobian applied row-wise: dS = P * (dP - sum(dP * P, axis=1))\n    dS = P * (dP - np.sum(dP * P, axis=1, keepdims=True))\n\n    dS = dS * scale\n    dQ = dS @ K\n    dK = dS.T @ Q\n    return dQ, dK, dV\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Straightforward implementation."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 322,
+      "total_tokens": 700,
+      "completion_tokens": 378,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

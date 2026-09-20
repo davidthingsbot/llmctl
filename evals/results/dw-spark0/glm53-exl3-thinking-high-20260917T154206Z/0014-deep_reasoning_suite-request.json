@@ -1,0 +1,19 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "A transformer with standard grouped-query attention. Work out its KV cache.\n\n  - 32 layers, every layer caches both K and V.\n  - 8 key/value heads per layer, head dimension 128.\n  - KV stored in fp16: 2 bytes per element.\n  - 1 GiB = 2**30 bytes.\n\nReturn ONLY JSON with exactly these keys:\n  \"kv_bytes_per_token\"   integer\n  \"kv_gib_at_8192\"       number, GiB of KV cache at 8192 tokens\n  \"kv_gib_at_131072\"     number, GiB at 131072 tokens\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

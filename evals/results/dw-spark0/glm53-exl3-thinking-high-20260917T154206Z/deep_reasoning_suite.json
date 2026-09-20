@@ -1,0 +1,601 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "GLM-5.3-Flash-EXL3",
+  "endpoint": "http://127.0.0.1:8005/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  },
+  "score": 300,
+  "max_score": 302,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 4845,
+    "completion_tokens": 11441,
+    "total_tokens": 16286,
+    "task_seconds": 416.45,
+    "wall_seconds": 416.93,
+    "generation_tok_s": 27.47,
+    "truncated_tasks": [],
+    "retries": 1,
+    "retry_completion_tokens": 286
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"Ada\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}\n```",
+      "grade_details": {
+        "Ada": true,
+        "Ben": true,
+        "Cara": true,
+        "Dion": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"Ada\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}\n```",
+      "usage": {
+        "prompt_tokens": 152,
+        "total_tokens": 596,
+        "completion_tokens": 444,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 24.9266
+    },
+    {
+      "task": "causal_inference",
+      "score": 12,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (RDD)\",\n  \"instrument\": \"Crossing the eligibility score cutoff of 70 (score >= 70), which sharply raises the probability of participation but does not deterministically assign treatment\",\n  \"estimand\": \"Local average treatment effect (LATE) at the cutoff for compliers \u2014 i.e., the effect of participation for individuals whose enrollment status changes because of crossing the threshold\",\n  \"global_generalization\": \"No. The estimate is local to the score cutoff and to compliers; it does not automatically generalize to people far from the threshold or to always-takers/never-takers\",\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all individual characteristics) vary smoothly through the score of 70 absent treatment\",\n    \"No precise manipulation: individuals cannot exactly manipulate their score around the cutoff, so treatment status is as good as random near 70\",\n    \"Relevance/first stage: crossing the cutoff has a significant, discontinuous effect on participation (supported by the observed jump)\",\n    \"Exclusion restriction: crossing the cutoff affects employment outcomes only through program participation (no other channels)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"No other concurrent policy changes or discontinuities at the score of 70\"\n  ]\n}\n```",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": false,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (RDD)\",\n  \"instrument\": \"Crossing the eligibility score cutoff of 70 (score >= 70), which sharply raises the probability of participation but does not deterministically assign treatment\",\n  \"estimand\": \"Local average treatment effect (LATE) at the cutoff for compliers \u2014 i.e., the effect of participation for individuals whose enrollment status changes because of crossing the threshold\",\n  \"global_generalization\": \"No. The estimate is local to the score cutoff and to compliers; it does not automatically generalize to people far from the threshold or to always-takers/never-takers\",\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all individual characteristics) vary smoothly through the score of 70 absent treatment\",\n    \"No precise manipulation: individuals cannot exactly manipulate their score around the cutoff, so treatment status is as good as random near 70\",\n    \"Relevance/first stage: crossing the cutoff has a significant, discontinuous effect on participation (supported by the observed jump)\",\n    \"Exclusion restriction: crossing the cutoff affects employment outcomes only through program participation (no other channels)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"No other concurrent policy changes or discontinuities at the score of 70\"\n  ]\n}\n```",
+      "usage": {
+        "prompt_tokens": 188,
+        "total_tokens": 589,
+        "completion_tokens": 401,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 25.4495,
+      "score_first": 12,
+      "retry_feedback": "failed checks: not_global",
+      "raw_retry_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (RDD)\",\n  \"instrument\": \"Crossing the eligibility score cutoff of 70 (score >= 70), which sharply raises the probability of participation but does not deterministically assign treatment\",\n  \"estimand\": \"Local average treatment effect (LATE) at the cutoff for compliers \u2014 the effect of participation for individuals whose enrollment status changes because of crossing the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all individual characteristics) vary smoothly through the score of 70 absent treatment\",\n    \"No precise manipulation: individuals cannot exactly manipulate their score around the cutoff, so treatment status is as good as random near 70\",\n    \"Relevance/first stage: crossing the cutoff has a significant, discontinuous effect on participation (supported by the observed jump)\",\n    \"Exclusion restriction: crossing the cutoff affects employment outcomes only through program participation (no other channels)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"No other concurrent policy changes or discontinuities at the score of 70\"\n  ]\n}\n```",
+      "retry_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (RDD)\",\n  \"instrument\": \"Crossing the eligibility score cutoff of 70 (score >= 70), which sharply raises the probability of participation but does not deterministically assign treatment\",\n  \"estimand\": \"Local average treatment effect (LATE) at the cutoff for compliers \u2014 the effect of participation for individuals whose enrollment status changes because of crossing the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Continuity: potential outcomes (and all individual characteristics) vary smoothly through the score of 70 absent treatment\",\n    \"No precise manipulation: individuals cannot exactly manipulate their score around the cutoff, so treatment status is as good as random near 70\",\n    \"Relevance/first stage: crossing the cutoff has a significant, discontinuous effect on participation (supported by the observed jump)\",\n    \"Exclusion restriction: crossing the cutoff affects employment outcomes only through program participation (no other channels)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"No other concurrent policy changes or discontinuities at the score of 70\"\n  ]\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 522,
+        "total_tokens": 808,
+        "completion_tokens": 286,
+        "prompt_tokens_details": null
+      },
+      "retry_elapsed_s": 38.2745,
+      "score_retry": 14,
+      "retry_grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given disease status. In reality, repeated tests of the same type are often correlated: a false positive may stem from a factor common to both tests (e.g., cross-reacting antibodies, lab handling, assay bias, or a patient characteristic like an autoimmune condition), so a second positive result adds less new information than independence implies. The true post-two-test probability could therefore be substantially lower than 76.6%, making the independence-based calculation overconfident.\"\n}\n```",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": true,
+        "conditional_independence": true,
+        "correlated_errors": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given disease status. In reality, repeated tests of the same type are often correlated: a false positive may stem from a factor common to both tests (e.g., cross-reacting antibodies, lab handling, assay bias, or a patient characteristic like an autoimmune condition), so a second positive result adds less new information than independence implies. The true post-two-test probability could therefore be substantially lower than 76.6%, making the independence-based calculation overconfident.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 150,
+        "total_tokens": 631,
+        "completion_tokens": 481,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 25.6253
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reduces signaling in an orthogonal assay, so the effect is not specific to the original assay format, which rules out H3 (assay artifact).\",\n    \"A validated occupancy assay detects no binding of X to R, which rules out H1 (direct blockade).\",\n    \"R protein decreases after X treatment while R mRNA is unchanged, indicating post-transcriptional loss of R consistent with protein degradation rather than transcriptional downregulation.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, linking the signaling effect mechanistically to proteasome-dependent loss of R protein.\",\n    \"Together, the observations support H2: X triggers proteasome-mediated degradation of R, and the reduced signaling is a consequence of loss of R protein rather than blocked binding or assay artifact.\"\n  ],\n  \"decisive_falsifier\": \"If R degradation is genetically or pharmacologically blocked by a mechanism independent of the proteasome inhibitor used (e.g., mutating R's ubiquitination sites or depleting the responsible E3 ligase) and X still reduces signaling despite R protein remaining stable, the proteasomal degradation mechanism would be decisively undermined.\"\n}\n```",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reduces signaling in an orthogonal assay, so the effect is not specific to the original assay format, which rules out H3 (assay artifact).\",\n    \"A validated occupancy assay detects no binding of X to R, which rules out H1 (direct blockade).\",\n    \"R protein decreases after X treatment while R mRNA is unchanged, indicating post-transcriptional loss of R consistent with protein degradation rather than transcriptional downregulation.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, linking the signaling effect mechanistically to proteasome-dependent loss of R protein.\",\n    \"Together, the observations support H2: X triggers proteasome-mediated degradation of R, and the reduced signaling is a consequence of loss of R protein rather than blocked binding or assay artifact.\"\n  ],\n  \"decisive_falsifier\": \"If R degradation is genetically or pharmacologically blocked by a mechanism independent of the proteasome inhibitor used (e.g., mutating R's ubiquitination sites or depleting the responsible E3 ligase) and X still reduces signaling despite R protein remaining stable, the proteasomal degradation mechanism would be decisively undermined.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 227,
+        "total_tokens": 654,
+        "completion_tokens": 427,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 14.7767
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "Belief in the claim should remain low and should not increase much beyond the fact that an accusation existed.\n\nS1 has some evidential weight because it is authenticated and contemporaneous, but it is still only an accusation by a political rival with an obvious incentive to damage the mayor. It shows that the rival believed or alleged diversion; it does not establish transaction details or mechanism.\n\nS2 adds essentially no independent evidence because it cites only S1. S4 adds even less: the five websites cite S2 or one another, not primary material. They demonstrate circulation of the accusation, not corroboration. Their dependence structure is: S2 depends on S1, and S4 depends on S2/each other.\n\nS3 is the strongest evidence. If it is genuinely independent, complete, and accurate, its reconciled totals establish that the disputed funds were recorded as paid to named grain suppliers and that the accounting is internally consistent. This weakens the simple version of the claim\u2014that money disappeared or was secretly diverted. But S3 does not prove that the grain was actually delivered, that the quantities and quality were adequate, that no kickbacks occurred, that suppliers were independent, or that the ledger was not falsified.\n\nThe cousin evidence cuts both ways. It creates a possible conflict of interest and a possible motive for favoritism, so it keeps some suspicion alive. However, the listed price matching other suppliers that month weakens any inference of overpayment. Relationship alone is not proof of diversion.\n\nOverall, the accusation should be treated as possible but not well supported. S1 gives a slight reason for suspicion; S2 and S4 give no independent support; S3 substantially reduces the probability of simple embezzlement or disappearance of funds; the cousin fact slightly increases concern but is mitigated by the price evidence.\n\nThe highest-value next evidence would be independent primary records showing performance behind the ledger: supplier contracts, delivery receipts, warehouse and distribution records, bank/payment records, audits, and market price data\u2014especially whether the cousin\u2019s firm actually delivered grain on normal terms.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      },
+      "status": "complete",
+      "raw_response": "Belief in the claim should remain low and should not increase much beyond the fact that an accusation existed.\n\nS1 has some evidential weight because it is authenticated and contemporaneous, but it is still only an accusation by a political rival with an obvious incentive to damage the mayor. It shows that the rival believed or alleged diversion; it does not establish transaction details or mechanism.\n\nS2 adds essentially no independent evidence because it cites only S1. S4 adds even less: the five websites cite S2 or one another, not primary material. They demonstrate circulation of the accusation, not corroboration. Their dependence structure is: S2 depends on S1, and S4 depends on S2/each other.\n\nS3 is the strongest evidence. If it is genuinely independent, complete, and accurate, its reconciled totals establish that the disputed funds were recorded as paid to named grain suppliers and that the accounting is internally consistent. This weakens the simple version of the claim\u2014that money disappeared or was secretly diverted. But S3 does not prove that the grain was actually delivered, that the quantities and quality were adequate, that no kickbacks occurred, that suppliers were independent, or that the ledger was not falsified.\n\nThe cousin evidence cuts both ways. It creates a possible conflict of interest and a possible motive for favoritism, so it keeps some suspicion alive. However, the listed price matching other suppliers that month weakens any inference of overpayment. Relationship alone is not proof of diversion.\n\nOverall, the accusation should be treated as possible but not well supported. S1 gives a slight reason for suspicion; S2 and S4 give no independent support; S3 substantially reduces the probability of simple embezzlement or disappearance of funds; the cousin fact slightly increases concern but is mitigated by the price evidence.\n\nThe highest-value next evidence would be independent primary records showing performance behind the ledger: supplier contracts, delivery receipts, warehouse and distribution records, bank/payment records, audits, and market price data\u2014especially whether the cousin\u2019s firm actually delivered grain on normal terms.",
+      "usage": {
+        "prompt_tokens": 221,
+        "total_tokens": 1612,
+        "completion_tokens": 1391,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 55.6684
+    },
+    {
+      "task": "value_of_information",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase_test\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": true,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"purchase_test\"\n}",
+      "usage": {
+        "prompt_tokens": 200,
+        "total_tokens": 1429,
+        "completion_tokens": 1229,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 37.5804
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is 'If a card has a vowel on one side, then it has an even number on the other side.' A card can only falsify the rule if it shows a vowel (requiring an even number on the back) or an odd number (which must not have a vowel on the back). Card A shows a vowel, so its hidden side must be checked for an even number. Card 7 shows an odd number, so its hidden side must be checked to ensure it is not a vowel. Card D is a consonant, so the rule makes no demand about its hidden number; turning it could never falsify the rule. Card 4 shows an even number, and the rule says nothing about what must be on the other side of an even number (it does not require that even numbers have vowels), so turning it could never falsify the rule either. Therefore only A and 7 must be turned.\"\n}\n```",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is 'If a card has a vowel on one side, then it has an even number on the other side.' A card can only falsify the rule if it shows a vowel (requiring an even number on the back) or an odd number (which must not have a vowel on the back). Card A shows a vowel, so its hidden side must be checked for an even number. Card 7 shows an odd number, so its hidden side must be checked to ensure it is not a vowel. Card D is a consonant, so the rule makes no demand about its hidden number; turning it could never falsify the rule. Card 4 shows an even number, and the rule says nothing about what must be on the other side of an even number (it does not require that even numbers have vowels), so turning it could never falsify the rule either. Therefore only A and 7 must be turned.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 138,
+        "total_tokens": 361,
+        "completion_tokens": 223,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 7.1391
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "**Recommendation: Constrained, provisional use \u2014 never automatic detention or restrictive supervision on a threshold alone.**\n\n**What calibration does and does not justify.** Calibration within groups means that among people scored at a given level, the observed rate of severe offenses matches the prediction. This supports aggregate resource planning, not individualized coercion. With severe violence rare, even a well-calibrated high-risk band contains mostly people who will not offend (low positive predictive value). Treating \"high risk\" as \"will offend\" commits a base-rate error. Errors are also asymmetric: false positives impose liberty losses on innocent people; false negatives impose safety costs. Calibration says nothing about how these errors distribute across groups\u2014equal calibration can coexist with very different false-positive and false-negative rates\u2014so calibration alone cannot justify unequal burdens.\n\n**Causation versus prediction.** The model predicts observed arrest/incident patterns, not an individual's disposition. Features may correlate with policing intensity, poverty, or prior system contact rather than causal risk. Acting on predictions can also be self-fulfilling: intensive supervision increases detection, \"confirming\" the label (selective labels and feedback loops). And when features become known, defendants can adapt, distorting inputs.\n\n**Distribution shift.** Economic and social conditions will change; a model trained on historical data has no guarantee of validity under shift. This argues for treating any deployment as an experiment with monitoring, not a settled policy.\n\n**Rights and due process.** Automatically imposing restrictive supervision from a score violates basic due process: the person cannot confront the \"evidence,\" the score is opaque and probabilistic, and the state action is triggered without individualized findings. Risk scores may inform human decisions but must not determine outcomes.\n\n**Proposed design.**\n1. Use the score only as one input among several in a human decision, for the least restrictive option (e.g., voluntary services, reminders), never for pretrial detention or onerous surveillance.\n2. Deploy initially in a shadow mode, then a randomized or stepped-wedge pilot comparing score-informed decisions against current practice on both safety and liberty outcomes.\n3. Audit continuously: calibration, false-positive/false-negative rates by group, and arrest data corrected for deployment intensity (e.g., using independent data sources where possible).\n4. Monitor for feedback loops by tracking whether observed outcomes differ by supervision intensity; retrain or retire the model under distribution shift.\n5. Provide notice, an opportunity to contest the score with evidence, human review, and periodic appeal.\n\n**Stopping/revision conditions.** Suspend use if calibration degrades materially, error burdens diverge across groups without safety justification, feedback-loop evidence emerges, or liberty costs exceed demonstrated safety gains. Absent strong evidence of net benefit under audit, the default is non-deployment.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      },
+      "status": "complete",
+      "raw_response": "**Recommendation: Constrained, provisional use \u2014 never automatic detention or restrictive supervision on a threshold alone.**\n\n**What calibration does and does not justify.** Calibration within groups means that among people scored at a given level, the observed rate of severe offenses matches the prediction. This supports aggregate resource planning, not individualized coercion. With severe violence rare, even a well-calibrated high-risk band contains mostly people who will not offend (low positive predictive value). Treating \"high risk\" as \"will offend\" commits a base-rate error. Errors are also asymmetric: false positives impose liberty losses on innocent people; false negatives impose safety costs. Calibration says nothing about how these errors distribute across groups\u2014equal calibration can coexist with very different false-positive and false-negative rates\u2014so calibration alone cannot justify unequal burdens.\n\n**Causation versus prediction.** The model predicts observed arrest/incident patterns, not an individual's disposition. Features may correlate with policing intensity, poverty, or prior system contact rather than causal risk. Acting on predictions can also be self-fulfilling: intensive supervision increases detection, \"confirming\" the label (selective labels and feedback loops). And when features become known, defendants can adapt, distorting inputs.\n\n**Distribution shift.** Economic and social conditions will change; a model trained on historical data has no guarantee of validity under shift. This argues for treating any deployment as an experiment with monitoring, not a settled policy.\n\n**Rights and due process.** Automatically imposing restrictive supervision from a score violates basic due process: the person cannot confront the \"evidence,\" the score is opaque and probabilistic, and the state action is triggered without individualized findings. Risk scores may inform human decisions but must not determine outcomes.\n\n**Proposed design.**\n1. Use the score only as one input among several in a human decision, for the least restrictive option (e.g., voluntary services, reminders), never for pretrial detention or onerous surveillance.\n2. Deploy initially in a shadow mode, then a randomized or stepped-wedge pilot comparing score-informed decisions against current practice on both safety and liberty outcomes.\n3. Audit continuously: calibration, false-positive/false-negative rates by group, and arrest data corrected for deployment intensity (e.g., using independent data sources where possible).\n4. Monitor for feedback loops by tracking whether observed outcomes differ by supervision intensity; retrain or retire the model under distribution shift.\n5. Provide notice, an opportunity to contest the score with evidence, human review, and periodic appeal.\n\n**Stopping/revision conditions.** Suspend use if calibration degrades materially, error burdens diverge across groups without safety justification, feedback-loop evidence emerges, or liberty costs exceed demonstrated safety gains. Absent strong evidence of net benefit under audit, the default is non-deployment.",
+      "usage": {
+        "prompt_tokens": 204,
+        "total_tokens": 835,
+        "completion_tokens": 631,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 25.3337
+    },
+    {
+      "task": "physics_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}\n```\n\nReasoning summary:\n- **energy_kwh**: 240 W \u00d7 3.5 h = 840 Wh = 0.84 kWh (direct calculation).\n- **cost_usd**: 0.84 kWh \u00d7 0.28 USD/kWh = 0.2352 USD (direct calculation).\n- **heat_watts**: 240 W \u2014 assumes steady-state operation where all electrical power is eventually dissipated as heat in the room (standard assumption; no efficiency data given).\n- **amps_at_240v**: 240 W \u00f7 240 V = 1.0 A (direct calculation, assuming unity power factor since none was specified).",
+      "grade_details": {
+        "expected_energy_kwh": 0.84,
+        "expected_cost_usd": 0.2352,
+        "expected_heat_watts": 240.0,
+        "expected_amps_at_240v": 1.0,
+        "parsed": true,
+        "energy_kwh": true,
+        "cost_usd": true,
+        "heat_watts": true,
+        "amps_at_240v": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}\n```\n\nReasoning summary:\n- **energy_kwh**: 240 W \u00d7 3.5 h = 840 Wh = 0.84 kWh (direct calculation).\n- **cost_usd**: 0.84 kWh \u00d7 0.28 USD/kWh = 0.2352 USD (direct calculation).\n- **heat_watts**: 240 W \u2014 assumes steady-state operation where all electrical power is eventually dissipated as heat in the room (standard assumption; no efficiency data given).\n- **amps_at_240v**: 240 W \u00f7 240 V = 1.0 A (direct calculation, assuming unity power factor since none was specified).",
+      "usage": {
+        "prompt_tokens": 139,
+        "total_tokens": 390,
+        "completion_tokens": 251,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 6.802
+    },
+    {
+      "task": "optimization_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}\n```",
+      "grade_details": {
+        "expected_choice": "bravo",
+        "expected_quality": 91,
+        "expected_memory_left_gib": 8,
+        "expected_alpha_fits": false,
+        "parsed": true,
+        "choice": true,
+        "quality": true,
+        "memory_left_gib": true,
+        "alpha_fits": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}\n```",
+      "usage": {
+        "prompt_tokens": 168,
+        "total_tokens": 239,
+        "completion_tokens": 71,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 2.4571
+    },
+    {
+      "task": "causal_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}\n```",
+      "grade_details": {
+        "parsed": true,
+        "relationship": true,
+        "confounder": true,
+        "adjust_for": true,
+        "ice_cream_causes_drowning": true,
+        "banning_ice_cream_helps": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}\n```",
+      "usage": {
+        "prompt_tokens": 215,
+        "total_tokens": 278,
+        "completion_tokens": 63,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 1.7786
+    },
+    {
+      "task": "sizing_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per token per layer, K and V each store 8 heads \u00d7 128 dims = 1024 elements; at 2 bytes each that's 2048 bytes per tensor, 4096 bytes for K+V, and \u00d7 32 layers = 131072 bytes/token. At 8192 tokens: 131072 \u00d7 8192 = 2\u00b3\u2070 bytes = 1 GiB. At 131072 tokens: 131072 \u00d7 131072 = 2\u00b3\u2074 bytes = 16 GiB.",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 131072,
+        "expected_kv_gib_at_8192": 1.0,
+        "expected_kv_gib_at_131072": 16.0,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "kv_gib_at_8192": true,
+        "kv_gib_at_131072": true,
+        "cached_k_only": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per token per layer, K and V each store 8 heads \u00d7 128 dims = 1024 elements; at 2 bytes each that's 2048 bytes per tensor, 4096 bytes for K+V, and \u00d7 32 layers = 131072 bytes/token. At 8192 tokens: 131072 \u00d7 8192 = 2\u00b3\u2070 bytes = 1 GiB. At 131072 tokens: 131072 \u00d7 131072 = 2\u00b3\u2074 bytes = 16 GiB.",
+      "usage": {
+        "prompt_tokens": 177,
+        "total_tokens": 450,
+        "completion_tokens": 273,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 6.4275
+    },
+    {
+      "task": "physics_medium",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.48\n}\n```",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": true,
+        "gave_rise_not_temperature": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.48\n}\n```",
+      "usage": {
+        "prompt_tokens": 245,
+        "total_tokens": 434,
+        "completion_tokens": 189,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 4.6603
+    },
+    {
+      "task": "optimization_medium",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}",
+      "usage": {
+        "prompt_tokens": 239,
+        "total_tokens": 874,
+        "completion_tokens": 635,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 19.1813
+    },
+    {
+      "task": "causal_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```\n\nReasoning summary:\n- **Adjustment set {C}**: The only backdoor path from T to Y is T \u2190 C \u2192 Y, so C must be adjusted for. M is a mediator (part of the total effect) and Z is a collider, so neither may be included; {C} is minimal and sufficient.\n- **Conditioning on M**: M lies on the causal path T \u2192 M \u2192 Y, so conditioning on it blocks this path, leaving only the direct effect T \u2192 Y.\n- **Z is a collider**: Z has two incoming arrows (T \u2192 Z \u2190 Y), so it is a collider.\n- **Conditioning on Z introduces bias**: Conditioning on the collider Z opens the non-causal path T \u2192 Z \u2190 Y, inducing spurious association between T and Y.\n- **I is a valid instrument**: I affects Y only through T (I \u2192 T), has no direct path to Y, and shares no common cause with Y (C affects T and Y but not I).",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": true,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```\n\nReasoning summary:\n- **Adjustment set {C}**: The only backdoor path from T to Y is T \u2190 C \u2192 Y, so C must be adjusted for. M is a mediator (part of the total effect) and Z is a collider, so neither may be included; {C} is minimal and sufficient.\n- **Conditioning on M**: M lies on the causal path T \u2192 M \u2192 Y, so conditioning on it blocks this path, leaving only the direct effect T \u2192 Y.\n- **Z is a collider**: Z has two incoming arrows (T \u2192 Z \u2190 Y), so it is a collider.\n- **Conditioning on Z introduces bias**: Conditioning on the collider Z opens the non-causal path T \u2192 Z \u2190 Y, inducing spurious association between T and Y.\n- **I is a valid instrument**: I affects Y only through T (I \u2192 T), has no direct path to Y, and shares no common cause with Y (C affects T and Y but not I).",
+      "usage": {
+        "prompt_tokens": 256,
+        "total_tokens": 767,
+        "completion_tokens": 511,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 16.0073
+    },
+    {
+      "task": "sizing_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72450\n}\n```\n\nSupporting reasoning:\n- Per token per sequence: 40 layers \u00d7 2 (K+V) \u00d7 8 heads \u00d7 128 dims \u00d7 1.0625 B = 87,040 bytes.\n- At 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB per sequence.\n- Four sequences: 10.625 GiB; total = 24.5 + 10.625 = 35.125 GiB (fits in 48 GiB).\n- KV budget: 48 \u2212 24.5 = 23.5 GiB = 25,224,306,688 B; per sequence 6,306,076,672 B; \u00f7 87,040 = 72,450.09\u2026 \u2192 72,450 tokens (4 \u00d7 72,450 \u00d7 87,040 = 25,224,272,000 B, which fits; one more token does not).",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "gib_per_sequence_at_32768": true,
+        "total_gib_at_32768": true,
+        "max_context_per_sequence": true,
+        "forgot_four_sequences": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72450\n}\n```\n\nSupporting reasoning:\n- Per token per sequence: 40 layers \u00d7 2 (K+V) \u00d7 8 heads \u00d7 128 dims \u00d7 1.0625 B = 87,040 bytes.\n- At 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB per sequence.\n- Four sequences: 10.625 GiB; total = 24.5 + 10.625 = 35.125 GiB (fits in 48 GiB).\n- KV budget: 48 \u2212 24.5 = 23.5 GiB = 25,224,306,688 B; per sequence 6,306,076,672 B; \u00f7 87,040 = 72,450.09\u2026 \u2192 72,450 tokens (4 \u00d7 72,450 \u00d7 87,040 = 25,224,272,000 B, which fits; one more token does not).",
+      "usage": {
+        "prompt_tokens": 258,
+        "total_tokens": 1095,
+        "completion_tokens": 837,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 20.2504
+    },
+    {
+      "task": "physics_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.7\n}\n```",
+      "grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": true,
+        "sustainable_power_w": true,
+        "used_tau_from_ambient": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.7\n}\n```",
+      "usage": {
+        "prompt_tokens": 266,
+        "total_tokens": 650,
+        "completion_tokens": 384,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 9.1986
+    },
+    {
+      "task": "optimization_hard",
+      "score": 22,
+      "max_score": 22,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": true\n}\n```\n\nReasoning summary:\n- Memory alone (\u2264112 GiB) would favor borealis+cinder (size 112, value 120) or atlas+dunlin+ember (size 107, value 114) \u2014 but both have bandwidth 270 > 260, so bandwidth rules them out.\n- The best set satisfying both limits is atlas+dunlin+fennec: size 61+27+13 = 101 \u2264 112, bandwidth 120+80+55 = 255 \u2264 260, value 67+28+12 = 107. No other feasible subset exceeds this value.",
+      "grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "total_bandwidth": true,
+        "bandwidth_binds": true,
+        "ignored_bandwidth": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": true\n}\n```\n\nReasoning summary:\n- Memory alone (\u2264112 GiB) would favor borealis+cinder (size 112, value 120) or atlas+dunlin+ember (size 107, value 114) \u2014 but both have bandwidth 270 > 260, so bandwidth rules them out.\n- The best set satisfying both limits is atlas+dunlin+fennec: size 61+27+13 = 101 \u2264 112, bandwidth 120+80+55 = 255 \u2264 260, value 67+28+12 = 107. No other feasible subset exceeds this value.",
+      "usage": {
+        "prompt_tokens": 263,
+        "total_tokens": 1864,
+        "completion_tokens": 1601,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 42.8433
+    },
+    {
+      "task": "causal_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```\n\nReasoning summary:\n\n- **Backdoor**: The only backdoor path from T to Y is T \u2190 U \u2192 Y, and U is unobservable. No set of observed variables blocks it (conditioning on M does not help, since M is not on that path), so no backdoor adjustment set exists among {T, M, Y}.\n- **Front-door**: M satisfies all three conditions: (1) M intercepts the only directed path T \u2192 M \u2192 Y; (2) all backdoor paths from T to M (T \u2190 U \u2192 Y \u2190 M) are blocked because Y is a collider; (3) all backdoor paths from M to Y (M \u2190 T \u2190 U \u2192 Y) are blocked by conditioning on T. Hence the effect is front-door identifiable with mediator M.\n- **Conditioning on M directly**: This blocks the causal path T \u2192 M \u2192 Y, leaving only the spurious association through T \u2190 U \u2192 Y, so the resulting T\u2013Y association is biased, not the causal effect.\n- **Overall identifiability**: The front-door formula recovers the causal effect of T on Y from observed data, so the effect is identifiable.",
+      "grade_details": {
+        "parsed": true,
+        "backdoor_identifiable": true,
+        "frontdoor_identifiable": true,
+        "frontdoor_mediator": true,
+        "adjust_for_m_directly": true,
+        "effect_identifiable": true,
+        "said_unidentifiable": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```\n\nReasoning summary:\n\n- **Backdoor**: The only backdoor path from T to Y is T \u2190 U \u2192 Y, and U is unobservable. No set of observed variables blocks it (conditioning on M does not help, since M is not on that path), so no backdoor adjustment set exists among {T, M, Y}.\n- **Front-door**: M satisfies all three conditions: (1) M intercepts the only directed path T \u2192 M \u2192 Y; (2) all backdoor paths from T to M (T \u2190 U \u2192 Y \u2190 M) are blocked because Y is a collider; (3) all backdoor paths from M to Y (M \u2190 T \u2190 U \u2192 Y) are blocked by conditioning on T. Hence the effect is front-door identifiable with mediator M.\n- **Conditioning on M directly**: This blocks the causal path T \u2192 M \u2192 Y, leaving only the spurious association through T \u2190 U \u2192 Y, so the resulting T\u2013Y association is biased, not the causal effect.\n- **Overall identifiability**: The front-door formula recovers the causal effect of T on Y from observed data, so the effect is identifiable.",
+      "usage": {
+        "prompt_tokens": 293,
+        "total_tokens": 855,
+        "completion_tokens": 562,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 17.6477
+    },
+    {
+      "task": "sizing_hard",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": true,
+        "gib_at_262144": true,
+        "max_context": true,
+        "fits": true,
+        "counted_all_48_layers": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "usage": {
+        "prompt_tokens": 324,
+        "total_tokens": 875,
+        "completion_tokens": 551,
+        "prompt_tokens_details": null
+      },
+      "elapsed_s": 14.4205
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 20,
+  "planned_tasks": [
+    "logic_grid",
+    "causal_inference",
+    "bayesian_reasoning",
+    "hypothesis_discrimination",
+    "adversarial_epistemology",
+    "value_of_information",
+    "wason_selection",
+    "complex_policy_reasoning",
+    "physics_easy",
+    "optimization_easy",
+    "causal_easy",
+    "sizing_easy",
+    "physics_medium",
+    "optimization_medium",
+    "causal_medium",
+    "sizing_medium",
+    "physics_hard",
+    "optimization_hard",
+    "causal_hard",
+    "sizing_hard"
+  ]
+}

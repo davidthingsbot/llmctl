@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 17.633743614991545,
+  "response": {
+    "id": "chatcmpl-b44bcd3ae85c6b2e",
+    "object": "chat.completion",
+    "created": 1789660716,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```\n\nReasoning summary:\n\n- **Backdoor**: The only backdoor path from T to Y is T \u2190 U \u2192 Y, and U is unobservable. No set of observed variables blocks it (conditioning on M does not help, since M is not on that path), so no backdoor adjustment set exists among {T, M, Y}.\n- **Front-door**: M satisfies all three conditions: (1) M intercepts the only directed path T \u2192 M \u2192 Y; (2) all backdoor paths from T to M (T \u2190 U \u2192 Y \u2190 M) are blocked because Y is a collider; (3) all backdoor paths from M to Y (M \u2190 T \u2190 U \u2192 Y) are blocked by conditioning on T. Hence the effect is front-door identifiable with mediator M.\n- **Conditioning on M directly**: This blocks the causal path T \u2192 M \u2192 Y, leaving only the spurious association through T \u2190 U \u2192 Y, so the resulting T\u2013Y association is biased, not the causal effect.\n- **Overall identifiability**: The front-door formula recovers the causal effect of T on Y from observed data, so the effect is identifiable.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Classic front-door: T -> M -> Y, unobserved confounder U affects T and Y. Backdoor: no observed adjustment set (U unobserved; conditioning on M doesn't block U->Y path... backdoor paths T <- U -> Y). So backdoor false. Front-door: M satisfies: T->M fully mediates, no unblocked backdoor T->M (T <- U -> Y? path T <- U -> Y, M not on it; but front-door condition 1: M intercepts all directed paths T to Y \u2014 yes. Condition 2: no unblocked backdoor paths from T to M \u2014 paths T <- U -> Y <- M? Y is a collider on U->Y<-M, so blocked. So yes. Condition 3: all backdoor paths from M to Y blocked by T: M <- T <- U -> Y \u2014 conditioning on T blocks. Yes. Front-door identifiable true, mediator M.\n\nadjust_for_m_directly: conditioning on M \u2014 M is a collider? Path T -> M <- ... no, M has only parent T. Conditioning on M blocks the mediated path, leaving only backdoor association T <- U -> Y, which is biased (spurious). So \"biased\".\n\neffect_identifiable: true via front-door."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 293,
+      "total_tokens": 855,
+      "completion_tokens": 562,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

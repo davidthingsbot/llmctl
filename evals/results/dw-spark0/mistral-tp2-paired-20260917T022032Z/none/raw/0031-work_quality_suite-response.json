@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 103.77438716699544,
+  "response": {
+    "id": "chatcmpl-9fc8743ada78f35d",
+    "object": "chat.completion",
+    "created": 1789612109,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "**Replacement Design:**\n\n1. **Commands:**\n   - `ACQUIRE_START`: Begins continuous acquisition. Generates raw frames with unique IDs.\n   - `ACQUIRE_STOP`: Ends continuous acquisition.\n   - `ACQUIRE_SINGLE`: Triggers a single raw frame acquisition (on-demand).\n   - `TRANSFORM_SET <params>`: Sets shear transform for future processing.\n   - `PROCESS <frame_id>`: Applies current transform to specified raw frame, updates filters, stores transformed frame.\n   - `EVENT_ENABLE <0/1>`: Toggles event reporting.\n\n2. **Responsibilities:**\n   - **Acquisition Module:**\n     - Owns sensor. On `ACQUIRE_START`/`ACQUIRE_SINGLE`, captures raw frame, assigns unique ID, stores raw frame + metadata (ID, timestamp, source). Emits `RAW_FRAME <id>`.\n   - **Transform Module:**\n     - Owns shear parameters. `TRANSFORM_SET` updates current params.\n   - **Processing Module:**\n     - On `PROCESS <id>`, retrieves raw frame, applies current transform, updates filters, stores transformed frame with same ID. Emits `TRANSFORMED_FRAME <id>`.\n   - **Event Module:**\n     - If enabled, subscribes to `TRANSFORMED_FRAME`. Emits `EVENT` on filter changes.\n\n3. **Frame Identity:**\n   - Raw frames: `frame_id`, `timestamp`, `source` (continuous/on-demand).\n   - Transformed frames: `frame_id`, `transform_params_used`.\n\n4. **Behavior:**\n   - Continuous: `ACQUIRE_START` \u2192 repeated `RAW_FRAME` \u2192 `PROCESS` (manual/auto) \u2192 `TRANSFORMED_FRAME` \u2192 event reporting (if enabled).\n   - On-demand: `ACQUIRE_SINGLE` \u2192 `RAW_FRAME` \u2192 `PROCESS` \u2192 `TRANSFORMED_FRAME` \u2192 event reporting (if enabled).\n   - `PROCESS` can be called at any time on stored raw frames (no rescanning).\n\n5. **Audit/Download:**\n   - Raw and transformed frames stored separately. Transformed frames can be regenerated from raw frames + `transform_params_used`.\n\n6. **Race Avoidance:**\n   - Acquisition only produces raw frames. Processing is explicit and non-overlapping. Event reporting depends solely on transformed frames.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 773,
+      "total_tokens": 1286,
+      "completion_tokens": 513,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

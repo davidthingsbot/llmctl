@@ -1,0 +1,503 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "qwen3.8-27b-fp8",
+  "endpoint": "http://127.0.0.1:19449/v1/chat/completions",
+  "status": "complete",
+  "score": 27,
+  "max_score": 28,
+  "tasks": [
+    {
+      "id": "hard_v2_reconciliation",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_reconciliation.png",
+      "question": "Reconcile the document using its displayed rules. Return JSON: released_good_units (integer), released_value_cents (integer), held_ids (ordered list of strings), largest_value_id (string).",
+      "expected": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      },
+      "image_sha256": "9d3246b06f1bd0454652c09f34e1d388c6f97db04d28aeb1e22c7c7bdd971991",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-82b0e3649dd063de",
+        "object": "chat.completion",
+        "created": 1789856267,
+        "model": "qwen3.8-27b-fp8",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "\n\n{\n  \"released_good_units\": 152,\n  \"released_value_cents\": 25285,\n  \"held_ids\": [\"E55\", \"F66\"],\n  \"largest_value_id\": \"B22\"\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "The user wants me to reconcile a dispatch ledger by applying amendments in order, then compute released good units, released value in cents, held IDs in original row order, and the largest value released line ID.\n\nLet me start with the original document:\n\nA11: qty=48, rejects=3, cents=125, state=RELEASE\nB22: qty=35, rejects=2, cents=240, state=HOLD\nC33: qty=60, rejects=5, cents=80, state=RELEASE\nD44: qty=24, rejects=1, cents=350, state=RELEASE\nE55: qty=40, rejects=4, cents=150, state=HOLD\nF66: qty=32, rejects=2, cents=200, state=RELEASE\n\nNow apply amendments in order:\n\n1. A11 qty ADD -6: qty = 48 + (-6) = 42\n2. C33 rejects SET 8: rejects = 8\n3. B22 state SET RELEASE: state = RELEASE\n4. D44 cents SET 320: cents = 320\n5. A11 rejects SET 1: rejects = 1\n6. F66 state SET HOLD: state = HOLD\n7. E55 qty ADD 5: qty = 40 + 5 = 45\n8. B22 qty SET 38: qty = 38\n\nNow final states:\n\nA11: qty=42, rejects=1, cents=125, state=RELEASE\nB22: qty=38, rejects=2, cents=240, state=RELEASE\nC33: qty=60, rejects=8, cents=80, state=RELEASE\nD44: qty=24, rejects=1, cents=320, state=RELEASE\nE55: qty=45, rejects=4, cents=150, state=HOLD\nF66: qty=32, rejects=2, cents=200, state=HOLD\n\nGood units = qty - rejects.\n\nReleased lines: A11, B22, C33, D44.\n\nA11 good = 42 - 1 = 41; value = 41 * 125 = 5125\nB22 good = 38 - 2 = 36; value = 36 * 240 = 8640\nC33 good = 60 - 8 = 52; value = 52 * 80 = 4160\nD44 good = 24 - 1 = 23; value = 23 * 320 = 7360\n\nTotal released good units = 41 + 36 + 52 + 23 = 152\nTotal released value = 5125 + 8640 + 4160 + 7360 = let's sum: 5125+8640=13765; +4160=17925; +7360=25285.\n\nHeld IDs in original row order: E55, F66.\n\nLargest value released line: B22 (8640) is largest. Compare: 5125, 8640, 4160, 7360 -> max 8640 = B22.\n\nThus largest_value_id = \"B22\".\n\nNow produce JSON.\n\nDouble check arithmetic:\nA11: 41*125 = 41*100 + 41*25 = 4100 + 1025 = 5125. ok.\nB22: 36*240 = 36*24*10 = 864*10 = 8640. ok.\nC33: 52*80 = 4160. ok.\nD44: 23*320 = 23*32*10 = 736*10 = 7360. ok.\nSum: 5125+8640=13765; 13765+4160=17925; 17925+7360=25285. ok.\nUnits: 41+36=77; +52=129; +23=152. ok.\n\nHeld order original: E55 then F66. ok.\n\nReturn JSON only.\n"
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.0-tp2-f4ccb2bb",
+        "usage": {
+          "prompt_tokens": 1719,
+          "total_tokens": 2870,
+          "completion_tokens": 1151,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1089
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 15.04,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "released_good_units": true,
+        "released_value_cents": true,
+        "held_ids": true,
+        "largest_value_id": true
+      },
+      "parsed": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      }
+    },
+    {
+      "id": "hard_v2_crossing_plot",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_crossing_plot.png",
+      "question": "Apply the plot selection rule and calculate the requested quantities. Return JSON: start_minute (integer), end_minute (integer), crossing_second (integer), right_gap (integer), c_area_unit_seconds (integer).",
+      "expected": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      },
+      "image_sha256": "5af575453f243c5999096c5286ecf6ff748540646d75e3c1cdba0d123e03c11a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-85e9ca13cc721f1e",
+        "object": "chat.completion",
+        "created": 1789856282,
+        "model": "qwen3.8-27b-fp8",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "\n\n{\n  \"start_minute\": 1,\n  \"end_minute\": 2,\n  \"crossing_second\": 70,\n  \"right_gap\": 25,\n  \"c_area_unit_seconds\": 1950\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "The user wants me to read values from a chart, apply a selection rule, and compute several quantities. Let me carefully extract the data points from the chart for each channel (A: circle, B: square, C: triangle) at integer minutes 0-8.\n\nLet me read the values:\n\nMinute 0: A=20, B=50, C=15\nMinute 1: A=40, B=45, C=25\nMinute 2: A=60, B=35, C=40\nMinute 3: A=35, B=55, C=30\nMinute 4: A=65, B=40, C=45\nMinute 5: A=45, B=60, C=35\nMinute 6: A=70, B=50, C=55\nMinute 7: A=40, B=65, C=30\nMinute 8: A=60, B=45, C=40\n\nLet me double check against the visual. At minute 0, A circle at 20, B square at 50, C triangle at 15. Yes.\nMinute 1: A=40, B=45, C=25. Yes.\nMinute 2: A=60, B=35, C=40. Yes.\nMinute 3: A=35, B=55, C=30. Yes.\nMinute 4: A=65, B=40, C=45. Yes.\nMinute 5: A=45, B=60, C=35. Yes.\nMinute 6: A=70, B=50, C=55. Yes.\nMinute 7: A=40, B=65, C=30. Yes.\nMinute 8: A=60, B=45, C=40. Yes.\n\nNow selection rule: candidate intervals are adjacent integer-minute samples [i, i+1]. Conditions:\n1. A strictly below B at left endpoint (i): A[i] < B[i].\n2. A strictly above B at right endpoint (i+1): A[i+1] > B[i+1].\n3. C at most 40 at BOTH endpoints: C[i] <= 40 and C[i+1] <= 40.\n4. A increases by at least 20 across interval: A[i+1] - A[i] >= 20.\n\nThen choose candidate with largest right-end (A - B); break ties by earliest start.\n\nLet me evaluate each interval i=0..7.\n\nInterval [0,1]: A[0]=20 < B[0]=50 yes. A[1]=40 > B[1]=45? No (40<45). Fail.\n\nInterval [1,2]: A[1]=40 < B[1]=45 yes. A[2]=60 > B[2]=35 yes. C[1]=25<=40 yes, C[2]=40<=40 yes. A increase: 60-40=20 >=20 yes. Candidate! Right-end A-B = 60-35=25.\n\nInterval [2,3]: A[2]=60 < B[2]=35? No. Fail.\n\nInterval [3,4]: A[3]=35 < B[3]=55 yes. A[4]=65 > B[4]=40 yes. C[3]=30<=40 yes, C[4]=45<=40? No (45>40). Fail.\n\nInterval [4,5]: A[4]=65 < B[4]=40? No. Fail.\n\nInterval [5,6]: A[5]=45 < B[5]=60 yes. A[6]=70 > B[6]=50 yes. C[5]=35<=40 yes, C[6]=55<=40? No. Fail.\n\nInterval [6,7]: A[6]=70 < B[6]=50? No. Fail.\n\nInterval [7,8]: A[7]=40 < B[7]=65 yes. A[8]=60 > B[8]=45 yes. C[7]=30<=40 yes, C[8]=40<=40 yes. A increase: 60-40=20 >=20 yes. Candidate! Right-end A-B = 60-45=15.\n\nSo candidates: [1,2] with right gap 25, and [7,8] with right gap 15. Largest right-end A-B is 25, so choose [1,2].\n\nThus start_minute=1, end_minute=2.\n\nCrossing time: seconds since minute 0 where A crosses B within the chosen interval [1,2]. At minute 1, A=40, B=45 (A below). At minute 2, A=60, B=35 (A above). Linear interpolation. A(t) = 40 + (60-40)*(t-1) = 40 + 20*(t-1). B(t) = 45 + (35-45)*(t-1) = 45 -10*(t-1). Set equal: 40 + 20x = 45 -10x where x = t-1. 30x = 5 => x = 1/6. So t = 1 + 1/6 minutes = 1.166666... minutes. In seconds since minute 0: t*60 = (1 + 1/6)*60 = 60 + 10 = 70 seconds. So crossing_second = 70.\n\nRight gap = A - B at right endpoint = 60-35 = 25.\n\nC area: integral under C across entire chosen interval [1,2], in unit-seconds. C is linear between C[1]=25 and C[2]=40. The integral over 1 minute (60 seconds) of a linear function = average value * duration in seconds. Average = (25+40)/2 = 32.5 units. Duration = 60 seconds. So area = 32.5 * 60 = 1950 unit-seconds. So c_area_unit_seconds = 1950.\n\nLet me double check: integral of C(t) dt where t in seconds from 60 to 120. C linear from 25 to 40 over 60 s. Integral = (25+40)/2 * 60 = 32.5*60 = 1950. Yes.\n\nThus final JSON: start_minute=1, end_minute=2, crossing_second=70, right_gap=25, c_area_unit_seconds=1950.\n\nReturn only JSON.\n"
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.0-tp2-f4ccb2bb",
+        "usage": {
+          "prompt_tokens": 1720,
+          "total_tokens": 3370,
+          "completion_tokens": 1650,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": {
+            "reasoning_tokens": 1592
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 21.237,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "start_minute": true,
+        "end_minute": true,
+        "crossing_second": true,
+        "right_gap": true,
+        "c_area_unit_seconds": true
+      },
+      "parsed": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      }
+    },
+    {
+      "id": "hard_v2_logic_network",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_logic_network.png",
+      "question": "Trace and evaluate the displayed logic network. Return JSON: g1_sources (list of strings), g2_sources (list of strings), high_input_codes (list of strings), scenario_y (integer), fault_y (integer).",
+      "expected": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "0010",
+          "0101",
+          "0110",
+          "1000",
+          "1100",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      },
+      "image_sha256": "58cad0d5f34815f8d06d133c8a12ea062c8f8c9298846f6842c06d3bf1ef3ea6",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-acc1a4af2fdef80c",
+        "object": "chat.completion",
+        "created": 1789856304,
+        "model": "qwen3.8-27b-fp8",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "\n\n{\n  \"g1_sources\": [\"A\", \"C\"],\n  \"g2_sources\": [\"B\", \"D\"],\n  \"high_input_codes\": [\"2\", \"5\", \"6\", \"8\", \"12\", \"15\"],\n  \"scenario_y\": 0,\n  \"fault_y\": 1\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "The user wants me to trace a logic network from an image. Let me carefully analyze the wiring.\n\nInputs: A, B, C, D (leftmost to rightmost bits).\n\nLet me look at the coordinates and wires carefully.\n\nA is at top (~y=313). There's a dot at A's start, then a dot at around (343,313) which is a junction. From that junction, one wire goes right to G1's top input (the line at y~313 goes to G1 top input at x~950). Another wire from that junction goes down then right to G1's bottom input? Let's look. The line from (343,313) goes down to y~353 then right to G1 bottom input (x~950, y~353). Wait, G1 has two left inputs: top at y~313 and bottom at y~353. The top input line comes from A's horizontal line at y~313 (the line from A goes right to about x~800 then... hmm).\n\nLet me look more carefully at the image. A's line: dot at (143,313), line to (343,313) with a dot, then continues to (800,313). Then there's a separate segment from (343,313) down to (343,353) then right to G1 bottom input (950,353). And the top input of G1 (950,313) is connected to the line from A at y=313? The line from A at y=313 goes to x=800, but G1's left edge is at x~950. Hmm, there's a gap. Actually the line at y=313 from A goes to x~800 (end of line). Then G1 top input line is at y~313 from x~950. Are they connected? The drawing shows the A line ending at 800 and G1 top input starting at 950 at same y. That seems like a connection via the horizontal line? Possibly the line from A continues to G1 top input. Let's assume A connects to G1 top input.\n\nNow G1 bottom input (950,353): trace left. The line at y=353 goes left to x~473 then up to y~453? There's a vertical line at x~473 from y~453 to y~353. At (473,453) there's a dot connecting to C's line? C is at y~813. Hmm.\n\nLet's look at vertical lines. There's a vertical line at x~473 from y~453 (top) down to y~813 (C's line) with a dot at (473,813). So C connects up to y~453 then right to G1 bottom input? Wait the vertical at x~473 goes from 453 to 813. At top (473,453) it goes right to G1 bottom input (950,453)? But G1 bottom input is at y~353 not 453. Hmm I'm misreading coordinates.\n\nLet me re-examine pixel positions from the image description mentally. G1 box spans roughly y=313 to y=493, with two inputs on left: top input ~y=353, bottom input ~y=453. Yes that's more plausible: box center ~403, inputs at 353 and 453.\n\nSo G1 top input y~353, bottom input y~453.\n\nA line at y~313. The junction dot at (343,313). From there down to y~353 then right to G1 top input (950,353). And A's horizontal line at y=313 continues to x~800 (just a stub, maybe not connected to anything else). Hmm but then A's main connection is via the down-then-right to G1 top input.\n\nNow G1 bottom input y~453: trace left to x~473, vertical line down to (473,813) dot on C line. So C connects to G1 bottom input. So G1 inputs = A and C. Thus g1_sources = [\"A\",\"C\"].\n\nNow G2 AND box: left inputs at y~733 and y~813 (box center ~813? Actually G2 box spans y~713 to y~873, inputs at 733 and 813). Top input y~733: trace left to x~613, vertical up to (613,553) dot on B line. So B connects to G2 top input. Bottom input y~813: trace left to x~800? There's a vertical at x~753 from y~813 down to D line (y~1053) dot at (753,1053). So D connects to G2 bottom input. Thus G2 inputs = B and D. g2_sources = [\"B\",\"D\"].\n\nNow G3 XOR: left inputs at y~453 and y~553. Top input y~453: trace left to x~1333 (the dot at (1333,453)) which is on G1's output line. So G1 output connects to G3 top input. Bottom input y~553: trace left to x~833, vertical up to (833,553)? Actually B line is at y~553. The line at y~553 from B goes right to x~800 stub, and also there's a horizontal line at y~553 from x~833 to G3 bottom input (1523,553). And at x~833 vertical down to G2? Hmm.\n\nLet's look: B line y~553 has dot at (613,553). From that dot, vertical down to (613,733) then right to G2 top input. Also B line continues right to x~800 stub. Then there's a separate horizontal line at y~553 starting at x~833 going right to G3 bottom input (1523,553). Where does x~833 vertical go? Down to (833,1053) dot on D line. So D connects to G3 bottom input! Because D line y~1053 has dots at (753,1053) and (833,1053). The (753,1053) goes up to G2 bottom input; the (833,1053) goes up to y~553 then right to G3 bottom input.\n\nThus G3 inputs = G1 output and D.\n\nNow G4 OR: left inputs at y~953 and y~1053. Top input y~953: trace left to x~1333 vertical up to (1333,453) which is G1 output dot. So G1 output also connects to G4 top input. Bottom input y~1053: trace left to x~1393 vertical up to (1393,773) then left to G2 output? G2 output is at y~773 (box center). The line from G2 output (1193,773) goes right to x~1393 then down to G4 bottom input (1523,1053). Yes.\n\nThus G4 inputs = G1 output and G2 output.\n\nNow G5 AND: inputs = G3 output and G4 output. Y = G5.\n\nLet me define signals:\nG1 = A XOR C.\nG2 = B AND D.\nG3 = G1 XOR D.\nG4 = G1 OR G2.\nY = G3 AND G4.\n\nNow compute for all 16 codes (A B C D) where A is MSB.\n\nLet me enumerate A,B,C,D from 0 to 15.\n\nI'll compute G1=A^C, G2=B&D, G3=G1^D, G4=G1|G2, Y=G3&G4.\n\nLet's make table.\n\nI'll iterate.\n\n0: A0 B0 C0 D0: G1=0, G2=0, G3=0^0=0, G4=0, Y=0.\n1: 0001: A0B0C0D1: G1=0, G2=0, G3=0^1=1, G4=0, Y=0.\n2: 0010: A0B0C1D0: G1=1, G2=0, G3=1^0=1, G4=1, Y=1.\n3: 0011: A0B0C1D1: G1=1, G2=0, G3=1^1=0, G4=1, Y=0.\n4: 0100: A0B1C0D0: G1=0, G2=0, G3=0, G4=0, Y=0.\n5: 0101: A0B1C0D1: G1=0, G2=1, G3=0^1=1, G4=1, Y=1.\n6: 0110: A0B1C1D0: G1=1, G2=0, G3=1, G4=1, Y=1.\n7: 0111: A0B1C1D1: G1=1, G2=1, G3=1^1=0, G4=1, Y=0.\n8: 1000: A1B0C0D0: G1=1, G2=0, G3=1, G4=1, Y=1.\n9: 1001: A1B0C0D1: G1=1, G2=0, G3=1^1=0, G4=1, Y=0.\n10:1010: A1B0C1D0: G1=0, G2=0, G3=0, G4=0, Y=0.\n11:1011: A1B0C1D1: G1=0, G2=0, G3=0^1=1, G4=0, Y=0.\n12:1100: A1B1C0D0: G1=1, G2=0, G3=1, G4=1, Y=1.\n13:1101: A1B1C0D1: G1=1, G2=1, G3=1^1=0, G4=1, Y=0.\n14:1110: A1B1C1D0: G1=0, G2=0, G3=0, G4=0, Y=0.\n15:1111: A1B1C1D1: G1=0, G2=1, G3=0^1=1, G4=1, Y=1.\n\nSo Y=1 for codes: 2,5,6,8,12,15.\n\nLet me double check a few.\n\nCode2 (0010): A0C1 => G1=1; D0 => G3=1; G2=0; G4=1; Y=1. ok.\nCode5 (0101): A0C0 G1=0; D1 G3=1; B1D1 G2=1; G4=1; Y=1. ok.\nCode6 (0110): A0C1 G1=1; D0 G3=1; B1D0 G2=0; G4=1; Y=1. ok.\nCode8 (1000): A1C0 G1=1; D0 G3=1; G2=0; G4=1; Y=1. ok.\nCode12 (1100): A1C0 G1=1; D0 G3=1; B1D0 G2=0; G4=1; Y=1. ok.\nCode15 (1111): A1C1 G1=0; D1 G3=1; B1D1 G2=1; G4=1; Y=1. ok.\n\nThus high_input_codes = [2,5,6,8,12,15].\n\nScenario: A=1,B=1,C=0,D=1 => code 13. Y=0 (from table). scenario_y=0.\n\nFault: force C=1, keep A=1,B=1,D=1 => code 15. Y=1. fault_y=1.\n\nNow g1_sources = [\"A\",\"C\"]; g2_sources = [\"B\",\"D\"].\n\nReturn JSON.\n\nMake sure lists of strings for sources, list of strings for high_input_codes? The spec says high_input_codes (list of strings). Hmm \"list of strings\". The codes as strings? It says \"List codes with Y = 1 in ascending order.\" and field type list of strings. So provide [\"2\",\"5\",\"6\",\"8\",\"12\",\"15\"].\n\nscenario_y integer 0, fault_y integer 1.\n\nThus final JSON.\n"
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.0-tp2-f4ccb2bb",
+        "usage": {
+          "prompt_tokens": 1776,
+          "total_tokens": 5014,
+          "completion_tokens": 3238,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": {
+            "reasoning_tokens": 3162
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 45.674,
+      "score": 4,
+      "max_score": 5,
+      "checks": {
+        "g1_sources": true,
+        "g2_sources": true,
+        "high_input_codes": false,
+        "scenario_y": true,
+        "fault_y": true
+      },
+      "parsed": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "2",
+          "5",
+          "6",
+          "8",
+          "12",
+          "15"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      }
+    },
+    {
+      "id": "hard_v2_cube",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cube.png",
+      "question": "Solve the displayed fold, candidate match, and roll sequence. Return JSON: option (string), opposite_c (string), final_top (string), final_front (string), final_right (string).",
+      "expected": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      },
+      "image_sha256": "7f9d9f8486ca3e4890bc949ee81260d9cb8b5048f38ef10ffe5fda054f5e71a0",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-9647235a6a1a7c6a",
+        "object": "chat.completion",
+        "created": 1789856349,
+        "model": "qwen3.8-27b-fp8",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "\n\n{\n  \"option\": \"Q\",\n  \"opposite_c\": \"E\",\n  \"final_top\": \"F\",\n  \"final_front\": \"D\",\n  \"final_right\": \"C\"\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "The user wants me to solve a cube folding + rolling puzzle. Let me work through it carefully.\n\n**Step 1: Understand the net.**\n\nThe net is a cross shape. Let me set up coordinates. The horizontal row is B - C - D - E (left to right). The vertical column through C is A (top), C (middle), F (bottom).\n\nSo:\n- C is the center.\n- A is above C.\n- F is below C.\n- B is left of C.\n- D is right of C.\n- E is right of D.\n\nWhen folded into a cube, opposite faces: In a cross net, the center C and the far end of the horizontal strip (E) are opposite? Let's think. The horizontal strip B-C-D-E wraps around: B, C, D, E form a ring of 4 faces around the cube (the \"equator\"). So B opposite D, C opposite E. The vertical A and F are the top and bottom caps relative to C as front. So A opposite F.\n\nLet me verify: If C is front, then A (above) folds to top, F (below) folds to bottom, B (left) folds to left, D (right) folds to right, E (right of D) folds to back. So:\n- Front = C\n- Back = E\n- Top = A\n- Bottom = F\n- Left = B\n- Right = D\n\nOpposite pairs: C-E, A-F, B-D. Good. So opposite of C is E.\n\n**Step 2: Determine orientation / chirality to pick the correct candidate.**\n\nWe need a consistent 3D orientation. Let's define axes: front = +Y? Let's use standard: front face normal = -Y (toward viewer)? This is getting complicated. Let's instead use the candidate views to test chirality.\n\nDefine cube faces with vectors. Let front = F_dir = (0,-1,0) (toward viewer), right = (1,0,0), top = (0,0,1). Then back = (0,1,0), left = (-1,0,0), bottom = (0,0,-1).\n\nAssign: C = front = (0,-1,0). D = right = (1,0,0). A = top = (0,0,1). F = bottom = (0,0,-1). B = left = (-1,0,0). E = back = (0,1,0).\n\nNow check handedness: For a right-handed view, the triple (top, front, right) should be... In the candidate view, we see top, front (left visible side), right (right visible side). The orientation of these three around the corner must match the cube's actual orientation (no reflection).\n\nLet's compute the scalar triple product top \u00b7 (front \u00d7 right) for our assignment. front \u00d7 right = (0,-1,0) \u00d7 (1,0,0) = determinant: i*((-1)*0 - 0*0) - j*(0*0 - 0*1) + k*(0*0 - (-1)*1) = i*0 - j*0 + k*(1) = (0,0,1). Then top \u00b7 (0,0,1) = (0,0,1)\u00b7(0,0,1)=1. So triple product = +1.\n\nNow for each candidate, we read top, front, right labels and compute the same triple product using our face vectors; it must equal +1 (same orientation, no reflection).\n\nLet's list vectors:\nA=(0,0,1), F=(0,0,-1), C=(0,-1,0), E=(0,1,0), B=(-1,0,0), D=(1,0,0).\n\nCandidate P: top=A, front=C, right=B. Compute front\u00d7right = C\u00d7B = (0,-1,0)\u00d7(-1,0,0) = i*((-1)*0-0*0) - j*(0*0 - 0*(-1)) + k*(0*0 - (-1)*(-1)) = i*0 - j*0 + k*(0 - 1) = (0,0,-1). top\u00b7that = A\u00b7(0,0,-1) = -1. Not +1 \u2192 reflection, invalid.\n\nCandidate Q: top=A, front=C, right=D. front\u00d7right = C\u00d7D = (0,-1,0)\u00d7(1,0,0) = (0,0,1) as computed earlier (C\u00d7D? wait earlier I did front\u00d7right with front=C,right=D gave (0,0,1)). Yes = (0,0,1). top\u00b7= A\u00b7(0,0,1)=+1. Valid!\n\nCandidate R: top=A, front=F, right=D. front\u00d7right = F\u00d7D = (0,0,-1)\u00d7(1,0,0) = i*(0*0 - (-1)*0) - j*(0*0 - (-1)*1) + k*(0*0-0*1) = i*0 - j*(0+1) + k*0 = (0,-1,0). top\u00b7= A\u00b7(0,-1,0)=0. Invalid (orthogonal, can't be adjacent? Actually top and front must be adjacent; A and F are opposite so they can't both be visible! Indeed A top and F front impossible). Invalid.\n\nCandidate S: top=C, front=E, right=A. front\u00d7right = E\u00d7A = (0,1,0)\u00d7(0,0,1) = i*(1*1-0*0) - j*(0*1-0*0) + k*(0*0-1*0) = (1,0,0). top\u00b7= C\u00b7(1,0,0)=0. Invalid (C and E opposite, can't both show). Indeed top=C front=E opposite \u2192 invalid.\n\nCandidate T: top=B, front=D, right=F. front\u00d7right = D\u00d7F = (1,0,0)\u00d7(0,0,-1) = i*(0*(-1)-0*0) - j*(1*(-1)-0*0) + k*(1*0-0*0) = i*0 - j*(-1) + k*0 = (0,1,0). top\u00b7= B\u00b7(0,1,0)=0. Invalid (B and D opposite). Indeed top=B front=D opposite \u2192 invalid.\n\nCandidate U: top=F, front=C, right=D. front\u00d7right = C\u00d7D = (0,0,1). top\u00b7= F\u00b7(0,0,1) = -1. Invalid (reflection).\n\nThus only Q is valid. Good. So option = Q.\n\nIn Q orientation: top=A, front=C, right=D.\n\n**Step 3: Roll sequence starting from Q orientation.**\n\nInitial: top=A, front=C, right=D. Then we need also bottom, back, left to track. From our assignment: bottom=F, back=E, left=B.\n\nLet's define state as (top, bottom, front, back, left, right).\nInitial: top=A, bottom=F, front=C, back=E, left=B, right=D.\n\nRoll RIGHT: \"right face becomes bottom; top becomes right. Front and back stay in place.\" Also left becomes top? Let's derive: rolling to the right means the cube tips over its right edge. The right face goes to bottom, bottom goes to left, left goes to top, top goes to right. Front/back unchanged. Let's check consistency: right->bottom, top->right, left->top, bottom->left. Yes that's a 90\u00b0 roll to the right.\n\nApply: new bottom = old right = D. new right = old top = A. new top = old left = B. new left = old bottom = F. front=C, back=E unchanged.\n\nState after RIGHT: top=B, bottom=D, front=C, back=E, left=F, right=A.\n\nRoll AWAY: \"front face becomes top; top becomes back. Left and right stay in place.\" Rolling away (toward back) means tipping over back edge: front->top, top->back, back->bottom, bottom->front. Left/right unchanged.\n\nApply: new top = old front = C. new back = old top = B. new bottom = old back = E. new front = old bottom = D. left=F, right=A unchanged.\n\nState after AWAY: top=C, bottom=E, front=D, back=B, left=F, right=A.\n\nRoll RIGHT again: right->bottom, top->right, left->top, bottom->left; front/back unchanged.\n\nApply: new bottom = old right = A. new right = old top = C. new top = old left = F. new left = old bottom = E. front=D, back=B unchanged.\n\nFinal: top=F, front=D, right=C.\n\nThus final_top = F, final_front = D, final_right = C.\n\nOpposite of C = E.\n\nSo JSON: option \"Q\", opposite_c \"E\", final_top \"F\", final_front \"D\", final_right \"C\".\n\nLet me double check roll RIGHT mapping with the problem's explicit description: \"RIGHT: right face becomes bottom; top becomes right. Front and back stay in place.\" They didn't mention left/bottom but it's implied the cycle. Yes our mapping consistent.\n\nCheck AWAY: \"front face becomes top; top becomes back. Left and right stay in place.\" Implies back->bottom, bottom->front. Yes.\n\nThus final answer.\n\nProvide JSON only.\n"
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.0-tp2-f4ccb2bb",
+        "usage": {
+          "prompt_tokens": 1736,
+          "total_tokens": 3907,
+          "completion_tokens": 2171,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": {
+            "reasoning_tokens": 2120
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 30.742,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "option": true,
+        "opposite_c": true,
+        "final_top": true,
+        "final_front": true,
+        "final_right": true
+      },
+      "parsed": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      }
+    },
+    {
+      "id": "hard_v2_resources",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_resources.png",
+      "question": "Find the optimal appointment under all displayed constraints. Return JSON: room (string), technician (string), start (HH:MM string), end (HH:MM string).",
+      "expected": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      },
+      "image_sha256": "ce0db528003bfcddfb8e90243830d255a04d76fa7082337eedd40ce495fd9131",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-a131600f25397259",
+        "object": "chat.completion",
+        "created": 1789856380,
+        "model": "qwen3.8-27b-fp8",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "\n\n{\n  \"room\": \"R2\",\n  \"technician\": \"Bo\",\n  \"start\": \"10:15\",\n  \"end\": \"11:15\"\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "Let me work through this scheduling problem carefully.\n\nResources:\n- Rooms: R1, R2\n- Technicians: Ada, Bo\n- Scanner (shared)\n\nConstraints:\n- Choose one room (R1 or R2) and one technician (Ada or Bo) for the whole appointment.\n- R1 permits Ada only. R2 permits either technician.\n- Appointment lasts 60 min: setup 15, scan 30, finish 15, no gaps.\n- Room: occupied for all 60 minutes.\n- Technician: occupied during setup AND finish; free during scan.\n- Scanner: occupied only during middle 30 minutes.\n- Start on 15-min tick; entire appointment within 09:00-13:00.\n- Touching endpoints do not overlap.\n- Objective: earliest completion time.\n\nLet me list occupied bars.\n\nR1: 09:00-10:00, 11:15-12:15\nR2: 09:00-09:30, 11:30-12:00, 12:30-13:00\nAda: 09:00-09:45, 10:30-11:30, 12:00-13:00\nBo: 09:00-10:00, 10:45-11:00, 11:45-12:30\nScanner: 09:00-09:30, 10:00-10:30, 11:30-12:00\n\nFor an appointment starting at time S (15-min tick), ending S+60.\n- Room must be free for [S, S+60].\n- Technician must be free during setup [S, S+15] and finish [S+45, S+60]. (Free during scan [S+15, S+45] is allowed to be occupied? Wait: \"Technician: setup AND finish; free during scan.\" This means the technician is required during setup and finish, and is free (not required) during scan. So the technician's occupied bars must not overlap with setup or finish. During scan, technician can be occupied (it's fine because we don't need them). Actually re-read: \"Technician: setup AND finish; free during scan.\" I think it means the technician is needed for setup and finish, and is free (available/not needed) during scan. So the constraint is: technician must be free (unoccupied) during setup and finish. During scan, no constraint on technician.\n\n- Scanner must be free during scan [S+15, S+45].\n\nLet me enumerate possible start times on 15-min ticks within 09:00-13:00 such that S+60 <= 13:00, so S in {09:00, 09:15, ..., 12:00}.\n\nWe want earliest completion = earliest S+60, i.e., earliest S that is feasible.\n\nLet's test S=09:00: end 10:00.\nRoom R1: occupied 09:00-10:00 -> conflict. R2: occupied 09:00-09:30 -> conflict. So no room free for full 60 min. Fail.\n\nS=09:15: end 10:15.\nRoom R1: 09:00-10:00 overlaps -> conflict. R2: 09:00-09:30 overlaps -> conflict. Fail.\n\nS=09:30: end 10:30.\nRoom R1: 09:00-10:00 overlaps (09:30-10:00) -> conflict. R2: 09:00-09:30 touches at 09:30 endpoint, no overlap; next R2 bar 11:30-12:00 no overlap. So R2 free for [09:30,10:30]? R2 bars: 09:00-09:30 (touch at 09:30 ok), 11:30-12:00, 12:30-13:00. So R2 is free 09:30-10:30. Good.\nNow technician for R2 can be Ada or Bo.\nSetup [09:30,09:45], finish [10:15,10:30].\nAda occupied: 09:00-09:45 overlaps setup 09:30-09:45 -> conflict. So Ada not ok.\nBo occupied: 09:00-10:00 overlaps setup 09:30-09:45 and finish 10:15? 09:00-10:00 overlaps setup (09:30-09:45) -> conflict. So Bo not ok.\nThus no technician. Fail.\n\nS=09:45: end 10:45.\nRoom R1: 09:00-10:00 overlaps -> conflict. R2: free? R2 bars 09:00-09:30 (no overlap with 09:45-10:45), 11:30-12:00 no, 12:30-13:00 no. So R2 free. Good.\nTechnician setup [09:45,10:00], finish [10:30,10:45].\nAda: 09:00-09:45 touches at 09:45 ok; next 10:30-11:30 overlaps finish 10:30-10:45 -> conflict. So Ada no.\nBo: 09:00-10:00 overlaps setup 09:45-10:00 -> conflict. Bo no.\nFail.\n\nS=10:00: end 11:00.\nRoom R1: 09:00-10:00 touches at 10:00 ok; next 11:15-12:15 no overlap with 10:00-11:00. So R1 free 10:00-11:00. Good. R2 also free (bars 09:00-09:30, 11:30-12:00, 12:30-13:00) -> free 10:00-11:00. Good.\nNow technician:\nIf R1 -> only Ada. Setup [10:00,10:15], finish [10:45,11:00].\nAda occupied: 09:00-09:45 no; 10:30-11:30 overlaps finish 10:45-11:00 -> conflict. So Ada no for R1.\nIf R2 -> Ada or Bo.\nAda: same conflict (10:30-11:30 overlaps finish). No.\nBo: occupied 09:00-10:00 touches at 10:00 ok; 10:45-11:00 overlaps finish 10:45-11:00 -> conflict. So Bo no.\nThus no technician. Fail.\n\nS=10:15: end 11:15.\nRoom R1: 11:15-12:15 touches at 11:15 ok; 09:00-10:00 no overlap. So R1 free 10:15-11:15. Good. R2 free too.\nTechnician setup [10:15,10:30], finish [11:00,11:15].\nR1->Ada: Ada 10:30-11:30 overlaps finish 11:00-11:15 -> conflict. No.\nR2->Ada: same no.\nR2->Bo: Bo 10:45-11:00 overlaps? setup 10:15-10:30 no; finish 11:00-11:15: Bo bar 10:45-11:00 touches at 11:00 ok; next Bo bar 11:45-12:30 no overlap. So Bo free during setup and finish! Check setup 10:15-10:30: Bo bars 09:00-10:00 (no), 10:45-11:00 (no overlap with 10:15-10:30). Good. Finish 11:00-11:15: Bo 10:45-11:00 touches at 11:00 ok; 11:45-12:30 no. Good. So Bo works for R2.\nNow scanner must be free during scan [10:30,11:00]. Scanner bars: 09:00-09:30, 10:00-10:30 (touches at 10:30 ok), 11:30-12:00 (no overlap with 10:30-11:00). So scanner free 10:30-11:00. Good!\nThus S=10:15 with R2, Bo is feasible! End 11:15.\n\nBut we need earliest completion. We found S=10:15 feasible. Check earlier S we already failed (09:00..10:00). So earliest feasible start is 10:15, completion 11:15.\n\nWait, but we must double check S=10:00 we failed all technicians. Yes.\n\nThus optimal: room R2, technician Bo, start 10:15, end 11:15.\n\nLet me double check room R2 free 10:15-11:15: R2 bars 09:00-09:30, 11:30-12:00, 12:30-13:00. 11:30-12:00 starts at 11:30 which is after 11:15, no overlap. Good.\n\nScanner scan 10:30-11:00 free: scanner 10:00-10:30 ends 10:30 touch ok; 11:30-12:00 starts later. Good.\n\nBo setup 10:15-10:30 free: Bo 09:00-10:00 ends 10:00; 10:45-11:00 starts 10:45. Free. Bo finish 11:00-11:15: Bo 10:45-11:00 ends 11:00 touch ok; 11:45-12:30 later. Free. Good.\n\nAll constraints satisfied. Unique optimal.\n\nThus JSON: room \"R2\", technician \"Bo\", start \"10:15\", end \"11:15\".\n\nProvide only JSON.\n"
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.0-tp2-f4ccb2bb",
+        "usage": {
+          "prompt_tokens": 1777,
+          "total_tokens": 4536,
+          "completion_tokens": 2759,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": {
+            "reasoning_tokens": 2711
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 36.282,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "room": true,
+        "technician": true,
+        "start": true,
+        "end": true
+      },
+      "parsed": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      }
+    },
+    {
+      "id": "hard_v2_cross_reference",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cross_reference.png",
+      "question": "Follow the displayed cross-reference procedure. Return JSON: node (string), probe (string), revision (integer), adjusted (integer), destination (string).",
+      "expected": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      },
+      "image_sha256": "24e4f053bda05dc11ead47923a4b3011f0e95a302bfdce94677265dbd438cdb2",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-8fd077a7b381628b",
+        "object": "chat.completion",
+        "created": 1789856416,
+        "model": "qwen3.8-27b-fp8",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "\n\n{\n  \"node\": \"N4\",\n  \"probe\": \"P7\",\n  \"revision\": 3,\n  \"adjusted\": 56,\n  \"destination\": \"BAY-6\"\n}",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "reasoning": "The user wants me to follow a cross-reference procedure on a diagram. Let me work through it carefully.\n\nProcedure: begin at IN. Follow a TRIANGLE edge, then a SQUARE edge; use solid arrows only. Dashed arrows are archived.\n\nLooking at the routing diagram (A):\n- IN has three outgoing edges:\n  - A solid edge with a blue TRIANGLE marker going to H1.\n  - A dashed edge with a blue TRIANGLE marker going to H2 (dashed = archived, ignore).\n  - A solid edge with a green CIRCLE marker going to H3.\n\nSo the first step: follow a TRIANGLE edge with solid arrow. That's the edge to H1 (blue triangle, solid). The green circle to H3 is not a triangle. The dashed triangle to H2 is archived. So we go to H1.\n\nNow at H1, follow a SQUARE edge. H1 has two outgoing edges:\n  - A solid edge with an orange SQUARE marker going to N4 (K2 / L8, raw = 17).\n  - A solid edge with a purple DIAMOND marker going to N7 (K2 / L3, raw = 17).\n\nSo the SQUARE edge leads to N4. Thus reached node = N4.\n\nAt N4: Unit / Lot = K2 / L8, raw = 17.\n\nNow match BOTH Unit and Lot to the LIVE registry row. Registry rows:\n- K2, L3, LIVE, P7, 2, S2\n- K8, L8, LIVE, P7, 4, S5\n- K2, L8, OLD, P9, 5, S2\n- K2, L8, LIVE, P7, 3, S2\n- K3, L8, LIVE, P9, 3, S5\n\nWe need Unit=K2, Lot=L8, State=LIVE. That's the row: K2, L8, LIVE, P7, 3, S2. (The other K2/L8 row is OLD, not LIVE.)\n\nSo Probe = P7, Rev = 3, Rack = S2.\n\nNow use that row's exact Probe AND Rev in calibration table. Calibration table:\n- P7, 1, -4, 2\n- P7, 2, 3, 2\n- P9, 3, 1, 5\n- P7, 3, -3, 4\n- P7, 4, 2, 3\n- P9, 5, -2, 3\n\nWe need Probe=P7, Revision=3. That row: Offset = -3, Gain = 4.\n\nCompute adjusted = Gain x (raw + Offset) = 4 x (17 + (-3)) = 4 x 14 = 56.\n\nNow match registry Rack (S2) and the adjusted band (56) in dispatch bands:\n- S2, 0, 49, BAY-1\n- S5, 50, 59, BAY-9\n- S2, 60, 99, BAY-3\n- S2, 50, 59, BAY-6\n\nWe need Rack=S2 and 50 <= 56 <= 59. That's the row S2, 50, 59, BAY-6. So destination = BAY-6.\n\nThus:\nnode = \"N4\"\nprobe = \"P7\"\nrevision = 3\nadjusted = 56\ndestination = \"BAY-6\"\n\nReturn JSON only.\n\nLet me double check the triangle edge selection. The instruction: \"Follow a TRIANGLE edge, then a SQUARE edge; use solid arrows only.\" At IN, the solid triangle edge goes to H1. Good. The dashed triangle to H2 is archived (dashed). The solid circle to H3 is not a triangle. So H1 is correct.\n\nAt H1, square edge to N4. Good.\n\nAll consistent. Final JSON.\n"
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.0-tp2-f4ccb2bb",
+        "usage": {
+          "prompt_tokens": 2139,
+          "total_tokens": 3084,
+          "completion_tokens": 945,
+          "prompt_tokens_details": null,
+          "completion_tokens_details": {
+            "reasoning_tokens": 893
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      },
+      "elapsed_s": 13.437,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "node": true,
+        "probe": true,
+        "revision": true,
+        "adjusted": true,
+        "destination": true
+      },
+      "parsed": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 8192,
+    "chat_template_kwargs": {
+      "reasoning_effort": "low"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 5,
+  "tiers": {
+    "easy": {
+      "score": 0,
+      "max_score": 0
+    },
+    "medium": {
+      "score": 0,
+      "max_score": 0
+    },
+    "hard": {
+      "score": 27,
+      "max_score": 28
+    }
+  }
+}

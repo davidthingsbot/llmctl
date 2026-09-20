@@ -1,0 +1,19 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Write an asynchronous FIFO in Verilog-2001 \u2014 a FIFO whose write and read\nsides run on unrelated clocks. Return ONLY the module, no testbench, no\nexplanation.\n\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\nRequirements:\n- DEPTH is a power of two. `wclk` and `rclk` have no fixed phase or frequency\n  relationship.\n- A write occurs on a `wclk` edge when `winc` is high and `wfull` is low; a read\n  on an `rclk` edge when `rinc` is high and `rempty` is low.\n- Pointers crossing between the domains MUST be Gray-coded and passed through a\n  two-flop synchroniser in the destination domain. A binary pointer crossed\n  directly can be sampled mid-transition with several bits changing at once,\n  which corrupts the count \u2014 it will usually still simulate correctly, so this is\n  about doing it right rather than about passing by luck.\n- `wfull` and `rempty` must be generated in their own clock domains.\n- No data may be lost, duplicated or reordered.\n- Synthesisable RTL: non-blocking assignments in sequential blocks, no latches.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

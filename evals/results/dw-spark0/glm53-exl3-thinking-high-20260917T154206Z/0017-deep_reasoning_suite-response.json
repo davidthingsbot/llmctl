@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 15.993004581003333,
+  "response": {
+    "id": "chatcmpl-af0cd580c94ffc94",
+    "object": "chat.completion",
+    "created": 1789660627,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```\n\nReasoning summary:\n- **Adjustment set {C}**: The only backdoor path from T to Y is T \u2190 C \u2192 Y, so C must be adjusted for. M is a mediator (part of the total effect) and Z is a collider, so neither may be included; {C} is minimal and sufficient.\n- **Conditioning on M**: M lies on the causal path T \u2192 M \u2192 Y, so conditioning on it blocks this path, leaving only the direct effect T \u2192 Y.\n- **Z is a collider**: Z has two incoming arrows (T \u2192 Z \u2190 Y), so it is a collider.\n- **Conditioning on Z introduces bias**: Conditioning on the collider Z opens the non-causal path T \u2192 Z \u2190 Y, inducing spurious association between T and Y.\n- **I is a valid instrument**: I affects Y only through T (I \u2192 T), has no direct path to Y, and shares no common cause with Y (C affects T and Y but not I).",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "DAG: C\u2192T, C\u2192Y, I\u2192T, T\u2192Y, T\u2192M, M\u2192Y, T\u2192Z, Y\u2192Z.\n\nTotal effect of T on Y. Backdoor paths: T\u2190C\u2192Y. Adjust for C. M is a mediator \u2014 must not adjust. Z is a collider (T\u2192Z\u2190Y) \u2014 must not adjust.\n\nMinimal adjustment set: {C}.\n\nConditioning on M: M is mediator, conditioning blocks mediated path, leaving direct effect. Answer: \"direct\".\n\nZ is collider: true.\n\nConditioning on Z: Z is a collider on T\u2192Z\u2190Y; conditioning opens path T\u2192Z\u2190Y... wait, that path is T\u2192Z\u2190Y, opening it creates bias (T and Y become associated through collider). Actually conditioning on collider Z opens path T\u2192Z\u2190Y which is a non-causal path between T and Y \u2014 introduces bias. Answer: \"introduces_bias\".\n\nI is instrument: I\u2192T only, no other paths, I not associated with C? I\u2192T, and confounder C affects T and Y but I has no edge to C. Valid instrument: true."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 256,
+      "total_tokens": 767,
+      "completion_tokens": 511,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

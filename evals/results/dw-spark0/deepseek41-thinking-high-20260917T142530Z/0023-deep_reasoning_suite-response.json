@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 34.78765665300307,
+  "response": {
+    "id": "chatcmpl-8becc6536db9d63d",
+    "object": "chat.completion",
+    "created": 1789656040,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"kv_bytes_per_token\":26112,\"kv_gib_at_262144\":6.375,\"max_context_tokens_in_25gib\":1028015,\"weights_87gib_and_262144_fits_in_112gib\":true}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer only JSON. Need solve carefully. Need compute.\n\nArchitecture: 48 layers total. 12 full attention cache K and V. 36 linear no KV. Each full layer has 8 key/value heads, head dim 128. K and V cached separately. So per token per full layer: K elements = 8*128 = 1024. V elements = 1024. Total per layer = 2048 elements. For 12 layers = 24576 elements per token. Quantized q8_0 costs 1.0625 bytes per element. kv_bytes_per_token = 24576 * 1.0625. Compute: 24576 * 1 = 24576. 0.0625 = 1/16. 24576/16 = 1536. Sum = 26112. Yes integer.\n\nAt 262144 tokens: bytes = 26112 * 262144. Need GiB divide by 2^30. Compute. 262144 = 2^18. 26112 * 2^18 bytes. Divide by 2^30 = 26112 / 2^12 = 26112 / 4096. 4096*6=24576 remainder 1536. 1536/4096=0.375. So 6.375 GiB. Check: 26112*262144 =? 26112*262144 = 6,844,? Let's compute: 26,112 * 262,144. 26,112*262,000? But ratio okay. 26112/4096 = 6.375. So kv_gib_at_262144 = 6.375.\n\nMax context tokens in 25 GiB: capacity bytes = 25 * 2^30. Per token bytes = 26112. Tokens = floor(25*2^30 / 26112). Need compute integer. 25*2^30 = 25*1,073,741,824 = 26,843,545,600. Divide by 26,112. Let's compute.\n\n26112 =? 26112 = 2^? 26112 = 24576+1536 = 2^? 24576=3*8192? Actually 26112 = 2^? 26112/1024=25.5? 26112 = 1024*25.5 = 2048*12.75. Let's divide.\n\n26,843,545,600 / 26,112. Use relation: 25 GiB / (26112 bytes/token). Since 1 GiB = 2^30. Tokens = 25 * 2^30 / 26112 = 25 * 2^30 / (26112). We can simplify 26112 = 2^? 26112 = 2^9 * 51? 512*51=26112 yes. So = 25 * 2^30 / (2^9 * 51) = 25 * 2^21 / 51. 2^21 = 2,097,152. 25*2,097,152 = 52,428,800. Divide by 51. 51*1,028,015 =? 1,028,015*50=51,400,750; +1,028,015=52,428,765. Remainder 35. So floor = 1,028,015. Check 52,428,800 / 51 = 1,028,015.686... So max = 1,028,015. Need integer.\n\nWeights 87 GiB + KV at 262144 = 87 + 6.375 = 93.375 GiB. Fits in 112 GiB? Yes true. Need boolean true.\n\nNeed return exactly keys. Ensure JSON valid. No extra. Use number for kv_gib_at_262144 maybe 6.375. max integer 1028015. Let's double-check all.\n\nLet's recalc per token: 12 layers * 8 heads * 128 dim * 2 (K,V) = 12*8*128*2 = 12*2048 = 24576 elements. q8_0 1.0625 bytes/element = 17/16? 1.0625 = 17/16. 24576*17/16 = 24576/16=1536; *17=26112. Yes.\n\nAt 262144 tokens: 26112 * 262144. 262144/16? Let's compute bytes: 26112*262144 = 26112*2^18. 26112*262144 = 6,844,? 26,112*262,144. 26,112*262,000 = 6,841,? Let's do exact: 262,144*26,000 = 6,815,744,000? Wait 262,144*26 = 6,815,744; *1000 = 6,815,744,000. 262,144*112 = 29,360,128? 262,144*100=26,214,400; *12=3,145,728; sum=29,360,128. Total = 6,845,104,128. Divide by 1,073,741,824 = 6.375? 1,073,741,824*6 = 6,442,450,944. Difference = 402,653,184. /1,073,741,824 = 0.375. Yes.\n\nMax tokens: 25 GiB bytes = 26,843,545,600. Divide by 26,112. Let's compute exact quotient: 26,112 * 1,028,015 =? 1,028,015*26,000 = 26,728,390,000? Wait compute carefully: 1,028,015 * 26,112.\n\n1,028,015 * 26,000 = 1,028,015*26 *1000. 1,028,015*26 = 26,728,390? 1,028,015*20=20,560,300; *6=6,168,090; sum=26,728,390. *1000 = 26,728,390,000.\n1,028,015 * 112 = 1,028,015*100=102,801,500; *12=12,336,180; sum=115,137,680.\nTotal = 26,843,527,680. Capacity 26,843,545,600. Difference = 17,920. So quotient floor 1,028,015, remainder 17,920. Next token would add 26,112 > remainder. So max 1,028,015. Yes.\n\nWeights+KV: 87 + 6.375 = 93.375 <=112 true.\n\nNeed final only JSON. Ensure no markdown. Use true lowercase. Keys exactly."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 337,
+      "total_tokens": 1900,
+      "completion_tokens": 1563,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1507
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

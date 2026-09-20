@@ -18,9 +18,11 @@ def grade(text, expected):
     return {'score':sum(checks.values()), 'max_score':len(expected), 'checks':checks, 'parsed':answer}
 
 
-def run_suite(tasks, url, model, key_file, output, *, template_kwargs=None, max_tokens=1024):
-    """template_kwargs replaces the default {'reasoning_effort': 'low'} — that
-    default is GLM's knob; Qwen3.5 ignores it and thinks until max_tokens."""
+def run_suite(tasks, url, model, key_file, output, request_settings=None):
+    """request_settings overrides temperature / max_tokens / chat_template_kwargs.
+    The default chat_template_kwargs {'reasoning_effort': 'low'} is GLM's knob;
+    Qwen3.5 ignores it and thinks until max_tokens, so pass e.g.
+    {'chat_template_kwargs': {'enable_thinking': False}} for it."""
     import base64
     import hashlib
     import time
@@ -29,7 +31,12 @@ def run_suite(tasks, url, model, key_file, output, *, template_kwargs=None, max_
     from pathlib import Path
     from eval_runtime import atomic_write_json
     key=Path(key_file).read_text().strip()
-    result={'suite':'synthetic-vision-v1','model':model,'endpoint':url,'status':'partial','score':0,'max_score':sum(len(t['expected']) for t in tasks),'tasks':[], 'settings':{'temperature':0,'max_tokens':max_tokens,'chat_template_kwargs':{'reasoning_effort':'low'} if template_kwargs is None else template_kwargs,'retry':False}}
+    result={'suite':'synthetic-vision-v1','model':model,'endpoint':url,'status':'partial','score':0,'max_score':sum(len(t['expected']) for t in tasks),'tasks':[], 'settings':{'temperature':0,'max_tokens':1024,'chat_template_kwargs':{'reasoning_effort':'low'},'retry':False}}
+    if request_settings:
+        allowed = {'temperature', 'max_tokens', 'chat_template_kwargs'}
+        if set(request_settings) - allowed:
+            raise ValueError('Unsupported vision request setting')
+        result['settings'].update(request_settings)
     atomic_write_json(output,result)
     for task in tasks:
         data=Path(task['image']).read_bytes()
@@ -77,8 +84,9 @@ if __name__=='__main__':
     args=parser.parse_args()
     manifest=Path(args.fixtures)/'manifest.json'
     tasks=json.loads(manifest.read_text())['tasks'] if manifest.exists() else build_suite(args.fixtures)
-    result=run_suite(tasks,args.url,args.model,args.key_file,args.output,
-                     template_kwargs=json.loads(args.template_kwargs) if args.template_kwargs else None,
-                     max_tokens=args.max_tokens)
+    request_settings={'max_tokens':args.max_tokens}
+    if args.template_kwargs:
+        request_settings['chat_template_kwargs']=json.loads(args.template_kwargs)
+    result=run_suite(tasks,args.url,args.model,args.key_file,args.output,request_settings=request_settings)
     print(json.dumps({k:result.get(k) for k in ('status','score','max_score','perfect_tasks','tiers')}))
     raise SystemExit(0 if result['status']=='complete' else 1)

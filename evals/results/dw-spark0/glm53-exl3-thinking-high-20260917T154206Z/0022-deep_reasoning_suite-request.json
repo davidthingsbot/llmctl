@@ -1,0 +1,19 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "A hybrid-attention model. Work out its KV cache cost. Return ONLY JSON.\n\nArchitecture:\n- 48 decoder layers in total.\n- 12 of those 48 layers use full attention and cache both K and V.\n- The other 36 layers use a linear-attention mechanism whose recurrent state is a\n  fixed size that does not grow with sequence length. It contributes nothing to\n  the KV cache.\n- Each full-attention layer has 8 key/value heads with a head dimension of 128.\n  K and V are cached separately.\n- The KV cache is quantised to q8_0, which costs 1.0625 bytes per element.\n- 1 GiB is 2**30 bytes.\n\nReturn exactly these keys:\n  \"kv_bytes_per_token\"        integer, bytes of KV cache per token of context\n  \"kv_gib_at_262144\"          number, GiB of KV cache at 262144 tokens of context\n  \"max_context_tokens_in_25gib\"  integer, the largest context that fits in 25 GiB\n                                 of KV cache (round down)\n  \"weights_87gib_and_262144_fits_in_112gib\"  true or false, whether 87 GiB of\n                                 weights plus the KV at 262144 tokens fits in 112 GiB\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

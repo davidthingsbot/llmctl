@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 46.40152886499709,
+  "response": {
+    "id": "chatcmpl-83fa394debd3d984",
+    "object": "chat.completion",
+    "created": 1789661097,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nclass Reassembler:\n    def __init__(self):\n        self._state = 'sync'      # 'sync' | 'len' | 'payload' | 'check'\n        self._saw_aa = False\n        self._len_buf = bytearray()\n        self._length = 0\n        self._payload = bytearray()\n\n    def feed(self, chunk: bytes) -> list:\n        out = []\n        for b in chunk:\n            if self._state == 'sync':\n                if self._saw_aa:\n                    if b == 0x55:\n                        self._state = 'len'\n                        self._len_buf = bytearray()\n                        self._saw_aa = False\n                    elif b == 0xAA:\n                        pass  # remain pending on 0xAA\n                    else:\n                        self._saw_aa = False\n                elif b == 0xAA:\n                    self._saw_aa = True\n            elif self._state == 'len':\n                self._len_buf.append(b)\n                if len(self._len_buf) == 2:\n                    self._length = self._len_buf[0] | (self._len_buf[1] << 8)\n                    if self._length > 4096:\n                        self._resync()\n                    else:\n                        self._payload = bytearray()\n                        self._state = 'check' if self._length == 0 else 'payload'\n            elif self._state == 'payload':\n                self._payload.append(b)\n                if len(self._payload) == self._length:\n                    self._state = 'check'\n            else:  # 'check'\n                x = 0\n                for p in self._payload:\n                    x ^= p\n                if b == x:\n                    out.append(bytes(self._payload))\n                self._resync()\n        return out\n\n    def _resync(self):\n        self._state = 'sync'\n        self._saw_aa = False\n        self._len_buf = bytearray()\n        self._payload = bytearray()\n        self._length = 0\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Implement a state machine. States: WAIT_SYNC (scanning), or collecting header bytes, or collecting payload.\n\nCareful with resync after bad checksum: after discarding, continue scanning from next byte. Also invalid length: discard and resync \u2014 but resync means scan forward for next sync word. Note: after reading length, if length > 4096, we should resync by scanning bytes. But which bytes? The length bytes themselves are consumed; we should continue scanning from the byte after the length. Actually a subtlety: garbage could contain 0xAA 0x55 within the length bytes... but we've consumed them. Simplest: after invalid length, go to scanning state starting at next byte.\n\nAlso sync scanning: when we see 0xAA, we tentatively expect 0x55. If next byte isn't 0x55, we should... consider whether 0xAA could be start. Standard approach: if byte == 0xAA, set flag; if flag and byte == 0x55, sync found; if flag and byte != 0x55, then check if byte == 0xAA (stay flagged) else clear flag. Edge: 0xAA 0xAA 0x55 \u2014 should that sync? The first 0xAA followed by 0xAA fails, but second 0xAA followed by 0x55 succeeds. That's reasonable.\n\nHeader collection: after sync, need 2 length bytes. Collect one at a time.\n\nPayload: buffer bytes until length reached, then read check byte, verify XOR.\n\nImplement with index-based iteration over chunk, state machine.\n\nStates: 'sync' (scanning, with saw_aa flag), 'len' (collecting 2 bytes), 'payload', 'check'.\n\nLet me write:\n\n```python\nclass Reassembler:\n    def __init__(self):\n        self._state = 'sync'\n        self._saw_aa = False\n        self._len_buf = bytearray()\n        self._length = 0\n        self._payload = bytearray()\n\n    def feed(self, chunk: bytes) -> list:\n        out = []\n        for b in chunk:\n            if self._state == 'sync':\n                if self._saw_aa:\n                    if b == 0x55:\n                        self._state = 'len'\n                        self._len_buf = bytearray()\n                        self._saw_aa = False\n                    elif b == 0xAA:\n                        pass  # stay\n                    else:\n                        self._saw_aa = False\n                elif b == 0xAA:\n                    self._saw_aa = True\n            elif self._state == 'len':\n                self._len_buf.append(b)\n                if len(self._len_buf) == 2:\n                    self._length = self._len_buf[0] | (self._len_buf[1] << 8)\n                    if self._length > 4096:\n                        self._reset_to_sync()\n                    else:\n                        self._payload = bytearray()\n                        self._state = 'check' if self._length == 0 else 'payload'\n                        # handle zero-length: need check byte next\n            elif self._state == 'payload':\n                self._payload.append(b)\n                if len(self._payload) == self._length:\n                    self._state = 'check'\n            else:  # check\n                x = 0\n                for p in self._payload:\n                    x ^= p\n                if b == x:\n                    out.append(bytes(self._payload))\n                self._reset_to_sync()\n        return out\n\n    def _reset_to_sync(self):\n        self._state = 'sync'\n        self._saw_aa = False\n        self._len_buf = bytearray()\n        self._payload = bytearray()\n```\n\nWait \u2014 resync after bad check: \"the stream must resync so that a valid frame immediately following it is still returned.\" After consuming the check byte, next byte scanning starts after it. If the next frame's sync follows immediately, fine. But what if the bad frame's payload contained 0xAA 0x55? We consumed payload by length, so we don't scan it \u2014 correct per spec (length governs). After bad check, we discard and scan from next byte. Good.\n\nEdge: invalid length resync \u2014 we consumed sync + 2 length bytes; scan from next byte. Could a valid frame's sync be hidden in the length bytes? E.g., garbage 0xAA 0x55 then length bytes that are 0xAA 0x55... length would be 0x55AA = 21930 > 4096, invalid. The actual next frame's sync would follow. But what if the length bytes were part of... no, spec says discard and resync; scanning from next byte is fine. Actually one could argue we should rescan the length bytes for sync, but spec doesn't require that. Keep simple.\n\nHmm, but consider: could a valid frame start inside the length field? The length bytes are part of the frame header; if length is invalid, the whole \"frame\" is garbage. Resync scanning from the byte after length is standard. Fine.\n\nOne more subtlety: after bad check byte, should we consider the check byte itself as potential 0xAA? E.g., check byte is 0xAA and next is 0x55 \u2014 that would be a new frame's sync anyway. Our scanning starts at next byte, so if check=0xAA and next bytes are 0x55... we'd miss it. But that's ambiguous anyway; spec says resync after the frame. Standard behavior: scan from next byte. Acceptable.\n\nAlso handle bytes vs bytearray input \u2014 iterate works for both. Return list[bytes].\n\nZero-length: state 'check' directly after length. Good.\n\nReturn type annotation: feed(self, chunk: bytes) -> list[bytes]. No imports needed."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 322,
+      "total_tokens": 1975,
+      "completion_tokens": 1653,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

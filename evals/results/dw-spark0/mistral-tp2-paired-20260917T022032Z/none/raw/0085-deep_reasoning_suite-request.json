@@ -1,0 +1,29 @@
+{
+  "mode": "none",
+  "suite": "deep_reasoning_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+      },
+      {
+        "role": "user",
+        "content": "A compute module sits at thermal equilibrium in a 22 C room drawing 120 W.\nIts junction-to-ambient thermal resistance is 0.28 K/W and its lumped heat\ncapacity is 900 J/K, so the time constant is resistance times capacity.\n\nAt t = 0 the load steps to 300 W. The junction temperature rises exponentially\ntowards the new steady state with that same time constant. Firmware throttles\nthe moment the junction reaches 95 C.\n\nReturn ONLY JSON with exactly these keys:\n  \"initial_junction_c\"     number, junction temperature just before the step\n  \"target_junction_c\"      number, the steady state it is heading towards at 300 W\n  \"throttles\"              true or false, whether it reaches 95 C at all\n  \"seconds_to_95c\"         number, seconds after the step until it hits 95 C;\n                           use -1 if it never does\n  \"sustainable_power_w\"    number, the highest constant power that holds the\n                           junction at or below 95 C in this ambient\n"
+      },
+      {
+        "role": "assistant",
+        "content": "```json\n{\n  \"initial_junction_c\": 22 + 120 * 0.28,\n  \"target_junction_c\": 22 + 300 * 0.28,\n  \"throttles\": true,\n  \"seconds_to_95c\": -1 * 900 * 0.28 * Math.log((22 + 300 * 0.28 - 95) / (22 + 120 * 0.28 - 95)),\n  \"sustainable_power_w\": (95 - 22) / 0.28\n}\n```"
+      },
+      {
+        "role": "user",
+        "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nresponse did not parse as JSON"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T03:11:22.275395+00:00"
+}

@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 8.151417939996463,
+  "response": {
+    "id": "chatcmpl-94c1e1cbee80ece7",
+    "object": "chat.completion",
+    "created": 1789655793,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"kv_bytes_per_token\":131072,\"kv_gib_at_8192\":1,\"kv_gib_at_131072\":16}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer only JSON. Need compute. Need be careful. Transformer standard grouped-query attention. KV cache: per token per layer stores K and V. 8 key/value heads per layer, head dim 128. So elements per token per layer for K = 8*128 = 1024. V same = 1024. Total per layer = 2048 elements. 32 layers => 65536 elements per token. fp16 2 bytes => 131072 bytes per token. That's 128 KiB? 131072 bytes = 128 KiB. Need GiB at 8192: bytes = 131072 * 8192. Compute. 131072 = 2^17. 8192=2^13. product=2^30 bytes = 1 GiB exactly. At 131072 tokens = 2^17 tokens. bytes = 2^17 * 2^17 = 2^34 bytes = 16 GiB? Since 1 GiB=2^30, 2^34/2^30=2^4=16. Yes.\n\nNeed return JSON exactly keys. Numbers: kv_gib_at_8192 maybe 1, kv_gib_at_131072 16. Ensure integer for first. JSON number can be 1 or 1.0? They said number. Use 1 and 16. Return only JSON."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 191,
+      "total_tokens": 513,
+      "completion_tokens": 322,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 291
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

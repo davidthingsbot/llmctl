@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 120.47459134399833,
+  "response": {
+    "id": "chatcmpl-ba74a0af34a4614d",
+    "object": "chat.completion",
+    "created": 1789680824,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\ndouble mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                         const double* X, const double* y, int n_samples,\n                         double* grad)\n{\n    const int n_w1 = n_hidden * n_in;\n    const int off_b1 = n_w1;\n    const int off_w2 = off_b1 + n_hidden;\n    const int off_b2 = off_w2 + n_hidden;\n    const int n_total = off_b2 + 1;\n\n    for (int i = 0; i < n_total; ++i) grad[i] = 0.0;\n\n    double loss = 0.0;\n\n    for (int s = 0; s < n_samples; ++s) {\n        const double* x = X + (long)s * n_in;\n        const double yv = y[s];\n\n        // Forward pass\n        double z = params[off_b2];\n        for (int j = 0; j < n_hidden; ++j) {\n            double a = params[off_b1 + j];\n            const double* w1row = params + (long)j * n_in;\n            for (int k = 0; k < n_in; ++k) a += w1row[k] * x[k];\n            z += params[off_w2 + j] * std::tanh(a);\n        }\n\n        const double p = 1.0 / (1.0 + std::exp(-z));\n\n        // Stable log terms:\n        // log(p)   = -softplus(-z)\n        // log(1-p) = -z - softplus(-z)\n        double t = -z;\n        double softplus;\n        if (t > 0.0) softplus = t + std::log1p(std::exp(-t));\n        else         softplus = std::log1p(std::exp(t));\n\n        loss += yv * softplus + (1.0 - yv) * (z + softplus);\n\n        // Backward pass: dL_i/dz = p - y\n        const double dz = p - yv;\n\n        grad[off_b2] += dz;\n\n        for (int j = 0; j < n_hidden; ++j) {\n            const double h = std::tanh(params[off_b1 + j]\n                                       + [&]() {\n                                             double acc = 0.0;\n                                             const double* wr = params + (long)j * n_in;\n                                             for (int k = 0; k < n_in; ++k) acc += wr[k] * x[k];\n                                             return acc;\n                                         }());\n            grad[off_w2 + j] += dz * h;\n\n            const double da = dz * params[off_w2 + j] * (1.0 - h * h);\n            grad[off_b1 + j] += da;\n\n            double* grow = grad + (long)j * n_in;\n            for (int k = 0; k < n_in; ++k) grow[k] += da * x[k];\n        }\n    }\n\n    const double inv = 1.0 / (double)n_samples;\n    for (int i = 0; i < n_total; ++i) grad[i] *= inv;\n\n    return loss * inv;\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Write the function. Standard backprop.\n\nFor each sample:\n- h_j = tanh(a_j), a_j = sum W1[j][k] x_k + b1[j]\n- z = sum W2[j] h_j + b2\n- p = sigmoid(z)\n- loss_i = -(y log p + (1-y) log(1-p))\n- dz = p - y (for BCE with sigmoid)\n- dW2[j] += dz * h_j; db2 += dz\n- da_j = dz * W2[j] * (1 - h_j^2)\n- dW1[j][k] += da_j * x_k; db1[j] += da_j\n\nAverage by dividing by n_samples. Overwrite grad: zero first.\n\nClamp p to avoid log(0)? Finite differences check; p could be exactly 0 or 1 numerically. Use safe log: clamp p to [eps, 1-eps]? But that changes gradient slightly... Actually derivative of clamped log is zero outside, which would break analytic gradient if p is in clamp region. Better: compute loss via log1p or use stable formulation: loss = -y log p - (1-y) log(1-p). Use logf-safe: p = 1/(1+exp(-z)); if z very negative, exp(-z) huge, p\u21920, log(p) = -inf. To be safe, compute log(p) as -log(1+exp(-z)) and log(1-p) as -z - log(1+exp(-z))? Since 1-p = exp(-z)/(1+exp(-z)), log(1-p) = -z - log(1+exp(-z)). And log(p) = -log(1+exp(-z)). These are exact analytically and numerically stable. log(1+exp(-z)) overflows for very negative z... exp(-z) huge \u2192 inf \u2192 log inf = inf, loss inf. Hmm, for z very negative, log(1+exp(-z)) \u2248 -z. Use softplus: log(1+exp(t)) with t=-z; stable version: t + log1p(exp(-|t|))? Actually softplus(t) = max(t,0) + log1p(exp(-|t|)). Use that.\n\nBut gradient dz = p - y is fine regardless.\n\nImplement:\n\ndouble mlp_loss_and_grad(...) {\n  int nW1 = n_hidden*n_in;\n  // zero grad\n  for (int i=0;i<nW1+n_hidden+1+n_hidden+1;i++) grad[i]=0.0;\n  double loss=0.0;\n  for (int s=0;s<n_samples;s++){\n    const double* x = X + s*n_in;\n    double yv = y[s];\n    // forward\n    for j: a_j = b1[j] + dot; h[j]=tanh(a)\n    z = b2 + sum W2[j]*h[j]\n    // stable log terms\n    double sp = softplus(-z); // log(1+exp(-z)) = log(1/p)... wait\n    p = 1/(1+exp(-z)); log p = -log(1+exp(-z)) = -softplus(-z)\n    log(1-p) = -z - softplus(-z)\n    loss += -(yv*(-softplus(-z)) + (1-yv)*(-z - softplus(-z)));\n    Simplify: loss_i = yv*softplus(-z) + (1-yv)*(z + softplus(-z)).\n    double dz = p - yv;\n    grad[b2 index] += dz; // index nW1+n_hidden+1+n_hidden\n    for j: grad[W2 idx] += dz*h[j]; da = dz*W2[j]*(1-h*h); grad[b1[j]] += da; for k grad[j*n_in+k] += da*x[k];\n  }\n  double inv = 1.0/n_samples;\n  for all grad *= inv; loss *= inv;\n  return loss;\n}\n\nsoftplus helper: static inline double softplus(double t){ if(t>30) return t; if(t<-30) return exp(t); return log1p(exp(t)); } Actually log1p(exp(t)) fine for t<30; for t>=30, \u2248t. Use: t>0 ? t + log1p(exp(-t)) : log1p(exp(t)).\n\np = 1/(1+exp(-z)): for z large positive, exp(-z)\u21920, p=1, dz=1-y fine.\n\nWrite final code."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 421,
+      "total_tokens": 2124,
+      "completion_tokens": 1703,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

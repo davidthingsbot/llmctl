@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 41.9353726440022,
+  "response": {
+    "id": "chatcmpl-932af8e7e5128b46",
+    "object": "chat.completion",
+    "created": 1789660789,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "# Acquisition and Processing Design\n\n## 1. Principle: separate acquisition from processing\n\nThe proposal conflates four responsibilities in one command. Split them:\n\n| Responsibility | Owner |\n|---|---|\n| Sensor access and raw frame capture | Acquisition engine (sole owner of the sensor) |\n| Raw frame storage | Frame store (ring buffer, raw + derived) |\n| Transform and filtering | Processing pipeline, run against a stored raw frame |\n| Change notification | Event layer, driven by frame-store commits |\n\n`SCAN` becomes a trigger that submits an acquisition request to the engine; it does not itself touch the sensor or the pipeline.\n\n## 2. Identity\n\n- Every source has a stable `source_id`.\n- Every captured frame gets a monotonically increasing `frame_id` (per source), assigned by the acquisition engine at capture time.\n- A frame record contains: `frame_id`, `source_id`, timestamp, raw payload, and a snapshot of the pipeline configuration (transform parameters, filter set, config version) in effect at capture time.\n- Derived (transformed/filtered) frames reference the `frame_id` of their raw parent. Raw frames are retained, not overwritten.\n\nThis makes processing reproducible: any derived frame can be regenerated bit-exactly from `(raw frame, config snapshot)`, and later audit or download reads stored data instead of rescanning.\n\n## 3. Command boundaries\n\n- `ACQ_START` / `ACQ_STOP` \u2014 enter/exit continuous acquisition on a source.\n- `SCAN` \u2014 request a single acquisition on a source. Returns `frame_id` (synchronously or via event).\n- `SET_TRANSFORM` / `SET_FILTERS` \u2014 modify pipeline configuration. Takes effect for frames captured after the change; does not retroactively alter stored frames.\n- `GET_FRAME frame_id [raw|derived]` \u2014 retrieve stored frames for audit/download.\n- `EVENT_SUBSCRIBE` / `EVENT_UNSUBSCRIBE` \u2014 control event reporting.\n\n## 4. Continuous vs. on-demand\n\n- The acquisition engine is the single owner of the sensor. There is no second code path.\n- While continuous acquisition is active, an on-demand `SCAN` is **rejected** with `BUSY` (or, if the protocol prefers, enqueued as an extra trigger \u2014 pick one and specify it; rejection is simpler and avoids interleaving ambiguity). It must never run concurrently with the continuous loop.\n- When idle, `SCAN` is the only way to capture. Same engine, same `frame_id` assignment, same storage path in both modes.\n\n## 5. Acquisition mode vs. event reporting\n\nEvent reporting is **orthogonal** to acquisition mode:\n\n- An event is emitted whenever a new frame (raw or derived, per subscription) is committed to the frame store \u2014 regardless of whether the commit came from the continuous loop or an on-demand `SCAN`.\n- Event mode changes (`EVENT_SUBSCRIBE`) never start, stop, or throttle acquisition.\n- Events carry `frame_id`, `source_id`, and record type \u2014 not payloads. Payloads are fetched with `GET_FRAME`, so event consumers cannot become an ownership path to the sensor or a bottleneck in the acquisition loop.\n\n## 6. Race avoidance summary\n\n- One sensor owner: the acquisition engine. All triggers (timer, `SCAN`) enter through its request queue.\n- Frame store commits are atomic per `frame_id`; events are published only after commit.\n- Configuration changes are applied between frames, never mid-frame, and are snapshotted per frame.",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "The user wants a design spec for an embedded protocol. Context: sensor frames, shear transform, filters, event mode, continuous acquisition, on-demand SCAN. Need to separate acquisition from transformation/filtering, keep raw frames stored for audit/download, define identity (frame IDs, source IDs), avoid ownership races (single owner of sensor, queue), continuous vs on-demand, event reporting decoupled from acquisition mode.\n\nWrite concise spec-style design. Key points:\n\n- Split SCAN into: ACQUIRE (sensor ownership, raw frame capture, store raw), TRANSFORM/PROCESS (apply shear + filters, store processed), EVENTS (reporting layer).\n- Frame identity: monotonically increasing frame_id per source; source_id; raw and derived frames reference frame_id.\n- Storage: retain raw frames in ring buffer for later download (DUMP/READ command) \u2014 audit without rescanning.\n- Ownership: sensor is owned by acquisition engine; on-demand SCAN while continuous active must be rejected or routed through the same queue \u2014 no second owner. Define: continuous mode owns sensor; on-demand requests enqueue or are refused with BUSY error.\n- Reproducibility: each frame records pipeline configuration version/transform parameters snapshot at capture time; processing deterministic given (raw frame, config snapshot).\n- Events: event mode is orthogonal to acquisition mode; events emitted on new processed frames regardless of whether acquisition was triggered by continuous timer or on-demand command; event carries frame_id, not payload (or small payload).\n- Command boundaries: START/STOP continuous, SCAN (on-demand acquire), GET_FRAME/DOWNLOAD (retrieve raw or processed by frame_id), SET_TRANSFORM, SET_FILTERS, EVENT_SUBSCRIBE.\n\nKeep concise. Format: spec with sections. Use headers and bullets. Moderate length."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 162,
+      "total_tokens": 1241,
+      "completion_tokens": 1079,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

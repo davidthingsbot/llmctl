@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 15.00609519299178,
+  "response": {
+    "id": "chatcmpl-b2fedc433f8db663",
+    "object": "chat.completion",
+    "created": 1789671870,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\"released_good_units\": 152, \"released_value_cents\": 25285, \"held_ids\": [\"E55\", \"F66\"], \"largest_value_id\": \"B22\"}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Let me carefully parse the original document and apply amendments in order.\n\nOriginal:\nA11: qty=48, rejects=3, cents=125, state=RELEASE\nB22: qty=35, rejects=2, cents=240, state=HOLD\nC33: qty=60, rejects=5, cents=80, state=RELEASE\nD44: qty=24, rejects=1, cents=350, state=RELEASE\nE55: qty=40, rejects=4, cents=150, state=HOLD\nF66: qty=32, rejects=2, cents=200, state=RELEASE\n\nAmendments:\n1: A11 qty ADD -6 -> qty=42\n2: C33 rejects SET 8 -> rejects=8\n3: B22 state SET RELEASE -> state=RELEASE\n4: D44 cents SET 320 -> cents=320\n5: A11 rejects SET 1 -> rejects=1\n6: F66 state SET HOLD -> state=HOLD\n7: E55 qty ADD 5 -> qty=45\n8: B22 qty SET 38 -> qty=38\n\nFinal states:\nA11: qty=42, rejects=1, cents=125, state=RELEASE -> good=41, value=41*125=5125\nB22: qty=38, rejects=2, cents=240, state=RELEASE -> good=36, value=36*240=8640\nC33: qty=60, rejects=8, cents=80, state=RELEASE -> good=52, value=52*80=4160\nD44: qty=24, rejects=1, cents=320, state=RELEASE -> good=23, value=23*320=7360\nE55: qty=45, rejects=4, cents=150, state=HOLD\nF66: qty=32, rejects=2, cents=200, state=HOLD\n\nReleased good units = 41+36+52+23 = 152\nReleased value cents = 5125+8640+4160+7360 = 25285\n\nHeld IDs in original row order: E55, F66\n\nLargest value released line: B22 (8640)\n\nLet me double check sums.\n41+36=77; 77+52=129; 129+23=152. Good.\n5125+8640=13765; +4160=17925; +7360=25285. Good.\n\nLargest value: B22=8640 > D44=7360 > A11=5125 > C33=4160. So B22.\n\nHeld IDs ordered: original rows order A11,B22,C33,D44,E55,F66. Held are E55 and F66. So [\"E55\",\"F66\"].\n\nNow produce JSON.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 1731,
+      "total_tokens": 2550,
+      "completion_tokens": 819,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 768
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

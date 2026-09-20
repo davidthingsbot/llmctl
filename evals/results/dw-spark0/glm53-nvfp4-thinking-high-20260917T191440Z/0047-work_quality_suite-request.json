@@ -1,0 +1,19 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Implement the forward pass, loss and analytic gradients of a small neural\nnetwork in C++, from scratch. Return ONLY the function, no main, no includes, no\nexplanation. You may not use any library beyond <cmath>.\n\n    double mlp_loss_and_grad(const double* params, int n_in, int n_hidden,\n                             const double* X, const double* y, int n_samples,\n                             double* grad);\n\nNetwork, for one input vector x of length n_in:\n  h_j    = tanh( sum_k W1[j][k] * x[k] + b1[j] )      for j in 0..n_hidden-1\n  z      = sum_j W2[j] * h_j + b2\n  p      = 1 / (1 + exp(-z))\n  loss   = -( y*log(p) + (1-y)*log(1-p) )\n\nReturn the loss AVERAGED over the n_samples, and write d(average loss)/d(param)\ninto grad[], which the caller has sized correctly.\n\n`params` is one flat array in exactly this order:\n  W1  n_hidden * n_in doubles, row-major: W1[j][k] is params[j*n_in + k]\n  b1  n_hidden doubles\n  W2  n_hidden doubles\n  b2  1 double\n`grad` uses the identical layout. `X` is n_samples * n_in doubles, row-major;\n`y` is n_samples doubles, each 0.0 or 1.0.\n\nRequirements:\n- grad[] must be OVERWRITTEN each call, not accumulated across calls.\n- n_samples may be 1.\n- The gradients must be the true analytic derivatives: they are checked against\n  finite differences to a relative tolerance of 1e-4.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

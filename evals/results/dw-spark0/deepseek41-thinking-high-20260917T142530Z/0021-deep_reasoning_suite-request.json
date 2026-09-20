@@ -1,0 +1,19 @@
+{
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Solve the reasoning problem carefully. State only conclusions supported by the given evidence, distinguish assumptions from deductions, and obey the requested format."
+    },
+    {
+      "role": "user",
+      "content": "Choose which models stay resident. TWO limits bind at once: 112 GiB of\nmemory AND 260 GB/s of memory bandwidth, shared by everything loaded.\n\n  name      size_gib   bandwidth_gbs   value\n  atlas        61            120         67\n  borealis     56            140         60\n  cinder       56            130         60\n  dunlin       27             80         28\n  ember        19             70         19\n  fennec       13             55         12\n\nA set is feasible only if total size <= 112 AND total bandwidth <= 260.\n\nReturn ONLY JSON with exactly these keys:\n  \"selection\"         array of names, the value-maximising feasible set\n  \"total_value\"       integer\n  \"total_size_gib\"    integer\n  \"total_bandwidth\"   integer\n  \"bandwidth_binds\"   true or false, whether the bandwidth limit rules out the\n                      set you would have picked on memory alone\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

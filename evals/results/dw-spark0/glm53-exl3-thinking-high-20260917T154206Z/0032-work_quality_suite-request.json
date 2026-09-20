@@ -1,0 +1,19 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Return ONLY JSON with exactly these numeric keys:\nbits_per_transaction, bus_bit_rate, wire_time_ms_per_second,\nchip_select_overhead_ms_per_second, total_bus_utilization_percent, remaining_margin_percent.\n\nbits_per_transaction is EVERY bit clocked out for one sample: data, status and framing\ntogether. bus_bit_rate is bits_per_transaction times the total samples per second across\nall channels.\n\nAn acquisition system has 8 channels. Every channel is sampled 2,000 times/second.\nEach sample transaction carries 24 data bits, 8 status bits, and 16 framing bits.\nSPI clock is 8,000,000 bits/second. Every sample is one transaction and adds 12 microseconds\nof chip-select/setup overhead beyond wire time. Ignore all other costs. Do not round to an integer."
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

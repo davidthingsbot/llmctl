@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 53.65571952100436,
+  "response": {
+    "id": "chatcmpl-a2ecdda8c35c6c31",
+    "object": "chat.completion",
+    "created": 1789672055,
+    "model": "qwen38-flash-next-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "\n\n{\"room\": \"R2\", \"technician\": \"Bo\", \"start\": \"10:15\", \"end\": \"11:15\"}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "I need to find the earliest completion time for a 60-minute appointment (setup 15, scan 30, finish 15) using one room (R1 or R2), one technician (Ada or Bo), and the shared Scanner.\n\nConstraints:\n- R1 permits Ada only. R2 permits either.\n- Room occupied all 60 minutes.\n- Technician occupied during setup (first 15) and finish (last 15), free during scan (middle 30).\n- Scanner occupied only during middle 30 minutes.\n- Start on 15-minute tick, entire appointment within 09:00-13:00.\n- Touching endpoints do not overlap.\n\nLet me list occupied times from the chart.\n\nR1: 09:00-10:00, 11:15-12:15\nR2: 09:00-09:30, 11:30-12:00, 12:30-13:00\nAda: 09:00-09:45, 10:30-11:30, 12:00-13:00\nBo: 09:00-10:00, 10:45-11:00, 11:45-12:30\nScanner: 09:00-09:30, 10:00-10:30, 11:30-12:00\n\nI need to find a start time S (15-min tick) such that:\n- Room free [S, S+60]\n- Technician free [S, S+15] and [S+45, S+60]\n- Scanner free [S+15, S+45]\n- S+60 <= 13:00, so S <= 12:00.\n\nPossible starts: 09:00, 09:15, 09:30, 09:45, 10:00, 10:15, 10:30, 10:45, 11:00, 11:15, 11:30, 11:45, 12:00.\n\nLet me check each start for earliest completion.\n\nStart 09:00: Room R1 free? R1 occupied 09:00-10:00, no. R2 occupied 09:00-09:30, no. So no room. Fail.\n\nStart 09:15: Room R1 occupied until 10:00, no. R2 occupied 09:00-09:30, overlaps 09:15-09:30, no. Fail.\n\nStart 09:30: Room R1 occupied until 10:00, no. R2 free 09:30-10:30? R2 occupied 09:00-09:30 (touching ok), next 11:30. So R2 free [09:30,10:30]. Good. Technician: R2 permits either. Need tech free [09:30,09:45] and [10:15,10:30]. Ada: occupied 09:00-09:45, overlaps 09:30-09:45, no. Bo: occupied 09:00-10:00, overlaps, no. Fail.\n\nStart 09:45: Room R1 occupied until 10:00, no. R2 free [09:45,10:45]? R2 occupied 09:00-09:30, next 11:30. So free. Good. Tech free [09:45,10:00] and [10:30,10:45]. Ada: occupied 09:00-09:45 (touching ok at 09:45), next 10:30-11:30 overlaps 10:30-10:45, no. Bo: occupied 09:00-10:00 overlaps 09:45-10:00, no. Fail.\n\nStart 10:00: Room R1 free [10:00,11:00]? R1 occupied 09:00-10:00 (touching ok), next 11:15. So free [10:00,11:00]. Good. R1 permits Ada only. Tech Ada free [10:00,10:15] and [10:45,11:00]. Ada occupied 10:30-11:30 overlaps 10:45-11:00, no. Fail for R1. R2 free [10:00,11:00]? R2 occupied 09:00-09:30, next 11:30. Free. Good. Tech either. Ada free [10:00,10:15]? Ada occupied 09:00-09:45 ok, next 10:30. So [10:00,10:15] free. [10:45,11:00]? Ada occupied 10:30-11:30 overlaps, no. Bo free [10:00,10:15]? Bo occupied 09:00-10:00 touching ok, next 10:45-11:00 overlaps 10:45-11:00, no. Fail.\n\nStart 10:15: Room R1 free [10:15,11:15]? R1 next occupied 11:15, touching ok. Free. R1 permits Ada. Ada free [10:15,10:30]? Ada occupied 10:30-11:30, [10:15,10:30] free (touching at 10:30 ok). [11:00,11:15]? Ada occupied 10:30-11:30 overlaps, no. Fail. R2 free [10:15,11:15]? R2 next 11:30, free. Tech either. Ada [10:15,10:30] free, [11:00,11:15] overlaps 10:30-11:30, no. Bo [10:15,10:30] free? Bo occupied 09:00-10:00 ok, next 10:45. So [10:15,10:30] free. [11:00,11:15]? Bo occupied 10:45-11:00 touching ok, next 11:45. So [11:00,11:15] free. Good for Bo! Now Scanner free [10:30,11:00]? Scanner occupied 10:00-10:30 (touching ok at 10:30), next 11:30. So [10:30,11:00] free. Good! So start 10:15 with R2, Bo works? Let me double check all.\n\nWait, but we need earliest completion. 10:15 start gives completion 11:15. But maybe earlier start works? We checked 09:00-10:00 all fail. So 10:15 is candidate. But let's also check 10:30 etc to ensure 10:15 is valid and earliest. Actually we want earliest completion, so earliest valid start. We found 10:15 valid. But wait, did we miss any start before 10:15? We checked 09:00,09:15,09:30,09:45,10:00 all fail. So 10:15 is earliest valid start? Let's double check 10:15 thoroughly.\n\nAppointment [10:15,11:15]. Setup [10:15,10:30], scan [10:30,11:00], finish [11:00,11:15].\nRoom R2: occupied 09:00-09:30, 11:30-12:00, 12:30-13:00. [10:15,11:15] free. Yes.\nTech Bo: occupied 09:00-10:00, 10:45-11:00, 11:45-12:30. Need free [10:15,10:30] and [11:00,11:15]. [10:15,10:30] free (Bo's 10:45-11:00 starts after). [11:00,11:15] free (Bo's 10:45-11:00 ends at 11:00 touching ok; next 11:45). Yes.\nScanner: occupied 09:00-09:30, 10:00-10:30, 11:30-12:00. Need free [10:30,11:00]. 10:00-10:30 ends at 10:30 touching ok; next 11:30. So [10:30,11:00] free. Yes.\n\nAll constraints satisfied! Completion 11:15.\n\nBut wait, the problem says \"unique optimal plan\". Let me check if any start earlier than 10:15 could work that I missed. We checked all. So 10:15 is earliest start, completion 11:15.\n\nHmm but let me double check start 10:00 with R2 and Bo more carefully. Setup [10:00,10:15], scan [10:15,10:45], finish [10:45,11:00]. Bo occupied 10:45-11:00 overlaps finish, no. Ada occupied 10:30-11:30 overlaps scan? Scanner not Ada. Ada finish [10:45,11:00] overlaps 10:30-11:30, no. So 10:00 fails. Good.\n\nThus optimal is start 10:15, end 11:15, room R2, technician Bo.\n\nBut wait, the objective is earliest completion time. Could there be a start at 10:00 with R1? R1 permits Ada only. Ada setup [10:00,10:15] free? Ada occupied 09:00-09:45 ok, next 10:30. So [10:00,10:15] free. Finish [10:45,11:00] overlaps 10:30-11:30, no. Fail.\n\nSo 10:15 is the answer. Let me also verify there's no start at 09:30 with some combination I missed. At 09:30 we needed tech free [09:30,09:45]; both Ada and Bo occupied then. Fail.\n\nThus final: room R2, technician Bo, start 10:15, end 11:15.\n\nHold on, but the chart's R1 first bar is 09:00-10:00 and R2 first bar 09:00-09:30. Yes.\n\nLet me double check Scanner at 10:30-11:00 free: Scanner bars 09:00-09:30, 10:00-10:30, 11:30-12:00. Yes free.\n\nEverything consistent. Unique optimal.\n\nThus JSON.\n"
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20073+g8e685d198-tp2-ep-efab62a1",
+    "usage": {
+      "prompt_tokens": 1789,
+      "total_tokens": 4750,
+      "completion_tokens": 2961,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 2924
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

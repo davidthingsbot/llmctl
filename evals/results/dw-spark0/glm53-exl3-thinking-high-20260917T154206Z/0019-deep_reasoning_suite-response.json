@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 9.174283521002508,
+  "response": {
+    "id": "chatcmpl-82c866e0a90eadb7",
+    "object": "chat.completion",
+    "created": 1789660664,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.7\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Initial: T = 22 + 120*0.28 = 22 + 33.6 = 55.6 \u00b0C.\nTarget: 22 + 300*0.28 = 22 + 84 = 106 \u00b0C.\nTime constant \u03c4 = 0.28*900 = 252 s.\nT(t) = 106 - (106-55.6) e^{-t/252} = 106 - 50.4 e^{-t/252}.\nSet = 95: 50.4 e^{-t/252} = 11 \u2192 e^{-t/252} = 11/50.4 = 0.218254...\nt = 252 * ln(50.4/11) = 252 * ln(4.581818...) = 252 * 1.52226 \u2248 383.6 s.\n\nln(4.581818): ln4.5818 \u2248 1.52226. Compute: ln4.5=1.504077, ln(4.5818/4.5)=ln(1.018182)=0.018019. Sum=1.522096. t=252*1.522096=383.57 s.\n\nSustainable power: 95 = 22 + P*0.28 \u2192 P = 73/0.28 = 260.714 W."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 266,
+      "total_tokens": 650,
+      "completion_tokens": 384,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

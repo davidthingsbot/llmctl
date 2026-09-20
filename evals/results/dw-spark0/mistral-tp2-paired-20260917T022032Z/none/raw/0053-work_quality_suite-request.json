@@ -1,0 +1,29 @@
+{
+  "mode": "none",
+  "suite": "work_quality_suite",
+  "request": {
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+      },
+      {
+        "role": "user",
+        "content": "Write an asynchronous FIFO in Verilog-2001 \u2014 a FIFO whose write and read\nsides run on unrelated clocks. Return ONLY the module, no testbench, no\nexplanation.\n\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\nRequirements:\n- DEPTH is a power of two. `wclk` and `rclk` have no fixed phase or frequency\n  relationship.\n- A write occurs on a `wclk` edge when `winc` is high and `wfull` is low; a read\n  on an `rclk` edge when `rinc` is high and `rempty` is low.\n- Pointers crossing between the domains MUST be Gray-coded and passed through a\n  two-flop synchroniser in the destination domain. A binary pointer crossed\n  directly can be sampled mid-transition with several bits changing at once,\n  which corrupts the count \u2014 it will usually still simulate correctly, so this is\n  about doing it right rather than about passing by luck.\n- `wfull` and `rempty` must be generated in their own clock domains.\n- No data may be lost, duplicated or reordered.\n- Synthesisable RTL: non-blocking assignments in sequential blocks, no latches.\n"
+      },
+      {
+        "role": "assistant",
+        "content": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  localparam ADDR_WIDTH = $clog2(DEPTH);\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  // Write domain\n  reg [ADDR_WIDTH:0] wptr_bin;\n  reg [ADDR_WIDTH:0] wptr_gray;\n  reg [ADDR_WIDTH:0] rptr_gray_sync1;\n  reg [ADDR_WIDTH:0] rptr_gray_sync2;\n  reg [ADDR_WIDTH:0] rptr_bin;\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wptr_bin <= 0;\n      wptr_gray <= 0;\n      rptr_gray_sync1 <= 0;\n      rptr_gray_sync2 <= 0;\n    end else begin\n      if (winc && !wfull) begin\n        mem[wptr_bin[ADDR_WIDTH-1:0]] <= wdata;\n        wptr_bin <= wptr_bin + 1;\n        wptr_gray <= (wptr_bin >> 1) ^ wptr_bin;\n      end\n      rptr_gray_sync1 <= rptr_gray;\n      rptr_gray_sync2 <= rptr_gray_sync1;\n      rptr_bin <= (rptr_gray_sync2 >> 1) ^ rptr_gray_sync2;\n    end\n  end\n\n  assign wfull = (wptr_gray == {~rptr_gray_sync2[ADDR_WIDTH:ADDR_WIDTH-1]});\n  assign wfull = wfull || (wptr_bin[ADDR_WIDTH-1:0] == (DEPTH-1));\n\n  // Read domain\n  reg [ADDR_WIDTH:0] rptr_bin_sync;\n  reg [ADDR_WIDTH:0] wptr_gray_sync1;\n  reg [ADDR_WIDTH:0] wptr_gray_sync2;\n  reg [ADDR_WIDTH:0] wptr_bin_sync;\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rptr_bin_sync <= 0;\n      wptr_gray_sync1 <= 0;\n      wptr_gray_sync2 <= 0;\n      wptr_bin_sync <= 0;\n    end else begin\n      if (rinc && !rempty) begin\n        rdata <= mem[rptr_bin_sync[ADDR_WIDTH-1:0]];\n        rptr_bin_sync <= rptr_bin_sync + 1;\n      end\n      wptr_gray_sync1 <= wptr_gray;\n      wptr_gray_sync2 <= wptr_gray_sync1;\n      wptr_bin_sync <= (wptr_gray_sync2 >> 1) ^ wptr_gray_sync2;\n    end\n  end\n\n  assign rempty = (rptr_bin_sync[ADDR_WIDTH-1:0] == wptr_bin_sync[ADDR_WIDTH-1:0]);\n\n  // Gray code generation for read pointer\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rptr_gray <= 0;\n    end else begin\n      rptr_gray <= (rptr_bin_sync >> 1) ^ rptr_bin_sync;\n    end\n  end\n\nendmodule\n```"
+      },
+      {
+        "role": "user",
+        "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\n/tmp/vlog-hard-c_6fxy53/async_fifo.v:27: error: Unable to bind wire/reg/memory `rptr_gray' in `tb.dut'\n/tmp/vlog-hard-c_6fxy53/async_fifo.v:50: error: rdata is not a valid l-value in tb.dut.\n%Error: /tmp/vlog-hard-c_6fxy53/async_fifo.v:27:26: Can't find definition of variable: 'rptr_gray'\n%Error: Exiting due to 1 error(s)\nfailed checks: compiles, lint_clean"
+      }
+    ],
+    "temperature": 0,
+    "max_tokens": 32768,
+    "reasoning_effort": "none"
+  },
+  "utc": "2026-09-17T02:54:47.156453+00:00"
+}

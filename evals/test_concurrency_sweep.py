@@ -18,6 +18,7 @@ TOKENS = 5
 
 class Handler(BaseHTTPRequestHandler):
     fail = False
+    reasoning_key = "reasoning_content"
 
     def do_POST(self):
         self.rfile.read(int(self.headers.get("Content-Length", 0)))
@@ -34,7 +35,7 @@ class Handler(BaseHTTPRequestHandler):
         # A reasoning-only delta must count: thinking tokens cost the same
         # bandwidth, and not counting them is how a throughput script silently
         # reports zero for a model served with a reasoning parser.
-        chunk = {"choices": [{"delta": {"reasoning_content": "think "}}]}
+        chunk = {"choices": [{"delta": {Handler.reasoning_key: "think "}}]}
         self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
         self.wfile.write(b"data: [DONE]\n\n")
 
@@ -56,6 +57,12 @@ class SweepTest(unittest.TestCase):
 
     def setUp(self):
         Handler.fail = False
+        Handler.reasoning_key = "reasoning_content"
+
+    def test_counts_current_reasoning_field(self):
+        Handler.reasoning_key = "reasoning"
+        results = sweep.sweep(self.url, "k", "m", [1], 50)
+        self.assertEqual(results[0]["tokens"], TOKENS + 1)
 
     def test_counts_every_stream_and_reasoning_tokens(self):
         results = sweep.sweep(self.url, "k", "m", [1, 2], 50)

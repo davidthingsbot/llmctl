@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 38.02644202099327,
+  "response": {
+    "id": "chatcmpl-91644802dfa644ad",
+    "object": "chat.completion",
+    "created": 1789612344,
+    "model": "mistral-medium-3.5-nvfp4-tp2",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\nstruct RingBuffer {\n    int data[1024];\n    size_t head = 0;\n    size_t tail = 0;\n    size_t count = 0;\n    const size_t capacity;\n\n    RingBuffer(int capacity) : capacity(capacity) {}\n\n    bool push(int value) {\n        if (full()) return false;\n        data[tail] = value;\n        tail = (tail + 1) % capacity;\n        ++count;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (empty()) return false;\n        out = data[head];\n        head = (head + 1) % capacity;\n        --count;\n        return true;\n    }\n\n    int size() const { return count; }\n    bool empty() const { return count == 0; }\n    bool full() const { return count == capacity; }\n};\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": null
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-e74bf818",
+    "usage": {
+      "prompt_tokens": 246,
+      "total_tokens": 433,
+      "completion_tokens": 187,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 5.2887865219963714,
+  "response": {
+    "id": "chatcmpl-aa67d8d46b630c68",
+    "object": "chat.completion",
+    "created": 1789660891,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```cpp\nstruct RingBuffer {\n    RingBuffer(int capacity) : cap_(capacity), head_(0), count_(0) {}\n\n    bool push(int value) {\n        if (full()) return false;\n        data_[(head_ + count_) % cap_] = value;\n        ++count_;\n        return true;\n    }\n\n    bool pop(int& out) {\n        if (empty()) return false;\n        out = data_[head_];\n        head_ = (head_ + 1) % cap_;\n        --count_;\n        return true;\n    }\n\n    int size() const { return count_; }\n    bool empty() const { return count_ == 0; }\n    bool full() const { return count_ == cap_; }\n\nprivate:\n    static const int kMaxCapacity = 1024;\n    int data_[kMaxCapacity];\n    int cap_;\n    int head_;\n    int count_;\n};\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Simple implementation. Use head, count."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 232,
+      "total_tokens": 430,
+      "completion_tokens": 198,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

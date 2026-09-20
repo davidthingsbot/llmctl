@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 33.57685774299898,
+  "response": {
+    "id": "chatcmpl-a33ee7a6dabffc3c",
+    "object": "chat.completion",
+    "created": 1789658973,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport numpy as np\n\ndef init_params(n_in, n_hidden, seed):\n    \"\"\"Return a dict with keys W1, b1, W2, b2.\"\"\"\n    rng = np.random.default_rng(seed)\n    W1 = rng.standard_normal((n_hidden, n_in)) * 0.01\n    b1 = np.zeros(n_hidden)\n    W2 = rng.standard_normal(n_hidden) * 0.01\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\n\ndef loss_and_grads(params, X, y):\n    \"\"\"Return (loss, grads) where grads has the same keys as params.\"\"\"\n    W1 = params[\"W1\"]\n    b1 = params[\"b1\"]\n    W2 = params[\"W2\"]\n    b2 = params[\"b2\"]\n\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = X.shape[0]\n\n    pre = X @ W1.T + b1\n    H = np.tanh(pre)\n    z = H @ W2 + b2\n    p = 1.0 / (1.0 + np.exp(-z))\n\n    eps = 1e-12\n    loss = -np.mean(y * np.log(p + eps) + (1.0 - y) * np.log(1.0 - p + eps))\n\n    dz = (p - y) / n\n    dW2 = H.T @ dz\n    db2 = float(np.sum(dz))\n    dH = np.outer(dz, W2)\n    dpre = dH * (1.0 - H * H)\n    dW1 = dpre.T @ X\n    db1 = dpre.sum(axis=0)\n\n    grads = {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n    return loss, grads\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Return only two functions. Need init_params deterministic with seed, small weights, not all same. Use np.random.default_rng(seed) or RandomState. Only numpy import.\n\nloss_and_grads: compute forward, backward.\n\nLet me write carefully.\n\nH = tanh(X @ W1.T + b1)\nz = H @ W2 + b2\np = sigmoid(z)\nloss = mean(-(y*log(p) + (1-y)*log(1-p)))\n\nBackward:\ndz = (p - y) / n_samples  (since dL/dz = (p-y)/n)\ndW2 = H.T @ dz  -> shape (n_hidden,)\ndb2 = sum(dz) -> scalar\ndH = dz[:, None] * W2[None, :]  -> (n_samples, n_hidden)\ndpre = dH * (1 - H**2)\ndW1 = dpre.T @ X  -> (n_hidden, n_in)\ndb1 = dpre.sum(axis=0) -> (n_hidden,)\n\nb2 scalar float. Return grads[\"b2\"] as float.\n\nFor numerical stability, clip p. But finite differences check... clipping could break gradient. Better use stable log computation. Actually with small weights, z is small, p not extreme. But to be safe, use log with epsilon? That changes gradient. Let's just compute directly but maybe use a stable formulation.\n\nActually let's just compute p = 1/(1+exp(-z)) and loss = mean(-(y*log(p)+(1-y)*log(1-p))). With small init, fine.\n\nBut to be safe against overflow, could clip z. Hmm, finite diff tolerance 1e-5 relative. Let's keep it simple and correct.\n\ninit_params: use np.random.default_rng(seed). W1 = rng.standard_normal((n_hidden, n_in)) * 0.01, etc. Or use RandomState for broader compat. default_rng is fine in modern numpy.\n\nLet me write:\n\ndef init_params(n_in, n_hidden, seed):\n    rng = np.random.default_rng(seed)\n    W1 = rng.standard_normal((n_hidden, n_in)) * 0.01\n    b1 = np.zeros(n_hidden)\n    W2 = rng.standard_normal(n_hidden) * 0.01\n    b2 = 0.0\n    return {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\n\nHmm b1 zeros is fine (not weights). W2 small random. Good.\n\nActually \"must NOT initialise every weight to the same value\" \u2014 random normal satisfies.\n\nloss_and_grads:\n\ndef loss_and_grads(params, X, y):\n    W1 = params[\"W1\"]; b1 = params[\"b1\"]; W2 = params[\"W2\"]; b2 = params[\"b2\"]\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = X.shape[0]\n    pre = X @ W1.T + b1\n    H = np.tanh(pre)\n    z = H @ W2 + b2\n    p = 1.0 / (1.0 + np.exp(-z))\n    eps = 1e-12\n    loss = -np.mean(y * np.log(p + eps) + (1 - y) * np.log(1 - p + eps))\n    dz = (p - y) / n\n    dW2 = H.T @ dz\n    db2 = float(np.sum(dz))\n    dH = np.outer(dz, W2)\n    dpre = dH * (1 - H * H)\n    dW1 = dpre.T @ X\n    db1 = dpre.sum(axis=0)\n    return loss, {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}\n\nWait, the eps in log affects gradient slightly. With eps=1e-12, negligible. But finite diff would compute loss with same eps, so consistent. Actually finite diff uses our loss function, so it's consistent. Good.\n\nBut if p is exactly 0 or 1... unlikely.\n\nReturn only the two functions."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 411,
+      "total_tokens": 1816,
+      "completion_tokens": 1405,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 945
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

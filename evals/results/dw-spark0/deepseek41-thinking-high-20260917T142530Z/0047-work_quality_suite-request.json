@@ -1,0 +1,27 @@
+{
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Write an asynchronous FIFO in Verilog-2001 \u2014 a FIFO whose write and read\nsides run on unrelated clocks. Return ONLY the module, no testbench, no\nexplanation.\n\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\nRequirements:\n- DEPTH is a power of two. `wclk` and `rclk` have no fixed phase or frequency\n  relationship.\n- A write occurs on a `wclk` edge when `winc` is high and `wfull` is low; a read\n  on an `rclk` edge when `rinc` is high and `rempty` is low.\n- Pointers crossing between the domains MUST be Gray-coded and passed through a\n  two-flop synchroniser in the destination domain. A binary pointer crossed\n  directly can be sampled mid-transition with several bits changing at once,\n  which corrupts the count \u2014 it will usually still simulate correctly, so this is\n  about doing it right rather than about passing by luck.\n- `wfull` and `rempty` must be generated in their own clock domains.\n- No data may be lost, duplicated or reordered.\n- Synthesisable RTL: non-blocking assignments in sequential blocks, no latches.\n"
+    },
+    {
+      "role": "assistant",
+      "content": "```verilog\nmodule async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input wclk, input wrst_n, input winc, input [WIDTH-1:0] wdata, output wfull,\n   input rclk, input rrst_n, input rinc, output [WIDTH-1:0] rdata, output rempty);\n\n  function integer clog2;\n    input integer value;\n    integer i;\n    begin\n      clog2 = 0;\n      for (i = value - 1; i > 0; i = i >> 1)\n        clog2 = clog2 + 1;\n    end\n  endfunction\n\n  localparam ADDRSIZE = clog2(DEPTH);\n  localparam ASIZE    = ADDRSIZE + 1;\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n  reg [ASIZE-1:0] wbin, wgray, rbin, rgray;\n  reg [ASIZE-1:0] wq1_rgray, wq2_rgray;\n  reg [ASIZE-1:0] rq1_wgray, rq2_wgray;\n  reg             wfull_r, rempty_r;\n\n  wire [ASIZE-1:0] wbin_next, wgray_next;\n  wire [ASIZE-1:0] rbin_next, rgray_next;\n  wire [ASIZE-1:0] wfull_val;\n  wire             rempty_val;\n\n  assign wbin_next  = wbin + (winc & ~wfull_r);\n  assign wgray_next = (wbin_next >> 1) ^ wbin_next;\n  assign rbin_next  = rbin + (rinc & ~rempty_r);\n  assign rgray_next = (rbin_next >> 1) ^ rbin_next;\n\n  generate\n    if (ASIZE == 2) begin : g_full\n      assign wfull_val = ~wq2_rgray;\n    end else begin : g_full\n      assign wfull_val = {~wq2_rgray[ASIZE-1:ASIZE-2], wq2_rgray[ASIZE-3:0]};\n    end\n  endgenerate\n\n  assign rempty_val = (rgray_next == rq2_wgray);\n\n  // ---- write clock domain ----\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wbin    <= 0;\n      wgray   <= 0;\n      wfull_r <= 1'b0;\n    end else begin\n      wbin    <= wbin_next;\n      wgray   <= wgray_next;\n      wfull_r <= wfull_val;\n    end\n  end\n\n  always @(posedge wclk or negedge wrst_n) begin\n    if (!wrst_n) begin\n      wq1_rgray <= 0;\n      wq2_rgray <= 0;\n    end else begin\n      wq1_rgray <= rgray;\n      wq2_rgray <= wq1_rgray;\n    end\n  end\n\n  // ---- read clock domain ----\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rbin     <= 0;\n      rgray    <= 0;\n      rempty_r <= 1'b1;\n    end else begin\n      rbin     <= rbin_next;\n      rgray    <= rgray_next;\n      rempty_r <= rempty_val;\n    end\n  end\n\n  always @(posedge rclk or negedge rrst_n) begin\n    if (!rrst_n) begin\n      rq1_wgray <= 0;\n      rq2_wgray <= 0;\n    end else begin\n      rq1_wgray <= wgray;\n      rq2_wgray <= rq1_wgray;\n    end\n  end\n\n  // ---- memory ----\n  always @(posedge wclk) begin\n    if (winc & ~wfull_r)\n      mem[wbin[ADDRSIZE-1:0]] <= wdata;\n  end\n\n  assign rdata  = mem[rbin[ADDRSIZE-1:0]];\n  assign wfull  = wfull_r;\n  assign rempty = rempty_r;\n\nendmodule\n```"
+    },
+    {
+      "role": "user",
+      "content": "Your previous answer did not pass. The output below is what the checker reported. Return a corrected answer in exactly the same format as before, with no explanation and no commentary.\n\nsimulator exited 0; testbench did not complete successfully\nfailed checks: ran_to_completion"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

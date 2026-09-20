@@ -1,0 +1,19 @@
+{
+  "model": "glm53-flash-nvfp4-vision",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Write a synchronous FIFO in Verilog-2001. Return ONLY the complete module,\nno testbench, no explanation.\n\nmodule sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\nRequirements:\n- DEPTH is a power of two. Storage is a register array of DEPTH entries.\n- `rst_n` is asynchronous, active low: it empties the FIFO.\n- On a clock edge with `wr_en` and not `full`, `din` is stored.\n- On a clock edge with `wr_en` while `full`, nothing is written and nothing is corrupted.\n- On a clock edge with `rd_en` and not `empty`, the oldest entry appears on `dout`.\n- On a clock edge with `rd_en` while `empty`, nothing happens.\n- `full` and `empty` must be distinguishable when the read and write pointers are\n  equal \u2014 that is the whole difficulty.\n- Must be synthesisable RTL: non-blocking assignments in sequential blocks, no\n  inferred latches, no combinational loops.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

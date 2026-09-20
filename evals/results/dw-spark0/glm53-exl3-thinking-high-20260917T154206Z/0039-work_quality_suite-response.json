@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 11.755145816001459,
+  "response": {
+    "id": "chatcmpl-86eea68c0c5c3e86",
+    "object": "chat.completion",
+    "created": 1789661143,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```verilog\nmodule sync_fifo #(parameter WIDTH = 8, parameter DEPTH = 4)\n  (input clk, input rst_n,\n   input wr_en, input [WIDTH-1:0] din,\n   input rd_en, output reg [WIDTH-1:0] dout,\n   output full, output empty);\n\n  localparam AW = $clog2(DEPTH);\n\n  reg [WIDTH-1:0] mem [0:DEPTH-1];\n  reg [AW:0] wptr, rptr;\n\n  wire do_wr = wr_en && !full;\n  wire do_rd = rd_en && !empty;\n\n  assign full  = (wptr[AW] != rptr[AW]) && (wptr[AW-1:0] == rptr[AW-1:0]);\n  assign empty = (wptr == rptr);\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      wptr <= {(AW+1){1'b0}};\n    end else if (do_wr) begin\n      mem[wptr[AW-1:0]] <= din;\n      wptr <= wptr + {{AW{1'b0}}, 1'b1};\n    end\n  end\n\n  always @(posedge clk or negedge rst_n) begin\n    if (!rst_n) begin\n      rptr <= {(AW+1){1'b0}};\n      dout <= {WIDTH{1'b0}};\n    end else if (do_rd) begin\n      dout <= mem[rptr[AW-1:0]];\n      rptr <= rptr + {{AW{1'b0}}, 1'b1};\n    end\n  end\n\nendmodule\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "Standard design: pointers one bit wider than address, full when {~wptr[MSB], wptr[MSB-1:0]} == rptr, empty when wptr == rptr. Simultaneous read/write when not empty works fine.\n\nWrite module."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 306,
+      "total_tokens": 726,
+      "completion_tokens": 420,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "elapsed_s": 30.469540668986156,
+  "response": {
+    "id": "chatcmpl-9729252bcd0d1a05",
+    "object": "chat.completion",
+    "created": 1789655917,
+    "model": "DeepSeek-v4.1-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"initial_junction_c\":55.6,\"target_junction_c\":106,\"throttles\":true,\"seconds_to_95c\":383.56808,\"sustainable_power_w\":260.7142857142857}",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "We need answer JSON only. Need solve. Need be careful. Let's parse.\n\nThermal equilibrium in 22 C room drawing 120 W. Junction-to-ambient thermal resistance R=0.28 K/W, heat capacity C=900 J/K, time constant tau=R*C = 0.28*900 = 252 s.\n\nAt t=0 load steps to 300 W. Junction temp rises exponentially towards new steady state with same tau. Firmware throttles moment junction reaches 95 C.\n\nNeed initial junction just before step. At equilibrium with 120 W, Tj = Tamb + P*R = 22 + 120*0.28 = 22 + 33.6 = 55.6 C.\n\nTarget at 300 W: T_target = 22 + 300*0.28 = 22 + 84 = 106 C.\n\nThrottles? It reaches 95? Initial 55.6, target 106, so yes.\n\nSeconds to 95: exponential T(t)=T_target + (T_initial - T_target)*exp(-t/tau). Or T(t)=T_initial + (T_target - T_initial)(1 - exp(-t/tau)). Need solve T=95.\n\n95 = 106 + (55.6 - 106) e^{-t/252} = 106 -50.4 e^{-t/252}\n=> 95-106 = -11 = -50.4 e^{-t/252}\n=> e^{-t/252}=11/50.4 =? 50.4 = 504/10, 11/50.4 = 110/504 = 55/252 \u22480.2182539683.\nt = -252 ln(55/252). ln(55/252) negative. t=252 ln(252/55). Compute. 252/55=4.58181818. ln =? ln(4.581818). ln4.58 ~1.5217. times 252 ~383.47. Let's compute accurately.\n\nNeed final number maybe enough. Let's calculate.\n\n252/55 = 4.5818181818.\nln(4.58181818). Use ln(4.5)=1.504077; ratio 4.581818/4.5=1.0181818; ln=0.018018? Actually ln(1.0181818)=0.018018? Let's compute: x=0.0181818, ln=0.018018? yes. Sum 1.522095. times 252 = 383.568? Let's do precise.\n\nCompute ln(252/55). 252/55 = 4.581818181818182.\nUse ln(4.581818) = ln(458181818?) Let's do high precision manually.\n\nln(4.5818181818) = ln(4) + ln(1.14545454545). ln4=1.38629436112. 1.145454545 = 1 + 0.145454545. ln(1+x) x=0.145454545. Series: x - x^2/2 + x^3/3 - x^4/4 + ...\nx=0.1454545455\nx^2=0.0211570248; /2=0.0105785124\nx^3=0.003077? compute 0.0211570248*0.1454545=0.003077? /3=0.0010257\nx^4=0.0004476; /4=0.0001119\nx^5=0.0000651; /5=0.0000130\nSum: 0.1454545455 -0.0105785124=0.1348760331; +0.0010257=0.1359017; -0.0001119=0.1357898; +0.0000130=0.1358028; - next ~0.0000016 =0.1358012. Add ln4=1.52209556. times 252 = 383.568? 1.52209556*250=380.52389; *2=3.04419; total 383.56808. Good.\n\nLet's compute exact using formula t=252 ln(252/55). 252*1.52209556=383.56808.\n\nSustainable power highest constant power holds junction at or below 95 C in ambient. At steady state Tj = Tamb + P*R <=95. P <= (95-22)/0.28 = 73/0.28 = 260.7142857 W. Need number. 73 / 0.28 = 7300/28 = 1825/7 = 260.714285714. So sustainable_power_w = 260.7142857142857 maybe.\n\nNeed return JSON exactly keys. Ensure numbers. \"throttles\": true. seconds_to_95c number. initial 55.6. target 106. sustainable 260.7142857142857.\n\nNeed consider if firmware throttles moment reaches 95, but target 106. Yes.\n\nPotential nuance: \"load steps to 300 W\" maybe power dissipated? At t=0 load steps to 300 W, but if throttles at 95, after throttle power reduces? They ask seconds until hits 95. Use exponential to target 300 W. Good.\n\nNeed only JSON. No markdown. Ensure valid JSON. Use true lowercase. Numbers.\n\nLet's final."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": null,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20904+g179dd0fa9-tp2-a90e110a",
+    "usage": {
+      "prompt_tokens": 285,
+      "total_tokens": 1523,
+      "completion_tokens": 1238,
+      "prompt_tokens_details": null,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1188
+      }
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

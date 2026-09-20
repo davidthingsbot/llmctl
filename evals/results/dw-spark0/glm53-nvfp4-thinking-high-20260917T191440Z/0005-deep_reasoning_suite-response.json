@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 27.13613197900122,
+  "response": {
+    "id": "chatcmpl-a3845d810e7b887b",
+    "object": "chat.completion",
+    "created": 1789673188,
+    "model": "glm53-flash-nvfp4-vision",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given true disease status. In reality, repeating the same type of test often produces correlated errors: shared patient characteristics, the same assay technology, the same lab or sample handling, and the disease spectrum in the population can make false positives recur together more often than independence predicts. If errors are positively correlated, the effective specificity after two positives is lower than 1 - 0.05^2, so the true post-two-positive probability would be lower than 76.6%, making this calculation overconfident.\"\n}\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "P(D)=0.01, sens=0.9, spec=0.95.\n\nOne positive: P(pos)=0.9*0.01 + 0.05*0.99 = 0.009+0.0495=0.0585. PPV = 0.009/0.0585 = 0.153846 \u2192 15.4%.\n\nTwo positives: numerator = 0.9\u00b2*0.01 = 0.0081; denominator = 0.0081 + 0.05\u00b2*0.99 = 0.0081+0.002475=0.010575. PPV = 0.0081/0.010575 = 0.766234 \u2192 76.6%.\n\nCaveat: conditional independence assumption may fail\u2014correlated errors (same test type, shared patient factors, same lab/batch, disease spectrum) mean false positives repeat more often than independence predicts, so real PPV lower."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-db4ea9d9",
+    "usage": {
+      "prompt_tokens": 150,
+      "total_tokens": 530,
+      "completion_tokens": 380,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

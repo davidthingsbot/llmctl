@@ -1,0 +1,19 @@
+{
+  "model": "DeepSeek-v4.1-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Write a tiled matrix-multiply CUDA kernel using shared memory. Return ONLY\nthe kernel, no host code, no main, no includes, no explanation.\n\n    __global__ void matmul(const float* A, const float* B, float* C,\n                           int M, int N, int K)\n\nComputes C = A * B where A is M x K, B is K x N, C is M x N, all row-major.\n\nContract:\n- Launched with dim3 threads(16,16) and blocks((N+15)/16, (M+15)/16). Assume a\n  16 x 16 tile.\n- You must stage tiles of A and B in __shared__ memory and loop over K in tiles.\n  A naive kernel that reads global memory K times per output will be rejected on\n  inspection.\n- M, N and K are NOT necessarily multiples of 16, and may be as small as 1.\n  Threads whose tile element falls outside the matrix must contribute zero, and\n  no thread may read or write out of bounds.\n- Every thread in a block must reach every __syncthreads(). Guarding the barrier\n  behind an in-range test deadlocks or corrupts the tile.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}

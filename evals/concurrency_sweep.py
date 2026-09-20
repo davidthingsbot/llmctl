@@ -59,7 +59,7 @@ def one_stream(url, key, model, max_tokens, out, idx):
                 except (KeyError, IndexError):
                     continue
                 # Count reasoning tokens too: they cost exactly the same bandwidth.
-                if delta.get("content") or delta.get("reasoning_content"):
+                if delta.get("content") or delta.get("reasoning_content") or delta.get("reasoning"):
                     if first is None:
                         first = time.monotonic() - started
                     tokens += 1

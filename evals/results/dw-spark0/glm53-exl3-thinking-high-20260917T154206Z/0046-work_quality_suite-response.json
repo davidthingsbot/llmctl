@@ -1,0 +1,42 @@
+{
+  "elapsed_s": 41.955299492008635,
+  "response": {
+    "id": "chatcmpl-9b36a722500e20d4",
+    "object": "chat.completion",
+    "created": 1789661269,
+    "model": "GLM-5.3-Flash-EXL3",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "module async_fifo #(parameter WIDTH = 8, parameter DEPTH = 8)\n  (input  wire             wclk,\n   input  wire             wrst_n,\n   input  wire             winc,\n   input  wire [WIDTH-1:0] wdata,\n   output wire             wfull,\n   input  wire             rclk,\n   input  wire             rrst_n,\n   input  wire             rinc,\n   output wire [WIDTH-1:0] rdata,\n   output wire             rempty);\n\n    localparam AW = $clog2(DEPTH);          // address bits\n    localparam PW = AW + 1;                 // pointer bits (extra for full/empty)\n\n    // ------------------------------------------------------------------\n    // Memory\n    // ------------------------------------------------------------------\n    reg [WIDTH-1:0] mem [0:DEPTH-1];\n\n    // ------------------------------------------------------------------\n    // Binary and Gray pointers\n    // ------------------------------------------------------------------\n    reg [PW-1:0] wbin, rbin;\n    reg [PW-1:0] wptr, rptr;                // Gray pointers, sent across domains\n    wire [PW-1:0] wbin_next, rbin_next;\n    wire [PW-1:0] wptr_next, rptr_next;\n\n    assign wbin_next = wbin + (winc & ~wfull);\n    assign wptr_next = (wbin_next >> 1) ^ wbin_next;\n\n    assign rbin_next = rbin + (rinc & ~rempty);\n    assign rptr_next = (rbin_next >> 1) ^ rbin_next;\n\n    always @(posedge wclk or negedge wrst_n) begin\n        if (!wrst_n) begin\n            wbin <= {PW{1'b0}};\n            wptr <= {PW{1'b0}};\n        end else begin\n            wbin <= wbin_next;\n            wptr <= wptr_next;\n        end\n    end\n\n    always @(posedge rclk or negedge rrst_n) begin\n        if (!rrst_n) begin\n            rbin <= {PW{1'b0}};\n            rptr <= {PW{1'b0}};\n        end else begin\n            rbin <= rbin_next;\n            rptr <= rptr_next;\n        end\n    end\n\n    // ------------------------------------------------------------------\n    // Synchronisers: wptr -> read domain, rptr -> write domain\n    // ------------------------------------------------------------------\n    reg [PW-1:0] wptr_sync1, wptr_sync2;    // wptr synced into rclk domain\n    reg [PW-1:0] rptr_sync1, rptr_sync2;    // rptr synced into wclk domain\n\n    always @(posedge rclk or negedge rrst_n) begin\n        if (!rrst_n) begin\n            wptr_sync1 <= {PW{1'b0}};\n            wptr_sync2 <= {PW{1'b0}};\n        end else begin\n            wptr_sync1 <= wptr;\n            wptr_sync2 <= wptr_sync1;\n        end\n    end\n\n    always @(posedge wclk or negedge wrst_n) begin\n        if (!wrst_n) begin\n            rptr_sync1 <= {PW{1'b0}};\n            rptr_sync2 <= {PW{1'b0}};\n        end else begin\n            rptr_sync1 <= rptr;\n            rptr_sync2 <= rptr_sync1;\n        end\n    end\n\n    // ------------------------------------------------------------------\n    // Full / empty generation (in their own domains, from registered\n    // pointers so there is no combinational loop through the pointer\n    // next-state logic)\n    // ------------------------------------------------------------------\n    wire [AW-1:0] waddr = wbin[AW-1:0];\n    wire [AW-1:0] raddr = rbin[AW-1:0];\n\n    assign wfull  = (wptr == {~rptr_sync2[PW-1:PW-2], rptr_sync2[PW-3:0]});\n    assign rempty = (rptr == wptr_sync2);\n\n    // ------------------------------------------------------------------\n    // Memory write / read\n    // ------------------------------------------------------------------\n    always @(posedge wclk) begin\n        if (winc & ~wfull)\n            mem[waddr] <= wdata;\n    end\n\n    assign rdata = mem[raddr];\n\nendmodule",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "reasoning": "The lint issue: wbin_next depends on wfull, which depends on wptr_next, which depends on wbin_next \u2014 circular. Standard fix: compute full from registered wptr (wptr) instead of wptr_next, or compute wfull combinationally from wptr (registered) compared with rptr_sync2. The classic Cummings design uses wptr_next in full check, which creates this loop in lint. To break the loop, use wptr (registered) for full comparison: wfull = (wptr == {~rptr_sync2[PW-1:PW-2], rptr_sync2[PW-3:0]}). This makes full assert one cycle later \u2014 still safe (conservative? Actually it's less conservative: full asserts one cycle late... wait). Using registered wptr: full compares current wptr with synced rptr. Since wptr only updates when a write occurs, and full gates the write... The write happens when winc & ~wfull; wptr updates after. With wptr_next comparison, full asserts combinationally in the same cycle the pointer would wrap. With wptr comparison, full asserts one cycle after the wrap \u2014 meaning one extra write could occur? No: full asserts when wptr equals inverted rptr top bits. If we use registered wptr, then after the write that fills the FIFO, wptr registers, and next cycle wfull is high. During that cycle, could another write occur? The write that fills happens at edge N; at edge N+1, wfull is now high (wptr updated), so write blocked. Actually wfull is evaluated before edge N+1 using old wptr... At edge N, wptr updates to full value. Between N and N+1, wfull = (wptr == ...) is now true, so at edge N+1 write is blocked. So it's safe \u2014 full asserts one cycle after the filling write, but no write can slip in because the filling write itself is the last one. Wait: could FIFO be full and a write occur at edge N+1? wfull sampled at edge N+1 is computed from wptr registered at edge N, which is the full value. So blocked. Correct.\n\nSimilarly rempty uses rptr registered already \u2014 fine.\n\nBut wait, there's still a subtle issue: with wptr_next version, full asserts in the same cycle as the would-be write, blocking it. With wptr version, full asserts one cycle later, but the write at that edge is blocked because wfull is high by then. Actually check: write at edge N fills FIFO (wptr_next at edge N equals full pointer). wfull during cycle N (before edge N) used wptr from edge N-1 \u2014 not full, so write proceeds. After edge N, wptr = full value, wfull = 1. At edge N+1, winc & ~wfull = 0. Good. So no overflow. This is the standard alternative and lint-clean.\n\nAlso rempty: rptr == wptr_sync2 \u2014 no loop since rptr registered. Fine.\n\nAlso the mem read: assign rdata = mem[raddr] \u2014 combinational read, fine, first-word fall-through. That's acceptable.\n\nAlso check UNOPTFLAT could also come from wptr_next loop. Fix both by using registered pointers for status.\n\nOutput corrected module only."
+        },
+        "logprobs": null,
+        "finish_reason": "stop",
+        "stop_reason": 154827,
+        "token_ids": null,
+        "routed_experts": null
+      }
+    ],
+    "service_tier": null,
+    "system_fingerprint": "vllm-0.1.dev20051+g487ecf187-tp2-15c4e4c9",
+    "usage": {
+      "prompt_tokens": 1357,
+      "total_tokens": 2983,
+      "completion_tokens": 1626,
+      "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "prompt_text": null,
+    "kv_transfer_params": null,
+    "ec_transfer_params": null,
+    "metrics": null
+  }
+}

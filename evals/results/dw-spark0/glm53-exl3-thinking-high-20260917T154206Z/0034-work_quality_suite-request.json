@@ -1,0 +1,19 @@
+{
+  "model": "GLM-5.3-Flash-EXL3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are being evaluated on practical engineering work. Follow the requested output format exactly, do not invent missing facts, and prioritize correctness over commentary."
+    },
+    {
+      "role": "user",
+      "content": "Write a rising-edge detector in Verilog-2001. Return ONLY the module, no\ntestbench, no explanation.\n\nmodule edge_detect(input clk, input rst_n, input sig, output reg pulse);\n\nRequirements:\n- `pulse` is high for EXACTLY ONE clock cycle after `sig` goes from 0 to 1.\n  It is a pulse, not a level: holding `sig` high must not hold `pulse` high.\n- No pulse on a falling edge of `sig`.\n- `rst_n` is asynchronous, active low, and clears `pulse`.\n- Synthesisable RTL: non-blocking assignments in the sequential block, no\n  inferred latches.\n"
+    }
+  ],
+  "temperature": 0,
+  "max_tokens": 32768,
+  "chat_template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  }
+}
