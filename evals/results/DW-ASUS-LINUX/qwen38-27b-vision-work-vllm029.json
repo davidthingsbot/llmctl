@@ -1,0 +1,327 @@
+{
+  "suite": "work_quality_v1",
+  "model": "qwen3.8-27b-fp8",
+  "endpoint": "http://127.0.0.1:19449/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": false
+  },
+  "score": 93,
+  "max_score": 100,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 38387,
+    "completion_tokens": 2421,
+    "total_tokens": 40808,
+    "task_seconds": 58.7,
+    "wall_seconds": 58.9,
+    "generation_tok_s": 41.24,
+    "truncated_tasks": [],
+    "retries": 3,
+    "retry_completion_tokens": 527
+  },
+  "tasks": [
+    {
+      "task": "strict_protocol_json",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 12000,
+      "response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "grade_details": {
+        "fields": {
+          "scan_action": true,
+          "transform_command": true,
+          "retained_read_command": true,
+          "crc_scope": true,
+          "acquisition_conflict": true,
+          "event_mode_relation": true
+        },
+        "exact_keys": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"scan_action\": \"transduce_only\",\n  \"transform_command\": \"APPLY_TRANSFORM\",\n  \"retained_read_command\": \"READ_FRAME\",\n  \"crc_scope\": \"outer_packet\",\n  \"acquisition_conflict\": \"reject_on_demand_scan\",\n  \"event_mode_relation\": \"independent\"\n}",
+      "usage": {
+        "prompt_tokens": 195,
+        "total_tokens": 267,
+        "completion_tokens": 72,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.0579
+    },
+    {
+      "task": "bom_consolidation",
+      "score": 9,
+      "max_score": 10,
+      "max_tokens": 12000,
+      "response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 0\n}",
+      "grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": false
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 0\n}",
+      "usage": {
+        "prompt_tokens": 287,
+        "total_tokens": 359,
+        "completion_tokens": 72,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.0451,
+      "score_first": 9,
+      "retry_feedback": "failed checks: setup_40",
+      "raw_retry_response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 40\n}",
+      "retry_response": "{\n  \"selected_mpn\": \"GRM21BR71H104KA01L\",\n  \"add_new_sku\": false,\n  \"voltage_valid\": false,\n  \"annual_unit_savings_usd\": 16.0,\n  \"setup_cost_usd\": 40\n}",
+      "retry_usage": {
+        "prompt_tokens": 415,
+        "total_tokens": 488,
+        "completion_tokens": 73,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.0868,
+      "score_retry": 10,
+      "retry_grade_details": {
+        "selected": true,
+        "no_new_sku": true,
+        "voltage_invalid": true,
+        "savings_16": true,
+        "setup_40": true
+      }
+    },
+    {
+      "task": "code_repair",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 12000,
+      "response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_total = 5 + payload_len\n    if len(frame) != expected_total:\n        raise ValueError(\"invalid length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "grade_details": {
+        "function_only": true,
+        "empty_payload": true,
+        "normal_payload": true,
+        "little_endian_length": true,
+        "reject_trailing": true,
+        "reject_bad_crc": true,
+        "reject_truncated": true
+      },
+      "status": "complete",
+      "raw_response": "```python\ndef decode_frame(frame: bytes):\n    if len(frame) < 5:\n        raise ValueError(\"short\")\n    payload_len = int.from_bytes(frame[1:3], \"little\")\n    expected_total = 5 + payload_len\n    if len(frame) != expected_total:\n        raise ValueError(\"invalid length\")\n    payload = frame[3:3 + payload_len]\n    expected = int.from_bytes(frame[-2:], \"little\")\n    actual = crc16(frame[:3 + payload_len])\n    if actual != expected:\n        raise ValueError(\"crc\")\n    return frame[0], payload\n```",
+      "usage": {
+        "prompt_tokens": 282,
+        "total_tokens": 420,
+        "completion_tokens": 138,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.7949
+    },
+    {
+      "task": "embedded_c_review",
+      "score": 10,
+      "max_score": 12,
+      "max_tokens": 12000,
+      "response": "1. **Missing bounds check on `rx_len`**: The code accesses `rx[1]` and `rx[2+len]` without verifying `rx_len` is sufficient, causing out-of-bounds reads.\n   **Correction**: Validate `rx_len >= 3 + len` before accessing payload and CRC bytes.\n\n2. **Unbounded `memcpy`**: `len` is taken directly from `rx[1]` without checking against the size of the local `payload` buffer (32 bytes), risking stack buffer overflow.\n   **Correction**: Ensure `len <= sizeof(payload)` before copying.\n\n3. **Incorrect CRC calculation**: `crc16` is computed only on `payload`, but the protocol requires CRC to cover command, length, and payload.\n   **Correction**: Compute CRC over `rx[0]` through `rx[1+len]` (command + length + payload).\n\n4. **Assignment instead of comparison**: `if (calc = got)` assigns `got` to `calc` instead of comparing them, always evaluating to true if `got` is non-zero.\n   **Correction**: Use `if (calc == got)`.\n\n5. **Authentication after parsing**: `parse_command` is called before `authenticate`, violating the requirement that authentication must complete before command parsing.\n   **Correction**: Move `parse_command` to execute only after successful authentication.\n\n6. **Sequence increment before validation**: `sequence++` occurs before CRC and authentication checks, allowing invalid or unauthenticated frames to alter state.\n   **Correction**: Move `sequence++` to execute only after successful CRC and authentication.",
+      "grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": true,
+        "parse_before_auth": true,
+        "unsafe_string_print": false
+      },
+      "status": "complete",
+      "raw_response": "1. **Missing bounds check on `rx_len`**: The code accesses `rx[1]` and `rx[2+len]` without verifying `rx_len` is sufficient, causing out-of-bounds reads.\n   **Correction**: Validate `rx_len >= 3 + len` before accessing payload and CRC bytes.\n\n2. **Unbounded `memcpy`**: `len` is taken directly from `rx[1]` without checking against the size of the local `payload` buffer (32 bytes), risking stack buffer overflow.\n   **Correction**: Ensure `len <= sizeof(payload)` before copying.\n\n3. **Incorrect CRC calculation**: `crc16` is computed only on `payload`, but the protocol requires CRC to cover command, length, and payload.\n   **Correction**: Compute CRC over `rx[0]` through `rx[1+len]` (command + length + payload).\n\n4. **Assignment instead of comparison**: `if (calc = got)` assigns `got` to `calc` instead of comparing them, always evaluating to true if `got` is non-zero.\n   **Correction**: Use `if (calc == got)`.\n\n5. **Authentication after parsing**: `parse_command` is called before `authenticate`, violating the requirement that authentication must complete before command parsing.\n   **Correction**: Move `parse_command` to execute only after successful authentication.\n\n6. **Sequence increment before validation**: `sequence++` occurs before CRC and authentication checks, allowing invalid or unauthenticated frames to alter state.\n   **Correction**: Move `sequence++` to execute only after successful CRC and authentication.",
+      "usage": {
+        "prompt_tokens": 263,
+        "total_tokens": 604,
+        "completion_tokens": 341,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 5.108,
+      "score_first": 10,
+      "retry_feedback": "failed checks: unsafe_string_print",
+      "raw_retry_response": "1. **Missing bounds check on `rx_len`**: The code accesses `rx[1]` and `rx[2+len]` without verifying `rx_len` is sufficient, causing out-of-bounds reads.\n   **Correction**: Validate `rx_len >= 3 + len` before accessing payload and CRC bytes.\n\n2. **Unbounded `memcpy`**: `len` is taken directly from `rx[1]` without checking against the size of the local `payload` buffer (32 bytes), risking stack buffer overflow.\n   **Correction**: Ensure `len <= sizeof(payload)` before copying.\n\n3. **Incorrect CRC calculation**: `crc16` is computed only on `payload`, but the protocol requires CRC to cover command, length, and payload.\n   **Correction**: Compute CRC over `rx[0]` through `rx[1+len]` (command + length + payload).\n\n4. **Assignment instead of comparison**: `if (calc = got)` assigns `got` to `calc` instead of comparing them, always evaluating to true if `got` is non-zero.\n   **Correction**: Use `if (calc == got)`.\n\n5. **Authentication after parsing**: `parse_command` is called before `authenticate`, violating the requirement that authentication must complete before command parsing.\n   **Correction**: Move `parse_command` to execute only after successful authentication.\n\n6. **Unsafe string printing**: `printf` treats `payload` as a null-terminated string, but `payload` is binary data and not guaranteed to be null-terminated, causing out-of-bounds reads.\n   **Correction**: Remove the `printf` statement or use a safe method to print binary data with explicit length.",
+      "retry_response": "1. **Missing bounds check on `rx_len`**: The code accesses `rx[1]` and `rx[2+len]` without verifying `rx_len` is sufficient, causing out-of-bounds reads.\n   **Correction**: Validate `rx_len >= 3 + len` before accessing payload and CRC bytes.\n\n2. **Unbounded `memcpy`**: `len` is taken directly from `rx[1]` without checking against the size of the local `payload` buffer (32 bytes), risking stack buffer overflow.\n   **Correction**: Ensure `len <= sizeof(payload)` before copying.\n\n3. **Incorrect CRC calculation**: `crc16` is computed only on `payload`, but the protocol requires CRC to cover command, length, and payload.\n   **Correction**: Compute CRC over `rx[0]` through `rx[1+len]` (command + length + payload).\n\n4. **Assignment instead of comparison**: `if (calc = got)` assigns `got` to `calc` instead of comparing them, always evaluating to true if `got` is non-zero.\n   **Correction**: Use `if (calc == got)`.\n\n5. **Authentication after parsing**: `parse_command` is called before `authenticate`, violating the requirement that authentication must complete before command parsing.\n   **Correction**: Move `parse_command` to execute only after successful authentication.\n\n6. **Unsafe string printing**: `printf` treats `payload` as a null-terminated string, but `payload` is binary data and not guaranteed to be null-terminated, causing out-of-bounds reads.\n   **Correction**: Remove the `printf` statement or use a safe method to print binary data with explicit length.",
+      "retry_usage": {
+        "prompt_tokens": 659,
+        "total_tokens": 1020,
+        "completion_tokens": 361,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 4.9522,
+      "score_retry": 10,
+      "retry_grade_details": {
+        "bounds_and_minimum_length": true,
+        "crc_scope": true,
+        "assignment_vs_comparison": true,
+        "state_before_validation": false,
+        "parse_before_auth": true,
+        "unsafe_string_print": true
+      }
+    },
+    {
+      "task": "protocol_architecture",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 12000,
+      "response": "**Design: Separation of Acquisition, Processing, and Reporting**\n\nThe proposed monolithic `SCAN` command violates single-responsibility principles and creates race conditions. Replace it with a stateful pipeline where **Acquisition** is distinct from **Processing** and **Reporting**.\n\n### 1. Command & Responsibility Boundaries\n\n| Command | Responsibility | State Change |\n| :--- | :--- | :--- |\n| `ACQ_START` | Begin continuous acquisition loop. | Sets `acq_mode = CONTINUOUS`. |\n| `ACQ_STOP` | Halt continuous acquisition. | Sets `acq_mode = IDLE`. |\n| `ACQ_SNAPSHOT` | Trigger one-shot acquisition (on-demand). | Returns `frame_id` immediately. |\n| `PROC_CONFIG` | Update shear transform, filters, event thresholds. | Updates processing pipeline parameters. |\n| `REPORT_CONFIG` | Enable/disable event emission. | Updates reporting flags. |\n| `FRAME_FETCH` | Retrieve stored frame by ID. | No state change. |\n\n### 2. Frame & Source Identity\n\nEvery acquired frame is assigned a unique, monotonically increasing `frame_id` (uint64) and a `source_tag` (e.g., `CONTINUOUS`, `SNAPSHOT`).  \n- **Storage:** All frames (raw or transformed, depending on config) are stored in a ring buffer or persistent log keyed by `frame_id`.  \n- **Auditability:** `FRAME_FETCH <frame_id>` allows retrieval of any previously acquired frame without rescanning.  \n- **Reproducibility:** Processing parameters (shear, filters) are versioned. Each frame record stores the `proc_version` used to transform it.\n\n### 3. Continuous vs. On-Demand Behavior\n\n- **Continuous Mode (`ACQ_START`):**  \n  - Acquisition runs in a background thread/ISR.  \n  - Frames are acquired, processed, and stored automatically.  \n  - `ACQ_SNAPSHOT` is **rejected** with error `ACQ_BUSY` if `acq_mode == CONTINUOUS`.  \n  - *Rationale:* Prevents ownership races and ensures deterministic frame ordering.\n\n- **On-Demand Mode (`ACQ_SNAPSHOT`):**  \n  - Only valid when `acq_mode == IDLE`.  \n  - Acquires one frame, processes it, stores it, and returns `frame_id`.  \n  - If event mode is enabled, emits events for this frame.\n\n### 4. Acquisition Mode vs. Event Reporting\n\n- **Event Reporting is Decoupled from Acquisition Mode:**  \n  - `REPORT_CONFIG` enables/disables event emission independently.  \n  - In **Continuous Mode**, events are emitted for every frame that meets criteria.  \n  - In **On-Demand Mode**, events are emitted only for the snapshot frame if enabled.  \n  - *Key:* Event emission is a **post-processing** step, not part of acquisition.\n\n### 5. Avoiding Ownership Races\n\n- **Single Writer Principle:** Only the acquisition thread writes to the frame buffer.  \n- **Lock-Free Handoff:** Processed frames are published to a lock-free queue or atomic pointer for consumers (e.g., event emitter, storage).  \n- **No Shared Mutable State:** Processing parameters are read-only during frame processing. Updates via `PROC_CONFIG` take effect on the *next* frame, not mid-frame.  \n- **Exclusive Access:** `ACQ_SNAPSHOT` and `ACQ_START` are mutually exclusive. The system enforces this via state machine checks.\n\n### 6. Reproducibility & Audit\n\n- **Raw Frame Storage:** Optionally store raw frames (configurable) to allow reprocessing with different transforms.  \n- **Parameter Versioning:** Each frame record includes `proc_version` and `report_version`.  \n- **Audit Trail:** `FRAME_FETCH` returns frame data + metadata (timestamp, source, proc_version).  \n- **No Rescanning:** All acquired frames are retained until buffer eviction or explicit purge.\n\n### Example Sequence\n\n```\n1. PROC_CONFIG shear=0.5, filter=median\n2. REPORT_CONFIG enable=true\n3. ACQ_START\n   -> Continuous acquisition begins.\n   -> Frame 1001 acquired, processed, stored, event emitted.\n   -> Frame 1002 acquired, processed, stored, event emitted.\n4. ACQ_STOP\n   -> Acquisition halts.\n5. ACQ_SNAPSHOT\n   -> Frame 1003 acquired, processed, stored, event emitted.\n   -> Returns frame_id=1003.\n6. FRAME_FETCH 1001\n   -> Returns frame 1001 data + metadata.\n```\n\nThis design ensures:\n- **Reproducibility:** Frames are stored with full context.\n- **Auditability:** Any frame can be retrieved later.\n- **No Races:** Single writer, exclusive modes, versioned parameters.\n- **Clarity:** Acquisition, processing, and reporting are separate concerns.",
+      "grade_details": {
+        "scan_transduces_only": true,
+        "transform_separate": true,
+        "retained_read_separate": true,
+        "physical_frame_id": true,
+        "derived_source_identity": true,
+        "download_without_rescan": true,
+        "acquisition_ownership": true,
+        "event_independent": true,
+        "conflict_rejected_or_queued": true
+      },
+      "status": "complete",
+      "raw_response": "**Design: Separation of Acquisition, Processing, and Reporting**\n\nThe proposed monolithic `SCAN` command violates single-responsibility principles and creates race conditions. Replace it with a stateful pipeline where **Acquisition** is distinct from **Processing** and **Reporting**.\n\n### 1. Command & Responsibility Boundaries\n\n| Command | Responsibility | State Change |\n| :--- | :--- | :--- |\n| `ACQ_START` | Begin continuous acquisition loop. | Sets `acq_mode = CONTINUOUS`. |\n| `ACQ_STOP` | Halt continuous acquisition. | Sets `acq_mode = IDLE`. |\n| `ACQ_SNAPSHOT` | Trigger one-shot acquisition (on-demand). | Returns `frame_id` immediately. |\n| `PROC_CONFIG` | Update shear transform, filters, event thresholds. | Updates processing pipeline parameters. |\n| `REPORT_CONFIG` | Enable/disable event emission. | Updates reporting flags. |\n| `FRAME_FETCH` | Retrieve stored frame by ID. | No state change. |\n\n### 2. Frame & Source Identity\n\nEvery acquired frame is assigned a unique, monotonically increasing `frame_id` (uint64) and a `source_tag` (e.g., `CONTINUOUS`, `SNAPSHOT`).  \n- **Storage:** All frames (raw or transformed, depending on config) are stored in a ring buffer or persistent log keyed by `frame_id`.  \n- **Auditability:** `FRAME_FETCH <frame_id>` allows retrieval of any previously acquired frame without rescanning.  \n- **Reproducibility:** Processing parameters (shear, filters) are versioned. Each frame record stores the `proc_version` used to transform it.\n\n### 3. Continuous vs. On-Demand Behavior\n\n- **Continuous Mode (`ACQ_START`):**  \n  - Acquisition runs in a background thread/ISR.  \n  - Frames are acquired, processed, and stored automatically.  \n  - `ACQ_SNAPSHOT` is **rejected** with error `ACQ_BUSY` if `acq_mode == CONTINUOUS`.  \n  - *Rationale:* Prevents ownership races and ensures deterministic frame ordering.\n\n- **On-Demand Mode (`ACQ_SNAPSHOT`):**  \n  - Only valid when `acq_mode == IDLE`.  \n  - Acquires one frame, processes it, stores it, and returns `frame_id`.  \n  - If event mode is enabled, emits events for this frame.\n\n### 4. Acquisition Mode vs. Event Reporting\n\n- **Event Reporting is Decoupled from Acquisition Mode:**  \n  - `REPORT_CONFIG` enables/disables event emission independently.  \n  - In **Continuous Mode**, events are emitted for every frame that meets criteria.  \n  - In **On-Demand Mode**, events are emitted only for the snapshot frame if enabled.  \n  - *Key:* Event emission is a **post-processing** step, not part of acquisition.\n\n### 5. Avoiding Ownership Races\n\n- **Single Writer Principle:** Only the acquisition thread writes to the frame buffer.  \n- **Lock-Free Handoff:** Processed frames are published to a lock-free queue or atomic pointer for consumers (e.g., event emitter, storage).  \n- **No Shared Mutable State:** Processing parameters are read-only during frame processing. Updates via `PROC_CONFIG` take effect on the *next* frame, not mid-frame.  \n- **Exclusive Access:** `ACQ_SNAPSHOT` and `ACQ_START` are mutually exclusive. The system enforces this via state machine checks.\n\n### 6. Reproducibility & Audit\n\n- **Raw Frame Storage:** Optionally store raw frames (configurable) to allow reprocessing with different transforms.  \n- **Parameter Versioning:** Each frame record includes `proc_version` and `report_version`.  \n- **Audit Trail:** `FRAME_FETCH` returns frame data + metadata (timestamp, source, proc_version).  \n- **No Rescanning:** All acquired frames are retained until buffer eviction or explicit purge.\n\n### Example Sequence\n\n```\n1. PROC_CONFIG shear=0.5, filter=median\n2. REPORT_CONFIG enable=true\n3. ACQ_START\n   -> Continuous acquisition begins.\n   -> Frame 1001 acquired, processed, stored, event emitted.\n   -> Frame 1002 acquired, processed, stored, event emitted.\n4. ACQ_STOP\n   -> Acquisition halts.\n5. ACQ_SNAPSHOT\n   -> Frame 1003 acquired, processed, stored, event emitted.\n   -> Returns frame_id=1003.\n6. FRAME_FETCH 1001\n   -> Returns frame 1001 data + metadata.\n```\n\nThis design ensures:\n- **Reproducibility:** Frames are stored with full context.\n- **Auditability:** Any frame can be retrieved later.\n- **No Races:** Single writer, exclusive modes, versioned parameters.\n- **Clarity:** Acquisition, processing, and reporting are separate concerns.",
+      "usage": {
+        "prompt_tokens": 167,
+        "total_tokens": 1219,
+        "completion_tokens": 1052,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 16.2527
+    },
+    {
+      "task": "long_context_retrieval",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 12000,
+      "response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "grade_details": {
+        "project": true,
+        "revision": true,
+        "connector": true,
+        "pullup_ohms": true,
+        "max_retries": true,
+        "crc_polynomial": true,
+        "calibration_temperature_c": true,
+        "owner": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"project\": \"Kestrel\",\n  \"revision\": \"C7\",\n  \"connector\": \"J14\",\n  \"pullup_ohms\": 4700,\n  \"max_retries\": 3,\n  \"crc_polynomial\": \"0x1EDC6F41\",\n  \"calibration_temperature_c\": 42.75,\n  \"owner\": \"Mira Chen\"\n}",
+      "usage": {
+        "prompt_tokens": 35416,
+        "total_tokens": 35517,
+        "completion_tokens": 101,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 24.4967
+    },
+    {
+      "task": "scope_control",
+      "score": 6,
+      "max_score": 6,
+      "max_tokens": 12000,
+      "response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "grade_details": {
+        "exact_files": true,
+        "typo_only": true,
+        "defers_expansion": true
+      },
+      "status": "complete",
+      "raw_response": "{\n  \"files_to_modify\": [\n    \"src/validator.py\",\n    \"tests/test_validator.py\"\n  ],\n  \"approved_change\": \"Correct the typo 'invaild frame' to 'invalid frame' in src/validator.py and add a regression assertion in tests/test_validator.py.\",\n  \"deferred_items\": [\n    \"Refactoring the parser\",\n    \"Adding telemetry\",\n    \"Changing error codes\",\n    \"Updating every documentation page\",\n    \"Renaming the validation API\"\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 167,
+        "total_tokens": 284,
+        "completion_tokens": 117,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 1.4462
+    },
+    {
+      "task": "acquisition_timing",
+      "score": 2,
+      "max_score": 6,
+      "max_tokens": 12000,
+      "response": "",
+      "grade_details": {
+        "bits_per_transaction": true,
+        "bus_bit_rate": false,
+        "wire_time_ms_per_second": true,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 226,
+        "total_tokens": 227,
+        "completion_tokens": 1,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "elapsed_s": 0.2098,
+      "score_first": 0,
+      "retry_feedback": "failed checks: bits_per_transaction, bus_bit_rate, chip_select_overhead_ms_per_second, remaining_margin_percent, total_bus_utilization_percent, wire_time_ms_per_second",
+      "raw_retry_response": "{\n  \"bits_per_transaction\": 48,\n  \"bus_bit_rate\": 768000000,\n  \"wire_time_ms_per_second\": 96.0,\n  \"chip_select_overhead_ms_per_second\": 192.0,\n  \"total_bus_utilization_percent\": 36.0,\n  \"remaining_margin_percent\": 64.0\n}",
+      "retry_response": "{\n  \"bits_per_transaction\": 48,\n  \"bus_bit_rate\": 768000000,\n  \"wire_time_ms_per_second\": 96.0,\n  \"chip_select_overhead_ms_per_second\": 192.0,\n  \"total_bus_utilization_percent\": 36.0,\n  \"remaining_margin_percent\": 64.0\n}",
+      "retry_usage": {
+        "prompt_tokens": 310,
+        "total_tokens": 403,
+        "completion_tokens": 93,
+        "prompt_tokens_details": null,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "retry_elapsed_s": 1.2546,
+      "score_retry": 3,
+      "retry_grade_details": {
+        "bits_per_transaction": true,
+        "bus_bit_rate": false,
+        "wire_time_ms_per_second": true,
+        "chip_select_overhead_ms_per_second": true,
+        "total_bus_utilization_percent": false,
+        "remaining_margin_percent": false
+      }
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 8,
+  "planned_tasks": [
+    "strict_protocol_json",
+    "bom_consolidation",
+    "code_repair",
+    "embedded_c_review",
+    "protocol_architecture",
+    "long_context_retrieval",
+    "scope_control",
+    "acquisition_timing"
+  ]
+}
