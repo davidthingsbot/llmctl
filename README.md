@@ -78,12 +78,15 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
 | `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) |
 | `llmctl agents` | list registered agents: type, FOLLOW, gateway state, current target |
+| `llmctl services` | list companion STT/TTS services: kind, port, health, bind host, client endpoint |
+| `llmctl service up <name>...` | start companion service(s) and enable on boot |
+| `llmctl service down <name>...\|all` | stop + remove from boot |
 | `llmctl add` / `remove <model>` | wizard to register a model / unregister it |
 | `llmctl agent add` / `agent remove <name>` | wizard to register an agent / unregister it |
 | `llmctl bench <model>` | benchmark now: prefill tok/s (via time-to-first-token over a ~1.5K prompt), generation tok/s, GPU util/power sampled in both phases |
 | `llmctl stats [model]` | load-time + benchmark history (load, ttft, prefill/gen tok/s) and per-model averages |
 | `llmctl env <model>` | print `OPENAI_*` exports for shell clients |
-| `llmctl logs <model> [-f]` | the model unit's journal |
+| `llmctl logs <name> [-f]` | journal for a model **or** a companion service |
 | `llmctl usage [model] [-n N]` | who's using the GPUs: per-process VRAM, each running model's connected clients (resolved to commands), last N request lines from the journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
 | `llmctl machine record` | record this machine's allowlisted profile, model definitions, and benchmark history as repository files |
@@ -244,6 +247,39 @@ node, since they outlive the launcher. Before the first launch of a new
 configuration run it with `--load-format dummy` (random weights, ~3 minutes):
 it reaches allocation, compile, profiling and the first forward pass, which is
 where a two-box model fails if it is going to.
+
+## Companion services (`~/.config/llmctl/services.d/<name>.conf`)
+
+Speech servers that run **alongside** the models rather than instead of them:
+whisper.cpp for speech-to-text, Kokoro for text-to-speech.
+
+These are deliberately not models. `llmctl set` stops every model except its
+target, and a transcription or voice service has to survive that switch — so
+services have their own registry, their own units (`llm-svc-<name>.service`),
+and are started and stopped only when named explicitly.
+
+```ini
+KIND=whisper                # or kokoro
+PORT=19442
+MODEL_REF="/home/you/models/ggml-large-v3-turbo-q5_0.bin"   # whisper
+IMAGE="ghcr.io/remsky/kokoro-fastapi-cpu:latest"            # kokoro (docker)
+HOST=0.0.0.0                # bind address; 127.0.0.1 to keep it local
+THREADS=8
+HEALTH_PATH=/health
+EXTRA_ARGS="-l auto"
+```
+
+| kind | server | endpoint clients post to |
+|---|---|---|
+| `whisper` | `whisper-server` (needs `WHISPER_SERVER` in `machine.conf`) | `/inference` |
+| `kokoro` | `kokoro-fastapi` container, port 8880 mapped to `PORT` | `/v1/audio/speech` |
+
+**Neither backend supports an API key.** llama.cpp and vLLM are always
+key-protected by llmctl; whisper-server and kokoro-fastapi have no such option,
+so anything that can route to the port can use them. `HOST=0.0.0.0` is only
+safe behind a firewall rule that restricts the port to trusted subnets — see
+the note in `services.d/kokoro.conf`. Set `HOST=127.0.0.1` if you want a
+service reachable only from the machine itself.
 
 ## License
 
