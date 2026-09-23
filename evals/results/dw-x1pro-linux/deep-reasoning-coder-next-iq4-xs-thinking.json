@@ -1,0 +1,206 @@
+{
+  "suite": "deep_reasoning_v1",
+  "run_config": {
+    "thinking": true,
+    "temperature": 1.0,
+    "extra_tokens": 12000,
+    "sampler": {
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    }
+  },
+  "model": "qwen3-coder-next-iq4-xs",
+  "endpoint": "http://127.0.0.1:19440/v1/chat/completions",
+  "score": 77,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 6,
+      "max_score": 12,
+      "elapsed_s": 6.2011,
+      "usage": {
+        "completion_tokens": 91,
+        "prompt_tokens": 152,
+        "total_tokens": 243,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": false,
+        "Ben": true,
+        "Cara": false,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 7,
+      "max_score": 14,
+      "elapsed_s": 11.005,
+      "usage": {
+        "completion_tokens": 212,
+        "prompt_tokens": 191,
+        "total_tokens": 403,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"design\": \"Regression Discontinuity Design (RDD)\",\n  \"instrument\": \"Assignment score near the cutoff of 70\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) at the cutoff (i.e., the effect of participation for individuals with score exactly at 70)\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"The assignment score cannot be precisely manipulated (no perfect bunching or manipulation at the cutoff)\",\n    \"Potential outcomes are smooth through the cutoff in the absence of treatment\",\n    \"No other policy changes or events occur at the cutoff that could drive the outcome jump\",\n    \"Monotonicity: individuals with score \u2265 70 are not more likely to participate than those just below 70 in a way that creates defiers (i.e., participation is non-decreasing in score near the cutoff)\",\n    \"The cutoff is the only deterministic rule determining eligibility, and variation in participation arises primarily from the score crossing the threshold\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": false,
+        "cutoff_instrument": true,
+        "late_compliers": false,
+        "not_global": true,
+        "continuity": false,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 8,
+      "max_score": 12,
+      "elapsed_s": 5.5488,
+      "usage": {
+        "completion_tokens": 83,
+        "prompt_tokens": 152,
+        "total_tokens": 235,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 78.1,\n  \"independence_caveat\": \"The calculation assumes test errors are conditionally independent given true condition status, but in reality, test errors may be correlated due to shared technical flaws, biological interferences, or operator bias, leading to overconfident probability estimates in practice.\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": false,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 8.9991,
+      "usage": {
+        "completion_tokens": 160,
+        "prompt_tokens": 227,
+        "total_tokens": 387,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X reduces signaling in an orthogonal assay, ruling out assay artifact (H3 falsified)\",\n    \"No binding of X to R detected by validated occupancy assay (H1 falsified)\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating post-translational regulation\",\n    \"Proteasome inhibitor prevents both R-protein loss and signaling reduction, directly linking proteasomal degradation to the functional effect\"\n  ],\n  \"decisive_falsifier\": \"Demonstrating that a proteasome-independent degradation pathway (e.g., lysosomal) mediates R loss when proteasome is inhibited, and signaling is still blocked\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 12,
+      "max_score": 14,
+      "elapsed_s": 18.9363,
+      "usage": {
+        "completion_tokens": 402,
+        "prompt_tokens": 227,
+        "total_tokens": 629,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "Initial belief in the claim should increase modestly\u2014not strongly\u2014upon encountering the evidence, but not be elevated by the modern sources.\n\nS1 is the primary accusation, but as a diary by a political rival, it carries incentive bias: the author may fabricate or exaggerate for political gain. Its lack of transactional detail weakens it alone.\n\nS2 and S4 add no independent support: S2 depends entirely on S1, and S4 depends on S2 or other secondary sites\u2014making both low-evidential-value layers.\n\nS3, however, is a high-value source: it is an independently preserved, reconciled treasury ledger, suggesting official accuracy. It confirms the disputed funds were *paid* to named suppliers\u2014including the mayor\u2019s cousin\u2014at market-matching prices. This refutes a claim of *embezzlement* (funds misappropriated), but *does not* disprove *diversion*: the funds could still have been sent to suppliers who then funneled them elsewhere, or that payments were inflated or unnecessary for legitimate procurement.\n\nThe cousin relationship is suspicious but not conclusive: the price parity with other suppliers mitigates favoritism claims, though it doesn\u2019t rule out *collusion* or *cronyism* that still constitutes diversion (e.g., awarding contracts to kin to siphon funds).\n\nThus, S3 supports that the funds left the treasury legally, but leaves open *where they ultimately ended up*. Belief in the mayor\u2019s *secret diversion* should rise slightly above baseline due to S1\u2019s existence and the cousin\u2019s involvement, but should not reach high confidence: S3 undermines the most direct reading of the accusation, yet doesn\u2019t fully exonerate.\n\nThe highest-value next evidence would be internal government correspondence or supplier ledgers (e.g., grain shipment receipts or supplier payments *after* receiving funds from the treasury), which could trace whether the funds were retained, redirected, or converted to non-relief uses.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": false,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 9,
+      "max_score": 12,
+      "elapsed_s": 6.8857,
+      "usage": {
+        "completion_tokens": 111,
+        "prompt_tokens": 204,
+        "total_tokens": 315,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "```json\n{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 76.364,\n  \"launch_ev_given_negative\": -25.0,\n  \"test_policy_ev_after_cost\": 22.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}\n```",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": false,
+        "launch_ev_given_negative": false,
+        "test_policy_ev_after_cost": false,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 9,
+      "max_score": 10,
+      "elapsed_s": 13.9166,
+      "usage": {
+        "completion_tokens": 290,
+        "prompt_tokens": 138,
+        "total_tokens": 428,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"To test the conditional rule 'If a card has a vowel on one side, then it has an even number on the other side', we must check cases that could potentially violate it. The rule is of the form P \u2192 Q (if P, then Q), which is falsified only when P is true and Q is false. Thus, we need to verify: (1) cards where P is true (vowel) to ensure Q is true (even number), and (2) cards where Q is false (odd number) to ensure P is false (not a vowel). The card 'A' is a vowel (P true), so we must check that the reverse side is even. The card '7' is an odd number (Q false), so we must check that the reverse side is *not* a vowel (to avoid P true and Q false). The card 'D' is a consonant (P false); regardless of the other side (even or odd), the rule is satisfied (since P \u2192 Q is true when P is false). The card '4' is an even number (Q true); the rule places no restriction on what letter must be on the other side when Q is true, so turning it cannot reveal a violation. Thus, only 'A' and '7' need to be turned.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": false,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 26.6157,
+      "usage": {
+        "completion_tokens": 592,
+        "prompt_tokens": 206,
+        "total_tokens": 798,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "**Recommendation:** Use the risk score *only as one input* within a structured, human-in-the-loop supervision decision process\u2014**not** as an automated trigger for restrictive measures. Restrictive supervision should require independent judicial review and be reserved for cases where high scores are corroborated by additional evidence (e.g., recent violent arrests, failure to appear, dynamic protective factors).\n\n**Calibration Justification & Limits:** Calibration ensures that, *within demographic groups*, a score of, say, 0.8 corresponds to ~80% observed severe offense rates *in the training era*. But calibration does *not* guarantee accuracy across groups if base rates differ\u2014or when conditions shift. With severe offenses rare (low base rate), even well-calibrated models yield many false positives at typical thresholds, disproportionately burdening low-risk individuals. Asymmetric error costs\u2014e.g., harms from unnecessary supervision vs. missed severe offenses\u2014demand explicit ethical weighting, not just statistical performance.\n\n**Causation vs. Prediction:** The model predicts associations, not causes. Feedback loops are inevitable: policing shifts alter arrest patterns, which feed back into training data; defendants adapt behavior when aware of predictive features (e.g., avoiding certain neighborhoods or contacts). This invalidates assumptions of stationarity and may entrench bias if feedback correlates with protected attributes.\n\n**Rights & Due Process:** Automated enforcement of restrictive supervision based solely on algorithmic prediction violates due process principles\u2014deprivation of liberty requires individualized justification, not statistical inference. Risk scores alone lack the procedural robustness of adversarial adjudication.\n\n**Deployment & Evaluation Design:**  \n- **Pilot Phase (2 years):** Deploy only in one jurisdiction with diverse demographics. Risk scores generated *only for case review*, not auto-triggered actions. Judges receive scores + contextual data (e.g., employment, housing stability, prior compliance).  \n- **Safeguards:**  \n  - Thresholds and scoring rules publicly auditable; model updates require independent bias impact assessment.  \n  - Real-time fairness monitoring: track false positive/negative rates *by race, gender, age*, and by offense type (e.g., severe violent vs. non-severe).  \n  - Automatic pause if: (i) severe offense rate drops >30% below baseline (suggesting deterrence or displacement, not reduced risk); (ii) false positive rate disparities widen >15% across groups; (iii) public feedback indicates procedural harm.  \n- **Evaluation Metrics:** Prioritize *net harm reduction*\u2014comparing recidivism, incarceration days, employment, and well-being between groups receiving score-informed vs. standard supervision.\n\n**Conclusion:** The tool may improve risk assessment *if* embedded in a rights-respecting, transparent, and adaptive system\u2014with strict limits on automated action. Automatic restrictive supervision, however, is unjustified and ethically perilous given causal ambiguity, feedback risks, and societal stakes.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      }
+    }
+  ]
+}

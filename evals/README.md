@@ -7,6 +7,20 @@
 - [2026-09-16: GLM text regrading, headless stability, vision fixtures and blind frontier comparison](EXPERIMENTS-2026-09-16.md). Includes corrections for missing NumPy, invalid/interrupted runs, output-budget caveats, and the deferred provisional-switch decision.
 - [Vision suite usage](VISION.md), [six harder candidates](VISION-HARD.md), [ten additional candidates](VISION-EXTRA10.md), and [retain-all policy](VISION-RETENTION.md).
 
+> ## ⚠️ Correction — 2026-08-27
+>
+> **The 2026-08-05 results below were produced with `enable_thinking: false`, `temperature 0`, and
+> per-task ceilings of 160–620 tokens.** Qwen3.6 models run in *thinking mode by default*, and Qwen
+> recommends an output budget of 32,768 tokens. The original runs therefore measured these models in
+> their weak mode against roughly 2% of the recommended budget.
+>
+> Re-running the 35B-A3B Q5 in thinking mode moved deep-reasoning from **69 → 95**. Three conclusions
+> stated below are consequently **wrong**, and are annotated inline: the acquisition-arithmetic verdict,
+> the second-Bayesian-posterior claim, and Coder-Next's standing as the structured-reasoning leader.
+>
+> The 2026-08-05 tables are retained as a valid record *of that configuration*, not of these models.
+> See **DW-X1Pro results — 2026-08-27 (thinking mode)** for the corrected standings.
+
 ## Tasks and weighting
 
 | Task | Points | What it tests |
@@ -22,9 +36,9 @@
 
 Total: 100 points.
 
-Objective tasks use exact JSON checks or executable tests. The open protocol and C-review tasks use explicit keyword/concept rubrics, followed by manual response inspection. Models run at temperature zero with thinking disabled. Raw prompts, responses, usage, timings and rubric details are retained in `results/`.
+Objective tasks use exact JSON checks or executable tests. The open protocol and C-review tasks use explicit keyword/concept rubrics, followed by manual response inspection. The historical 2026-08-05 runs used temperature zero, thinking disabled, and the old per-task ceilings. The current suite still defaults to temperature zero and `enable_thinking: false`, but now applies a 12K token floor and retry by default, so its defaults do **not** reproduce those old totals. Use `--template-kwargs` to select a model-specific thinking mode and `--min-tokens` or `--token-budget-scale` to control headroom; result files retain the template settings, per-task budgets, retry state, raw responses, usage, timings, and rubric details.
 
-## DW-X1Pro results — 2026-08-05
+## DW-X1Pro results — 2026-08-05 (non-thinking baseline)
 
 | Task | 35B-A3B Q5 | 27B dense Q8 | Coder-Next IQ4_XS |
 |---|---:|---:|---:|
@@ -46,10 +60,10 @@ Objective tasks use exact JSON checks or executable tests. The open protocol and
 - **27B dense Q8 quality was close on this small suite, but its economics are poor.** It was one point behind 35B while taking 4.29 times as long. Its 2.9 tok/s decode rate dominates real use.
 - **Coder-Next is strong for bounded coding tasks.** It passed every executable decoder test and was the fastest generator in throughput testing. Its open embedded-protocol answer was materially weaker: it retained monolithic SCAN behavior, stored transformed rather than reproducible raw/retained data, coupled event reporting to acquisition behavior, and proposed pausing continuous acquisition rather than rejecting the ownership conflict.
 - **All three retrieved every fact from the long context**, so the tested 35K-token retrieval case does not distinguish them.
-- **All three failed the acquisition arithmetic.** None should be trusted to calculate link budgets unaided. Production workflows should continue using an actual calculation tool and then ask the model to interpret checked numbers.
-- The open protocol task also exposed a shared verbosity problem: all models consumed the 520-token ceiling and left requirements unresolved. For architecture work, request a strict decision table or structured schema, then review it against explicit invariants.
+- **All three failed the acquisition arithmetic.** None should be trusted to calculate link budgets unaided. **[CORRECTED 2026-08-27: false. In thinking mode the 35B scores 4/6 and the Q8 4/6 on this task. The failure was the configuration, not the models. Coder-Next, which has no thinking mode, does still score 0/6.]** Production workflows should continue using an actual calculation tool and then ask the model to interpret checked numbers.
+- The open protocol task also exposed a shared verbosity problem: all models consumed the 520-token ceiling and left requirements unresolved. **[CORRECTED 2026-08-27: a 520-token ceiling is ~1.6% of Qwen's recommended 32,768-token output budget. This measured the ceiling, not the models. With headroom the 35B scores 14/18 and the Q8 16/18.]** For architecture work, request a strict decision table or structured schema, then review it against explicit invariants.
 
-## Deep-reasoning suite — 2026-08-05
+## Deep-reasoning suite — 2026-08-05 (non-thinking baseline)
 
 `deep_reasoning_suite.py` is a separate 100-point suite focused on non-engineering reasoning: a uniquely solved logic grid, fuzzy regression-discontinuity inference, sequential Bayesian updating, scientific hypothesis discrimination, adversarial historical evidence, value of information, Wason conditional logic, and policy reasoning under uncertainty.
 
@@ -69,12 +83,12 @@ Objective tasks use exact JSON checks or executable tests. The open protocol and
 
 ### Deep-reasoning interpretation
 
-- **Coder-Next won this suite decisively.** It was the only model to partially solve the unique logic grid, handled the fuzzy causal design much more completely, and earned full policy and Wason scores. It also completed slightly faster than 35B.
+- **[SUPERSEDED 2026-08-27 — see the thinking-mode section. Coder-Next has no thinking mode; on a level field it scores 77 against the Q5's 95 and the Q8's 94.]** **Coder-Next won this suite decisively.** It was the only model to partially solve the unique logic grid, handled the fuzzy causal design much more completely, and earned full policy and Wason scores. It also completed slightly faster than 35B.
 - **Dense 27B narrowly exceeded 35B but took 7.40 times as long.** The two-point advantage on one deterministic run is not enough to offset its impractical decode speed.
 - **35B remained strongest on scientific mechanism discrimination**, tying dense 27B at 12/12 and exceeding Coder by one point.
-- **All three computed the first positive-test posterior correctly and the second incorrectly**, despite the prompt explicitly granting conditional independence.
+- **All three computed the first positive-test posterior correctly and the second incorrectly**, despite the prompt explicitly granting conditional independence. **[CORRECTED 2026-08-27: false. In thinking mode both the Q5 and Q8 score a perfect 12/12 on this task.]**
 - **All three made material expected-value mistakes.** They generally selected the right contingent actions and policy, but produced incorrect conditional EVs and net test values.
-- The result changes the role recommendation: Coder-Next is not merely a fast code model; on the deterministic suite it is the preferred local model for structured standalone reasoning when its 44.25 GiB VRAM footprint is acceptable. The blind open-response review below prevents generalizing that result to all forms of deep thought. The 35B remains the better always-on default because it uses about 12.25 GiB less VRAM and remains strong for practical engineering work.
+- **[RETRACTED 2026-08-27: this recommendation is withdrawn. It compared non-thinking scores across models, one of which cannot do thinking at all. Coder-Next is not the structured-reasoning leader.]** ~~The result changes the role recommendation: Coder-Next is not merely a fast code model; on the deterministic suite it is the preferred local model for structured standalone reasoning when its 44.25 GiB VRAM footprint is acceptable.~~ The blind open-response review below prevents generalizing that result to all forms of deep thought. The 35B remains the better always-on default because it uses about 12.25 GiB less VRAM and remains strong for practical engineering work.
 
 ### Independent blind review of open responses
 
@@ -982,6 +996,86 @@ two-flop synchronisers, registered flags, lint clean. The 2 was the model.
 - **Models served with `--reasoning-parser` stream into `reasoning_content`, not
   `content`.** A throughput script counting only `content` records zero tokens
   for `27b-fp8` and reports, wrongly, that nothing was generated.
+## DW-X1Pro results — 2026-08-27 (thinking mode)
+
+The then-current harness ran with `--thinking --temperature 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+--presence-penalty 0.0 --extra-tokens 12000`, identical for every model so the comparison held one
+variable. These legacy flags have since been replaced; each retained result file records the exact
+historical settings under `run_config`.
+
+\* **Coder-Next has no thinking mode.** A probe with thinking requested returned `reasoning_chars: 0`,
+so its column is a non-thinking run with the sampler matched to the others. This is a property of the
+model, not a configuration gap — there is no setting that gives it a thinking mode.
+
+### Work quality
+
+| Task | 35B-A3B Q5 | 35B-A3B Q8 | Coder-Next IQ4_XS\* |
+|---|---:|---:|---:|
+| Strict protocol JSON | 8/12 | 12/12 | 12/12 |
+| BOM consolidation | 10/10 | 9/10 | 10/10 |
+| Executable code repair | 20/20 | 20/20 | 20/20 |
+| Embedded C review | 10/12 | 10/12 | 10/12 |
+| Protocol architecture | 14/18 | 16/18 | 12/18 |
+| 35K-token retrieval | 16/16 | 16/16 | 16/16 |
+| Scope control | 6/6 | 6/6 | 6/6 |
+| Acquisition timing | 4/6 | 4/6 | 0/6 |
+| **Total** | **88/100** | **93/100** | **86/100** |
+| Suite wall time | 981.40 s | 1212.07 s | 243.80 s |
+
+### Deep reasoning
+
+| Task | 35B-A3B Q5 | 35B-A3B Q8 | Coder-Next IQ4_XS\* |
+|---|---:|---:|---:|
+| Logic grid | 12/12 | 12/12 | 6/12 |
+| Causal inference | 13/14 | 13/14 | 7/14 |
+| Bayesian updating | 12/12 | 12/12 | 8/12 |
+| Hypothesis discrimination | 12/12 | 10/12 | 12/12 |
+| Adversarial epistemology | 14/14 | 12/14 | 12/14 |
+| Value of information | 12/12 | 12/12 | 9/12 |
+| Wason selection | 10/10 | 9/10 | 9/10 |
+| Complex policy reasoning | 10/14 | 14/14 | 14/14 |
+| **Total** | **95/100** | **94/100** | **77/100** |
+| Suite wall time | 1210.93 s | 1258.86 s | 98.11 s |
+
+### Interpretation
+
+- **Thinking mode is the single largest quality factor measured on this machine.** For the 35B Q5 it
+  moved deep-reasoning 69 → 95. It solved the logic grid no model had ever solved (0/12 → 12/12),
+  fixed the second Bayesian posterior (8/12 → 12/12), and produced the first non-zero acquisition
+  arithmetic score (0/6 → 4/6). No quant, model or sampler change in this inventory comes close.
+- **Thinking is not uniformly better.** Work-quality for the Q5 stayed at 88 because gains on
+  architecture and arithmetic were cancelled by losses on `strict_protocol_json` (12 → 8) and
+  `embedded_c_review` (12 → 10). Thinking can degrade strict output-format adherence. This is
+  consistent with Qwen shipping two distinct modes rather than one.
+- **The cost is 4.5x–12.3x wall time.** The Q5 pair went from 5.3 minutes to 36.5 minutes.
+- **Q5 and Q8 quants are indistinguishable in thinking mode.** 183 versus 187 combined, from single
+  stochastic samples, is not a real gap. Note this *reverses* the non-thinking comparison, where the
+  Q8 scored lower on both suites — that earlier result was an artifact of the weak mode. The case for
+  the Q5 rests on 12.56 GiB of headroom versus 2.83 GiB, not on quality.
+- **Coder-Next is now clearly third on reasoning and cannot improve.** 77 against 94–95, losing the
+  logic grid 6/12, causal inference 7/14 and Bayesian 8/12. It remains excellent value on speed:
+  163/200 in 5.7 minutes against 183–187 in 36–41 minutes, roughly 6.7x faster for about 11% less
+  score. It also still scores 0/6 on acquisition arithmetic, so the "do not trust it with link
+  budgets" warning stands for this model specifically.
+- **27B dense and Mistral Medium have no thinking-mode data.** The 27B was skipped on cost (~4.2 hours
+  at 2.9 tok/s). Mistral cannot run the work-quality suite at all: `long_context_retrieval` needs a
+  35,414-token prompt and Mistral is served at 32K. That gap is structural.
+
+## Caveats
+
+- The 2026-08-05 runs are one deterministic (temperature 0) run per model, not a statistical quality
+  estimate.
+- **The 2026-08-27 thinking-mode runs are not deterministic.** Qwen specifies temperature 1.0 for
+  thinking mode, so each is a single stochastic sample. Task-level swings of ±2–4 points are noise;
+  only large effects should be trusted. The 35B Q5's `strict_protocol_json` result of 8/12 is likely
+  a bad draw, given it scored 12/12 both non-thinking and on the Q8. Differences worth believing from
+  that run are the thinking-vs-non-thinking gap itself and Coder-Next's 18-point reasoning deficit.
+- Thinking-mode runs moved two variables at once (mode and sampler). A control comparing only the
+  sampler in non-thinking mode showed no scoring change, so the mode is the dominant factor, but the
+  runs do not formally separate them.
+- Sampler settings were held identical across models rather than using each model's own recommended
+  profile. This keeps the comparison controlled but may mildly disadvantage Coder-Next, whose own
+  serving config uses `top_k 40`.
 - The suite is intentionally tailored to current work and is not comparable to MMLU, HumanEval or public leaderboard scores.
 - Exact and executable grading is reliable; keyword-rubric task totals are directional. The raw responses must remain available for manual review.
 - The 35B code response was regraded after fixing an evaluator sandbox defect: the sandbox initially omitted `bytes` and did not expose the provided `crc16` function in candidate globals. The saved candidate itself was correct, and final-grader consistency was verified across all three result files.
@@ -1052,3 +1146,13 @@ machine for agent work than the single-stream number suggests.
 Note the suites themselves are strictly sequential and always have been, so
 their wall-clock times are single-stream figures and must not be read as
 throughput.
+
+### Historical DW-X1Pro thinking-run controls
+
+The 2026-08-27 runs above predate the current CLI and used the retired `--thinking`, sampler, and
+`--extra-tokens` flags. Their exact settings remain embedded in the retained result files. The current
+suite controls thinking generically with `--template-kwargs` and generation headroom with
+`--min-tokens` or `--token-budget-scale`; these controls do not recreate the historical sampler
+settings exactly. Always verify that a served model really supports thinking by confirming that a
+probe returns non-empty `reasoning_content`. Coder-Next silently ignored thinking in the historical
+probe.

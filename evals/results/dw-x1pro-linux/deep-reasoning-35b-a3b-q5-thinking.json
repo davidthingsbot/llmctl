@@ -1,0 +1,206 @@
+{
+  "suite": "deep_reasoning_v1",
+  "run_config": {
+    "thinking": true,
+    "temperature": 1.0,
+    "extra_tokens": 12000,
+    "sampler": {
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0.0,
+      "presence_penalty": 0.0
+    }
+  },
+  "model": "qwen3.6-35b-a3b-q5",
+  "endpoint": "http://127.0.0.1:19438/v1/chat/completions",
+  "score": 95,
+  "max_score": 100,
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 132.5573,
+      "usage": {
+        "completion_tokens": 2849,
+        "prompt_tokens": 162,
+        "total_tokens": 3011,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response": "{\n  \"Ada\": {\n    \"day\": \"Thursday\",\n    \"topic\": \"Biology\"\n  },\n  \"Ben\": {\n    \"day\": \"Monday\",\n    \"topic\": \"History\"\n  },\n  \"Cara\": {\n    \"day\": \"Wednesday\",\n    \"topic\": \"Economics\"\n  },\n  \"Dion\": {\n    \"day\": \"Tuesday\",\n    \"topic\": \"Logic\"\n  }\n}",
+      "grade_details": {
+        "Ada": true,
+        "Ben": true,
+        "Cara": true,
+        "Dion": true
+      }
+    },
+    {
+      "task": "causal_inference",
+      "score": 13,
+      "max_score": 14,
+      "elapsed_s": 127.5765,
+      "usage": {
+        "completion_tokens": 2742,
+        "prompt_tokens": 193,
+        "total_tokens": 2935,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"design\": \"Fuzzy Regression Discontinuity Design\",\n  \"instrument\": \"Eligibility indicator (score cutoff at 70)\",\n  \"estimand\": \"Local Average Treatment Effect (LATE) for compliers at the threshold\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"Potential outcomes vary continuously around the cutoff in the absence of treatment\",\n    \"The running variable cannot be precisely manipulated around the threshold\",\n    \"No other simultaneous policy changes or confounding events occur exactly at the cutoff\",\n    \"Monotonicity: Crossing the cutoff weakly increases the probability of participation for all individuals (no defiers)\",\n    \"Local exchangeability: Assignment near the cutoff is as-good-as-random conditional on the running variable\"\n  ]\n}",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": false,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 161.4735,
+      "usage": {
+        "completion_tokens": 3482,
+        "prompt_tokens": 155,
+        "total_tokens": 3637,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"In practice, test errors are often positively correlated due to shared methodological flaws, sample handling issues, biological confounders, or operator bias. Assuming conditional independence ignores this correlation, which increases the true probability of multiple false positives and renders the calculated probability overly confident (i.e., it overestimates the true post-test probability).\"\n}",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": true,
+        "conditional_independence": true,
+        "correlated_errors": true
+      }
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 123.3112,
+      "usage": {
+        "completion_tokens": 2645,
+        "prompt_tokens": 238,
+        "total_tokens": 2883,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"Orthogonal assay replicates the effect, falsifying H3 (assay artifact).\",\n    \"Occupancy assay shows zero binding, falsifying H1 (direct blockade).\",\n    \"R protein decreases while R mRNA is stable, deducing post-translational downregulation.\",\n    \"Proteasome inhibitor abolishes both R protein loss and signaling suppression, deducing proteasome dependence.\",\n    \"Synthesized conclusion: X triggers proteasome-mediated degradation of R, not direct binding or assay error.\"\n  ],\n  \"decisive_falsifier\": \"Administration of a validated proteasome inhibitor fails to prevent X-induced R protein degradation and signaling suppression, while confirming successful on-target proteasome activity inhibition.\"\n}",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "elapsed_s": 139.4911,
+      "usage": {
+        "completion_tokens": 2995,
+        "prompt_tokens": 236,
+        "total_tokens": 3231,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "Belief in the secret-diversion claim should shift substantially downward. The assertion exhibits critical **source dependence**: S2 merely repeats S1, and S4 is a modern derivative chain citing only secondary copies. These add no independent weight. S1 originates from a political rival with a strong **incentive** to discredit the mayor, and its lack of transactional details makes it a weak foundation.\n\nS3 significantly weakens the claim by showing a reconciled treasury ledger with funds paid to named suppliers. It **establishes** that money followed a documented, auditable financial pathway, directly undermining the \u201csecret\u201d aspect. However, S3 **does not establish** that grain was actually delivered, that contracts were performative, or that no side agreements occurred; it only confirms financial recording, not operational reality.\n\nThe **cousin evidence** further reduces suspicion. The market-rate pricing neutralizes the typical nepotism red flag, indicating standard procurement rather than covert enrichment or price-gouging.\n\nOverall, the evidence pivots belief from plausible suspicion to strong skepticism. The **highest-value next evidence** would be primary delivery manifests, supplier contracts, and contemporaneous official inspection records verifying that purchased grain actually reached famine victims. Until such records are examined, the ledger\u2019s reconciliation and market pricing support a qualified conclusion that funds were channeled through standard administrative procedures, though absolute exoneration remains unproven.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      }
+    },
+    {
+      "task": "value_of_information",
+      "score": 12,
+      "max_score": 12,
+      "elapsed_s": 225.7953,
+      "usage": {
+        "completion_tokens": 4873,
+        "prompt_tokens": 208,
+        "total_tokens": 5081,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.727,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test_then_decide\"\n}",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": true,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      }
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "elapsed_s": 140.7536,
+      "usage": {
+        "completion_tokens": 3037,
+        "prompt_tokens": 141,
+        "total_tokens": 3178,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "{\n  \"turn_cards\": [\n    \"A\",\n    \"7\"\n  ],\n  \"reason\": \"Deduction: The rule is a conditional statement (If Vowel, then Even). In formal logic, a conditional is only testable for falsification by checking the antecedent (Vowel) and the negation of the consequent (Odd). Therefore, card A must be turned to verify the reverse is even, and card 7 must be turned to verify the reverse is not a vowel.\\nAssumptions: We assume standard two-sided cards with one letter and one number. No other assumptions are made.\\nWhy other cards are not required: Card D (Consonant) is not logically required because the rule only restricts what appears on the reverse of vowels; it is silent on consonants, meaning any number on the reverse is consistent with the rule. Card 4 (Even) is not logically required because affirming the consequent is invalid for testing conditionals; the rule does not claim that even numbers must have vowels, so an even number can legally have a consonant on the back without contradicting the statement.\"\n}",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      }
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 10,
+      "max_score": 14,
+      "elapsed_s": 159.9725,
+      "usage": {
+        "completion_tokens": 3447,
+        "prompt_tokens": 209,
+        "total_tokens": 3656,
+        "prompt_tokens_details": {
+          "cached_tokens": 32
+        }
+      },
+      "response": "**Policy Recommendation:** Constrained, human-supervised advisory use only. Automatic restrictive supervision is unjustified.\n\n**Deductions from Evidence:** Group calibration ensures predicted probabilities match historical group frequencies, but this statistical property does not justify liberty restrictions, guarantee fairness, or imply causal efficacy. Given severe violence is rare, high thresholds yield low positive predictive value; false positives will vastly outnumber true positives. The asymmetric cost of wrongly restricting innocent individuals outweighs marginal safety gains. Prediction correlates past patterns with outcomes but does not identify preventable causes. Automatic restrictions violate due process by presuming risk based on scores, denying meaningful contestation. Police deployment determines who is arrested, creating selective labeling; the model learns enforcement bias, not ground-truth crime. Flagged groups will face intensified surveillance, creating feedback loops that corrupt future data through differential observation. Economic shifts, feature transparency, and strategic adaptation will cause distributional drift, invalidating historical calibration.\n\n**Necessary Assumptions:** Restrictive supervision disrupts employment and housing stability. Automated restrictions will alter police deployment patterns. Human reviewers can meaningfully mitigate algorithmic bias when provided with transparent scores and appeal pathways.\n\n**Deployment & Evaluation Design:** Deploy solely as a transparent advisory input. Require mandatory human review, documented rationale, and accessible appeal pathways. Prohibit algorithmic triggers. Prospective evaluation tracks: actual violence rates, supervision violation rates, demographic equity in restriction decisions, and community trust metrics. Continuous drift monitoring uses pre-specified statistical controls. **Conditions for stopping/revising:** Immediately halt deployment if (1) false positive rates exceed ethical thresholds, (2) restricted individuals show higher post-supervision recidivism than matched controls, or (3) calibration metrics degrade beyond tolerance. Conduct annual independent audits with community oversight. Revisions or termination depend on empirical evidence, not algorithmic momentum.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": false,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": false
+      }
+    }
+  ]
+}
