@@ -20,7 +20,7 @@ pathlib.Path(sys.argv[2]).write_text(src.split(marker, 1)[0] + '''
 [[ "${S_HOST[vision]}" == 127.0.0.1 ]] || exit 22
 [[ "$(svc_endpoint vision)" == http://127.0.0.1:19466/v1/analyze ]] || exit 23
 svc_check_prereqs "${1:-vision}"
-[[ "${1:-vision}" == vision ]] && write_service_run_script vision
+write_service_run_script "${1:-vision}"
 ''')
 PY
 HOME="$TMP/home" bash "$TMP/harness.sh"
@@ -33,6 +33,8 @@ assert '--port 19466' in run
 assert '--weights-dir' in run and '/models' in run
 assert 'docker run' not in run
 PY
-printf 'KIND=image-inference\nPORT=19467\nHOST=0.0.0.0\nPYTHON=%s/home/bin/python\nSERVICE_SCRIPT=%s/image_service.py\n' "$TMP" "$ROOT" > "$TMP/home/.config/llmctl/services.d/unsafe.conf"
-HOME="$TMP/home" bash "$TMP/harness.sh" unsafe > "$TMP/out" 2>&1 && { printf 'unsafe host accepted\n' >&2; exit 1; }
-printf 'PASS: image service registry, loopback endpoint, generated launcher, unsafe host rejection\n'
+# HOST=0.0.0.0 is allowed (LAN use, firewall-guarded like whisper/kokoro) and reaches the launcher
+printf 'KIND=image-inference\nPORT=19467\nHOST=0.0.0.0\nPYTHON=%s/home/bin/python\nSERVICE_SCRIPT=%s/image_service.py\nWEIGHTS_DIR=%s/models\n' "$TMP" "$ROOT" "$TMP" > "$TMP/home/.config/llmctl/services.d/lan.conf"
+HOME="$TMP/home" bash "$TMP/harness.sh" lan
+grep -q -- '--host 0.0.0.0 --port 19467' "$TMP/home/.config/llmctl/run-svc-lan.sh"
+printf 'PASS: image service registry, loopback default, generated launcher, LAN host honoured\n'

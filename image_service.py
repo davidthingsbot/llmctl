@@ -1,4 +1,4 @@
-"""CPU-only, loopback-only image inference companion; weights are provisioned explicitly.
+"""CPU-only image inference companion (loopback by default); weights are provisioned explicitly.
 
 OpenCV Zoo YOLOX (Apache-2.0), YuNet (MIT), SFace (Apache-2.0).
 COCO classes include car/cow. Similarity is uncalibrated; names never leave this service.
@@ -202,9 +202,9 @@ class ImageInference:
         return results
 
 
-def create_server(model, host='127.0.0.1', port=19466):
-    if host != '127.0.0.1':
-        raise ValueError('image service only binds loopback')
+def create_server(model, host='127.0.0.1', port=19470):
+    # No authentication: a non-loopback host is a deliberate choice, and the
+    # firewall is then the only access control (same as whisper and kokoro).
 
     class BoundedServer(ThreadingHTTPServer):
         daemon_threads = True
@@ -295,7 +295,7 @@ def create_server(model, host='127.0.0.1', port=19466):
     return BoundedServer((host, port), Handler)
 
 
-def serve(model, host='127.0.0.1', port=19466):
+def serve(model, host='127.0.0.1', port=19470):
     with create_server(model, host, port) as server:
         server.serve_forever()
 
@@ -303,7 +303,7 @@ def serve(model, host='127.0.0.1', port=19466):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='127.0.0.1')
-    parser.add_argument('--port', type=int, default=19466)
+    parser.add_argument('--port', type=int, default=19470)
     parser.add_argument('--weights-dir', default=os.path.join(os.path.dirname(__file__), '.models'))
     args = parser.parse_args()
     serve(ImageInference(args.weights_dir), args.host, args.port)

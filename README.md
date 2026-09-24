@@ -299,7 +299,8 @@ where a two-box model fails if it is going to.
 Speech servers that run **alongside** the models rather than instead of them:
 whisper.cpp for speech-to-text, Kokoro for text-to-speech. The experimental
 `image-inference` kind runs `image_service.py` on CPU, also independently of
-model switching. It is deliberately loopback-only and has no remote transport.
+model switching. It binds loopback by default; `HOST=0.0.0.0` serves the LAN,
+unauthenticated like the speech kinds, so the firewall is the access control.
 
 These are deliberately not models. `llmctl set` stops every model except its
 target, and a transcription or voice service has to survive that switch — so
@@ -385,14 +386,14 @@ pinned SHA-256 digests at startup and records them in every response.
 The SFace cosine cutoff (0.363) and top-two margin (0.05) are uncalibrated trial
 values. Similarity is **not** identity probability; candidate results need human
 review. Templates are calculated in memory per request, never persisted. The
-service has no per-member read isolation and must not be exposed publicly.
+service has no per-member read isolation and must not be exposed to the internet.
 
 Example definition, opt-in only (paths are examples; do not install a user unit
 until deployment approval):
 
 ```ini
 KIND=image-inference
-PORT=19466
+PORT=19470
 HOST=127.0.0.1
 PYTHON=/absolute/path/to/llmctl/.venv/bin/python
 SERVICE_SCRIPT=/absolute/path/to/llmctl/image_service.py
@@ -404,8 +405,9 @@ WEIGHTS_DIR=/absolute/private/path/to/weights
 It returns bounded percent `[x,y,w,h]` boxes, model SHA-256 hashes and candidate
 similarity/threshold/margin, **not embeddings**. The Python server accepts at most
 4 MiB per image, 16 gallery entries and 8 MiB total decoded bytes. No URL/file
-path input. The default host is loopback; manager startup refuses any other host.
-Whiteboard uses a server-side adapter; browser clients must not contact this port.
+path input. The default host is loopback; set `HOST=0.0.0.0` to serve the house.
+Whiteboard uses a server-side adapter (which itself only targets loopback);
+browser clients must not contact this port.
 The trial does **not** persist review/evidence or offer human confirmation, and
 is not production identity verification. Development smoke tests used the
 Wikimedia Commons [Giles Laurent cow portrait](https://commons.wikimedia.org/wiki/File:004_Portrait_Vache_Salanfe_Photo_by_Giles_Laurent.jpg)
