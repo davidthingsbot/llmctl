@@ -45,6 +45,12 @@ PORT=19442
 HOST=0.0.0.0
 MODEL_REF="/models/whisper.bin"
 EOF
+cat > "$CONF_DIR/services.d/transcribe.conf" <<'EOF'
+KIND=whisper
+PORT=19444
+MODEL_REF="/models/whisper.bin"
+EXTRA_ARGS="-l auto --request-path /v1 --inference-path /audio/transcriptions"
+EOF
 cat > "$CONF_DIR/services.d/voice.conf" <<'EOF'
 KIND=kokoro
 PORT=19443
@@ -98,6 +104,13 @@ expected = {
             "port": 19442,
             "bind_host": "0.0.0.0",
             "endpoint": "http://127.0.0.1:19442/inference",
+        },
+        {
+            "name": "transcribe",
+            "kind": "whisper",
+            "port": 19444,
+            "bind_host": "0.0.0.0",
+            "endpoint": "http://127.0.0.1:19444/v1/audio/transcriptions",
         },
         {
             "name": "vision",

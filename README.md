@@ -132,8 +132,10 @@ JSON document with this versioned schema (the example values are illustrative):
 Model `base_url` values and service `endpoint` values always use loopback so a
 gateway on the same host does not need host/network discovery. Service
 `bind_host` preserves the configured listener host; Whisper endpoints end in
-`/inference`, Kokoro endpoints end in `/v1/audio/speech`, and image-inference
-endpoints end in `/v1/analyze`.
+`/inference` unless the service's `EXTRA_ARGS` sets `--request-path` /
+`--inference-path`, in which case the endpoint follows those flags (e.g.
+`/v1/audio/transcriptions`); Kokoro endpoints end in `/v1/audio/speech`, and
+image-inference endpoints end in `/v1/analyze`.
 
 The command reads only `machine.conf`, `models.d`, and `services.d`. It does not
 query systemd or health endpoints, probe the hostname/network/hardware, or read
@@ -309,17 +311,53 @@ KIND=whisper                # or kokoro
 PORT=19442
 MODEL_REF="/home/you/models/ggml-large-v3-turbo-q5_0.bin"   # whisper
 IMAGE="ghcr.io/remsky/kokoro-fastapi-cpu:latest"            # kokoro (docker)
+PYTHON="/home/you/work/Kokoro-FastAPI/.venv/bin/python"      # kokoro without docker:
+APP_DIR="/home/you/work/Kokoro-FastAPI"                      #   a checkout + its venv
 HOST=0.0.0.0                # bind address; 127.0.0.1 to keep it local
 THREADS=8
-HEALTH_PATH=/health
-EXTRA_ARGS="-l auto"
+HEALTH_PATH=/v1/health
+EXTRA_ARGS="-l auto --request-path /v1 --inference-path /audio/transcriptions"
 ```
+
+Those two whisper flags put whisper-server on the OpenAI audio route, and they
+are the recommended setup: with them the box exposes **one speech interface**,
+`POST /v1/audio/transcriptions` (multipart `file`, `model`, `language`,
+`response_format`) and `POST /v1/audio/speech` (JSON `input`, `voice`,
+`response_format`, `speed`, `stream`), so every client — a browser, a
+microcontroller, or a gateway — talks to whisper and Kokoro the way it would
+talk to OpenAI, and low-overhead versus high-fidelity is a matter of request
+parameters (`pcm`/`wav` versus `opus`/`mp3`, which model is registered) rather
+than a different protocol. Without the flags whisper-server keeps its native
+`/inference` path; `llmctl services`, `llmctl status`, and `llmctl spec` report
+whichever path the flags select, and the whisper health probe defaults to
+`<request-path>/`.
 
 | kind | server | endpoint clients post to |
 |---|---|---|
-| `whisper` | `whisper-server` (needs `WHISPER_SERVER` in `machine.conf`) | `/inference` |
-| `kokoro` | `kokoro-fastapi` container, port 8880 mapped to `PORT` | `/v1/audio/speech` |
+| `whisper` | `whisper-server` (needs `WHISPER_SERVER` in `machine.conf`) | `/inference`, or `--request-path` + `--inference-path` from `EXTRA_ARGS` (e.g. `/v1/audio/transcriptions`) |
+| `kokoro` | `kokoro-fastapi` container, port 8880 mapped to `PORT` — or, with `PYTHON=` + `APP_DIR=` and no `IMAGE=`, uvicorn from a checkout | `/v1/audio/speech` |
 | `image-inference` | local Python/OpenCV CPU service (trial) | `/v1/analyze` |
+
+### Kokoro without docker
+
+On a box with no container runtime (and no root to install one), point the
+`kokoro` kind at a [Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI)
+checkout instead of an image:
+
+```sh
+git clone https://github.com/remsky/Kokoro-FastAPI.git ~/work/Kokoro-FastAPI
+cd ~/work/Kokoro-FastAPI
+uv venv .venv --python 3.12
+uv pip install --python .venv/bin/python -e ".[cpu]"     # or .[gpu-cu128] for a Blackwell card
+.venv/bin/python docker/scripts/download_model.py --output api/src/models/v1_0
+```
+
+Then `PYTHON=` is that venv's python and `APP_DIR=` the checkout; leave `IMAGE=`
+unset. The generated launcher reproduces the project's own `start-cpu.sh`
+(`USE_GPU=false`, `MODEL_DIR`, `VOICES_DIR`, `PYTHONPATH`) and runs
+`uvicorn api.src.main:app` on `HOST:PORT`. `ENV_EXTRA="USE_GPU=true"` flips it
+to CUDA when the venv's torch supports the card. espeak-ng comes from the
+`espeakng-loader` wheel, so nothing needs installing system-wide.
 
 ### Image-inference trial (not installed or enabled by default)
 
