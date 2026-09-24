@@ -120,9 +120,9 @@ JSON document with this versioned schema (the example values are illustrative):
     {
       "name": "speech",
       "kind": "whisper",
-      "port": 19442,
+      "port": 19450,
       "bind_host": "0.0.0.0",
-      "endpoint": "http://127.0.0.1:19442/inference"
+      "endpoint": "http://127.0.0.1:19450/inference"
     }
   ]
 }
@@ -306,9 +306,15 @@ target, and a transcription or voice service has to survive that switch — so
 services have their own registry, their own units (`llm-svc-<name>.service`),
 and are started and stopped only when named explicitly.
 
+Give them ports of their own: `llmctl add` walks upward from `WIZARD_BASE_PORT`
+(and now steps over registered service ports), so put services a decade above
+the model block and ten apart — 19450 whisper, 19460 kokoro, 19470
+image-inference — leaving room for models to grow and for a second variant of
+each kind beside the first.
+
 ```ini
 KIND=whisper                # or kokoro
-PORT=19442
+PORT=19450                  # keep services ten apart, a decade above the model block
 MODEL_REF="/home/you/models/ggml-large-v3-turbo-q5_0.bin"   # whisper
 IMAGE="ghcr.io/remsky/kokoro-fastapi-cpu:latest"            # kokoro (docker)
 PYTHON="/home/you/work/Kokoro-FastAPI/.venv/bin/python"      # kokoro without docker:

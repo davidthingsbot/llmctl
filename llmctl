@@ -1781,6 +1781,8 @@ next_free_port() {
   while :; do
     used=0
     for n in "${MODELS[@]}"; do [[ "${PORT[$n]}" == "$p" ]] && used=1; done
+    # a registered companion service owns its port even while it is down
+    for n in ${SERVICES[@]+"${SERVICES[@]}"}; do [[ "${S_PORT[$n]}" == "$p" ]] && used=1; done
     ss -ltn 2>/dev/null | grep -q ":$p " && used=1
     (( used )) || { echo "$p"; return; }
     ((p++))
