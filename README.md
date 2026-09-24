@@ -77,6 +77,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl down <model>...\|all` | stop + remove from boot |
 | `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
 | `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) |
+| `llmctl spec` | emit the configured machine, model, and companion-service registry as JSON for same-host gateways |
 | `llmctl agents` | list registered agents: type, FOLLOW, gateway state, current target |
 | `llmctl services` | list companion STT/TTS services: kind, port, health, bind host, client endpoint |
 | `llmctl service up <name>...` | start companion service(s) and enable on boot |
@@ -95,6 +96,51 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 
 `STATS=0` skips the post-start benchmark; `FORCE=1` overrides the VRAM check
 and `machine init` overwrite protection.
+
+### Machine-readable provider spec
+
+`llmctl spec` is the read-only application discovery interface. It emits one
+JSON document with this versioned schema (the example values are illustrative):
+
+```json
+{
+  "schema_version": 1,
+  "machine": {"name": "my-box"},
+  "models": [
+    {
+      "name": "qwen27b",
+      "model_id": "qwen3.6-27b-fp8",
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:19438/v1",
+      "port": 19438,
+      "key_file": "/home/me/.config/vllm/api-keys"
+    }
+  ],
+  "services": [
+    {
+      "name": "speech",
+      "kind": "whisper",
+      "port": 19450,
+      "bind_host": "0.0.0.0",
+      "endpoint": "http://127.0.0.1:19450/inference"
+    }
+  ]
+}
+```
+
+`name` is the llmctl registry name; `model_id` is the served model identifier.
+Model `base_url` values and service `endpoint` values always use loopback so a
+gateway on the same host does not need host/network discovery. Service
+`bind_host` preserves the configured listener host; Whisper endpoints end in
+`/inference` unless the service's `EXTRA_ARGS` sets `--request-path` /
+`--inference-path`, in which case the endpoint follows those flags (e.g.
+`/v1/audio/transcriptions`); Kokoro endpoints end in `/v1/audio/speech`, and
+image-inference endpoints end in `/v1/analyze`.
+
+The command reads only `machine.conf`, `models.d`, and `services.d`. It does not
+query systemd or health endpoints, probe the hostname/network/hardware, or read
+credentials. `key_file` is the configured credential **path**; key contents are
+never included. `MACHINE_NAME` must be set in `machine.conf`.
 
 ### Suspend and resume
 
@@ -251,30 +297,128 @@ where a two-box model fails if it is going to.
 ## Companion services (`~/.config/llmctl/services.d/<name>.conf`)
 
 Speech servers that run **alongside** the models rather than instead of them:
-whisper.cpp for speech-to-text, Kokoro for text-to-speech.
+whisper.cpp for speech-to-text, Kokoro for text-to-speech. The experimental
+`image-inference` kind runs `image_service.py` on CPU, also independently of
+model switching. It binds loopback by default; `HOST=0.0.0.0` serves the LAN,
+unauthenticated like the speech kinds, so the firewall is the access control.
 
 These are deliberately not models. `llmctl set` stops every model except its
 target, and a transcription or voice service has to survive that switch — so
 services have their own registry, their own units (`llm-svc-<name>.service`),
 and are started and stopped only when named explicitly.
 
+Give them ports of their own: `llmctl add` walks upward from `WIZARD_BASE_PORT`
+(and now steps over registered service ports), so put services a decade above
+the model block and ten apart — 19450 whisper, 19460 kokoro, 19470
+image-inference — leaving room for models to grow and for a second variant of
+each kind beside the first.
+
 ```ini
 KIND=whisper                # or kokoro
-PORT=19442
+PORT=19450                  # keep services ten apart, a decade above the model block
 MODEL_REF="/home/you/models/ggml-large-v3-turbo-q5_0.bin"   # whisper
 IMAGE="ghcr.io/remsky/kokoro-fastapi-cpu:latest"            # kokoro (docker)
+PYTHON="/home/you/work/Kokoro-FastAPI/.venv/bin/python"      # kokoro without docker:
+APP_DIR="/home/you/work/Kokoro-FastAPI"                      #   a checkout + its venv
 HOST=0.0.0.0                # bind address; 127.0.0.1 to keep it local
 THREADS=8
-HEALTH_PATH=/health
-EXTRA_ARGS="-l auto"
+HEALTH_PATH=/v1/health
+EXTRA_ARGS="-l auto --request-path /v1 --inference-path /audio/transcriptions"
 ```
+
+Those two whisper flags put whisper-server on the OpenAI audio route, and they
+are the recommended setup: with them the box exposes **one speech interface**,
+`POST /v1/audio/transcriptions` (multipart `file`, `model`, `language`,
+`response_format`) and `POST /v1/audio/speech` (JSON `input`, `voice`,
+`response_format`, `speed`, `stream`), so every client — a browser, a
+microcontroller, or a gateway — talks to whisper and Kokoro the way it would
+talk to OpenAI, and low-overhead versus high-fidelity is a matter of request
+parameters (`pcm`/`wav` versus `opus`/`mp3`, which model is registered) rather
+than a different protocol. Without the flags whisper-server keeps its native
+`/inference` path; `llmctl services`, `llmctl status`, and `llmctl spec` report
+whichever path the flags select, and the whisper health probe defaults to
+`<request-path>/`.
 
 | kind | server | endpoint clients post to |
 |---|---|---|
-| `whisper` | `whisper-server` (needs `WHISPER_SERVER` in `machine.conf`) | `/inference` |
-| `kokoro` | `kokoro-fastapi` container, port 8880 mapped to `PORT` | `/v1/audio/speech` |
+| `whisper` | `whisper-server` (needs `WHISPER_SERVER` in `machine.conf`) | `/inference`, or `--request-path` + `--inference-path` from `EXTRA_ARGS` (e.g. `/v1/audio/transcriptions`) |
+| `kokoro` | `kokoro-fastapi` container, port 8880 mapped to `PORT` — or, with `PYTHON=` + `APP_DIR=` and no `IMAGE=`, uvicorn from a checkout | `/v1/audio/speech` |
+| `image-inference` | local Python/OpenCV CPU service (trial) | `/v1/analyze` |
 
-**Neither backend supports an API key.** llama.cpp and vLLM are always
+### Kokoro without docker
+
+On a box with no container runtime (and no root to install one), point the
+`kokoro` kind at a [Kokoro-FastAPI](https://github.com/remsky/Kokoro-FastAPI)
+checkout instead of an image:
+
+```sh
+git clone https://github.com/remsky/Kokoro-FastAPI.git ~/work/Kokoro-FastAPI
+cd ~/work/Kokoro-FastAPI
+uv venv .venv --python 3.12
+uv pip install --python .venv/bin/python -e ".[cpu]"     # or .[gpu-cu128] for a Blackwell card
+.venv/bin/python docker/scripts/download_model.py --output api/src/models/v1_0
+```
+
+Then `PYTHON=` is that venv's python and `APP_DIR=` the checkout; leave `IMAGE=`
+unset. The generated launcher reproduces the project's own `start-cpu.sh`
+(`USE_GPU=false`, `MODEL_DIR`, `VOICES_DIR`, `PYTHONPATH`) and runs
+`uvicorn api.src.main:app` on `HOST:PORT`. `ENV_EXTRA="USE_GPU=true"` flips it
+to CUDA when the venv's torch supports the card. espeak-ng comes from the
+`espeakng-loader` wheel, so nothing needs installing system-wide.
+
+### Image-inference trial (not installed or enabled by default)
+
+On an explicitly trusted colocated machine, provision a venv (`uv venv .venv`;
+`uv pip install --python .venv/bin/python -r requirements-image.txt`) and **manually**
+download three OpenCV Zoo weights into a private weights directory. Nothing
+downloads at service startup. The exact tested weights and SHA-256 checksums:
+
+| Weight file | SHA-256 | Upstream license |
+|---|---|---|
+| `object_detection_yolox_2022nov.onnx` (YOLOX-s, COCO 80 classes incl. car/cow) | `c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063` | [Apache-2.0](https://github.com/opencv/opencv_zoo/tree/main/models/object_detection_yolox) |
+| `face_detection_yunet_2023mar.onnx` | `8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4` | [MIT](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet) |
+| `face_recognition_sface_2021dec_int8.onnx` | `2b0e941e6f16cc048c20aee0c8e31f569118f65d702914540f7bfdc14048d78a` | [Apache-2.0](https://github.com/opencv/opencv_zoo/tree/main/models/face_recognition_sface) |
+
+Model training inputs are COCO 2017 for YOLOX and SFace's upstream face training
+set; model-file licenses do not automatically license redistribution of training
+photos. Verify suitability for your own intended use. The service verifies the
+pinned SHA-256 digests at startup and records them in every response.
+The SFace cosine cutoff (0.363) and top-two margin (0.05) are uncalibrated trial
+values. Similarity is **not** identity probability; candidate results need human
+review. Templates are calculated in memory per request, never persisted. The
+service has no per-member read isolation and must not be exposed to the internet.
+
+Example definition, opt-in only (paths are examples; do not install a user unit
+until deployment approval):
+
+```ini
+KIND=image-inference
+PORT=19470
+HOST=127.0.0.1
+PYTHON=/absolute/path/to/llmctl/.venv/bin/python
+SERVICE_SCRIPT=/absolute/path/to/llmctl/image_service.py
+WEIGHTS_DIR=/absolute/private/path/to/weights
+```
+
+`GET /health` reports version 1 capabilities; `POST /v1/analyze` accepts JSON
+`{version:1,kind:"objects"|"knownPeople",image:<base64>,gallery:[{personRef,image:<base64>}]}`.
+It returns bounded percent `[x,y,w,h]` boxes, model SHA-256 hashes and candidate
+similarity/threshold/margin, **not embeddings**. The Python server accepts at most
+4 MiB per image, 16 gallery entries and 8 MiB total decoded bytes. No URL/file
+path input. The default host is loopback; set `HOST=0.0.0.0` to serve the house.
+Whiteboard uses a server-side adapter (which itself only targets loopback);
+browser clients must not contact this port.
+The trial does **not** persist review/evidence or offer human confirmation, and
+is not production identity verification. Development smoke tests used the
+Wikimedia Commons [Giles Laurent cow portrait](https://commons.wikimedia.org/wiki/File:004_Portrait_Vache_Salanfe_Photo_by_Giles_Laurent.jpg)
+(CC BY-SA 4.0; attribution Giles Laurent) and two *distinct*, public-domain
+US-government photographs,
+[2012 Obama portrait crop](https://commons.wikimedia.org/wiki/File:President_Barack_Obama,_2012_portrait_crop.jpg)
+and [President Barack Obama](https://commons.wikimedia.org/wiki/File:President_Barack_Obama.jpg).
+No private images or credentials were uploaded. These images are not distributed
+with this repository; identity output is a model **candidate**, not verification.
+
+**Neither speech backend supports an API key.** llama.cpp and vLLM are always
 key-protected by llmctl; whisper-server and kokoro-fastapi have no such option,
 so anything that can route to the port can use them. `HOST=0.0.0.0` is only
 safe behind a firewall rule that restricts the port to trusted subnets — see

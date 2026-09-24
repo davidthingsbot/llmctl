@@ -9,6 +9,7 @@
 #   llmctl                     interactive menu
 #   llmctl <model>             shorthand for `llmctl set <model>`
 #   llmctl list                model registry + status
+#   llmctl spec                machine-readable local provider registry (JSON)
 #   llmctl status              units, health, agent targets, chat links, and
 #                              every node's CPU/RAM/GPU (this box + PEERS)
 #   llmctl set  <model>        THE switch: stop other models, start <model>,
@@ -79,6 +80,8 @@
 set -euo pipefail
 MACHINE_RECORD_REQUEST=0
 [[ "${1:-}" == machine && "${2:-}" == record ]] && MACHINE_RECORD_REQUEST=1
+SPEC_REQUEST=0
+[[ "${1:-}" == spec ]] && SPEC_REQUEST=1
 
 # ----------------------------------------------------------------------------
 # Built-in registry (the author's dual-RTX-3090 box; ENABLE_BUILTIN_MODELS=0
@@ -145,7 +148,7 @@ OPENCLAW_UNIT="openclaw-gateway.service"
 # Machine-profile defaults (overridable via ~/.config/llmctl/machine.conf).
 # These describe the original host: DW-ASUS-LINUX, dual RTX 3090.
 MACHINE_CONF="${MACHINE_CONF:-$RUN_DIR/machine.conf}"
-if ((MACHINE_RECORD_REQUEST)); then
+if ((MACHINE_RECORD_REQUEST || SPEC_REQUEST)); then
   MACHINE_NAME=""
 else
   MACHINE_NAME="$(hostname 2>/dev/null || echo unknown)"
@@ -261,7 +264,7 @@ load_machine_profile() {
 
 # Resolve the accelerator: never assume CUDA. Auto-detect when unset, and pick
 # the matching visible-devices env var for generated run scripts.
-if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 ]]; then
+if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 && "$SPEC_REQUEST" == 0 ]]; then
   if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
     ACCEL=cuda
   elif command -v rocm-smi >/dev/null 2>&1; then
@@ -350,6 +353,8 @@ load_external_models() {
 #
 # Required keys: KIND (whisper|kokoro), PORT.
 # Optional: MODEL_REF (whisper: ggml model path), IMAGE (kokoro: docker image),
+#           PYTHON + APP_DIR (kokoro without docker: a Kokoro-FastAPI checkout
+#           and the venv python that has its deps — see README),
 #           HOST (default 0.0.0.0), THREADS, DESC, NOTES, HEALTH_PATH,
 #           HEALTH_TIMEOUT, EXTRA_ARGS, ENV_EXTRA ("A=1; B=2").
 #
@@ -361,10 +366,36 @@ load_external_models() {
 # ----------------------------------------------------------------------------
 SERVICES_D="${SERVICES_D:-$HOME/.config/llmctl/services.d}"
 SERVICES=()
-declare -A S_KIND S_PORT S_REF S_IMAGE S_HOST S_THREADS S_DESC S_HEALTH \
+declare -A S_KIND S_PORT S_REF S_IMAGE S_HOST S_PYTHON S_SCRIPT S_WEIGHTS S_APPDIR S_THREADS S_DESC S_HEALTH \
            S_XARGS S_XENV S_FILE S_TIMEOUT
 
 svc_unit_of() { echo "llm-svc-$1.service"; }
+
+# whisper-server mounts everything under --request-path (default "") and the
+# transcription POST at --inference-path (default /inference). With
+#   EXTRA_ARGS="--request-path /v1 --inference-path /audio/transcriptions"
+# it answers on the OpenAI audio route, which is what clients should target;
+# the endpoint we report and the health probe both follow those flags.
+svc_whisper_paths() { # svc_whisper_paths "<extra args>" -> "<request-path> <inference-path>"
+  local -a a; local i rp="" ip="/inference"
+  read -r -a a <<<"$1"
+  for ((i = 0; i < ${#a[@]}; i++)); do
+    case "${a[i]}" in
+      --request-path)   rp="${a[i+1]:-}" ;;
+      --inference-path) ip="${a[i+1]:-}" ;;
+    esac
+  done
+  echo "$rp" "$ip"
+}
+
+svc_path() { # svc_path <name> — the URL path a client posts to
+  local rp ip
+  case "${S_KIND[$1]}" in
+    whisper)         read -r rp ip <<<"$(svc_whisper_paths "${S_XARGS[$1]}")"; echo "$rp$ip" ;;
+    image-inference) echo "/v1/analyze" ;;
+    *)               echo "/v1/audio/speech" ;;
+  esac
+}
 
 load_services() {
   local f name kind port n clash
@@ -376,8 +407,8 @@ load_services() {
     fi
     kind="$(conf_get KIND "$f")"
     port="$(conf_get PORT "$f")"
-    if [[ ! "$kind" =~ ^(whisper|kokoro)$ || ! "$port" =~ ^[0-9]+$ ]]; then
-      err "services.d: $f needs KIND=whisper|kokoro and a numeric PORT — skipping"; continue
+    if [[ ! "$kind" =~ ^(whisper|kokoro|image-inference)$ || ! "$port" =~ ^[0-9]+$ ]]; then
+      err "services.d: $f needs KIND=whisper|kokoro|image-inference and a numeric PORT — skipping"; continue
     fi
     clash=""
     for n in ${MODELS[@]+"${MODELS[@]}"}; do
@@ -395,14 +426,19 @@ load_services() {
     S_PORT[$name]="$port"
     S_REF[$name]="$(conf_get MODEL_REF "$f")"
     S_IMAGE[$name]="$(conf_get IMAGE "$f")"
-    S_HOST[$name]="$(conf_get HOST "$f" 0.0.0.0)"
+    S_HOST[$name]="$(conf_get HOST "$f" "$([[ "$kind" == image-inference ]] && printf 127.0.0.1 || printf 0.0.0.0)")"
+    S_PYTHON[$name]="$(conf_get PYTHON "$f")"
+    S_SCRIPT[$name]="$(conf_get SERVICE_SCRIPT "$f")"
+    S_WEIGHTS[$name]="$(conf_get WEIGHTS_DIR "$f")"
+    S_APPDIR[$name]="$(conf_get APP_DIR "$f")"
     S_THREADS[$name]="$(conf_get THREADS "$f" 8)"
     S_DESC[$name]="$(conf_get DESC "$f" "$kind service")"
     S_XARGS[$name]="$(conf_get EXTRA_ARGS "$f")"
     S_XENV[$name]="$(conf_get ENV_EXTRA "$f")"
     S_TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 180)"
     if [[ "$kind" == whisper ]]; then
-      S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" /)"
+      local rp; read -r rp _ <<<"$(svc_whisper_paths "${S_XARGS[$name]}")"
+      S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" "$rp/")"
     else
       S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" /health)"
     fi
@@ -465,7 +501,7 @@ load_agents() {
     fi
   fi
 }
-((MACHINE_RECORD_REQUEST)) || load_agents
+((MACHINE_RECORD_REQUEST || SPEC_REQUEST)) || load_agents
 
 require_agent() {
   [[ -n "${A_TYPE[$1]:-}" ]] || die "unknown agent '$1' (registered: ${AGENTS[*]:-none})"
@@ -1199,14 +1235,33 @@ svc_check_prereqs() {
         || die "missing whisper model ${S_REF[$name]} (fix MODEL_REF in ${S_FILE[$name]})"
       ;;
     kokoro)
-      command -v docker >/dev/null 2>&1 || die "docker not found — kokoro runs as a container"
-      [[ -n "${S_IMAGE[$name]}" ]] || die "kokoro needs IMAGE= in ${S_FILE[$name]}"
+      if [[ -n "${S_IMAGE[$name]}" ]]; then
+        command -v docker >/dev/null 2>&1 || die "docker not found — kokoro with IMAGE= runs as a container"
+      else
+        # no docker on this box: run Kokoro-FastAPI straight from a checkout
+        [[ -n "${S_PYTHON[$name]}" && -x "${S_PYTHON[$name]}" ]] \
+          || die "kokoro needs IMAGE= (docker) or executable PYTHON= + APP_DIR= in ${S_FILE[$name]}"
+        [[ -n "${S_APPDIR[$name]}" && -f "${S_APPDIR[$name]}/api/src/main.py" ]] \
+          || die "APP_DIR=${S_APPDIR[$name]:-<unset>} is not a Kokoro-FastAPI checkout (no api/src/main.py)"
+        [[ -d "${S_APPDIR[$name]}/api/src/models/v1_0" ]] \
+          || die "kokoro weights missing: run ${S_APPDIR[$name]}/docker/scripts/download_model.py --output api/src/models/v1_0"
+      fi
+      ;;
+    image-inference)
+      [[ -n "${S_PYTHON[$name]}" && -x "${S_PYTHON[$name]}" ]] || die "image-inference needs executable PYTHON= in ${S_FILE[$name]}"
+      [[ -n "${S_SCRIPT[$name]}" && -f "${S_SCRIPT[$name]}" ]] || die "image-inference needs SERVICE_SCRIPT= in ${S_FILE[$name]}"
+      [[ -n "${S_WEIGHTS[$name]}" && -d "${S_WEIGHTS[$name]}" ]] || die "image-inference needs provisioned WEIGHTS_DIR= in ${S_FILE[$name]}"
+      local weight
+      for weight in object_detection_yolox_2022nov.onnx face_detection_yunet_2023mar.onnx face_recognition_sface_2021dec_int8.onnx; do
+        [[ -s "${S_WEIGHTS[$name]}/$weight" ]] || die "missing image weight $weight"
+      done
       ;;
   esac
 }
 
 write_service_run_script() {
-  local name="$1" script="$RUN_DIR/run-svc-$name.sh" env_extra="" pair
+  local name="$1" script env_extra="" pair
+  script="$RUN_DIR/run-svc-$name.sh"
   mkdir -p "$RUN_DIR"
   if [[ -n "${S_XENV[$name]:-}" ]]; then
     while IFS= read -r pair; do
@@ -1230,6 +1285,30 @@ exec "$WHISPER_SERVER" -m "${S_REF[$name]}" \\
   -t ${S_THREADS[$name]} \\
   --convert --tmp-dir "$RUN_DIR/tmp-$name" ${S_XARGS[$name]}
 EOF
+  elif [[ "${S_KIND[$name]}" == image-inference ]]; then
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+exec "${S_PYTHON[$name]}" "${S_SCRIPT[$name]}" --host ${S_HOST[$name]} --port ${S_PORT[$name]} --weights-dir "${S_WEIGHTS[$name]}"
+EOF
+  elif [[ "${S_KIND[$name]}" == kokoro && -z "${S_IMAGE[$name]}" ]]; then
+    # the same layout Kokoro-FastAPI's own start-cpu.sh sets up; ENV_EXTRA comes
+    # last so it can override (USE_GPU=true for a CUDA torch in the venv)
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+cd "${S_APPDIR[$name]}"
+export USE_GPU=false
+export PYTHONPATH="${S_APPDIR[$name]}:${S_APPDIR[$name]}/api"
+export MODEL_DIR=src/models
+export VOICES_DIR=src/voices/v1_0
+export WEB_PLAYER_PATH="${S_APPDIR[$name]}/web"
+${env_extra}
+exec "${S_PYTHON[$name]}" -m uvicorn api.src.main:app \\
+  --host ${S_HOST[$name]} --port ${S_PORT[$name]} ${S_XARGS[$name]}
+EOF
   else
     cat > "$script" <<EOF
 #!/usr/bin/env bash
@@ -1251,7 +1330,7 @@ write_service_unit() {
   write_service_run_script "$name"
   mkdir -p "$SYSTEMD_USER_DIR"
   # a stopped `docker run` can leave the container behind; reap it explicitly
-  [[ "${S_KIND[$name]}" == kokoro ]] \
+  [[ "${S_KIND[$name]}" == kokoro && -n "${S_IMAGE[$name]}" ]] \
     && stop_post="ExecStopPost=-$(command -v docker) rm -f llmctl-$name"
   cat > "$SYSTEMD_USER_DIR/$unit" <<EOF
 [Unit]
@@ -1349,11 +1428,7 @@ svc_endpoint() { # svc_endpoint <name> — the URL a client actually posts to
   local name="$1" hostpart
   hostpart="$(lan_ip)"
   [[ "${S_HOST[$name]}" == 127.0.0.1 ]] && hostpart=127.0.0.1
-  if [[ "${S_KIND[$name]}" == whisper ]]; then
-    echo "http://$hostpart:${S_PORT[$name]}/inference"
-  else
-    echo "http://$hostpart:${S_PORT[$name]}/v1/audio/speech"
-  fi
+  echo "http://$hostpart:${S_PORT[$name]}$(svc_path "$name")"
 }
 
 # ----------------------------------------------------------------------------
@@ -1704,6 +1779,8 @@ next_free_port() {
   while :; do
     used=0
     for n in "${MODELS[@]}"; do [[ "${PORT[$n]}" == "$p" ]] && used=1; done
+    # a registered companion service owns its port even while it is down
+    for n in ${SERVICES[@]+"${SERVICES[@]}"}; do [[ "${S_PORT[$n]}" == "$p" ]] && used=1; done
     ss -ltn 2>/dev/null | grep -q ":$p " && used=1
     (( used )) || { echo "$p"; return; }
     ((p++))
@@ -1978,7 +2055,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as dst:
 PYEOF
 }
 
-RECORD_SERVICE_KEYS=(KIND PORT MODEL_REF IMAGE HOST THREADS DESC NOTES
+RECORD_SERVICE_KEYS=(KIND PORT MODEL_REF IMAGE PYTHON APP_DIR HOST THREADS DESC NOTES
                      HEALTH_PATH HEALTH_TIMEOUT EXTRA_ARGS ENV_EXTRA)
 RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH_TIMEOUT GPUS
                    EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS NODES)
@@ -3666,6 +3743,56 @@ cmd_env() {
   echo "export OPENAI_MODEL=${ID[$name]}"
 }
 
+cmd_spec() {
+  # Static provider discovery for same-host gateways. This intentionally uses
+  # only the parsed registries: no units, health endpoints, network/hostname
+  # probes, or key-file reads.
+  [[ -n "$MACHINE_NAME" ]] || die "spec requires MACHINE_NAME in $MACHINE_CONF"
+  local name args=("$MACHINE_NAME" "${#MODELS[@]}")
+  for name in "${MODELS[@]}"; do
+    args+=("$name" "${ID[$name]}" "${BACKEND[$name]}" "${PORT[$name]}"
+           "${KEYFILE[$name]}" )
+  done
+  args+=("${#SERVICES[@]}")
+  for name in "${SERVICES[@]}"; do
+    args+=("$name" "${S_KIND[$name]}" "${S_PORT[$name]}" "${S_HOST[$name]}" "$(svc_path "$name")")
+  done
+  python3 - "${args[@]}" <<'PYEOF'
+import json
+import sys
+
+args = iter(sys.argv[1:])
+machine = next(args)
+models = []
+for _ in range(int(next(args))):
+    name, model_id, backend, port, key_file = (next(args) for _ in range(5))
+    models.append({
+        "name": name,
+        "model_id": model_id,
+        "backend": backend,
+        "base_url": f"http://127.0.0.1:{port}/v1",
+        "port": int(port),
+        "key_file": key_file,
+    })
+services = []
+for _ in range(int(next(args))):
+    name, kind, port, bind_host, path = (next(args) for _ in range(5))
+    services.append({
+        "name": name,
+        "kind": kind,
+        "port": int(port),
+        "bind_host": bind_host,
+        "endpoint": f"http://127.0.0.1:{port}{path}",
+    })
+print(json.dumps({
+    "schema_version": 1,
+    "machine": {"name": machine},
+    "models": models,
+    "services": services,
+}, indent=2))
+PYEOF
+}
+
 # ----------------------------------------------------------------------------
 # Reporting
 # ----------------------------------------------------------------------------
@@ -3825,6 +3952,7 @@ usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; }
 case "${1:-menu}" in
   menu)          menu;;
   list)          print_table;;
+  spec)          shift; (($#==0)) || die "usage: llmctl spec"; cmd_spec;;
   status)        cmd_status;;
   up)            shift; (($#)) || die "usage: llmctl up [--no-point] <model>..."; cmd_up "$@";;
   down)          shift; (($#)) || die "usage: llmctl down <model>...|all"; cmd_down "$@";;
