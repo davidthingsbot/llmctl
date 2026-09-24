@@ -9,6 +9,7 @@
 #   llmctl                     interactive menu
 #   llmctl <model>             shorthand for `llmctl set <model>`
 #   llmctl list                model registry + status
+#   llmctl spec                machine-readable local provider registry (JSON)
 #   llmctl status              units, health, agent targets, chat links, and
 #                              every node's CPU/RAM/GPU (this box + PEERS)
 #   llmctl set  <model>        THE switch: stop other models, start <model>,
@@ -79,6 +80,8 @@
 set -euo pipefail
 MACHINE_RECORD_REQUEST=0
 [[ "${1:-}" == machine && "${2:-}" == record ]] && MACHINE_RECORD_REQUEST=1
+SPEC_REQUEST=0
+[[ "${1:-}" == spec ]] && SPEC_REQUEST=1
 
 # ----------------------------------------------------------------------------
 # Built-in registry (the author's dual-RTX-3090 box; ENABLE_BUILTIN_MODELS=0
@@ -145,7 +148,7 @@ OPENCLAW_UNIT="openclaw-gateway.service"
 # Machine-profile defaults (overridable via ~/.config/llmctl/machine.conf).
 # These describe the original host: DW-ASUS-LINUX, dual RTX 3090.
 MACHINE_CONF="${MACHINE_CONF:-$RUN_DIR/machine.conf}"
-if ((MACHINE_RECORD_REQUEST)); then
+if ((MACHINE_RECORD_REQUEST || SPEC_REQUEST)); then
   MACHINE_NAME=""
 else
   MACHINE_NAME="$(hostname 2>/dev/null || echo unknown)"
@@ -261,7 +264,7 @@ load_machine_profile() {
 
 # Resolve the accelerator: never assume CUDA. Auto-detect when unset, and pick
 # the matching visible-devices env var for generated run scripts.
-if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 ]]; then
+if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 && "$SPEC_REQUEST" == 0 ]]; then
   if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
     ACCEL=cuda
   elif command -v rocm-smi >/dev/null 2>&1; then
@@ -468,7 +471,7 @@ load_agents() {
     fi
   fi
 }
-((MACHINE_RECORD_REQUEST)) || load_agents
+((MACHINE_RECORD_REQUEST || SPEC_REQUEST)) || load_agents
 
 require_agent() {
   [[ -n "${A_TYPE[$1]:-}" ]] || die "unknown agent '$1' (registered: ${AGENTS[*]:-none})"
@@ -3689,6 +3692,61 @@ cmd_env() {
   echo "export OPENAI_MODEL=${ID[$name]}"
 }
 
+cmd_spec() {
+  # Static provider discovery for same-host gateways. This intentionally uses
+  # only the parsed registries: no units, health endpoints, network/hostname
+  # probes, or key-file reads.
+  [[ -n "$MACHINE_NAME" ]] || die "spec requires MACHINE_NAME in $MACHINE_CONF"
+  local name args=("$MACHINE_NAME" "${#MODELS[@]}")
+  for name in "${MODELS[@]}"; do
+    args+=("$name" "${ID[$name]}" "${BACKEND[$name]}" "${PORT[$name]}"
+           "${KEYFILE[$name]}" )
+  done
+  args+=("${#SERVICES[@]}")
+  for name in "${SERVICES[@]}"; do
+    args+=("$name" "${S_KIND[$name]}" "${S_PORT[$name]}" "${S_HOST[$name]}")
+  done
+  python3 - "${args[@]}" <<'PYEOF'
+import json
+import sys
+
+args = iter(sys.argv[1:])
+machine = next(args)
+models = []
+for _ in range(int(next(args))):
+    name, model_id, backend, port, key_file = (next(args) for _ in range(5))
+    models.append({
+        "name": name,
+        "model_id": model_id,
+        "backend": backend,
+        "base_url": f"http://127.0.0.1:{port}/v1",
+        "port": int(port),
+        "key_file": key_file,
+    })
+services = []
+service_paths = {
+    "whisper": "/inference",
+    "kokoro": "/v1/audio/speech",
+    "image-inference": "/v1/analyze",
+}
+for _ in range(int(next(args))):
+    name, kind, port, bind_host = (next(args) for _ in range(4))
+    services.append({
+        "name": name,
+        "kind": kind,
+        "port": int(port),
+        "bind_host": bind_host,
+        "endpoint": f"http://127.0.0.1:{port}{service_paths[kind]}",
+    })
+print(json.dumps({
+    "schema_version": 1,
+    "machine": {"name": machine},
+    "models": models,
+    "services": services,
+}, indent=2))
+PYEOF
+}
+
 # ----------------------------------------------------------------------------
 # Reporting
 # ----------------------------------------------------------------------------
@@ -3848,6 +3906,7 @@ usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; }
 case "${1:-menu}" in
   menu)          menu;;
   list)          print_table;;
+  spec)          shift; (($#==0)) || die "usage: llmctl spec"; cmd_spec;;
   status)        cmd_status;;
   up)            shift; (($#)) || die "usage: llmctl up [--no-point] <model>..."; cmd_up "$@";;
   down)          shift; (($#)) || die "usage: llmctl down <model>...|all"; cmd_down "$@";;

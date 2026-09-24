@@ -77,6 +77,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl down <model>...\|all` | stop + remove from boot |
 | `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
 | `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) |
+| `llmctl spec` | emit the configured machine, model, and companion-service registry as JSON for same-host gateways |
 | `llmctl agents` | list registered agents: type, FOLLOW, gateway state, current target |
 | `llmctl services` | list companion STT/TTS services: kind, port, health, bind host, client endpoint |
 | `llmctl service up <name>...` | start companion service(s) and enable on boot |
@@ -95,6 +96,49 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 
 `STATS=0` skips the post-start benchmark; `FORCE=1` overrides the VRAM check
 and `machine init` overwrite protection.
+
+### Machine-readable provider spec
+
+`llmctl spec` is the read-only application discovery interface. It emits one
+JSON document with this versioned schema (the example values are illustrative):
+
+```json
+{
+  "schema_version": 1,
+  "machine": {"name": "my-box"},
+  "models": [
+    {
+      "name": "qwen27b",
+      "model_id": "qwen3.6-27b-fp8",
+      "backend": "vllm",
+      "base_url": "http://127.0.0.1:19438/v1",
+      "port": 19438,
+      "key_file": "/home/me/.config/vllm/api-keys"
+    }
+  ],
+  "services": [
+    {
+      "name": "speech",
+      "kind": "whisper",
+      "port": 19442,
+      "bind_host": "0.0.0.0",
+      "endpoint": "http://127.0.0.1:19442/inference"
+    }
+  ]
+}
+```
+
+`name` is the llmctl registry name; `model_id` is the served model identifier.
+Model `base_url` values and service `endpoint` values always use loopback so a
+gateway on the same host does not need host/network discovery. Service
+`bind_host` preserves the configured listener host; Whisper endpoints end in
+`/inference`, Kokoro endpoints end in `/v1/audio/speech`, and image-inference
+endpoints end in `/v1/analyze`.
+
+The command reads only `machine.conf`, `models.d`, and `services.d`. It does not
+query systemd or health endpoints, probe the hostname/network/hardware, or read
+credentials. `key_file` is the configured credential **path**; key contents are
+never included. `MACHINE_NAME` must be set in `machine.conf`.
 
 ### Suspend and resume
 
