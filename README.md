@@ -251,7 +251,9 @@ where a two-box model fails if it is going to.
 ## Companion services (`~/.config/llmctl/services.d/<name>.conf`)
 
 Speech servers that run **alongside** the models rather than instead of them:
-whisper.cpp for speech-to-text, Kokoro for text-to-speech.
+whisper.cpp for speech-to-text, Kokoro for text-to-speech. The experimental
+`image-inference` kind runs `image_service.py` on CPU, also independently of
+model switching. It is deliberately loopback-only and has no remote transport.
 
 These are deliberately not models. `llmctl set` stops every model except its
 target, and a transcription or voice service has to survive that switch — so
@@ -273,8 +275,60 @@ EXTRA_ARGS="-l auto"
 |---|---|---|
 | `whisper` | `whisper-server` (needs `WHISPER_SERVER` in `machine.conf`) | `/inference` |
 | `kokoro` | `kokoro-fastapi` container, port 8880 mapped to `PORT` | `/v1/audio/speech` |
+| `image-inference` | local Python/OpenCV CPU service (trial) | `/v1/analyze` |
 
-**Neither backend supports an API key.** llama.cpp and vLLM are always
+### Image-inference trial (not installed or enabled by default)
+
+On an explicitly trusted colocated machine, provision a venv (`uv venv .venv`;
+`uv pip install --python .venv/bin/python -r requirements-image.txt`) and **manually**
+download three OpenCV Zoo weights into a private weights directory. Nothing
+downloads at service startup. The exact tested weights and SHA-256 checksums:
+
+| Weight file | SHA-256 | Upstream license |
+|---|---|---|
+| `object_detection_yolox_2022nov.onnx` (YOLOX-s, COCO 80 classes incl. car/cow) | `c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063` | [Apache-2.0](https://github.com/opencv/opencv_zoo/tree/main/models/object_detection_yolox) |
+| `face_detection_yunet_2023mar.onnx` | `8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4` | [MIT](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet) |
+| `face_recognition_sface_2021dec_int8.onnx` | `2b0e941e6f16cc048c20aee0c8e31f569118f65d702914540f7bfdc14048d78a` | [Apache-2.0](https://github.com/opencv/opencv_zoo/tree/main/models/face_recognition_sface) |
+
+Model training inputs are COCO 2017 for YOLOX and SFace's upstream face training
+set; model-file licenses do not automatically license redistribution of training
+photos. Verify suitability for your own intended use. The service verifies the
+pinned SHA-256 digests at startup and records them in every response.
+The SFace cosine cutoff (0.363) and top-two margin (0.05) are uncalibrated trial
+values. Similarity is **not** identity probability; candidate results need human
+review. Templates are calculated in memory per request, never persisted. The
+service has no per-member read isolation and must not be exposed publicly.
+
+Example definition, opt-in only (paths are examples; do not install a user unit
+until deployment approval):
+
+```ini
+KIND=image-inference
+PORT=19466
+HOST=127.0.0.1
+PYTHON=/absolute/path/to/llmctl/.venv/bin/python
+SERVICE_SCRIPT=/absolute/path/to/llmctl/image_service.py
+WEIGHTS_DIR=/absolute/private/path/to/weights
+```
+
+`GET /health` reports version 1 capabilities; `POST /v1/analyze` accepts JSON
+`{version:1,kind:"objects"|"knownPeople",image:<base64>,gallery:[{personRef,image:<base64>}]}`.
+It returns bounded percent `[x,y,w,h]` boxes, model SHA-256 hashes and candidate
+similarity/threshold/margin, **not embeddings**. The Python server accepts at most
+4 MiB per image, 16 gallery entries and 8 MiB total decoded bytes. No URL/file
+path input. The default host is loopback; manager startup refuses any other host.
+Whiteboard uses a server-side adapter; browser clients must not contact this port.
+The trial does **not** persist review/evidence or offer human confirmation, and
+is not production identity verification. Development smoke tests used the
+Wikimedia Commons [Giles Laurent cow portrait](https://commons.wikimedia.org/wiki/File:004_Portrait_Vache_Salanfe_Photo_by_Giles_Laurent.jpg)
+(CC BY-SA 4.0; attribution Giles Laurent) and two *distinct*, public-domain
+US-government photographs,
+[2012 Obama portrait crop](https://commons.wikimedia.org/wiki/File:President_Barack_Obama,_2012_portrait_crop.jpg)
+and [President Barack Obama](https://commons.wikimedia.org/wiki/File:President_Barack_Obama.jpg).
+No private images or credentials were uploaded. These images are not distributed
+with this repository; identity output is a model **candidate**, not verification.
+
+**Neither speech backend supports an API key.** llama.cpp and vLLM are always
 key-protected by llmctl; whisper-server and kokoro-fastapi have no such option,
 so anything that can route to the port can use them. `HOST=0.0.0.0` is only
 safe behind a firewall rule that restricts the port to trusted subnets — see
