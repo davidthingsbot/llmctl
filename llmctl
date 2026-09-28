@@ -43,6 +43,12 @@
 #   llmctl machine             show machine profile + probed hardware
 #   llmctl machine init        probe host, write machine.conf, discover agents
 #   llmctl machine record      record safe config + benchmark history in repo
+#   llmctl lend [reason...]    hand the GPUs to another workload: stop + un-boot
+#                              every model, block set/up until reclaim, start
+#                              machine.conf LEND_UNITS; hermes agents fail over
+#                              to their fallback_providers
+#   llmctl reclaim             stop LEND_UNITS, then (GPUs must be free) restart
+#                              what lend stopped and repoint agents
 #   llmctl sleep-hook install  stop models before suspend, restart on resume
 #                              (VRAM-heavy CUDA contexts don't survive sleep;
 #                              writes /etc/systemd/system-sleep/llmctl, sudo)
@@ -152,6 +158,9 @@ ENABLE_BUILTIN_MODELS=1        # 0 = ignore the registry block (models.d/ only)
 HERMES_ENABLE=1
 OPENCLAW_ENABLE=1
 WEBUI_ENABLE=1
+# systemd --user units that borrow the GPUs: `lend` starts them once the models
+# are down, `reclaim` stops them first (e.g. "comfyui@0.service comfyui@1.service")
+LEND_UNITS=""
 # Peer nodes for two-box models (a DGX Spark pair): "name=addr name2=addr2" —
 # addr is whatever ssh takes, the fabric IP preferred. `status`/`top` probe every
 # node; a cluster model refuses to start unless every node it spans answers ssh
@@ -221,7 +230,7 @@ load_machine_profile() {
            WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
            HERMES_ENABLE HERMES_CFG HERMES_UNIT \
            OPENCLAW_ENABLE OPENCLAW_DIR OPENCLAW_UNIT \
-           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE PEERS; do
+           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE PEERS LEND_UNITS; do
     v="$(conf_get "$k" "$MACHINE_CONF")"
     [[ -n "$v" ]] && printf -v "$k" '%s' "$v"
   done
@@ -1343,6 +1352,7 @@ cmd_up() { # cmd_up [--no-point] <model>... — start alongside what's running; 
   done
   ((${#names[@]})) || die "usage: llmctl up [--no-point] <model>..."
   for name in "${names[@]}"; do require_model "$name"; done
+  lend_guard
   ensure_linger
   # legacy units own :19434 — only displace them if a requested model needs it
   for name in "${names[@]}"; do
@@ -1383,6 +1393,7 @@ cmd_down() {
 cmd_set() { # exclusive switch + agents; rolls back on failure
   local name="$1" prev=() m
   require_model "$name"
+  lend_guard
   check_prereqs "$name"
   for m in "${MODELS[@]}"; do
     [[ "$m" != "$name" ]] && is_active "$m" && prev+=("$m")
@@ -1419,6 +1430,120 @@ cmd_set() { # exclusive switch + agents; rolls back on failure
   cmd_point "$name"
   hw_report
   log "SET: $name is the active model — server + agents survive reboot"
+}
+
+# ----------------------------------------------------------------------------
+# Lend / reclaim — hand the GPUs to something else (ComfyUI, training, ...)
+# for a while. `lend` stops + un-boots every running model and records them in
+# $LEND_STATE; while that file exists `set`/`up` refuse (FORCE=1 overrides),
+# because the cluster-backend VRAM check only looks at host RAM and would
+# happily load a model on top of the borrower. `reclaim` refuses while any
+# foreign process still holds the GPUs, then brings the recorded models back
+# with `up`, which repoints the agents. Agents are NOT repointed on lend: a
+# stopped port refuses connections instantly, so hermes' fallback_providers
+# take over without a timeout — lend warns about any agent that has none.
+# ----------------------------------------------------------------------------
+LEND_STATE="$RUN_DIR/lent"
+
+is_lent() { [[ -f "$LEND_STATE" ]]; }
+
+load_lend_state() { # sets LENT_SINCE LENT_REASON LENT_MODELS
+  LENT_SINCE=0; LENT_REASON=""; LENT_MODELS=()
+  # shellcheck disable=SC1090
+  is_lent && source "$LEND_STATE"
+}
+
+write_lend_state() { # write_lend_state <since> <reason> [model...]
+  mkdir -p "$RUN_DIR"
+  { printf 'LENT_SINCE=%s\n' "$1"
+    printf 'LENT_REASON=%q\n' "$2"
+    shift 2
+    printf 'LENT_MODELS=('; (($#)) && printf '%q ' "$@"; printf ')\n'
+  } > "$LEND_STATE"
+}
+
+lend_summary() {
+  load_lend_state
+  local ago=$(( ($(date +%s) - LENT_SINCE) / 60 ))
+  printf 'GPUs LENT since %s (%dh%02dm ago) — %s; reclaim restarts: %s\n' \
+    "$(date -d "@$LENT_SINCE" '+%F %H:%M')" $((ago / 60)) $((ago % 60)) \
+    "${LENT_REASON:-no reason given}" "${LENT_MODELS[*]:-nothing}"
+}
+
+lend_guard() { # called by set/up
+  is_lent || return 0
+  (( ${RECLAIMING:-0} )) && return 0
+  [[ "${FORCE:-0}" == 1 ]] && { err "FORCE=1 — starting a model while the GPUs are lent"; return 0; }
+  die "$(lend_summary) — 'llmctl reclaim' first (or FORCE=1)"
+}
+
+gpu_foreign_procs() { # stdout: "pid name MiB" per compute process on the GPUs
+  [[ "$ACCEL" == cuda ]] || return 0
+  nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader,nounits 2>/dev/null \
+    | awk -F', *' 'NF>=3 {print $1, $2, $3 " MiB"}'
+}
+
+hermes_has_fallback() { # hermes_has_fallback <cfg> — a non-empty fallback_providers list
+  awk '/^fallback_providers:/ {f=1; next}
+       f && /^[^[:space:]#-]/ {exit}
+       f && /base_url:/ {found=1; exit}
+       END {exit !found}' "$1" 2>/dev/null
+}
+
+cmd_lend() { # cmd_lend [reason...]
+  local reason="$*" name a u active=()
+  if is_lent; then log "$(lend_summary)"; return 0; fi
+  for name in "${MODELS[@]}"; do is_active "$name" && active+=("$name"); done
+  # write state first: a crash mid-stop must still leave `reclaim` knowing what to restore
+  write_lend_state "$(date +%s)" "$reason" "${active[@]}"
+  for name in "${active[@]}"; do
+    log "stopping $name (:${PORT[$name]})"
+    systemctl --user stop "$(unit_of "$name")" || err "stop of $name failed"
+    systemctl --user disable "$(unit_of "$name")" 2>/dev/null || true
+  done
+  for a in "${AGENTS[@]}"; do
+    [[ "${A_TYPE[$a]}" == hermes ]] || { log "$a (${A_TYPE[$a]}): no automatic fallback — it is offline until reclaim"; continue; }
+    if hermes_has_fallback "${A_CFG[$a]}"; then
+      log "$a: will fail over to its fallback_providers"
+    else
+      err "$a: NO fallback_providers in ${A_CFG[$a]} — it is offline until reclaim"
+    fi
+  done
+  hw_report
+  for u in $LEND_UNITS; do
+    systemctl --user start "$u" && log "started $u" || err "could not start $u (journalctl --user -u $u)"
+  done
+  log "LENT: ${active[*]:-no models were running} — GPUs are yours. Give them back with: llmctl reclaim"
+}
+
+cmd_reclaim() {
+  local procs u RECLAIMING=0
+  if ! is_lent; then log "GPUs are not lent — nothing to reclaim"; return 0; fi
+  load_lend_state
+  for u in $LEND_UNITS; do
+    systemctl --user is-active --quiet "$u" || continue
+    log "stopping $u"
+    systemctl --user stop "$u" || err "could not stop $u"
+  done
+  procs="$(gpu_foreign_procs)"
+  if [[ -n "$procs" ]]; then
+    err "the GPUs are still in use:"
+    sed 's/^/    /' <<<"$procs" >&2
+    [[ "${FORCE:-0}" == 1 ]] || die "stop the workload first (or FORCE=1 to try anyway)"
+    err "FORCE=1 — reclaiming anyway"
+  fi
+  if ((${#LENT_MODELS[@]} == 0)); then
+    rm -f "$LEND_STATE"
+    log "RECLAIMED — no models were running when lent, none restarted"
+    return 0
+  fi
+  log "reclaiming: restarting ${LENT_MODELS[*]}"
+  # the state file stays until `up` succeeds: up's failure paths include `die`
+  # (exits the script), and the next `reclaim` must still know what to restore
+  RECLAIMING=1
+  cmd_up "${LENT_MODELS[@]}" || die "reclaim failed — still marked lent. Fix it, then: llmctl reclaim"
+  rm -f "$LEND_STATE"
+  log "RECLAIMED — ${LENT_MODELS[*]} back up, agents repointed"
 }
 
 # ----------------------------------------------------------------------------
@@ -1718,7 +1843,7 @@ RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH
 RECORD_MACHINE_KEYS=(MACHINE_NAME NOTES ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT
                      VRAM_PER_GPU_MB VLLM_BIN LLAMA_SERVER MODELS_DIR WIZARD_BASE_PORT
                      ENABLE_BUILTIN_MODELS HERMES_ENABLE OPENCLAW_ENABLE
-                     WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS PEERS)
+                     WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS PEERS LEND_UNITS)
 
 conf_is_safe() { # conf_is_safe <file> <recordable-key>...
   local file="$1" key value
@@ -1845,7 +1970,7 @@ machine_show() {
   for k in MACHINE_NAME ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT VRAM_PER_GPU_MB \
            MODELS_DIR VLLM_BIN VLLM_KEYFILE LLAMA_SERVER LLAMA_KEYFILE \
            WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
-           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT; do
+           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT LEND_UNITS; do
     printf '  %-24s %s\n' "$k" "${!k:-—}"
   done
   printf '  %-24s %s\n' LEGACY_UNITS "${LEGACY_UNITS[*]:-—}"
@@ -3474,6 +3599,7 @@ chat_report() { # browser links for whatever is up
 }
 
 cmd_status() {
+  if is_lent; then log "$(lend_summary)"; echo; fi
   echo "models:"
   print_table
   echo
@@ -3550,6 +3676,8 @@ case "${1:-menu}" in
   bench)         shift; (($#==1)) || die "usage: llmctl bench <model>"; cmd_bench "$1";;
   stats)         shift; cmd_stats "${1:-}";;
   machine)       shift; (($#<=1)) || die "usage: llmctl machine [init|record]"; cmd_machine "${1:-show}";;
+  lend)          shift; cmd_lend "$@";;
+  reclaim)       cmd_reclaim;;
   sleep-hook)    shift; cmd_sleephook "${1:-status}";;
   watchdog)      shift; cmd_watchdog "${1:-status}";;
   sleep)         shift; cmd_sleep "${1:-}";;

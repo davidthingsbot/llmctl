@@ -87,11 +87,29 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl usage [model] [-n N]` | who's using the GPUs: per-process VRAM, each running model's connected clients (resolved to commands), last N request lines from the journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
 | `llmctl machine record` | record this machine's allowlisted profile, model definitions, and benchmark history as repository files |
+| `llmctl lend [reason...]` | hand the GPUs to another workload (ComfyUI, training, ...): stop + un-boot every running model, record them, and make `set`/`up` refuse until reclaim (`FORCE=1` overrides). Hermes agents fail over to their `fallback_providers`; lend warns about any agent without one |
+| `llmctl reclaim` | refuses while any process still holds the GPUs, then restarts exactly what `lend` stopped and repoints the agents; a failed reclaim leaves the box marked lent |
 | `llmctl sleep-hook [install\|uninstall\|status]` | survive suspend: stop running models before sleep, restart them on resume |
 | `llmctl watchdog [install\|uninstall\|status\|once]` | external runaway backstop: restart an agent's gateway when a single gateway client drives a sustained request loop (agent harnesses like OpenClaw have no turn cap on local models, so a wedged heartbeat can loop unbounded). Runs as a systemd `--user` service; tune with `WATCHDOG_RATE` (req/min, default 5), `WATCHDOG_WINDOW` (seconds, default 360), `WATCHDOG_COOLDOWN` (default 600). Only restarts registered agent gateways — never open-webui or ad-hoc clients. |
 
 `STATS=0` skips the post-start benchmark; `FORCE=1` overrides the VRAM check
 and `machine init` overwrite protection.
+
+### Lending the GPUs
+
+`llmctl lend "comfyui video"` frees the cards for something else; `status`
+shows who has them and since when. Agents are deliberately *not* repointed:
+a stopped port refuses connections instantly, so each hermes agent's
+`fallback_providers` takes over with no timeout, and `reclaim` needs no
+undo step. The guard on `set`/`up` matters because a cluster-backend model's
+pre-check measures host RAM, not VRAM: without it a routine `up` would load
+on top of the borrower. Lend only one box of a pair at a time — each is the
+other's fallback, so with both lent the agents have no model at all.
+
+Set `LEND_UNITS` in `machine.conf` to the systemd `--user` units that borrow the
+cards (e.g. `"comfyui@0.service comfyui@1.service"`): `lend` starts them once
+the models are down and `reclaim` stops them before its GPU check, so each
+direction is one command.
 
 ### Suspend and resume
 
