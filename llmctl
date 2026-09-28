@@ -9,6 +9,7 @@
 #   llmctl                     interactive menu
 #   llmctl <model>             shorthand for `llmctl set <model>`
 #   llmctl list                model registry + status
+#   llmctl spec                machine-readable local provider registry (JSON)
 #   llmctl status              units, health, agent targets, chat links, and
 #                              every node's CPU/RAM/GPU (this box + PEERS)
 #   llmctl set  <model>        THE switch: stop other models, start <model>,
@@ -24,6 +25,9 @@
 #   llmctl agents              list registered agents + where each points
 #   llmctl agent add           wizard: register an agent  (agents.d/<name>.conf)
 #   llmctl agent remove <name> unregister an agent (its own config untouched)
+#   llmctl services            companion STT/TTS services + status + endpoints
+#   llmctl service up <name>...   start companion service(s) (services.d/)
+#   llmctl service down <name>...|all
 #   llmctl add                 wizard: register a model   (models.d/<name>.conf)
 #   llmctl remove <model>      unregister a model (stops it first)
 #   llmctl env  <model>        print OPENAI_* exports for shell/manual clients
@@ -67,6 +71,9 @@
 #   models.d/*.conf   one file per model (`llmctl add`); BACKEND=cluster
 #                     points MODEL_REF at a launch script that drives every
 #                     node in NODES (hand-written; see scripts/*-tp2.sh)
+#   services.d/*.conf one file per companion service: KIND=whisper|kokoro,
+#                     PORT, MODEL_REF/IMAGE. These run ALONGSIDE the models and
+#                     are never stopped by `set`.
 #   agents.d/*.conf   one file per agent (`llmctl agent add`): TYPE=hermes|
 #                     openclaw, CFG, UNIT, FOLLOW — FOLLOW=0 pins an agent so
 #                     `set` leaves it alone. While agents.d/ is empty, legacy
@@ -79,6 +86,8 @@
 set -euo pipefail
 MACHINE_RECORD_REQUEST=0
 [[ "${1:-}" == machine && "${2:-}" == record ]] && MACHINE_RECORD_REQUEST=1
+SPEC_REQUEST=0
+[[ "${1:-}" == spec ]] && SPEC_REQUEST=1
 
 # ----------------------------------------------------------------------------
 # Built-in registry (the author's dual-RTX-3090 box; ENABLE_BUILTIN_MODELS=0
@@ -116,6 +125,7 @@ MODELS_DIR="$HOME/models"   # where GGUF weights live (profile-overridable);
 RUN_DIR="$HOME/.config/llmctl"
 STATS_FILE="${STATS_FILE:-$RUN_DIR/stats.jsonl}"   # one JSON record per start/bench
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+WHISPER_SERVER="${WHISPER_SERVER:-}"   # whisper.cpp server binary (companion services)
 
 # Old single-port (19434) units this script supersedes
 LEGACY_UNITS=(
@@ -144,7 +154,7 @@ OPENCLAW_UNIT="openclaw-gateway.service"
 # Machine-profile defaults (overridable via ~/.config/llmctl/machine.conf).
 # These describe the original host: DW-ASUS-LINUX, dual RTX 3090.
 MACHINE_CONF="${MACHINE_CONF:-$RUN_DIR/machine.conf}"
-if ((MACHINE_RECORD_REQUEST)); then
+if ((MACHINE_RECORD_REQUEST || SPEC_REQUEST)); then
   MACHINE_NAME=""
 else
   MACHINE_NAME="$(hostname 2>/dev/null || echo unknown)"
@@ -230,7 +240,8 @@ load_machine_profile() {
            WIZARD_BASE_PORT ENABLE_BUILTIN_MODELS \
            HERMES_ENABLE HERMES_CFG HERMES_UNIT \
            OPENCLAW_ENABLE OPENCLAW_DIR OPENCLAW_UNIT \
-           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE PEERS LEND_UNITS; do
+           WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE PEERS \
+           WHISPER_SERVER LEND_UNITS; do
     v="$(conf_get "$k" "$MACHINE_CONF")"
     [[ -n "$v" ]] && printf -v "$k" '%s' "$v"
   done
@@ -262,7 +273,7 @@ load_machine_profile() {
 
 # Resolve the accelerator: never assume CUDA. Auto-detect when unset, and pick
 # the matching visible-devices env var for generated run scripts.
-if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 ]]; then
+if [[ -z "$ACCEL" && "$MACHINE_RECORD_REQUEST" == 0 && "$SPEC_REQUEST" == 0 ]]; then
   if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
     ACCEL=cuda
   elif command -v rocm-smi >/dev/null 2>&1; then
@@ -340,6 +351,115 @@ load_external_models() {
 ((MACHINE_RECORD_REQUEST)) || load_external_models
 
 # ----------------------------------------------------------------------------
+# Companion services (~/.config/llmctl/services.d/*.conf)
+#
+# Speech and other non-LLM servers that run ALONGSIDE the models: whisper.cpp
+# for speech-to-text, kokoro for text-to-speech. These are deliberately NOT
+# models. `llmctl set` stops every model except its target, and a transcription
+# or voice service has to survive that switch — so services live in their own
+# registry, get their own units (llm-svc-<name>.service), and are started and
+# stopped only when named explicitly.
+#
+# Required keys: KIND (whisper|kokoro), PORT.
+# Optional: MODEL_REF (whisper: ggml model path), IMAGE (kokoro: docker image),
+#           PYTHON + APP_DIR (kokoro without docker: a Kokoro-FastAPI checkout
+#           and the venv python that has its deps — see README),
+#           HOST (default 0.0.0.0), THREADS, DESC, NOTES, HEALTH_PATH,
+#           HEALTH_TIMEOUT, EXTRA_ARGS, ENV_EXTRA ("A=1; B=2").
+#
+# NOTE ON AUTH: neither whisper-server nor kokoro-fastapi has any API-key
+# option — unlike llama.cpp and vLLM, which llmctl always key-protects. HOST
+# defaults to 0.0.0.0 because these are meant to be reached from the LAN, but
+# that means anything able to route to the port can use them. Keep the port
+# closed at the firewall to everything except the subnets you trust.
+# ----------------------------------------------------------------------------
+SERVICES_D="${SERVICES_D:-$HOME/.config/llmctl/services.d}"
+SERVICES=()
+declare -A S_KIND S_PORT S_REF S_IMAGE S_HOST S_PYTHON S_SCRIPT S_WEIGHTS S_APPDIR S_THREADS S_DESC S_HEALTH \
+           S_XARGS S_XENV S_FILE S_TIMEOUT
+
+svc_unit_of() { echo "llm-svc-$1.service"; }
+
+# whisper-server mounts everything under --request-path (default "") and the
+# transcription POST at --inference-path (default /inference). With
+#   EXTRA_ARGS="--request-path /v1 --inference-path /audio/transcriptions"
+# it answers on the OpenAI audio route, which is what clients should target;
+# the endpoint we report and the health probe both follow those flags.
+svc_whisper_paths() { # svc_whisper_paths "<extra args>" -> "<request-path> <inference-path>"
+  local -a a; local i rp="" ip="/inference"
+  read -r -a a <<<"$1"
+  for ((i = 0; i < ${#a[@]}; i++)); do
+    case "${a[i]}" in
+      --request-path)   rp="${a[i+1]:-}" ;;
+      --inference-path) ip="${a[i+1]:-}" ;;
+    esac
+  done
+  echo "$rp" "$ip"
+}
+
+svc_path() { # svc_path <name> — the URL path a client posts to
+  local rp ip
+  case "${S_KIND[$1]}" in
+    whisper)         read -r rp ip <<<"$(svc_whisper_paths "${S_XARGS[$1]}")"; echo "$rp$ip" ;;
+    image-inference) echo "/v1/analyze" ;;
+    *)               echo "/v1/audio/speech" ;;
+  esac
+}
+
+load_services() {
+  local f name kind port n clash
+  shopt -s nullglob
+  for f in "$SERVICES_D"/*.conf; do
+    name="$(basename "$f" .conf)"
+    if [[ -n "${S_PORT[$name]:-}" ]]; then
+      err "services.d: '$name' listed twice — skipping $f"; continue
+    fi
+    kind="$(conf_get KIND "$f")"
+    port="$(conf_get PORT "$f")"
+    if [[ ! "$kind" =~ ^(whisper|kokoro|image-inference)$ || ! "$port" =~ ^[0-9]+$ ]]; then
+      err "services.d: $f needs KIND=whisper|kokoro|image-inference and a numeric PORT — skipping"; continue
+    fi
+    clash=""
+    for n in ${MODELS[@]+"${MODELS[@]}"}; do
+      [[ "${PORT[$n]}" == "$port" ]] && clash="model '$n'"
+    done
+    for n in ${SERVICES[@]+"${SERVICES[@]}"}; do
+      [[ "${S_PORT[$n]}" == "$port" ]] && clash="service '$n'"
+    done
+    if [[ -n "$clash" ]]; then
+      err "services.d: $f wants port $port, already used by $clash — skipping"; continue
+    fi
+    SERVICES+=("$name")
+    S_FILE[$name]="$f"
+    S_KIND[$name]="$kind"
+    S_PORT[$name]="$port"
+    S_REF[$name]="$(conf_get MODEL_REF "$f")"
+    S_IMAGE[$name]="$(conf_get IMAGE "$f")"
+    S_HOST[$name]="$(conf_get HOST "$f" "$([[ "$kind" == image-inference ]] && printf 127.0.0.1 || printf 0.0.0.0)")"
+    S_PYTHON[$name]="$(conf_get PYTHON "$f")"
+    S_SCRIPT[$name]="$(conf_get SERVICE_SCRIPT "$f")"
+    S_WEIGHTS[$name]="$(conf_get WEIGHTS_DIR "$f")"
+    S_APPDIR[$name]="$(conf_get APP_DIR "$f")"
+    S_THREADS[$name]="$(conf_get THREADS "$f" 8)"
+    S_DESC[$name]="$(conf_get DESC "$f" "$kind service")"
+    S_XARGS[$name]="$(conf_get EXTRA_ARGS "$f")"
+    S_XENV[$name]="$(conf_get ENV_EXTRA "$f")"
+    S_TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 180)"
+    if [[ "$kind" == whisper ]]; then
+      local rp; read -r rp _ <<<"$(svc_whisper_paths "${S_XARGS[$name]}")"
+      S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" "$rp/")"
+    else
+      S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" /health)"
+    fi
+  done
+}
+((MACHINE_RECORD_REQUEST)) || load_services
+
+require_service() {
+  [[ -n "${S_PORT[$1]:-}" ]] || die "unknown service '$1' (registered: ${SERVICES[*]:-none})"
+}
+
+# ----------------------------------------------------------------------------
 # Agents (~/.config/llmctl/agents.d/*.conf) — the consumers `set`/`point`
 # repoint. One file per agent, PARSED like models.d. Keys:
 #   TYPE=hermes|openclaw   which repoint recipe to use
@@ -390,7 +510,7 @@ load_agents() {
     fi
   fi
 }
-((MACHINE_RECORD_REQUEST)) || load_agents
+((MACHINE_RECORD_REQUEST || SPEC_REQUEST)) || load_agents
 
 require_agent() {
   [[ -n "${A_TYPE[$1]:-}" ]] || die "unknown agent '$1' (registered: ${AGENTS[*]:-none})"
@@ -1097,6 +1217,230 @@ EOF
 }
 
 # ----------------------------------------------------------------------------
+# Companion service lifecycle — mirrors the model path minus the VRAM gate and
+# the token benchmark, neither of which means anything for STT/TTS.
+# ----------------------------------------------------------------------------
+svc_is_active() { systemctl --user is-active --quiet "$(svc_unit_of "$1")" 2>/dev/null; }
+
+svc_is_healthy() {
+  curl -fsS -o /dev/null --max-time 2 \
+    "http://127.0.0.1:${S_PORT[$1]}${S_HEALTH[$1]}" 2>/dev/null
+}
+
+svc_status_of() {
+  if ! svc_is_active "$1"; then echo "-"
+  elif svc_is_healthy "$1"; then echo "up+healthy"
+  else echo "up"
+  fi
+}
+
+svc_check_prereqs() {
+  local name="$1"
+  case "${S_KIND[$name]}" in
+    whisper)
+      [[ -n "$WHISPER_SERVER" && -x "$WHISPER_SERVER" ]] \
+        || die "whisper-server not found at ${WHISPER_SERVER:-<unset>} (set WHISPER_SERVER in $MACHINE_CONF)"
+      [[ -f "${S_REF[$name]}" ]] \
+        || die "missing whisper model ${S_REF[$name]} (fix MODEL_REF in ${S_FILE[$name]})"
+      ;;
+    kokoro)
+      if [[ -n "${S_IMAGE[$name]}" ]]; then
+        command -v docker >/dev/null 2>&1 || die "docker not found — kokoro with IMAGE= runs as a container"
+      else
+        # no docker on this box: run Kokoro-FastAPI straight from a checkout
+        [[ -n "${S_PYTHON[$name]}" && -x "${S_PYTHON[$name]}" ]] \
+          || die "kokoro needs IMAGE= (docker) or executable PYTHON= + APP_DIR= in ${S_FILE[$name]}"
+        [[ -n "${S_APPDIR[$name]}" && -f "${S_APPDIR[$name]}/api/src/main.py" ]] \
+          || die "APP_DIR=${S_APPDIR[$name]:-<unset>} is not a Kokoro-FastAPI checkout (no api/src/main.py)"
+        [[ -d "${S_APPDIR[$name]}/api/src/models/v1_0" ]] \
+          || die "kokoro weights missing: run ${S_APPDIR[$name]}/docker/scripts/download_model.py --output api/src/models/v1_0"
+      fi
+      ;;
+    image-inference)
+      [[ -n "${S_PYTHON[$name]}" && -x "${S_PYTHON[$name]}" ]] || die "image-inference needs executable PYTHON= in ${S_FILE[$name]}"
+      [[ -n "${S_SCRIPT[$name]}" && -f "${S_SCRIPT[$name]}" ]] || die "image-inference needs SERVICE_SCRIPT= in ${S_FILE[$name]}"
+      [[ -n "${S_WEIGHTS[$name]}" && -d "${S_WEIGHTS[$name]}" ]] || die "image-inference needs provisioned WEIGHTS_DIR= in ${S_FILE[$name]}"
+      local weight
+      for weight in object_detection_yolox_2022nov.onnx face_detection_yunet_2023mar.onnx face_recognition_sface_2021dec_int8.onnx; do
+        [[ -s "${S_WEIGHTS[$name]}/$weight" ]] || die "missing image weight $weight"
+      done
+      ;;
+  esac
+}
+
+write_service_run_script() {
+  local name="$1" script env_extra="" pair
+  script="$RUN_DIR/run-svc-$name.sh"
+  mkdir -p "$RUN_DIR"
+  if [[ -n "${S_XENV[$name]:-}" ]]; then
+    while IFS= read -r pair; do
+      pair="${pair#"${pair%%[![:space:]]*}"}"; pair="${pair%"${pair##*[![:space:]]}"}"
+      [[ -n "$pair" ]] && env_extra+="export $pair"$'\n'
+    done < <(tr ';' '\n' <<<"${S_XENV[$name]}")
+    env_extra="${env_extra%$'\n'}"
+  fi
+
+  if [[ "${S_KIND[$name]}" == whisper ]]; then
+    # --convert lets clients post mp3/ogg/flac (ffmpeg transcodes to WAV);
+    # --tmp-dir keeps those scratch files out of $RUN_DIR
+    mkdir -p "$RUN_DIR/tmp-$name"
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+${env_extra}
+exec "$WHISPER_SERVER" -m "${S_REF[$name]}" \\
+  --host ${S_HOST[$name]} --port ${S_PORT[$name]} \\
+  -t ${S_THREADS[$name]} \\
+  --convert --tmp-dir "$RUN_DIR/tmp-$name" ${S_XARGS[$name]}
+EOF
+  elif [[ "${S_KIND[$name]}" == image-inference ]]; then
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+exec "${S_PYTHON[$name]}" "${S_SCRIPT[$name]}" --host ${S_HOST[$name]} --port ${S_PORT[$name]} --weights-dir "${S_WEIGHTS[$name]}"
+EOF
+  elif [[ "${S_KIND[$name]}" == kokoro && -z "${S_IMAGE[$name]}" ]]; then
+    # the same layout Kokoro-FastAPI's own start-cpu.sh sets up; ENV_EXTRA comes
+    # last so it can override (USE_GPU=true for a CUDA torch in the venv)
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+cd "${S_APPDIR[$name]}"
+export USE_GPU=false
+export PYTHONPATH="${S_APPDIR[$name]}:${S_APPDIR[$name]}/api"
+export MODEL_DIR=src/models
+export VOICES_DIR=src/voices/v1_0
+export WEB_PLAYER_PATH="${S_APPDIR[$name]}/web"
+${env_extra}
+exec "${S_PYTHON[$name]}" -m uvicorn api.src.main:app \\
+  --host ${S_HOST[$name]} --port ${S_PORT[$name]} ${S_XARGS[$name]}
+EOF
+  else
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+${env_extra}
+docker rm -f llmctl-$name >/dev/null 2>&1 || true
+exec docker run --rm --name llmctl-$name \\
+  -p ${S_HOST[$name]}:${S_PORT[$name]}:8880 ${S_XARGS[$name]} \\
+  "${S_IMAGE[$name]}"
+EOF
+  fi
+  chmod +x "$script"
+}
+
+write_service_unit() {
+  local name="$1" unit stop_post=""
+  unit="$(svc_unit_of "$name")"
+  write_service_run_script "$name"
+  mkdir -p "$SYSTEMD_USER_DIR"
+  # a stopped `docker run` can leave the container behind; reap it explicitly
+  [[ "${S_KIND[$name]}" == kokoro && -n "${S_IMAGE[$name]}" ]] \
+    && stop_post="ExecStopPost=-$(command -v docker) rm -f llmctl-$name"
+  cat > "$SYSTEMD_USER_DIR/$unit" <<EOF
+[Unit]
+Description=llmctl service: ${S_DESC[$name]} (:${S_PORT[$name]})
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=$RUN_DIR/run-svc-$name.sh
+${stop_post}
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target
+EOF
+  systemctl --user daemon-reload
+}
+
+cmd_service_up() {
+  local name i ok
+  for name in "$@"; do require_service "$name"; done
+  ensure_linger
+  for name in "$@"; do
+    if svc_is_active "$name" && svc_is_healthy "$name"; then
+      log "service '$name' already up on :${S_PORT[$name]}"; continue
+    fi
+    svc_check_prereqs "$name"
+    write_service_unit "$name"
+    log "starting service '$name' (${S_KIND[$name]}) on :${S_PORT[$name]} …"
+    systemctl --user restart "$(svc_unit_of "$name")"
+    ok=0
+    for ((i=0; i<${S_TIMEOUT[$name]}; i++)); do
+      svc_is_healthy "$name" && { ok=1; break; }
+      svc_is_active "$name" || break
+      (( i > 0 && i % 10 == 0 )) && log "  … loading: ${i}s elapsed"
+      sleep 1
+    done
+    if (( ok )); then
+      systemctl --user enable "$(svc_unit_of "$name")" 2>/dev/null
+      log "UP: service $name — healthy in ${i}s, enabled on boot"
+    else
+      err "service '$name' did not become healthy — stopping it. Logs: llmctl logs $name"
+      systemctl --user stop "$(svc_unit_of "$name")" || true
+      return 1
+    fi
+  done
+}
+
+cmd_service_down() {
+  local names name
+  if [[ "${1:-}" == all ]]; then
+    names=(${SERVICES[@]+"${SERVICES[@]}"})
+  else
+    names=("$@")
+  fi
+  for name in ${names[@]+"${names[@]}"}; do
+    require_service "$name"
+    systemctl --user stop "$(svc_unit_of "$name")" 2>/dev/null || true
+    systemctl --user disable "$(svc_unit_of "$name")" 2>/dev/null || true
+    log "DOWN: service $name (stopped + removed from boot)"
+  done
+}
+
+services_report() {
+  local name
+  ((${#SERVICES[@]})) || { echo "  (none registered — $SERVICES_D/<name>.conf)"; return 0; }
+  for name in "${SERVICES[@]}"; do
+    printf '  %-12s %-8s %-6s %-11s %s\n' \
+      "$name" "${S_KIND[$name]}" "${S_PORT[$name]}" "$(svc_status_of "$name")" "${S_DESC[$name]}"
+  done
+}
+
+cmd_services() {
+  if ((${#SERVICES[@]} == 0)); then
+    log "no companion services registered — write $SERVICES_D/<name>.conf (KIND=whisper|kokoro, PORT=…)"
+    return 0
+  fi
+  local name
+  printf '  %-12s %-8s %-6s %-11s %-9s %s\n' name kind port status host endpoint
+  for name in "${SERVICES[@]}"; do
+    printf '  %-12s %-8s %-6s %-11s %-9s %s\n' \
+      "$name" "${S_KIND[$name]}" "${S_PORT[$name]}" "$(svc_status_of "$name")" \
+      "${S_HOST[$name]}" "$(svc_endpoint "$name")"
+  done
+  echo
+  echo "  (definitions: $SERVICES_D/<name>.conf — these run alongside the models"
+  echo "   and are NOT stopped by 'llmctl set'. Neither backend supports an API"
+  echo "   key: restrict the port at the firewall.)"
+}
+
+svc_endpoint() { # svc_endpoint <name> — the URL a client actually posts to
+  local name="$1" hostpart
+  hostpart="$(lan_ip)"
+  [[ "${S_HOST[$name]}" == 127.0.0.1 ]] && hostpart=127.0.0.1
+  echo "http://$hostpart:${S_PORT[$name]}$(svc_path "$name")"
+}
+
+# ----------------------------------------------------------------------------
 # Agent repointing
 # ----------------------------------------------------------------------------
 point_agent() { # point_agent <agent> <model> — dispatch on the agent's TYPE
@@ -1560,6 +1904,8 @@ next_free_port() {
   while :; do
     used=0
     for n in "${MODELS[@]}"; do [[ "${PORT[$n]}" == "$p" ]] && used=1; done
+    # a registered companion service owns its port even while it is down
+    for n in ${SERVICES[@]+"${SERVICES[@]}"}; do [[ "${S_PORT[$n]}" == "$p" ]] && used=1; done
     ss -ltn 2>/dev/null | grep -q ":$p " && used=1
     (( used )) || { echo "$p"; return; }
     ((p++))
@@ -1834,6 +2180,8 @@ with open(sys.argv[1], "w", encoding="utf-8") as dst:
 PYEOF
 }
 
+RECORD_SERVICE_KEYS=(KIND PORT MODEL_REF IMAGE PYTHON APP_DIR HOST THREADS DESC NOTES
+                     HEALTH_PATH HEALTH_TIMEOUT EXTRA_ARGS ENV_EXTRA)
 RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH_TIMEOUT GPUS
                    EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS NODES)
 
@@ -1842,7 +2190,7 @@ RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH
 # Rationale worth publishing goes in NOTES, which is scanned like any other value.
 RECORD_MACHINE_KEYS=(MACHINE_NAME NOTES ACCEL GPUS_DEFAULT TENSOR_PARALLEL_DEFAULT
                      VRAM_PER_GPU_MB VLLM_BIN LLAMA_SERVER MODELS_DIR WIZARD_BASE_PORT
-                     ENABLE_BUILTIN_MODELS HERMES_ENABLE OPENCLAW_ENABLE
+                     ENABLE_BUILTIN_MODELS HERMES_ENABLE OPENCLAW_ENABLE WHISPER_SERVER
                      WEBUI_ENABLE WEBUI_CONTAINER WEBUI_PORT WEBUI_IMAGE LEGACY_UNITS PEERS LEND_UNITS)
 
 conf_is_safe() { # conf_is_safe <file> <recordable-key>...
@@ -1891,6 +2239,10 @@ machine_record() {
     [[ -d "$MODELS_D" && ! -L "$MODELS_D" ]] && path_has_no_symlink_component "$MODELS_D" \
       || die "refusing non-directory or symlink models.d: $MODELS_D"
   fi
+  if [[ -e "$SERVICES_D" || -L "$SERVICES_D" ]]; then
+    [[ -d "$SERVICES_D" && ! -L "$SERVICES_D" ]] && path_has_no_symlink_component "$SERVICES_D" \
+      || die "refusing non-directory or symlink services.d: $SERVICES_D"
+  fi
   if [[ -e "$STATS_FILE" || -L "$STATS_FILE" ]]; then
     [[ -f "$STATS_FILE" && ! -L "$STATS_FILE" ]] && path_has_no_symlink_component "$STATS_FILE" \
       || die "refusing non-file or symlink stats history: $STATS_FILE"
@@ -1911,6 +2263,11 @@ machine_record() {
       && conf_is_safe "$f" "${RECORD_MODEL_KEYS[@]}" \
       || die "refusing unsafe or symlinked model configuration"
   done
+  for f in "$SERVICES_D"/*.conf; do
+    [[ -f "$f" && ! -L "$f" ]] && path_has_no_symlink_component "$f" \
+      && conf_is_safe "$f" "${RECORD_SERVICE_KEYS[@]}" \
+      || die "refusing unsafe or symlinked service configuration"
+  done
   mkdir -p "$machines"
   stage="$machines/.record-${machine_id}-$$"
   rm -rf -- "$stage"
@@ -1923,19 +2280,24 @@ machine_record() {
     name="$(basename "$f")"
     record_project_conf "$f" "$stage/models.d/$name" "${RECORD_MODEL_KEYS[@]}"
   done
+  for f in "$SERVICES_D"/*.conf; do
+    mkdir -p "$stage/services.d"
+    name="$(basename "$f")"
+    record_project_conf "$f" "$stage/services.d/$name" "${RECORD_SERVICE_KEYS[@]}"
+  done
   record_stats "$STATS_FILE" "$stage/stats.jsonl" "$target/stats.jsonl"
   # Carry across anything already recorded that this command does not itself
   # generate — a patched chat template, a README, whatever else a machine needs
   # to be rebuilt. The staging directory is built from scratch and then swapped
   # in atomically, so without this the swap silently destroys those files.
-  # machine.conf, stats.jsonl and models.d/ are excluded because they are
-  # regenerated here: models.d/ in particular must be able to LOSE a conf when
-  # a model is unregistered locally.
+  # machine.conf, stats.jsonl, models.d/ and services.d/ are excluded because
+  # they are regenerated here: models.d/ and services.d/ in particular must be
+  # able to LOSE a conf when a model or service is unregistered locally.
   if [[ -d "$target" && ! -L "$target" ]]; then
     for f in "$target"/* "$target"/.[!.]*; do
       [[ -e "$f" || -L "$f" ]] || continue
       case "$(basename -- "$f")" in
-        machine.conf|stats.jsonl|models.d) continue ;;
+        machine.conf|stats.jsonl|models.d|services.d) continue ;;
       esac
       cp -a -- "$f" "$stage/" || die "could not preserve recorded file $f"
     done
@@ -2412,11 +2774,19 @@ PYEOF
 }
 
 cmd_logs() {
-  local name="$1"; shift; require_model "$name"
-  if [[ "${1:-}" == "-f" ]]; then
-    journalctl --user -u "$(unit_of "$name")" -n 40 -f
+  local name="$1" unit; shift
+  # a name may be a model or a companion service — resolve to whichever unit
+  if [[ -n "${PORT[$name]:-}" ]]; then
+    unit="$(unit_of "$name")"
+  elif [[ -n "${S_PORT[$name]:-}" ]]; then
+    unit="$(svc_unit_of "$name")"
   else
-    journalctl --user -u "$(unit_of "$name")" -n "${1:-80}" --no-pager
+    die "unknown model or service '$name' (models: ${MODELS[*]}; services: ${SERVICES[*]:-none})"
+  fi
+  if [[ "${1:-}" == "-f" ]]; then
+    journalctl --user -u "$unit" -n 40 -f
+  else
+    journalctl --user -u "$unit" -n "${1:-80}" --no-pager
   fi
 }
 
@@ -3498,6 +3868,56 @@ cmd_env() {
   echo "export OPENAI_MODEL=${ID[$name]}"
 }
 
+cmd_spec() {
+  # Static provider discovery for same-host gateways. This intentionally uses
+  # only the parsed registries: no units, health endpoints, network/hostname
+  # probes, or key-file reads.
+  [[ -n "$MACHINE_NAME" ]] || die "spec requires MACHINE_NAME in $MACHINE_CONF"
+  local name args=("$MACHINE_NAME" "${#MODELS[@]}")
+  for name in "${MODELS[@]}"; do
+    args+=("$name" "${ID[$name]}" "${BACKEND[$name]}" "${PORT[$name]}"
+           "${KEYFILE[$name]}" )
+  done
+  args+=("${#SERVICES[@]}")
+  for name in "${SERVICES[@]}"; do
+    args+=("$name" "${S_KIND[$name]}" "${S_PORT[$name]}" "${S_HOST[$name]}" "$(svc_path "$name")")
+  done
+  python3 - "${args[@]}" <<'PYEOF'
+import json
+import sys
+
+args = iter(sys.argv[1:])
+machine = next(args)
+models = []
+for _ in range(int(next(args))):
+    name, model_id, backend, port, key_file = (next(args) for _ in range(5))
+    models.append({
+        "name": name,
+        "model_id": model_id,
+        "backend": backend,
+        "base_url": f"http://127.0.0.1:{port}/v1",
+        "port": int(port),
+        "key_file": key_file,
+    })
+services = []
+for _ in range(int(next(args))):
+    name, kind, port, bind_host, path = (next(args) for _ in range(5))
+    services.append({
+        "name": name,
+        "kind": kind,
+        "port": int(port),
+        "bind_host": bind_host,
+        "endpoint": f"http://127.0.0.1:{port}{path}",
+    })
+print(json.dumps({
+    "schema_version": 1,
+    "machine": {"name": machine},
+    "models": models,
+    "services": services,
+}, indent=2))
+PYEOF
+}
+
 # ----------------------------------------------------------------------------
 # Reporting
 # ----------------------------------------------------------------------------
@@ -3606,6 +4026,9 @@ cmd_status() {
   echo "agents:"
   agents_report
   echo
+  echo "services:"
+  services_report
+  echo
   chat_report
   echo
   hw_report
@@ -3655,12 +4078,20 @@ usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; }
 case "${1:-menu}" in
   menu)          menu;;
   list)          print_table;;
+  spec)          shift; (($#==0)) || die "usage: llmctl spec"; cmd_spec;;
   status)        cmd_status;;
   up)            shift; (($#)) || die "usage: llmctl up [--no-point] <model>..."; cmd_up "$@";;
   down)          shift; (($#)) || die "usage: llmctl down <model>...|all"; cmd_down "$@";;
   set)           shift; (($#==1)) || die "usage: llmctl set <model>"; cmd_set "$1";;
   point)         shift; (($#>=1)) || die "usage: llmctl point <model> [agent...]"; cmd_point "$@";;
   agents)        cmd_agents;;
+  services)      cmd_services;;
+  service)       shift
+                 case "${1:-}" in
+                   up)   shift; (($#)) || die "usage: llmctl service up <name>..."; cmd_service_up "$@";;
+                   down) shift; (($#)) || die "usage: llmctl service down <name>...|all"; cmd_service_down "$@";;
+                   *)    die "usage: llmctl service up <name>... | llmctl service down <name>...|all";;
+                 esac;;
   agent)         shift
                  case "${1:-}" in
                    add)    cmd_agent_add;;
