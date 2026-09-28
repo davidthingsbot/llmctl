@@ -1,0 +1,31 @@
+# hermes profile shaped like the DW-ASUS agents (2026-09-28): local vLLM primary,
+# GLM on the Spark as fallback, compression pinned to a local port.
+model:
+  default: qwen3.8-27b-fp8
+  provider: custom
+  base_url: http://127.0.0.1:19435/v1
+  api_key: llmctl-local-test-key
+  context_length: 262144
+fallback_providers:
+- provider: custom
+  model: GLM-5.3-Flash-EXL3
+  base_url: http://dw-spark0:8005/v1
+  api_key: glm-key-with:colon
+auxiliary:
+  vision:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 300
+  compression:
+    provider: custom
+    model: qwen3.8-27b-fp8
+    base_url: http://127.0.0.1:19448/v1
+    api_key: llmctl-local-test-key
+    timeout: 1800
+model_aliases:
+  glm53:
+    model: GLM-5.3-Flash-EXL3
+    provider: GLM53Flash
+    base_url: http://dw-spark0:8005/v1

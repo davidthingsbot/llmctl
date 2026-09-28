@@ -1451,6 +1451,157 @@ point_agent() { # point_agent <agent> <model> — dispatch on the agent's TYPE
   esac
 }
 
+# hermes_retarget <mode> <in> <out> [args...] — line-based edits of a hermes
+# config.yaml that keep comments and layout (PyYAML only reads; ruamel is not
+# available). Modes:
+#   lend <snapshot>         point `model:` and every auxiliary/delegation block on a
+#                           local (127.0.0.1/localhost) endpoint at fallback_providers[0];
+#                           record the old values in <snapshot> (JSON, mode 600)
+#   restore <snapshot>      put those values back, field by field, but only where
+#                           the field still holds what `lend` wrote (keeps later edits)
+#   local-aux <id> <url> <key>
+#                           move auxiliary/delegation blocks on a local endpoint to
+#                           <url>. Without this, `point` left compression on the
+#                           previous model's port (mr-c sat on dead :19448 from 09-19).
+hermes_retarget() {
+  python3 - "$@" <<'PYEOF'
+import json, os, re, sys, yaml
+
+mode, src, dst, *args = sys.argv[1:]
+LOCAL = re.compile(r"^https?://(127\.0\.0\.1|localhost|\[::1\])(:\d+)?(/|$)")
+ABSENT = {"__absent__": True}
+lines = open(src).read().splitlines(keepends=True)
+
+def indent(ln): return len(ln) - len(ln.lstrip(" "))
+def content(ln): s = ln.strip(); return bool(s) and not s.startswith("#")
+
+def block(path):  # -> (first, end, child_indent) of the mapping at path, or None
+    first, end, parent = 0, len(lines), -1
+    for key in path:
+        hit, ci = None, None
+        for i in range(first, end):
+            if not content(lines[i]): continue
+            ind = indent(lines[i])
+            if ind <= parent: break
+            ci = ind if ci is None else ci
+            if ind == ci and re.match(re.escape(key) + r"\s*:", lines[i].strip()):
+                hit = i; break
+        if hit is None: return None
+        j = hit + 1
+        while j < end and not (content(lines[j]) and indent(lines[j]) <= ci): j += 1
+        first, end, parent = hit + 1, j, ci
+    ci = next((indent(lines[i]) for i in range(first, end) if content(lines[i])), parent + 2)
+    return first, end, ci
+
+def scalar(v): return yaml.safe_dump(v, default_flow_style=True, width=1 << 30).split("\n")[0]
+
+def set_fields(path, fields):
+    for k, v in fields.items():
+        first, end, ci = block(path)
+        at = next((i for i in range(first, end) if indent(lines[i]) == ci and content(lines[i])
+                   and re.match(re.escape(k) + r"\s*:", lines[i].strip())), None)
+        if v == ABSENT:
+            if at is not None: del lines[at]
+        elif at is not None:
+            lines[at] = " " * ci + f"{k}: {scalar(v)}" + ("\n" if lines[at].endswith("\n") else "")
+        else:
+            lines.insert(end, " " * ci + f"{k}: {scalar(v)}\n")
+
+data = yaml.safe_load("".join(lines)) or {}
+
+def local_blocks():  # (path, mapping) of auxiliary.<x> / delegation on a local endpoint
+    out = [(["auxiliary", k], v) for k, v in (data.get("auxiliary") or {}).items() if isinstance(v, dict)]
+    if isinstance(data.get("delegation"), dict): out.append((["delegation"], data["delegation"]))
+    return [(p, m) for p, m in out if LOCAL.match(str(m.get("base_url") or ""))]
+
+def target(fields_from):  # the fields a block gets when retargeted
+    t = {"provider": "custom", "model": fields_from["model"], "base_url": fields_from["base_url"]}
+    for k in ("api_key", "key_env"):
+        if k in fields_from: t[k] = fields_from[k]
+    return t
+
+if mode == "lend":
+    snap = args[0]
+    fb = next((f for f in data.get("fallback_providers") or [] if isinstance(f, dict) and f.get("base_url")), None)
+    if not fb: sys.exit("no fallback_providers entry with a base_url")
+    changes = []
+    m = data.get("model") or {}
+    new = target(fb); new["default"] = new.pop("model")
+    changes.append((["model"], m, new))
+    changes += [(p, blk, target(fb)) for p, blk in local_blocks()]
+    rec = []
+    for path, cur, new in changes:
+        old = {k: cur.get(k, ABSENT) for k in new}
+        if all(old[k] == v for k, v in new.items()): continue
+        set_fields(path, new)
+        rec.append({"path": path, "old": old, "new": new})
+        print(f"  {'.'.join(path)}: {cur.get('base_url')} -> {fb['base_url']}")
+    old_umask = os.umask(0o077)
+    json.dump({"fallback": fb["base_url"], "changes": rec}, open(snap, "w"), indent=1)
+    os.umask(old_umask)
+elif mode == "restore":
+    for ch in json.load(open(args[0]))["changes"]:
+        cur = data
+        for k in ch["path"]: cur = (cur or {}).get(k) if isinstance(cur, dict) else None
+        cur = cur if isinstance(cur, dict) else {}
+        keep = {k: v for k, v in ch["old"].items() if cur.get(k, ABSENT) == ch["new"].get(k)}
+        skipped = sorted(set(ch["old"]) - set(keep))
+        if keep and block(ch["path"]): set_fields(ch["path"], keep)
+        print(f"  {'.'.join(ch['path'])}: restored" + (f" (kept your edits to {', '.join(skipped)})" if skipped else ""))
+elif mode == "local-aux":
+    mid, url, key = args
+    for path, blk in local_blocks():
+        if blk.get("base_url") == url and blk.get("model") == mid: continue
+        set_fields(path, {"model": mid, "base_url": url, "api_key": key})
+        print(f"  {'.'.join(path)}: {blk.get('base_url')} -> {url}")
+else:
+    sys.exit(f"unknown mode {mode}")
+open(dst, "w").write("".join(lines))
+yaml.safe_load(open(dst))   # must still parse
+PYEOF
+}
+
+lend_snapshot() { echo "$RUN_DIR/lent-agents/$1.json"; }
+
+# lend_repoint_agent <agent> — move a hermes agent onto its fallback for the
+# lend (idempotent: a snapshot means it is already there). Automatic failover
+# alone was not enough: hermes retries the dead primary on EVERY turn (2 failed
+# attempts, ~3 s) and its auxiliary compression/vision clients, pinned to the
+# local port, fail outright ("all fallbacks exhausted") — seen on mr-c 09-28.
+lend_repoint_agent() {
+  local a="$1" cfg="${A_CFG[$a]}" unit="${A_UNIT[$a]}" snap bak
+  snap="$(lend_snapshot "$a")"
+  [[ -f "$snap" ]] && { log "$a: already on its fallback for this lend"; return 0; }
+  [[ -f "$cfg" ]] || { err "$a: hermes config not found ($cfg) — skipping"; return 0; }
+  hermes_has_fallback "$cfg" || { err "$a: NO fallback_providers in $cfg — it is offline until reclaim"; return 0; }
+  mkdir -p "$(dirname "$snap")"
+  bak="$cfg.bak.llmctl.$(date +%Y%m%d_%H%M%S)"
+  cp "$cfg" "$bak"
+  if hermes_retarget lend "$bak" "$cfg.tmp" "$snap"; then
+    mv "$cfg.tmp" "$cfg"
+    rm -f "$(dirname "$cfg")/context_length_cache.yaml"
+    if systemctl --user is-active --quiet "$unit" 2>/dev/null; then
+      systemctl --user restart "$unit"
+      log "$a: on its fallback until reclaim (gateway restarted, backup: $(basename "$bak"))"
+    else
+      log "$a: on its fallback until reclaim (gateway not running, backup: $(basename "$bak"))"
+    fi
+  else
+    rm -f "$cfg.tmp" "$snap"
+    err "$a: could not move it to its fallback — left as is; hermes will still fail over per request"
+  fi
+}
+
+# lend_restore_agent <agent> <in> <out> — undo lend_repoint_agent on a copy of the
+# config (the caller installs it and restarts), then drop the snapshot
+lend_restore_agent() {
+  local a="$1" snap
+  snap="$(lend_snapshot "$a")"
+  [[ -f "$snap" ]] || { cp "$2" "$3"; return 0; }
+  hermes_retarget restore "$2" "$3" "$snap" || return 1
+  log "$a: moved back off its fallback"
+}
+
 point_hermes_at() { # point_hermes_at <agent> <model>
   local a="$1" name="$2" id="${ID[$name]}" url key bak
   local cfg="${A_CFG[$a]}" unit="${A_UNIT[$a]}"
@@ -1458,6 +1609,13 @@ point_hermes_at() { # point_hermes_at <agent> <model>
   [[ -f "$cfg" ]] || { err "$a: hermes config not found ($cfg) — skipping"; return 0; }
   bak="$cfg.bak.llmctl.$(date +%Y%m%d_%H%M%S)"
   cp "$cfg" "$bak"
+  # coming back from a lend: restore what lend moved first, so this point
+  # restarts the gateway once and the auxiliary blocks return with the model
+  local srcfile="$bak"
+  if (( ${RECLAIMING:-0} )) && [[ -f "$(lend_snapshot "$a")" ]]; then
+    lend_restore_agent "$a" "$bak" "$cfg.restored" || { rm -f "$cfg.restored"; err "$a: lend restore failed — original untouched (backup at $bak)"; return 1; }
+    srcfile="$cfg.restored"
+  fi
 
   # Edit only the top-level `model:` block (keeps comments/format elsewhere intact)
   awk -v id="$id" -v url="$url" -v key="$key" '
@@ -1483,7 +1641,15 @@ point_hermes_at() { # point_hermes_at <agent> <model>
     inblk && /^  api_key:/  { print "  api_key: " key;      saw_api_key=1;  next }
     { print }
     END { if (inblk) emit_missing() }
-  ' "$bak" > "$cfg.tmp"
+  ' "$srcfile" > "$cfg.tmp"
+  rm -f "$cfg.restored"
+  # auxiliary/delegation blocks on a local port follow the model (compression!)
+  if ! hermes_retarget local-aux "$cfg.tmp" "$cfg.tmp2" "$id" "$url" "$key"; then
+    rm -f "$cfg.tmp" "$cfg.tmp2"
+    err "$a: hermes auxiliary repoint failed — original untouched (backup at $bak)"
+    return 1
+  fi
+  mv "$cfg.tmp2" "$cfg.tmp"
 
   # Validate the result parses and took the edit before installing it
   if python3 - "$cfg.tmp" "$id" "$url" <<'PYEOF'
@@ -1494,6 +1660,7 @@ assert m["default"] == sys.argv[2] and m["base_url"] == sys.argv[3], "model bloc
 PYEOF
   then
     mv "$cfg.tmp" "$cfg"
+    (( ${RECLAIMING:-0} )) && rm -f "$(lend_snapshot "$a")"
     rm -f "$(dirname "$cfg")/context_length_cache.yaml"   # force re-probe of context length
     if systemctl --user is-active --quiet "$unit" 2>/dev/null; then
       systemctl --user restart "$unit"
@@ -1783,9 +1950,10 @@ cmd_set() { # exclusive switch + agents; rolls back on failure
 # because the cluster-backend VRAM check only looks at host RAM and would
 # happily load a model on top of the borrower. `reclaim` refuses while any
 # foreign process still holds the GPUs, then brings the recorded models back
-# with `up`, which repoints the agents. Agents are NOT repointed on lend: a
-# stopped port refuses connections instantly, so hermes' fallback_providers
-# take over without a timeout — lend warns about any agent that has none.
+# with `up`, which repoints the agents. Lend moves each hermes agent onto its
+# first fallback_providers entry (model + local auxiliary endpoints), keeping a
+# snapshot in $RUN_DIR/lent-agents/ that reclaim restores. Relying on per-request
+# failover alone cost ~3 s of retries every turn and broke compression/vision.
 # ----------------------------------------------------------------------------
 LEND_STATE="$RUN_DIR/lent"
 
@@ -1834,9 +2002,37 @@ hermes_has_fallback() { # hermes_has_fallback <cfg> — a non-empty fallback_pro
        END {exit !found}' "$1" 2>/dev/null
 }
 
+lend_repoint_agents() {
+  local a
+  for a in "${AGENTS[@]}"; do
+    [[ "${A_TYPE[$a]}" == hermes ]] || { log "$a (${A_TYPE[$a]}): no automatic fallback — it is offline until reclaim"; continue; }
+    lend_repoint_agent "$a"
+  done
+  return 0
+}
+
+# lend_restore_leftovers — agents `up` did not repoint (FOLLOW=0, or nothing was
+# running when lent) still sit on their fallback: restore them and restart
+lend_restore_leftovers() {
+  local a cfg unit
+  for a in "${AGENTS[@]}"; do
+    [[ -f "$(lend_snapshot "$a")" ]] || continue
+    cfg="${A_CFG[$a]}" unit="${A_UNIT[$a]}"
+    cp "$cfg" "$cfg.bak.llmctl.$(date +%Y%m%d_%H%M%S)"
+    if lend_restore_agent "$a" "$cfg" "$cfg.restored"; then
+      mv "$cfg.restored" "$cfg"; rm -f "$(lend_snapshot "$a")" "$(dirname "$cfg")/context_length_cache.yaml"
+      systemctl --user is-active --quiet "$unit" 2>/dev/null && systemctl --user restart "$unit"
+    else
+      rm -f "$cfg.restored"; err "$a: could not restore its pre-lend config — see $(lend_snapshot "$a")"
+    fi
+  done
+  return 0
+}
+
 cmd_lend() { # cmd_lend [reason...]
   local reason="$*" name a u active=()
-  if is_lent; then log "$(lend_summary)"; return 0; fi
+  # already lent: report, and make sure the agents are off the lent models
+  if is_lent; then log "$(lend_summary)"; lend_repoint_agents; return 0; fi
   for name in "${MODELS[@]}"; do is_active "$name" && active+=("$name"); done
   # write state first: a crash mid-stop must still leave `reclaim` knowing what to restore
   write_lend_state "$(date +%s)" "$reason" "${active[@]}"
@@ -1845,14 +2041,7 @@ cmd_lend() { # cmd_lend [reason...]
     systemctl --user stop "$(unit_of "$name")" || err "stop of $name failed"
     systemctl --user disable "$(unit_of "$name")" 2>/dev/null || true
   done
-  for a in "${AGENTS[@]}"; do
-    [[ "${A_TYPE[$a]}" == hermes ]] || { log "$a (${A_TYPE[$a]}): no automatic fallback — it is offline until reclaim"; continue; }
-    if hermes_has_fallback "${A_CFG[$a]}"; then
-      log "$a: will fail over to its fallback_providers"
-    else
-      err "$a: NO fallback_providers in ${A_CFG[$a]} — it is offline until reclaim"
-    fi
-  done
+  lend_repoint_agents
   hw_report
   for u in $LEND_UNITS; do
     systemctl --user start "$u" && log "started $u" || err "could not start $u (journalctl --user -u $u)"
@@ -1877,6 +2066,7 @@ cmd_reclaim() {
     err "FORCE=1 — reclaiming anyway"
   fi
   if ((${#LENT_MODELS[@]} == 0)); then
+    lend_restore_leftovers
     rm -f "$LEND_STATE"
     log "RECLAIMED — no models were running when lent, none restarted"
     return 0
@@ -1886,6 +2076,7 @@ cmd_reclaim() {
   # (exits the script), and the next `reclaim` must still know what to restore
   RECLAIMING=1
   cmd_up "${LENT_MODELS[@]}" || die "reclaim failed — still marked lent. Fix it, then: llmctl reclaim"
+  lend_restore_leftovers
   rm -f "$LEND_STATE"
   log "RECLAIMED — ${LENT_MODELS[*]} back up, agents repointed"
 }
