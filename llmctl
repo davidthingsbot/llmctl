@@ -71,9 +71,11 @@
 #   models.d/*.conf   one file per model (`llmctl add`); BACKEND=cluster
 #                     points MODEL_REF at a launch script that drives every
 #                     node in NODES (hand-written; see scripts/*-tp2.sh)
-#   services.d/*.conf one file per companion service: KIND=whisper|kokoro,
-#                     PORT, MODEL_REF/IMAGE. These run ALONGSIDE the models and
-#                     are never stopped by `set`.
+#   services.d/*.conf one file per companion service: KIND=whisper|kokoro|
+#                     image-inference|comfyui, PORT, MODEL_REF/IMAGE. These run
+#                     ALONGSIDE the models and are never stopped by `set` —
+#                     except LEND=1 services (comfyui's default), which need
+#                     the GPUs: `lend` starts them, `reclaim` stops them.
 #   agents.d/*.conf   one file per agent (`llmctl agent add`): TYPE=hermes|
 #                     openclaw, CFG, UNIT, FOLLOW — FOLLOW=0 pins an agent so
 #                     `set` leaves it alone. While agents.d/ is empty, legacy
@@ -360,12 +362,20 @@ load_external_models() {
 # registry, get their own units (llm-svc-<name>.service), and are started and
 # stopped only when named explicitly.
 #
-# Required keys: KIND (whisper|kokoro), PORT.
+# Required keys: KIND (whisper|kokoro|image-inference|comfyui), PORT.
 # Optional: MODEL_REF (whisper: ggml model path), IMAGE (kokoro: docker image),
 #           PYTHON + APP_DIR (kokoro without docker: a Kokoro-FastAPI checkout
-#           and the venv python that has its deps — see README),
+#           and the venv python that has its deps — see README; comfyui: a
+#           ComfyUI checkout and its venv python),
 #           HOST (default 0.0.0.0), THREADS, DESC, NOTES, HEALTH_PATH,
-#           HEALTH_TIMEOUT, EXTRA_ARGS, ENV_EXTRA ("A=1; B=2").
+#           HEALTH_TIMEOUT, EXTRA_ARGS, ENV_EXTRA ("A=1; B=2"),
+#           LEND (0|1; default 1 for comfyui, 0 otherwise).
+#
+# LEND=1 marks a service that needs the GPUs themselves (ComfyUI holds most of
+# a GB10's unified pool), so it can never run beside a model: `llmctl lend`
+# starts it once the models are down, `llmctl reclaim` stops it before its
+# GPU check, `service up` refuses it unless the box is lent (FORCE=1 overrides)
+# and never enables it on boot.
 #
 # NOTE ON AUTH: neither whisper-server nor kokoro-fastapi has any API-key
 # option — unlike llama.cpp and vLLM, which llmctl always key-protects. HOST
@@ -376,7 +386,7 @@ load_external_models() {
 SERVICES_D="${SERVICES_D:-$HOME/.config/llmctl/services.d}"
 SERVICES=()
 declare -A S_KIND S_PORT S_REF S_IMAGE S_HOST S_PYTHON S_SCRIPT S_WEIGHTS S_APPDIR S_THREADS S_DESC S_HEALTH \
-           S_XARGS S_XENV S_FILE S_TIMEOUT
+           S_XARGS S_XENV S_FILE S_TIMEOUT S_LEND
 
 svc_unit_of() { echo "llm-svc-$1.service"; }
 
@@ -402,6 +412,7 @@ svc_path() { # svc_path <name> — the URL path a client posts to
   case "${S_KIND[$1]}" in
     whisper)         read -r rp ip <<<"$(svc_whisper_paths "${S_XARGS[$1]}")"; echo "$rp$ip" ;;
     image-inference) echo "/v1/analyze" ;;
+    comfyui)         echo "/" ;;
     *)               echo "/v1/audio/speech" ;;
   esac
 }
@@ -416,8 +427,8 @@ load_services() {
     fi
     kind="$(conf_get KIND "$f")"
     port="$(conf_get PORT "$f")"
-    if [[ ! "$kind" =~ ^(whisper|kokoro|image-inference)$ || ! "$port" =~ ^[0-9]+$ ]]; then
-      err "services.d: $f needs KIND=whisper|kokoro|image-inference and a numeric PORT — skipping"; continue
+    if [[ ! "$kind" =~ ^(whisper|kokoro|image-inference|comfyui)$ || ! "$port" =~ ^[0-9]+$ ]]; then
+      err "services.d: $f needs KIND=whisper|kokoro|image-inference|comfyui and a numeric PORT — skipping"; continue
     fi
     clash=""
     for n in ${MODELS[@]+"${MODELS[@]}"}; do
@@ -445,9 +456,13 @@ load_services() {
     S_XARGS[$name]="$(conf_get EXTRA_ARGS "$f")"
     S_XENV[$name]="$(conf_get ENV_EXTRA "$f")"
     S_TIMEOUT[$name]="$(conf_get HEALTH_TIMEOUT "$f" 180)"
+    S_LEND[$name]="$(conf_get LEND "$f" "$([[ "$kind" == comfyui ]] && printf 1 || printf 0)")"
+    [[ "${S_LEND[$name]}" =~ ^[01]$ ]] || { err "services.d: $f LEND must be 0 or 1 — treating as 1"; S_LEND[$name]=1; }
     if [[ "$kind" == whisper ]]; then
       local rp; read -r rp _ <<<"$(svc_whisper_paths "${S_XARGS[$name]}")"
       S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" "$rp/")"
+    elif [[ "$kind" == comfyui ]]; then
+      S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" /system_stats)"
     else
       S_HEALTH[$name]="$(conf_get HEALTH_PATH "$f" /health)"
     fi
@@ -1256,6 +1271,11 @@ svc_check_prereqs() {
           || die "kokoro weights missing: run ${S_APPDIR[$name]}/docker/scripts/download_model.py --output api/src/models/v1_0"
       fi
       ;;
+    comfyui)
+      [[ -n "${S_PYTHON[$name]}" && -x "${S_PYTHON[$name]}" ]] || die "comfyui needs executable PYTHON= (the checkout's venv) in ${S_FILE[$name]}"
+      [[ -n "${S_APPDIR[$name]}" && -f "${S_APPDIR[$name]}/main.py" ]] \
+        || die "APP_DIR=${S_APPDIR[$name]:-<unset>} is not a ComfyUI checkout (no main.py)"
+      ;;
     image-inference)
       [[ -n "${S_PYTHON[$name]}" && -x "${S_PYTHON[$name]}" ]] || die "image-inference needs executable PYTHON= in ${S_FILE[$name]}"
       [[ -n "${S_SCRIPT[$name]}" && -f "${S_SCRIPT[$name]}" ]] || die "image-inference needs SERVICE_SCRIPT= in ${S_FILE[$name]}"
@@ -1293,6 +1313,15 @@ exec "$WHISPER_SERVER" -m "${S_REF[$name]}" \\
   --host ${S_HOST[$name]} --port ${S_PORT[$name]} \\
   -t ${S_THREADS[$name]} \\
   --convert --tmp-dir "$RUN_DIR/tmp-$name" ${S_XARGS[$name]}
+EOF
+  elif [[ "${S_KIND[$name]}" == comfyui ]]; then
+    cat > "$script" <<EOF
+#!/usr/bin/env bash
+# generated by llmctl from ${S_FILE[$name]} — edit that file, not this one
+set -euo pipefail
+cd "${S_APPDIR[$name]}"
+${env_extra}
+exec "${S_PYTHON[$name]}" main.py --listen ${S_HOST[$name]} --port ${S_PORT[$name]} ${S_XARGS[$name]}
 EOF
   elif [[ "${S_KIND[$name]}" == image-inference ]]; then
     cat > "$script" <<EOF
@@ -1369,6 +1398,9 @@ cmd_service_up() {
     if svc_is_active "$name" && svc_is_healthy "$name"; then
       log "service '$name' already up on :${S_PORT[$name]}"; continue
     fi
+    if [[ "${S_LEND[$name]}" == 1 ]] && ! is_lent && [[ "${FORCE:-0}" != 1 ]]; then
+      die "service '$name' borrows the GPUs — 'llmctl lend' starts it once the models are down (or FORCE=1)"
+    fi
     svc_check_prereqs "$name"
     write_service_unit "$name"
     log "starting service '$name' (${S_KIND[$name]}) on :${S_PORT[$name]} …"
@@ -1380,7 +1412,10 @@ cmd_service_up() {
       (( i > 0 && i % 10 == 0 )) && log "  … loading: ${i}s elapsed"
       sleep 1
     done
-    if (( ok )); then
+    if (( ok )) && [[ "${S_LEND[$name]}" == 1 ]]; then
+      systemctl --user disable "$(svc_unit_of "$name")" 2>/dev/null || true
+      log "UP: service $name — healthy in ${i}s at $(svc_endpoint "$name") (borrows the GPUs: not enabled on boot)"
+    elif (( ok )); then
       systemctl --user enable "$(svc_unit_of "$name")" 2>/dev/null
       log "UP: service $name — healthy in ${i}s, enabled on boot"
     else
@@ -1417,7 +1452,7 @@ services_report() {
 
 cmd_services() {
   if ((${#SERVICES[@]} == 0)); then
-    log "no companion services registered — write $SERVICES_D/<name>.conf (KIND=whisper|kokoro, PORT=…)"
+    log "no companion services registered — write $SERVICES_D/<name>.conf (KIND=whisper|kokoro|image-inference|comfyui, PORT=…)"
     return 0
   fi
   local name
@@ -2046,6 +2081,10 @@ cmd_lend() { # cmd_lend [reason...]
   for u in $LEND_UNITS; do
     systemctl --user start "$u" && log "started $u" || err "could not start $u (journalctl --user -u $u)"
   done
+  for name in ${SERVICES[@]+"${SERVICES[@]}"}; do
+    [[ "${S_LEND[$name]}" == 1 ]] || continue
+    cmd_service_up "$name" || err "lend service '$name' did not come up (llmctl logs $name)"
+  done
   log "LENT: ${active[*]:-no models were running} — GPUs are yours. Give them back with: llmctl reclaim"
 }
 
@@ -2053,6 +2092,11 @@ cmd_reclaim() {
   local procs u RECLAIMING=0
   if ! is_lent; then log "GPUs are not lent — nothing to reclaim"; return 0; fi
   load_lend_state
+  for u in ${SERVICES[@]+"${SERVICES[@]}"}; do
+    [[ "${S_LEND[$u]}" == 1 ]] && svc_is_active "$u" || continue
+    log "stopping lend service '$u'"
+    cmd_service_down "$u"
+  done
   for u in $LEND_UNITS; do
     systemctl --user is-active --quiet "$u" || continue
     log "stopping $u"
@@ -2372,7 +2416,7 @@ PYEOF
 }
 
 RECORD_SERVICE_KEYS=(KIND PORT MODEL_REF IMAGE PYTHON APP_DIR HOST THREADS DESC NOTES
-                     HEALTH_PATH HEALTH_TIMEOUT EXTRA_ARGS ENV_EXTRA)
+                     HEALTH_PATH HEALTH_TIMEOUT EXTRA_ARGS ENV_EXTRA LEND)
 RECORD_MODEL_KEYS=(BACKEND PORT MODEL_REF MODEL_ID CTX DESC NOTES VRAM_MB HEALTH_TIMEOUT GPUS
                    EXTRA_ARGS TENSOR_PARALLEL GPU_UTIL MAX_MODEL_LEN SERVER_CTX STREAMS NODES)
 

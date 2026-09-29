@@ -91,8 +91,8 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl usage [model] [-n N]` | who's using the GPUs: per-process VRAM, each running model's connected clients (resolved to commands), last N request lines from the journal |
 | `llmctl machine [init]` | show the effective machine profile / probe + generate it |
 | `llmctl machine record` | record this machine's allowlisted profile, model definitions, and benchmark history as repository files |
-| `llmctl lend [reason...]` | hand the GPUs to another workload (ComfyUI, training, ...): stop + un-boot every running model, record them, and make `set`/`up` refuse until reclaim (`FORCE=1` overrides). Hermes agents fail over to their `fallback_providers`; lend warns about any agent without one |
-| `llmctl reclaim` | refuses while any process still holds the GPUs, then restarts exactly what `lend` stopped and repoints the agents; a failed reclaim leaves the box marked lent |
+| `llmctl lend [reason...]` | hand the GPUs to another workload (ComfyUI, training, ...): stop + un-boot every running model, record them, start `LEND_UNITS` and every `LEND=1` service, and make `set`/`up` refuse until reclaim (`FORCE=1` overrides). Hermes agents fail over to their `fallback_providers`; lend warns about any agent without one |
+| `llmctl reclaim` | stops the `LEND=1` services and `LEND_UNITS`, refuses while any process still holds the GPUs, then restarts exactly what `lend` stopped and repoints the agents; a failed reclaim leaves the box marked lent |
 | `llmctl sleep-hook [install\|uninstall\|status]` | survive suspend: stop running models before sleep, restart them on resume |
 | `llmctl watchdog [install\|uninstall\|status\|once]` | external runaway backstop: restart an agent's gateway when a single gateway client drives a sustained request loop (agent harnesses like OpenClaw have no turn cap on local models, so a wedged heartbeat can loop unbounded). Runs as a systemd `--user` service; tune with `WATCHDOG_RATE` (req/min, default 5), `WATCHDOG_WINDOW` (seconds, default 360), `WATCHDOG_COOLDOWN` (default 600). Only restarts registered agent gateways — never open-webui or ad-hoc clients. |
 
@@ -110,10 +110,14 @@ pre-check measures host RAM, not VRAM: without it a routine `up` would load
 on top of the borrower. Lend only one box of a pair at a time — each is the
 other's fallback, so with both lent the agents have no model at all.
 
-Set `LEND_UNITS` in `machine.conf` to the systemd `--user` units that borrow the
-cards (e.g. `"comfyui@0.service comfyui@1.service"`): `lend` starts them once
-the models are down and `reclaim` stops them before its GPU check, so each
-direction is one command.
+The borrower itself is best registered as a `KIND=comfyui` companion service
+(below): it is `LEND=1` by default, so `lend` starts it once the models are
+down, `reclaim` stops it before its GPU check, `llmctl status` shows its health
+and `llmctl logs comfyui` works. For anything llmctl cannot model, set
+`LEND_UNITS` in `machine.conf` to raw systemd `--user` units (e.g.
+`"comfyui@0.service comfyui@1.service"`, or a oneshot wrapper that starts a
+ComfyUI on the other box of a pair over ssh): `lend` starts them and `reclaim`
+stops them the same way. Either way each direction is one command.
 
 ### Machine-readable provider spec
 
@@ -325,6 +329,15 @@ target, and a transcription or voice service has to survive that switch — so
 services have their own registry, their own units (`llm-svc-<name>.service`),
 and are started and stopped only when named explicitly.
 
+The exception is a service that needs the GPUs itself. `KIND=comfyui` runs a
+ComfyUI checkout (`PYTHON` = its venv python, `APP_DIR` = the checkout,
+`EXTRA_ARGS` for its launch flags, health on `/system_stats`) and is `LEND=1`
+by default: it cannot run beside a model on a unified-memory box, so
+`llmctl lend` starts it, `llmctl reclaim` stops it, `service up` refuses it
+unless the box is lent (`FORCE=1` overrides) and it is never enabled on boot.
+`LEND=0` turns a comfyui entry back into an ordinary alongside service, for a
+box with a spare GPU.
+
 Give them ports of their own: `llmctl add` walks upward from `WIZARD_BASE_PORT`
 (and now steps over registered service ports), so put services a decade above
 the model block and ten apart — 19450 whisper, 19460 kokoro, 19470
@@ -332,7 +345,7 @@ image-inference — leaving room for models to grow and for a second variant of
 each kind beside the first.
 
 ```ini
-KIND=whisper                # or kokoro
+KIND=whisper                # or kokoro, image-inference, comfyui
 PORT=19450                  # keep services ten apart, a decade above the model block
 MODEL_REF="/home/you/models/ggml-large-v3-turbo-q5_0.bin"   # whisper
 IMAGE="ghcr.io/remsky/kokoro-fastapi-cpu:latest"            # kokoro (docker)
@@ -342,6 +355,16 @@ HOST=0.0.0.0                # bind address; 127.0.0.1 to keep it local
 THREADS=8
 HEALTH_PATH=/v1/health
 EXTRA_ARGS="-l auto --request-path /v1 --inference-path /audio/transcriptions"
+```
+
+```ini
+KIND=comfyui                # borrows the GPUs: started by `llmctl lend`, stopped by `reclaim`
+PORT=8188
+PYTHON="/home/you/ComfyUI/.venv/bin/python"
+APP_DIR="/home/you/ComfyUI"
+HOST=0.0.0.0
+EXTRA_ARGS="--fast-disk --enable-cors-header"
+LEND=1                      # the default for this kind
 ```
 
 Those two whisper flags put whisper-server on the OpenAI audio route, and they
