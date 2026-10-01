@@ -466,6 +466,16 @@ safe behind a firewall rule that restricts the port to trusted subnets — see
 the note in `services.d/kokoro.conf`. Set `HOST=127.0.0.1` if you want a
 service reachable only from the machine itself.
 
+## Local creative-workload notes
+
+- [ACE-Step / ComfyUI operation on Spark0](docs/ace-step-comfyui-operation.md):
+  installed models, generation controls, saved workflows, verification and limits.
+- [ACE-Step session — 2026-09-30](evals/ACE-STEP-SESSION-2026-09-30.md):
+  music iterations, user feedback, failed reference-audio experiments, compilation
+  and the completed recurring-singer music video.
+
+These document local ComfyUI workloads; they do not add an llmctl LLM backend.
+
 ## License
 
 MIT
