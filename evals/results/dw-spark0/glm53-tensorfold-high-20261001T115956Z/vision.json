@@ -1,0 +1,1836 @@
+{
+  "suite": "synthetic-vision-v1",
+  "model": "GLM-5.3-Flash-EXL3",
+  "endpoint": "http://127.0.0.1:18888/v1/chat/completions",
+  "status": "complete",
+  "score": 70,
+  "max_score": 78,
+  "tasks": [
+    {
+      "id": "easy_ocr",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_ocr.png",
+      "question": "Read the access code. Return JSON with string key code.",
+      "expected": {
+        "code": "R7K2"
+      },
+      "image_sha256": "b6385c9a6883e7ef159c62aceea0258a4168d95ac638b86031efb4225cdfca36",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-6cc26d0b85974d819ccfef8e",
+        "object": "chat.completion",
+        "created": 1790858746,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"code\": \"R7K2\"}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 380,
+          "completion_tokens": 11,
+          "total_tokens": 391,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.7563,
+          "decode_s": 0.1288,
+          "rounds": 2,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 5,
+          "drafted": 11,
+          "accepted": 8,
+          "sha256": "bcf57c4c5f44048b",
+          "tokens_per_round": 5.0,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "8e5f7702b42c"
+        }
+      },
+      "elapsed_s": 2.997,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "code": true
+      },
+      "parsed": {
+        "code": "R7K2"
+      }
+    },
+    {
+      "id": "easy_spatial",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_spatial.png",
+      "question": "Name the colors of the leftmost and rightmost objects. Return JSON with lowercase string keys leftmost and rightmost.",
+      "expected": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      },
+      "image_sha256": "3b1ecb235cfe19b682330ae1e834294f4627d2253430a182cfa2256fc3c23610",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-15bcd4d38f8b44dd9d57cff2",
+        "object": "chat.completion",
+        "created": 1790858747,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"leftmost\": \"blue\", \"rightmost\": \"red\"}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 482,
+          "completion_tokens": 16,
+          "total_tokens": 498,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.4721,
+          "decode_s": 0.1819,
+          "rounds": 3,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 4,
+          "drafted": 15,
+          "accepted": 12,
+          "sha256": "77206daf60da42bc",
+          "tokens_per_round": 5.0,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "24b22538876d"
+        }
+      },
+      "elapsed_s": 0.744,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "leftmost": true,
+        "rightmost": true
+      },
+      "parsed": {
+        "leftmost": "blue",
+        "rightmost": "red"
+      }
+    },
+    {
+      "id": "easy_count",
+      "difficulty": "easy",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/easy_count.png",
+      "question": "Count only the orange circles. Return JSON with integer key count.",
+      "expected": {
+        "count": 6
+      },
+      "image_sha256": "5981f343d63ba352c333f930662d02511fa7f001539b296988153c5befec8d35",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-4a02cc20cb27497fbb550aaa",
+        "object": "chat.completion",
+        "created": 1790858748,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"count\": 6}",
+              "reasoning_content": "Orange circles: top-left, top-middle-left, top-right circle, left-middle, center-bottom, right-middle. That's 6."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 861,
+          "completion_tokens": 36,
+          "total_tokens": 897,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 29
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.0462,
+          "decode_s": 0.5901,
+          "rounds": 12,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 32,
+          "accepted": 23,
+          "sha256": "a01be7015f60b61f",
+          "tokens_per_round": 2.917,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "61cc3a7e5fee"
+        }
+      },
+      "elapsed_s": 1.819,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "count": true
+      },
+      "parsed": {
+        "count": 6
+      }
+    },
+    {
+      "id": "medium_chart",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_chart.png",
+      "question": "Read the chart. Return JSON: highest (category string), highest_value (integer), gap (highest minus lowest, integer).",
+      "expected": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      },
+      "image_sha256": "6627e4693052ef656c3cfef85f7d2429117d4b3e8d59dadc0f1cae2cb4f09ad9",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-9b5d7b24f21d46eaa5a1a33a",
+        "object": "chat.completion",
+        "created": 1790858750,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"highest\": \"B\", \"highest_value\": 70, \"gap\": 50}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 873,
+          "completion_tokens": 21,
+          "total_tokens": 894,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.6544,
+          "decode_s": 0.2527,
+          "rounds": 4,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 3,
+          "drafted": 19,
+          "accepted": 16,
+          "sha256": "6559aa40beee36b0",
+          "tokens_per_round": 5.0,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "6be5f54f4bd0"
+        }
+      },
+      "elapsed_s": 1.081,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest": true,
+        "highest_value": true,
+        "gap": true
+      },
+      "parsed": {
+        "highest": "B",
+        "highest_value": 70,
+        "gap": 50
+      }
+    },
+    {
+      "id": "medium_table",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_table.png",
+      "question": "Return JSON: restock_ids (IDs with Stock strictly below Minimum, in displayed order), washers_bin (string), bolts_stock (integer).",
+      "expected": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      },
+      "image_sha256": "bd000b604cad6634530fababfcc2eb8db36aea22109d44f86b8215b94e9c8afd",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-b29ed19214b6420f994bf5e0",
+        "object": "chat.completion",
+        "created": 1790858751,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"restock_ids\": [\"P01\", \"P03\", \"P05\"],\n  \"washers_bin\": \"C2\",\n  \"bolts_stock\": 42\n}\n```"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 877,
+          "completion_tokens": 45,
+          "total_tokens": 922,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.6595,
+          "decode_s": 0.4763,
+          "rounds": 7,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 39,
+          "accepted": 37,
+          "sha256": "76f94b579008a137",
+          "tokens_per_round": 6.286,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "6e193434eaf6"
+        }
+      },
+      "elapsed_s": 1.308,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "restock_ids": true,
+        "washers_bin": true,
+        "bolts_stock": true
+      },
+      "parsed": {
+        "restock_ids": [
+          "P01",
+          "P03",
+          "P05"
+        ],
+        "washers_bin": "C2",
+        "bolts_stock": 42
+      }
+    },
+    {
+      "id": "medium_flow",
+      "difficulty": "medium",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/medium_flow.png",
+      "question": "Follow the displayed input through the diagram. Return JSON with destination equal to the exact output-box text.",
+      "expected": {
+        "destination": "FAN HIGH"
+      },
+      "image_sha256": "c296d2d73b01af18a738d7535d8f9c014c5d461dafbb3a6f35cbdf2080d7b3b7",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-f838156c744e4e758ab59273",
+        "object": "chat.completion",
+        "created": 1790858752,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"destination\": \"FAN HIGH\"}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 868,
+          "completion_tokens": 10,
+          "total_tokens": 878,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.6635,
+          "decode_s": 0.1582,
+          "rounds": 3,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 3,
+          "drafted": 11,
+          "accepted": 6,
+          "sha256": "8391eecd0cb85c57",
+          "tokens_per_round": 3.0,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "5ce6e2916009"
+        }
+      },
+      "elapsed_s": 0.993,
+      "score": 1,
+      "max_score": 1,
+      "checks": {
+        "destination": true
+      },
+      "parsed": {
+        "destination": "FAN HIGH"
+      }
+    },
+    {
+      "id": "hard_ledger",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_ledger.png",
+      "question": "Using only RELEASE rows, sum Units minus Rejected. Also identify all batches (including HOLD) tied for most rejected units, in displayed order, and read Units for L14. Return JSON: released_net_units (integer), most_rejected_batches (list of strings), l14_units (integer).",
+      "expected": {
+        "released_net_units": 836,
+        "most_rejected_batches": [
+          "L05",
+          "L10",
+          "L15"
+        ],
+        "l14_units": 79
+      },
+      "image_sha256": "cfad9c2b72bba3fafb706dbadde0b4628017bb3bfa6b7543eaf514c1ea36948a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-babab224b1604c119261dafc",
+        "object": "chat.completion",
+        "created": 1790858753,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"released_net_units\": 836, \"most_rejected_batches\": [\"L05\", \"L10\", \"L15\"], \"l14_units\": 79}",
+              "reasoning_content": "RELEASE rows: L02 43-1=42, L03 46-2=44, L04 49-3=46, L06 55-0=55, L07 58-1=57, L08 61-2=59, L10 67-4=63, L11 70-0=70, L12 73-1=72, L14 79-3=76, L15 82-4=78, L16 85-0=85, L18 91-2=89.\n\nSum: 42+44=86, +46=132, +55=187, +57=244, +59=303, +63=366, +70=436, +72=508, +76=584, +78=662, +85=747, +89=836.\n\nMost rejected: max rejected = 4, batches: L05, L10, L15 (in displayed order, including HOLD).\n\nL14 units = 79."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1487,
+          "completion_tokens": 263,
+          "total_tokens": 1750,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 227
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.8998,
+          "decode_s": 3.1586,
+          "rounds": 45,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 250,
+          "accepted": 217,
+          "sha256": "6137c5618efc1ee7",
+          "tokens_per_round": 5.822,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "9d38a20d3751"
+        }
+      },
+      "elapsed_s": 4.39,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "released_net_units": true,
+        "most_rejected_batches": true,
+        "l14_units": true
+      },
+      "parsed": {
+        "released_net_units": 836,
+        "most_rejected_batches": [
+          "L05",
+          "L10",
+          "L15"
+        ],
+        "l14_units": 79
+      }
+    },
+    {
+      "id": "hard_connections",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_connections.png",
+      "question": "Trace each left input through its middle terminal to the numbered right output. Crossings are not junctions. Return JSON with integer keys A, B, C, D (key names are strings; values are integers).",
+      "expected": {
+        "A": 1,
+        "B": 4,
+        "C": 3,
+        "D": 2
+      },
+      "image_sha256": "5e7e3f86e3b30c6315ee8df5021dadf459b746d80374e55f0be344f52ce50eb6",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-cca86e7b0b724dc3888e284b",
+        "object": "chat.completion",
+        "created": 1790858758,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"A\": 1, \"B\": 4, \"C\": 3, \"D\": 2}",
+              "reasoning_content": "Let's trace.\n\nA connects to Y (line from A down-right to Y). Then Y connects to 1 (line from Y up-right to 1). So A\u21921.\n\nB connects to W. W connects to 4 (line from W down-right to 4). So B\u21924.\n\nC connects to Z. Z connects to 3. So C\u21923.\n\nD connects to X. X connects to 2. So D\u21922."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1074,
+          "completion_tokens": 121,
+          "total_tokens": 1195,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 96
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.7371,
+          "decode_s": 1.4564,
+          "rounds": 25,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 102,
+          "accepted": 95,
+          "sha256": "4ae1aacebd6c52cc",
+          "tokens_per_round": 4.8,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "2ef128557bfb"
+        }
+      },
+      "elapsed_s": 2.421,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true
+      },
+      "parsed": {
+        "A": 1,
+        "B": 4,
+        "C": 3,
+        "D": 2
+      }
+    },
+    {
+      "id": "hard_schedule",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v1/hard_schedule.png",
+      "question": "Which two jobs overlap? Give their names in row order. What is the earliest start time at or after 09:00 for a new uninterrupted 45-minute job, using 15-minute start increments? Return JSON: overlapping_jobs (two strings), earliest_start (HH:MM).",
+      "expected": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "12:00"
+      },
+      "image_sha256": "d90f53e0fd30e16e2b344ea03308d85c5829d5f5f370fd7cc942a2800a4b3f2c",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-fb8421a5fb2245ae9eb30375",
+        "object": "chat.completion",
+        "created": 1790858760,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"overlapping_jobs\": [\"BUILD\", \"SYNC\"], \"earliest_start\": \"12:00\"}\n```",
+              "reasoning_content": "BUILD: 09:00\u201309:45. SYNC: 09:30\u201310:00. Overlap: BUILD & SYNC.\n\nBusy: 09:00\u201309:45, 09:30\u201310:00, 10:15\u201311:00, 11:30\u201312:00.\n\n45-min job, start at 15-min increments \u226509:00. Free gaps: 10:00\u201310:15 (15 min), 11:00\u201311:30 (30 min), after 12:00. 12:00 works: 12:00\u201312:45. Check earlier: 09:00 no, 09:15 no... 10:00 start \u2192 10:45 overlaps EVAL (10:15). 10:15 no. 11:00 \u2192 11:45 overlaps BACKUP (11:30). 11:15 no. 12:00 \u2192 12:45 free. Earliest 12:00."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1040,
+          "completion_tokens": 236,
+          "total_tokens": 1276,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 210
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 0.7305,
+          "decode_s": 3.4729,
+          "rounds": 66,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 221,
+          "accepted": 169,
+          "sha256": "c704cfbb8bc9ce89",
+          "tokens_per_round": 3.561,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "d7dc749b29fb"
+        }
+      },
+      "elapsed_s": 4.412,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "overlapping_jobs": true,
+        "earliest_start": true
+      },
+      "parsed": {
+        "overlapping_jobs": [
+          "BUILD",
+          "SYNC"
+        ],
+        "earliest_start": "12:00"
+      }
+    },
+    {
+      "id": "hard_v2_reconciliation",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_reconciliation.png",
+      "question": "Reconcile the document using its displayed rules. Return JSON: released_good_units (integer), released_value_cents (integer), held_ids (ordered list of strings), largest_value_id (string).",
+      "expected": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      },
+      "image_sha256": "9d3246b06f1bd0454652c09f34e1d388c6f97db04d28aeb1e22c7c7bdd971991",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-ee2d3b34e60b4bffad6222a5",
+        "object": "chat.completion",
+        "created": 1790858765,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"released_good_units\": 152, \"released_value_cents\": 25285, \"held_ids\": [\"E55\", \"F66\"], \"largest_value_id\": \"B22\"}\n```",
+              "reasoning_content": "Apply amendments:\n\nA11: qty 48-6=42, rejects 1, cents 125, RELEASE \u2192 good 41, value 41*125=5125\nB22: state RELEASE, qty 38, rejects 2, cents 240 \u2192 good 36, value 8640\nC33: rejects 8, qty 60, cents 80, RELEASE \u2192 good 52, value 4160\nD44: cents 320, qty 24, rejects 1, RELEASE \u2192 good 23, value 7360\nE55: qty 45, rejects 4, HOLD\nF66: state HOLD\n\nReleased good units: 41+36+52+23 = 152\nValue: 5125+8640+4160+7360 = 25285\nHeld: E55, F66\nLargest value: B22 (8640)"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2072,
+          "completion_tokens": 244,
+          "total_tokens": 2316,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 198
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2806,
+          "decode_s": 2.9261,
+          "rounds": 44,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 235,
+          "accepted": 199,
+          "sha256": "434f54e262229e43",
+          "tokens_per_round": 5.523,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "e6ca4d5e90a5"
+        }
+      },
+      "elapsed_s": 4.865,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "released_good_units": true,
+        "released_value_cents": true,
+        "held_ids": true,
+        "largest_value_id": true
+      },
+      "parsed": {
+        "released_good_units": 152,
+        "released_value_cents": 25285,
+        "held_ids": [
+          "E55",
+          "F66"
+        ],
+        "largest_value_id": "B22"
+      }
+    },
+    {
+      "id": "hard_v2_crossing_plot",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_crossing_plot.png",
+      "question": "Apply the plot selection rule and calculate the requested quantities. Return JSON: start_minute (integer), end_minute (integer), crossing_second (integer), right_gap (integer), c_area_unit_seconds (integer).",
+      "expected": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 70,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      },
+      "image_sha256": "5af575453f243c5999096c5286ecf6ff748540646d75e3c1cdba0d123e03c11a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-9f291abf799941f880c4bdb3",
+        "object": "chat.completion",
+        "created": 1790858770,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"start_minute\": 1, \"end_minute\": 2, \"crossing_second\": 10, \"right_gap\": 25, \"c_area_unit_seconds\": 1950}",
+              "reasoning_content": "Let me read values.\n\nA (circle): 0:20, 1:40, 2:60, 3:35, 4:65, 5:45, 6:70, 7:40, 8:60\nB (square): 0:50, 1:45, 2:35, 3:55, 4:40, 5:60, 6:50, 7:65, 8:45\nC (triangle): 0:15, 1:25, 2:40, 3:30, 4:45, 5:35, 6:55, 7:30, 8:40\n\nCandidate intervals: A below B at left, above B at right.\n- [0,1]: A=20<50, A=40>45? No (40<45). Not candidate.\n- [1,2]: 40<45, 60>35 yes. A increase 20 \u226520 yes. C endpoints 25,40 \u2014 C at most 40 at both: 40 \u226440 yes. Candidate. Right gap A-B=25.\n- [2,3]: 60<35? No.\n- [3,4]: 35<55, 65>40 yes. Increase 30. C: 30,45 \u2014 45>40 no.\n- [4,5]: 65<60? No.\n- [5,6]: 45<60, 70>50 yes. Increase 25. C: 35,55 \u2014 55>40 no.\n- [6,7]: 70<65? No.\n- [7,8]: 40<65, 60>45 yes. Increase 20. C: 30,40 both \u226440 yes. Candidate. Right gap 15.\n\nLargest right gap: [1,2] with 25. Choose [1,2].\n\nCrossing: A from 40 to 60, B from 45 to 35. A-B: -5 to +25, crossing at t where -5+30t=0 \u2192 t=1/6 min = 10 seconds. crossing_second = 10.\n\nC area over [1,2]: C from 25 to 40, linear. Average 32.5 over 60 seconds = 1950 unit-seconds.\n\nstart_minute=1, end_minute=2, crossing_second=10, right_gap=25, c_area=1950."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2073,
+          "completion_tokens": 573,
+          "total_tokens": 2646,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 533
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2532,
+          "decode_s": 7.7605,
+          "rounds": 125,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 570,
+          "accepted": 447,
+          "sha256": "3e19555d7f9a1f24",
+          "tokens_per_round": 4.576,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "a77b127230c5"
+        }
+      },
+      "elapsed_s": 9.556,
+      "score": 4,
+      "max_score": 5,
+      "checks": {
+        "start_minute": true,
+        "end_minute": true,
+        "crossing_second": false,
+        "right_gap": true,
+        "c_area_unit_seconds": true
+      },
+      "parsed": {
+        "start_minute": 1,
+        "end_minute": 2,
+        "crossing_second": 10,
+        "right_gap": 25,
+        "c_area_unit_seconds": 1950
+      }
+    },
+    {
+      "id": "hard_v2_logic_network",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_logic_network.png",
+      "question": "Trace and evaluate the displayed logic network. Return JSON: g1_sources (list of strings), g2_sources (list of strings), high_input_codes (list of strings), scenario_y (integer), fault_y (integer).",
+      "expected": {
+        "g1_sources": [
+          "A",
+          "C"
+        ],
+        "g2_sources": [
+          "B",
+          "D"
+        ],
+        "high_input_codes": [
+          "0010",
+          "0101",
+          "0110",
+          "1000",
+          "1100",
+          "1111"
+        ],
+        "scenario_y": 0,
+        "fault_y": 1
+      },
+      "image_sha256": "58cad0d5f34815f8d06d133c8a12ea062c8f8c9298846f6842c06d3bf1ef3ea6",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-c3e145ae9df14c8fb1d96ee3",
+        "object": "chat.completion",
+        "created": 1790858779,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "reasoning_content": "Let me trace the network.\n\nInputs A, B, C, D.\n\nG1 XOR inputs: A and B? Let's look. A goes right, junction dot at ~x=220, continues to G1 top input. Also from junction, a line goes down... Actually A line: A dot at x~95, line to x~520 (top). Junction at x~220 with a branch going down to y~215 then right to G1? Let me think.\n\nLines: A at y~190. There's a horizontal line at y~190 from A to x~520. Junction dot at x~220 on A's line. From that dot, a wire goes down to y~215 and right to G1's top input (x~615, y~215). Wait G1 box spans y~195-305, inputs at left around y~220 and y~280.\n\nActually the top line at y~190 goes to x~520 and stops? Hmm, the line from A extends to x~520 at y~190. Then a branch from dot at x~220 goes down to y~215, then right to G1 input at y~220? G1's top input.\n\nB at y~345. B line goes right to x~520? There's a junction at x~390 on B's line. From B's line, a branch at x~305 goes up to y~280 then right to G1's bottom input (y~280). Wait, the vertical line at x~305 from y~280 down to... Let me reconsider.\n\nLines described:\n- A: y~190, from x95 to x520. Dot at x220.\n- From dot x220: vertical down to y~215? Actually there's a line at y~215 from x220 to x615 (G1 top input). Hmm, but the image shows A's line at y190 going to x520, and a second horizontal line at y~215 from x220 to G1.\n\nWait, G1 inputs: top input at y~220, bottom at y~280. The line at y~215 from x220... Actually A's line at y190 continues to x520 \u2014 but G1 box starts at x~615. Hmm, the line at y190 ends at x520? That seems odd. Maybe A's line goes to x520 then... no.\n\nLet me re-read: \"A \u2022\u2014\u2014 at y190 to x520\" \u2014 the top horizontal line ends at x~520. And a line at y~215 from x~220 to x~615 (G1 top input). So A connects via dot at x220 down to y215, then to G1 top input. But then what's the segment from x220 to x520 at y190? That's just A's wire ending... Actually maybe A's wire ends at x520 with nothing? That can't be. Perhaps the y190 line from x220 to x520 is a stub \u2014 no, wires must connect somewhere.\n\nHmm, maybe the y190 line from A goes to x520 and that's the end \u2014 but that would be a dangling wire. More likely: A's line at y190 goes to x520, then bends down? No visible.\n\nAlternative: the top line y190 from x220 to x520 is actually a wire that goes to... G1's top input is at y~220. Hmm.\n\nLet me reconsider: maybe A's wire: A at y190, dot at x220, continues to x520, then down to y215? No, the y215 line starts at x220.\n\nActually maybe: A line y190 from x95 to x520. At x220 dot, branch down to y215, then right to x615 (G1 input). The segment x220-x520 at y190 \u2014 dangling? Unlikely. Perhaps the line at y190 continues to x520 and then down into... nothing there. Hmm, but maybe it goes down at x520 to y215? No, y215 line starts at x220.\n\nWait \u2014 maybe I misread and the y215 line goes from x220 to x615, and the y190 line from x220 to x520 is actually part of A's wire that ends... Let me just consider: perhaps A's wire goes to x520 and then down to y280? No.\n\nAlternatively, maybe the top line is A \u2192 splits: one branch continues at y190 to x520 then down to G1? G1's left edge at x615. Hmm.\n\nLet me think about what makes sense: G1 XOR inputs likely A and B. G2 AND inputs likely B and C or C and D. G3 XOR inputs: G1 output and something. G4 OR: G2 output and something. G5 AND: G3 and G4.\n\nCommon puzzle: G1 = A XOR B, G2 = C AND D, G3 = G1 XOR ?, G4 = G2 OR ?, G5 = G3 AND G4.\n\nLet's trace more carefully with coordinates from the description:\n\n- A dot at (95,190). Horizontal line y190 to x520. Dot at (220,190).\n- Line y215 from x220 to x615? Actually image shows a horizontal line at y~215 from x~220 to G1. And the y190 line from x220 to x520 \u2014 hmm, maybe the y190 line from x220 to x520 then bends down at x520 to y215? No...\n\nActually wait: maybe the y190 line goes from x220 to x520, and then there's a vertical at x520 down to... G1's top input is at y~220. The line at y215 from x220: maybe it's from x220 to x615 passing under? Hmm.\n\nLet me instead consider the visual: \"A \u2022\u2014\u2014\u2014\u2022\u2014\u2014\u2014\u2014\u2014\u2014 (to x520)\" at y190, and below \"\u2014\u2014\u2014\u2014 to G1\" at y215. The dot at x220 connects both. So A branches: one branch ends at x520 (dangling?) \u2014 no. Unless the branch at y190 to x520 then goes down at x520 to y280 and into G1's bottom input? G1 bottom input at y~280. The line at y280 from x305 to x615 \u2014 that's B's branch.\n\nHmm, actually maybe: A's y190 line to x520, then down to y280? But there's a horizontal line at y280 from x305 to x615. If A's wire went down at x520 to y280, it would join that line. But the y280 line starts at x305 which connects to B via vertical at x305 from y280 up... no wait.\n\nLet me re-examine: B at y345. Line from B to x520? There's a dot at (390,345) on B's line. Vertical line at x305 from y280 to y345? The image shows a vertical line at x~305 from y~280 down to y~345 area, connecting to B's line? Actually B's line: from x95 to x520 at y345, with dot at x390. Hmm, and vertical at x305 from y280 to y345 crossing B's line? If no dot at crossing, not connected.\n\nLines I can infer:\n1. y190: A from x95 to x520, dot at x220.\n2. y215: from x220 to x615 (G1 top input). So A \u2192 G1 top input. But then segment x220-x520 at y190 dangles... unless the y190 line from x220 to x520 bends down at x520 to y215? That would make the y215 line start at x520 not x220. Hmm.\n\nActually maybe: A's wire goes to x520, then down to y215? No \u2014 the y215 horizontal line clearly starts at x220 (below the dot).\n\nAlternatively: A's wire: y190 from x95 to x520. At x220, dot, branch down to y215, then right to x615. The remaining y190 segment x220\u2192x520: maybe it bends down at x520 and goes to y280, then... no, y280 line is at x305-615.\n\nHmm, wait \u2014 maybe the y190 segment from x220 to x520 goes down at x520 to y280? Then A connects to both G1 inputs? That'd be weird for XOR.\n\nLet me reconsider: maybe the top line is: A at y190 to x520, and that's where it ends because it connects to G1? No, G1 is at x615-765.\n\nActually, maybe I'm misreading and the y190 line ends at x520 because it turns down at x520 to y215... but the y215 line starts at x220. Both could be true if the y215 line spans x220 to x615 AND there's a vertical at x520 from y190 to y215 \u2014 that would create a loop, weird.\n\nLet me try different interpretation: The picture: A's line at y190 goes right; at x220 there's a junction; the line continues to x520 where it ends (this is the top input to... nothing?). Hmm.\n\nAlternatively maybe the line at y190 from x220 to x520 is actually at y190 and G1's top input wire is at y215, and the connection is: A \u2192 dot x220 \u2192 down to y215 \u2192 right to G1. And the y190 continuation to x520 is... actually maybe it's the wire that goes to G1's top input and I'm misjudging y. G1 box top at y195, so top input could be at y~220. The line at y190 would enter the box? No, box starts x615.\n\nOK here's another thought: maybe the y190 line from x220 to x520 then bends down at x520 to y280, and goes right to G1's bottom input at y280? And the y280 line from x305 to x615 is B's branch: B at y345, dot at x390... hmm, but the vertical at x305.\n\nLet me use the dots: dots visible at (220,190) on A's line, (390,345) on B's line, (305,497) on C's line, (480,652) and (537,652) on D's line, (862,287) on G1 output line.\n\nC at y497: line from x95 to x520, dot at x305. Vertical at x305 from y280? to y497: connects C up to y280 line \u2192 G1 bottom input? So G1 inputs: A (top) and C (bottom)? Hmm.\n\nWait, the vertical line at x305: from y280 down to y497 (C's line). And the y280 horizontal line from x305 to x615 (G1 bottom input). So C \u2192 G1 bottom input? But then what about B?\n\nB at y345: line to x520, dot at x390. Vertical at x390 from y345 up to y280? No... The image shows vertical at x390 from y345 down to y450? \"B \u2022\u2014\u2014 at y345, dot at x390, branch down to y450 then right to G2?\" G2 box at x615-765, y425-535. G2 inputs at y~455 and y~510.\n\nLines near G2: y455 line from x540? to x615? Hmm, \"from x395 to x615 at y450\" \u2014 there's a horizontal line at y~450 from x~395 to G2 top input. And vertical at x390 from B's line (y345) down to y450, then right to G2. So B \u2192 G2 top input? But wait, the dot at x390 on B's line: branch down to y450, right to G2 top input.\n\nAlso vertical at x305 from y280 to y497: C's line dot at x305, branch up to y280, right to G1 bottom input. So C \u2192 G1 bottom input? Hmm, but then G1 = A XOR C.\n\nHmm wait, but also there's a line at y~450 from x395 to x615 \u2014 actually the description shows a horizontal line at y~450 starting around x540 (from G2's left) going left to x~540? Let me look again at the image description: \"B \u2022\u2014 ... \u2014\u2022\u2014\u2014 (x520)\" and below \"\u2014\u2014 (from x540?) to G2\". \n\nThe image shows: a horizontal line at y~450 from x~540 to x~615? No...\n\nLet me re-derive from the rendered figure text positions:\n- G1 box: x615-765, y195-305. Inputs at left edge: y~220, y~280.\n- G2 box: x615-765, y425-535. Inputs: y~455, y~510.\n- G3 box: x980-1130, y260-395. Inputs: y~290, y~365.\n- G4 box: x980-1130, y565-700. Inputs: y~595, y~670.\n- G5 box: x1228-1370, y415-545. Inputs: y~440, y~515. Output to Y at y~480.\n\nWires:\n- A: y190, x95\u2192x520. Dot at (220,190).\n- Horizontal y215: x220\u2192x615? Actually from the figure, there's a line from (220,190) down... The figure shows a line at y~215 from x~220 to x~615. Hmm, but actually looking at the image: the line from A's dot goes down slightly and right to G1. And the y190 line continues to x520 \u2014 where does it go? It ends at x520. That's strange unless it connects to something at x520.\n\nOh wait! Maybe the y190 line from x220 to x520 is not A's continuation \u2014 maybe A's line ends at the dot x220, and the segment x220-x520 at y190 belongs to a different wire: one coming from below? Like from G1's area? No.\n\nHmm, alternatively the top line: A \u2192 x520, then down at x520 to y215? and the y215 line from x220... no.\n\nLet me try: maybe the y215 horizontal line is from x220 to x615, and the y190 line from x220 to x520 is actually a wire from A that goes to x520 then down to y345?? No, B is at y345.\n\nActually, you know, maybe the top line at y190 from x220 to x520 then bends down at x520 and goes all the way down... The image shows a vertical line at x~540 from y~365 to y~450? There's \"a line at y~365 from x540 to x980 (G3 bottom input)\" and vertical at x540 from y365 up? Hmm.\n\nLet me carefully re-read the figure as rendered:\n\nRow y~190: A dot, line to x~520 (with dot at x220).\nRow y~215: line from x~220 to x~615 (G1 top input).\nRow y~280: line from x~305 to x~615 (G1 bottom input).\nRow y~345: B dot, line to x~520, dot at x390.\nRow y~365: line from x~540 to x~980 (G3 bottom input)? Actually G3 bottom input at y~365. There's a horizontal line at y~365 from x~540 to x~980.\nRow y~450: line from x~395 to x~615 (G2 top input)? And also line from x~540? Hmm.\nRow y~497: C dot, line x95\u2192x520, dot at x305.\nRow y~510: line from x~480 to x~615 (G2 bottom input)?\nRow y~652: D dot, line x95\u2192x537, dots at x480 and x537.\n\nVertical lines:\n- x220: y190\u2192y215 (A branch to G1 top).\n- x305: y280\u2192y497 (C branch to G1 bottom via y280 line).\n- x390: y345\u2192y450? (B branch down to y450, then right to G2 top input at y455). Hmm, but the y450 line \u2014 from x390 to x615? The figure shows the y450 line starting around x395. Actually wait, looking again: there's a horizontal line at y~450 from x~540 to x~615? and another from x~395?\n\nHmm, the figure shows: \"at y~450: line from x~540 to x~615\" \u2014 no wait.\n\nLet me look at the original description again: \n\n\"B \u2022\u2014\u2014\u2014\u2014\u2014\u2014\u2022\u2014\u2014\u2014\u2014 (y345, to x520, dot at 390)\"\nThen below: \"\u2014\u2014\u2014\u2014 (y~365?) from x540 to x980\" \u2014 this is G3's bottom input line.\n\"\u2014\u2014\u2014\u2014 (y~450) from x395? to x615\" \u2014 G2 top input.\n\nAnd vertical at x540: from y365 up? or down? The line at y365 from x540 to x980: where does x540 connect? Vertical at x540 from y365 down to y450? Then y450 line from x540 to... hmm.\n\nActually, I recall the figure: there's a vertical line at x~540 from y~365 to y~450, connecting the y365 line (to G3 bottom input) with the y450 line (to G2 top input)? That would short them. No.\n\nLet me think about the dots on D's line: D at y652, line from x95 to x537, dots at x480 and x537. Vertical at x480 from y652 up to y510 (G2 bottom input)? So D \u2192 G2 bottom input. Vertical at x537 from y652 up to y~560? to G4? Hmm, G4 inputs at y595 and y670, at x980. Lines to G4: y595 from x~900? and y670 from x~900?\n\nG2 output: from x765 at y~480, goes right to x~900, then down to y~595? and to G4 top input? The figure shows G2 output line going right then there's a vertical at x~900 from y480 down to y595, then right to G4 top input (y595). Hmm, but also G2 output should go somewhere else? G2 AND output \u2014 where does it go? Maybe to G4 only.\n\nG1 output: from x765 y~250, right to x~862, dot at (862,287)? The dot at (862,287) is on the vertical line x862. G1 output: right to x862, then down? and the y287 line from x862 to x980 (G3 top input). Also vertical x862 continues down to y~560? to G4? The figure shows vertical at x862 from y250 down to y~620? and lines to G4 inputs.\n\nG4 OR inputs: one from G2 output, one from G1 output? And G3 XOR inputs: G1 output and ...?\n\nHmm, let me reconsider. The dot at (862,287): G1 output goes right along y250 to x862, then down to y287? Actually the dot is at y287 which is where the horizontal line to G3 top input is. So: G1 output y250 \u2192 x862, vertical down to y287? No \u2014 more likely: G1 output goes right to x862, then the wire splits: continues down x862, and branch at y287 goes right to G3 top input. The dot at (862,287) marks junction.\n\nVertical x862 continues down from y287 to... y~560? Then to G4? G4 top input at y595: line from x862? The figure shows a horizontal line at y~595 from x~900 to x980? Hmm.\n\nAlso there's a line at y~620 from x862 to x980? G4 inputs at y595 and y670.\n\nLet me guess the topology from typical puzzles and the visual:\n\n- G1 XOR: inputs A and B? or A and C?\n- G2 AND: inputs ? and ?\n- G3 XOR: G1 out and B? (the y365 line from x540 to x980 \u2014 x540 connects to what? vertical at x540 from y365 up to y280? no...)\n\nHmm, the y365 line: from x540 to x980. At x540, vertical line: the figure shows a vertical at x~540 from y~365 down to y~450? and the y450 line from x540 to x615? No wait.\n\nActually, let me reconsider the whole thing with the lines I can discern from the image:\n\nLooking at the image again (mentally):\n\n1. Top: A \u2014\u2022\u2014\u2014\u2014 (y190). From dot, line down to y215, right to G1 top input. Also line continues at y190 to x520... and at x520, bends down? The image shows the y190 line ending at x520. Hmm, but wait \u2014 maybe it bends down at x520 and goes to y280, joining the y280 line? The y280 line spans x305 to x615. If A's wire came down at x520 to y280, it would overlap. But the y280 line's left end is x305 which connects via vertical x305 down to C. So y280 line connects C to G1 bottom input. If A also joined, A and C both to G1 bottom \u2014 no.\n\nAlternatively, the y190 line from x220 to x520 bends down at x520 and goes down to y345? No, B's line is there.\n\nHmm, wait. Maybe I have it backwards: maybe the y190 line from x220 to x520 is A's wire to... nothing, and actually the wire from A at y190 goes to x520, then down at x520 to y215? and the y215 line goes from x520 left to x220? That doesn't make sense either.\n\nLet me try yet another reading: perhaps the top line is: A at y190 \u2192 x520 \u2192 down to y215 \u2192 ... no.\n\nOK here's another thought: maybe the y190 line from x220 to x520 is actually the top input wire to G1, and G1's top input is at y~220, and the wire bends down at x~520? No, G1 is at x615.\n\nHmm, let me look at the image once more. The image shows:\n\n\"A \u2022\u2014\u2014\u2014\u2022\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\" (y190, line ends ~x520)\n\"     |__________ G1\" \u2014 the branch goes down to y215 and right to G1? Actually in the image, the line from the dot at x220 goes down to y~215 and then right, reaching G1's top-left. And the y190 line continues past to x520 and stops.\n\nWait \u2014 maybe the y190 line to x520 then turns down and goes to y280, then right into G1's bottom input? And the y280 line from x305 is C's line? Both would collide.\n\nAlternatively: the y190 line to x520 turns down at x520 and goes down to y345?? B's line at y345 spans x95 to x520. If A's wire came down at x520 to y345, it would meet B's line end. Hmm, B's line ends at x520 too. So maybe A and B both end at x520? No.\n\nHmm, actually! Maybe B's line at y345 ends at x520 and turns UP at x520 to y280, then right to G1 bottom input? And the y280 line from x305 to x615 \u2014 its left portion x305-520 at y280 would be B's wire after bending up, and x305 connects down to C? But then C would also connect to G1 bottom input via the same wire \u2014 the vertical at x305 from y280 to y497 (C). If B's wire occupies y280 from x520 to x615, and C's branch occupies y280 from x305 to x520... they'd be the same wire, connecting B, C, and G1 bottom input all together. That's a short. Unlikely.\n\nLet me step back and think about what's most plausible given the answer format: g1_sources and g2_sources are \"lettered inputs driving each gate\". So G1 and G2 are driven directly by lettered inputs only. G3, G4 driven by gate outputs and/or inputs. G5 = G3 AND G4.\n\nGiven the visual: G1 gets A and something. G2 gets something and something.\n\nDots: A line has dot at x220 \u2192 branch to G1. So A \u2192 G1.\nB line has dot at x390 \u2192 branch down to y450 \u2192 G2 top input? So B \u2192 G2.\nC line has dot at x305 \u2192 branch up to y280 \u2192 G1 bottom input. So C \u2192 G1.\nD line has dots at x480 and x537 \u2192 branches: x480 up to y510 \u2192 G2 bottom input; x537 up to ... G4? or somewhere.\n\nSo G1 = A XOR C? Hmm wait, but the y280 line \u2014 does it come from C's vertical at x305? C's dot at (305,497), vertical up to y280, then right to G1 bottom input at y280. Yes plausible.\n\nBut wait, then what about the y190 line from x220 to x520? If A's dot at x220 branches down to y215 \u2192 G1 top input, the y190 continuation to x520 dangles. Unless... the y190 line from x220 to x520 is actually the wire that goes to G1's top input, and the y215 line is something else. G1 top input at y~220. Hmm, y190 vs y215: G1 box top edge at y195. Inputs typically drawn at y~220 and y~280 (inside box vertical range 195-305). So input wires at y220 and y280.\n\nSo the y215 line (close to 220) from x220 to x615 is G1's top input wire. A's branch: dot at (220,190), vertical down x220 from y190 to y215, then right to G1. \u2713.\n\nThen the y190 segment from x220 to x520: dangling? That can't be. Unless it bends down at x520... Let me check: is there a vertical line at x520 from y190 down to y345? The image... B's line at y345 ends at x520. Hmm! Maybe A's wire goes down at x520 from y190 to y345?? But B's line also ends at x520. If A's wire came down at x520 to y345, it would join B's line end \u2014 connecting A and B. Then B's dot at x390 branches to G2. So the net {A, B} would drive G1 top input (via... no wait, A's branch at x220 goes to G1 top).\n\nHmm, that would mean A and B are shorted together. Not sensible.\n\nAlternative: maybe the y190 line ends at x520 and turns down to y280, and the y280 line from x305 to x615: left part is C's branch (x305 vertical), and... no, still collides.\n\nLet me reconsider: maybe the y190 line from x220 to x520 doesn't exist, and instead the top line is: A from x95 to x520 at y190 with dot at x220, and from x520 the wire bends down to y215? No \u2014 the y215 line starts at x220 per the image (it's below the dot).\n\nHmm, actually wait. Let me re-look at the image: The top shows \"A \u2022\u2014\u2014\u2014\u2022\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\" where the line after the dot extends to about x520. Then there's a second horizontal line below it starting at the dot's x position going right to G1. So A's wire: main line y190 to x520; branch at x220 down to y215 then right to G1 top input.\n\nThe y190 segment x220\u2192x520: where does it end? At x520. Is there anything at x520? Looking at the image... the line at y190 ends at x520. Hmm, and G1's left edge is x615. So it dangles 95px short. That's weird.\n\nOH WAIT. Maybe I'm misreading and the y190 line actually continues to x615 into G1's top input, and the y215 line is from x220 to... no.\n\nAlternatively, maybe the top line y190 goes from A to x520, then down at x520 to y280, then right to G1's bottom input at y280? And the y280 line from x305: C's branch goes up x305 to y280 and right \u2014 but it would merge with A's wire. Unless C's vertical at x305 goes up to y280 and the y280 line is only from x305 to x615 \u2014 and A's wire comes down at x520 \u2014 they'd be connected. Short again.\n\nHmm, unless C's vertical goes up to y280 and A's wire comes down at x520 \u2014 and the y280 horizontal line is the G1 bottom input wire spanning x305 to x615 \u2014 then A, C, and G1 bottom input all connected. Short. Not plausible.\n\nLet me try assuming the image actually shows: A's line y190 from x95 to x520, dot at x220. From dot, vertical down to y215, then horizontal y215 from x220 to x615 (G1 top input). The y190 segment beyond the dot to x520 \u2014 maybe it's actually a wire that goes to G1's top input and the y215 line is... \n\nYou know what, maybe the y190 line from x220 to x520 bends down at x520 and descends to y345? No...\n\nNew idea: maybe the y190 line from x220 to x520 is a wire that goes to G1's top input, and the \"y215 line\" I think I see is actually the same wire and I'm confusing myself. And the branch from the dot at x220 goes DOWN to y280? and right to G1's bottom input? Then G1 inputs: A (top, direct) and A again (bottom)? No.\n\nLet me try to think about what the y280 line connects. In the image, there's a horizontal line at y~280 from x~305 to x~615. And a vertical line at x~305 from y~280 down to y~497 (C's line, dot at 305). So C \u2192 y280 \u2192 G1 bottom input. That seems solid.\n\nAnd B: dot at (390,345). Vertical at x390: down from y345 to y~450? Then right at y450 to G2 top input (y455)? The image shows a horizontal line at y~450 from x~395 to x~615? Hmm, actually the image shows the y450 line starting around x540... \n\nUgh. Let me look at the image description again very carefully:\n\nFrom the rendering: \n- Line from B (y345) goes right; at x390 dot; continues to x520.\n- Below B's line: a horizontal line at y~365 from x~540 to x~980 (this goes to G3's bottom input at y365).\n- A vertical line at x~540 from y~365 down to y~450? Or up?\n- A horizontal line at y~450 from x~540 to x~615? No \u2014 G2's top input...\n\nHmm, actually the image shows: \"at y~450, a line from x~540 to x~615\" \u2014 hmm no. Let me think about G2's inputs: G2 box y425-535, inputs at y~455 and y~510.\n\nLines reaching G2:\n- Top input (y455): horizontal line from somewhere to x615.\n- Bottom input (y510): horizontal line from x~480? to x615. With vertical at x480 down to D's line (y652, dot at 480). So D \u2192 G2 bottom input. \u2713\n\nTop input: the line at y455 from x615 going left to... x540? then vertical at x540 up to y365? then the y365 line from x540 to x980? That would connect G2 top input to G3 bottom input \u2014 short. No.\n\nAlternatively: top input line at y455 from x615 left to x395, then vertical at x395 up to y345 (B's line, dot at 390). So B \u2192 G2 top input. \u2713 And the y365 line from x540 to x980 (G3 bottom input) connects at x540 to a vertical going... where? Maybe up to y280? No, that's C's. Maybe the vertical at x540 goes from y365 down to y450? and the y450 line from x540 to x615 is G2's top input? Then B's connection: dot at x390, vertical down x390 from y345 to y450? and y450 line from x390 to x615? Hmm, but then what feeds G3's bottom input at y365 via x540?\n\nWait, maybe: B's dot at x390, vertical down to y450, right to G2 top input. And the y365 line from x540 to x980: at x540, vertical UP from y365 to y280? But y280 is C's line to G1. Short again.\n\nHmm, alternatively the y365 line at x540 connects via vertical UP to y190 (A's line)? The vertical would cross B's line at y345 (no dot, not connected) and C's... wait C is at y497, below. Vertical at x540 from y365 up to y190: crosses B's line at (540,345) \u2014 no dot, so not connected. So the y365 line connects to A's line at y190? But A's line ends at x520, not reaching x540. Hmm, close though. Maybe A's line ends at x540? If A's line goes to x540 then down to y365 then right to G3 bottom input? But then the dot at x220 branches to G1 top input. So A \u2192 G1 top AND A \u2192 G3 bottom? But G3 sources should include gate outputs presumably... Actually the question only asks g1_sources and g2_sources, so G3 could have mixed inputs.\n\nHmm wait, but actually let me reconsider. Let me re-examine: the image shows the y365 line starting at x~540 and there's a vertical line at x~540 from y~365 going UP to y~280? or to y190?\n\nActually, from the image: I see a vertical line at x~540 spanning from y~365 down to y~450? and the y450 line from x540 to x615? Hmm no.\n\nLet me try to use the G3 inputs: G3 box y260-395, inputs at y~290 and y~365.\n- G3 top input (y290): line from x980 left to x862 (dot at 862,287), which connects to G1 output (G1 output at y250 from x765, right to x862, then down to y287? Actually G1 output y250, vertical at x862 from y250 down; the dot at (862,287) is where the branch to G3 top input at y290... close enough: y287\u2248290).\n\nHmm wait, actually G1 output at y~250 (center of box 195-305). The line goes right from x765 to x862. Then vertical at x862. The dot at (862,287): branch right at y287 to G3 top input (y290). \u2713. And the vertical continues down from y287 to...? Maybe to y~620 for G4 input? The image shows vertical at x862 going down to y~620, then right at y620 to G4? G4 inputs at y595 and y670. Hmm, y620 isn't either. \n\nActually the image shows: vertical at x862 from y250 down to y~560? and horizontal at y~560? Hmm.\n\nLet me think about G4 OR inputs: G4 box y565-700, inputs at y~595 and y~670.\n- One input from G2 output: G2 output at y480 from x765, right to x~900, then down to y595? then right to G4 top input? The image shows a vertical at x~900 from y480 down to y~595, then horizontal to x980. Plausible: G2 \u2192 G4 top input.\n\nHmm wait, actually the image shows G2's output going right to x~900 then down... Actually I see \"G2 output: line from x765 y480 to x900, then vertical down x900 from y480 to y670?\" and horizontal at y670 to G4 bottom input? And G4 top input from x862 line?\n\nThe image shows: a horizontal line at y~595 from x~900 to x980? and at y~670 from x~900 to x980? And vertical at x900 from y480 to y595 or y670.\n\nAlso vertical at x862 from y287 down to y~620? then... hmm.\n\nAlternatively: G1 output \u2192 x862 \u2192 down to y620 \u2192 right to G4? G4 input wires: maybe top input y595 fed from x862 (G1 out) and bottom input y670 fed from x900 (G2 out). The vertical at x862 would go from y287 down to y595, then right to G4 top input. The vertical at x900 from y480 (G2 out) down to y670, then right to G4 bottom input. The two verticals x862 and x900 \u2014 G2's output horizontal at y480 crosses x862? G2 output at y480 from x765 to x900: crosses vertical x862 at (862,480). Is there a dot? If no dot, not connected. Good.\n\nSo: G4 = G1_out OR G2_out? Hmm, but wait \u2014 the image seems to show the vertical at x862 going down and the G4 connections... Let me also check G3's bottom input (y365): line from x540 to x980. What feeds it at x540? \n\nPossibility: B's line: dot at x390... no. What about the vertical at x540 from y365 up to y190 (A's line)? A's line ends at x520 though. Hmm, unless A's line ends at x540.\n\nOR: the y365 line at x540 connects down: vertical x540 from y365 to y450, and y450 line from x540 to x615 = G2 top input? Then G2 top input = G3 bottom input = same wire \u2014 short. No.\n\nOR: vertical x540 from y365 UP to y280? C's line? Short with C. No.\n\nHmm, what if the y365 line connects at its left end x540 to a vertical going up to y190, and A's line actually extends to x540 (I misjudged 520 vs 540)? Then A \u2192 G3 bottom input. And G3 = G1_out XOR A? Hmm.\n\nBut wait, actually, let me reconsider the top area. Maybe: A's line y190 from x95 to x520. At x520, bend down to y215? No...\n\nAlternatively, maybe the top line: A \u2192 x520 \u2192 down \u2192 y280? and the y280 line from x305... \n\nHold on. Let me reconsider the y280 line. Maybe the y280 line is NOT from C. Maybe C's vertical at x305 goes from y497 up to y280, and the y280 line goes right to G1 bottom input. And A's y190 line from x220 to x520 bends down at x520 to y280?? They'd merge. Unless A's line bends down at x520 and the y280 line starts at x520 (not x305), and C's vertical at x305 goes up to... y280? Hmm.\n\nI think I need to be more careful about reading the actual image. Let me re-describe what I see in the image:\n\nTop left: \"A \u2022\" at (65,190). Horizontal line to the right. There's a filled dot at approximately (220,190). The line continues at y190 to about x520, where it ends.\n\nFrom the dot at (220,190): a line goes down to y~215 and then right... Actually in the image, I see the branch going down from the dot and then right at y215, extending to x615 (G1's left edge, top input).\n\nWait, actually, looking at the image again: the line from A at y190 \u2014 after the dot at x220 \u2014 continues to x520 and then there's a vertical drop? The image shows the y190 line ending at x520. And separately a line at y215 from x220 to x615.\n\nHmm, hold on \u2014 maybe the y190 line from x220 to x520 then bends DOWN at x520 and goes down to y345?? and B's line ends at x520 too... \n\nActually wait! Maybe B's line at y345 ends at x520 and bends UP? No...\n\nLet me look at B: \"B \u2022\" at (65,345). Line right. Dot at (390,345). Line continues to x520? The image shows B's line ending around x520.\n\nAnd there's a vertical line at x~305 from y~280 to y~497? The image shows a vertical line at x305 from y280 down through y345 (crossing B's line \u2014 no dot?) to y497 (C's line, dot at 305).\n\nHmm wait, if the vertical at x305 crosses B's line without a dot, fine.\n\nAnd there's a vertical at x~390 from y345 (B's dot) down to y~450, then right at y450 to G2's top input? The image shows a horizontal line at y~450 from x~390 to x~615? Hmm, actually I recall seeing the y450 line starting around x540. But maybe it starts at x390.\n\nHmm, wait. The image shows near G2: a horizontal line at y~450 entering G2's top input, extending left to about x540, where it turns... Actually you know, I remember the image shows a vertical line at x~540 from y~365 to y~450, and the y450 line from x540 to x615 (G2 top input), and the y365 line from x540 to x980 (G3 bottom input). That would short G2 top input with G3 bottom input. Unless the vertical at x540 doesn't exist and instead:\n\n- y365 line from x540 to x980: left end x540 connects UP via vertical to y280? no...\n\nAlternatively:\n- The y365 line's left end connects to a vertical that goes up to y190? crossing B (no dot) and... A's line ends at x520 < 540. Hmm.\n\nWhat if A's line ends at x540? Then vertical at x540 from y190 down to y365, crossing B's line at (540,345) without dot. So A \u2192 G3 bottom input. And the y450 line to G2 top input comes from B: dot at x390, vertical down x390 from y345 to y450, right to G2 top input (y455). Hmm, but the image seems to show the y450 line starting at x540, not x390...\n\nHmm, wait. Actually, let me reconsider: maybe the vertical from B's dot at x390 goes down to y450 and right to G2 top input. And the vertical at x540 from y365... where does the y365 line come from?\n\nWhat if the y365 line comes from G2's... no, G2 output is on the right.\n\nWhat if the y365 line comes from the vertical at x540 which goes UP from y365 to y280, and the y280 line is from x305 (C) to x615 (G1 bottom)? Then C would feed both G1 bottom and G3 bottom. But the vertical at x540 from y280 to y365 would cross... nothing between. And the y280 line spans x305-615, passing through x540 \u2014 so junction at (540,280)? Is there a dot there? If the wires just merge (T-junction), it's a connection. Hmm, but the legend says filled dot = junction. A T-junction would typically have a dot.\n\nAlternatively the y365 line connects to B: vertical at x540? B's line is at y345 spanning to x520. If B's line extended to x540 and the vertical at x540 went from y345 down to y365 then right? That's a bend, not a crossing. Hmm: B's line y345 from x95 to x540, then down to y365? No wait, the y365 line is at y365 from x540 to x980. So B's line could go: y345 to x540, down to y365, right to G3 bottom input. But the image shows B's line ending at x520 and the y365 line starting at x540 \u2014 inconsistent.\n\nHmm, hmm. Let me think about the dots again: dots at (220,190) A, (390,345) B, (305,497) C, (480,652) D, (537,652) D, (862,287) G1 out.\n\nD has TWO dots: x480 and x537. So D branches twice: one branch to G2 bottom input (via x480 up to y510), another branch via x537 up to...? The vertical at x537 from y652 up to...? It could go up to y~560? and right to G4? Or up to y450? Hmm. The image shows a vertical line at x~537 from y652 up to y~510? and also from x537... \n\nWait, the image shows near G2's bottom input: a horizontal line at y~510 from x~480 to x615? And there's also a vertical at x~480 from y510 down to y652 (D, dot at 480). And another vertical at x537 from y652 (dot) up to y~560? Hmm, what's at y560? Nothing obvious. Up to y450? The y450 line (G2 top input) spans x390-615 \u2014 if the vertical at x537 from D goes up to y450, it would join G2's top input wire. Then D \u2192 G2 top input too? G2 inputs B and D? Hmm, but then what about the y365 line to G3?\n\nAlternatively, vertical at x537 from y652 up to y365? It would cross C's line (y497) at (537,497) \u2014 no dot, OK; cross G2's box? G2 box spans x615-765, so no. Cross the y450 line? If the y450 line spans x390-615, then vertical x537 crosses it at (537,450) \u2014 needs no dot. Then continues to y365? But wait, the y365 line starts at x540. So vertical at x537/540 from y652 up to y365, then right at y365 to G3 bottom input. So D \u2192 G3 bottom input!\n\nHmm, that's plausible: D's line has two dots: x480 (branch to G2 bottom) and x537 (branch to G3 bottom input via long vertical). But wait, would the vertical at x537 cross the y450 line (G2 top input wire)? If G2's top input wire spans x390-615 at y450, then yes crossing at (537,450) without dot \u2014 fine per legend.\n\nBut hold on, what feeds G2's top input then? B via x390 vertical down to y450. And the y450 line from x390 to x615. And D's vertical at x537 crosses it. OK.\n\nBut wait, actually, does the image show the y450 line starting at x390? Let me think... The image shows below B: a vertical line at x390 from the dot going down... to y450? then right. Hmm, actually I think the image shows the vertical from B's dot going down only a short distance to y~450 and then the horizontal line at y450 going right to G2. Actually wait, no \u2014 I recall the image shows a horizontal line at y~450 that starts around x540 and goes left to... hmm.\n\nLet me try yet another interpretation based on typical rendering:\n\nLooking at the image once more (the actual pixel layout):\n\n- There's a horizontal line at y\u2248450 from x\u2248540 to x\u2248615? OR from x\u2248395?\n\nThe image shows: \"at y~450: \u2014\u2014\u2014 from x~540 to G2\" and also a vertical at x~540 from y~365 to y~450. And the y365 line from x540 to x980.\n\nIf that's the case: G2 top input connects via x540 vertical up to y365 line, which goes right to G3 bottom input. That's a short between G2 top input and G3 bottom input \u2014 impossible.\n\nUNLESS: the y365 line doesn't go to G3's bottom input but rather G3's bottom input is fed elsewhere, and the y365 line from x540 is... hmm, G3 box y260-395, bottom input at y~365. The line at y365 from x540 to x980 would enter G3 at y365. Yes it's G3's bottom input.\n\nSo the vertical at x540 must connect the y365 line to something else. Options: up to A's line (y190) if A extends to x540, or up to B's line (y345) if B extends to x540.\n\nIf B's line extends to x540: B's line y345 from x95 to x540, dot at x390. Then vertical at x540 from y345 down to y365, then right to G3 bottom input. Wait, but that's a bend: B's wire goes right along y345 to x540, bends down to y365, then right to G3. Hmm, but the y365 line starts at x540 \u2014 consistent! And B's line ends at x540 (I thought 520, could be 540).\n\nBut wait, then what about the vertical at x540 from y365 to y450 (G2 top input)? If B's wire bends at x540 from y345 to y365, the vertical spans y345-y365 only. The y450 line to G2 top input would need another source.\n\nHmm, alternatively: B's line ends at x520. The vertical at x540 spans y365 to y450. The y365 line from x540 to x980 (G3 bottom). The y450 line from x540 to x615 (G2 top). These two connected via x540 vertical \u2014 short. Contradiction. So one of my line readings is wrong.\n\nLet me try: the y450 line to G2's top input actually starts at x390 (below B's dot) \u2014 i.e., B's dot at x390, vertical down x390 from y345 to y450, right y450 from x390 to x615. And the vertical at x540 spans y365 to y652?? connecting D to G3 bottom input? But D's dots are at x480 and x537 \u2014 x537\u2248540. So D's branch at x537 goes up to y365, then right to G3 bottom input. The vertical at x537 crosses: y510 (G2 bottom input wire, spans x480-615 \u2014 crossing at (537,510), no dot, fine), y497 (C's line, spans x95-520 \u2014 doesn't reach x537, fine), y480 (G2 output wire, spans x765-900 \u2014 no), y455/450 (G2 top input wire, spans x390-615 \u2014 crossing at (537,450), no dot, fine). So D \u2192 G3 bottom input. \n\nHmm wait, but actually, does the image show the vertical at x537 going all the way from y652 to y365? Looking at the image: I see a vertical line at x~537 from y~652 up to y~510 area... and the image shows near G2 bottom input a vertical at x480 from y652 to y510. And another vertical at x537 from y652 up to... The image shows two vertical lines between C's row and D's row around x480 and x537. The x537 one goes from y652 up to y~560? Hmm.\n\nActually, from the image: I see a vertical line at x~537 spanning from y~510? to y~652? and a horizontal line at y~510 from x~480? to x615? Hmm.\n\nLet me count the lines entering G2: two inputs. Bottom input y510: line from x615 going left to x480, then down to D (dot at 480,652). Top input y455: line from x615 going left to x390 (B's branch) \u2014 the image shows this line at y~450 extending from x615 left to about x540, then... hmm, or to x390?\n\nOK here's the thing \u2014 I recall the image showing a vertical line at x~540 from y~365 down to y~450, and the horizontal line at y~450 from x~540 to x~615. And ALSO a horizontal line at y~450 from x~395? No...\n\nAlright, let me approach from the answer's perspective. The question asks for g1_sources and g2_sources as lettered inputs. Common configurations:\n\nOption 1: G1 = A XOR B, G2 = C AND D.\nOption 2: G1 = A XOR C, G2 = B AND D.\nOption 3: G1 = A XOR B, G2 = B AND D... etc.\n\nFrom the dots: A's dot branches to G1 (top input via y215). C's dot at x305 branches up to y280 \u2192 G1 bottom input. So G1 = A XOR C? But wait \u2014 maybe C's branch goes to y280 and G1's bottom input... but actually wait, maybe the y280 line is B's? B's dot at x390 \u2014 vertical at x390 up? No, the vertical at x305 is what reaches y280.\n\nHmm, but actually wait: maybe the vertical at x305 from C goes up past y345 (B's line, crossing no dot) to y280, then right to G1 bottom input. So G1 = A XOR C.\n\nHmm, but hold on \u2014 let me re-examine. Is the vertical at x305 or does B's branch go up? B's dot at x390. The image shows a vertical line at x~305 from y~280 to y~497. And B's dot at x390 with vertical going DOWN to y~450 (G2). So:\n\nG1 inputs: A (y215) and C (y280)? Wait, but the y280 line \u2014 G1's bottom input is at y~280. The line at y280 from x305 to x615. C's vertical at x305 from y497 up to y280. So C \u2192 G1 bottom. G1 = A XOR C.\n\nHmm wait, but actually, let me double check the y215 line: from x220 (A's dot) to x615. G1 top input. A \u2192 G1 top. So G1 = A XOR C.\n\nHmm, but wait \u2014 actually, maybe the y280 line is fed by B, not C. Let me check the vertical positions: B's dot at x390. If B's branch went up to y280, the vertical would be at x390, and the y280 line would start at x390. But I believe the y280 line starts at x305, matching C's dot at x305. And C's dot is at (305,497). So the vertical at x305 connects C to y280. But does this vertical cross B's line at (305,345)? B's line spans x95-520, so yes, crossing at (305,345) without a dot \u2014 not connected. OK.\n\nSo G1 = A XOR C? Hmm, wait, but actually let me reconsider whether the y215 line is A's branch or whether A's main line goes to G1. A's line at y190... G1's top input at y~220. The image shows the line entering G1 at y~220 coming from a horizontal at y~215 that starts at x220 (below A's dot). So A branches: main line continues at y190 to x520 (dangling?) \u2014 no wait.\n\nUgh, the y190 segment from x220 to x520. Let me think about what it could connect to. At x520, y190. Is there a vertical at x520? Going down to y345 (B's line end)? If both A and B lines end at x520... Maybe A's line bends down at x520 and B's line ends at x520, and they connect? That would short A and B.\n\nOR: A's line at y190 goes to x520, bends down, goes to y280, and the y280 line from x520 to x615 is G1's bottom input, while the y280 line from x305 to x520... no wait.\n\nHmm, hold on. What if the y280 line is actually TWO things: C's branch from x305 going right, and it's the G1 bottom input wire. And A's y190 line from x220 to x520 bends down at x520 to y280 \u2014 merging with C's wire. Short. No.\n\nWhat if A's y190 line from x220 to x520 bends down at x520 and goes down to y345, and B's line from x95 to x520 at y345 \u2014 they meet at x520? So A and B connected? Then the net {A,B} drives G1 top (via A's dot at x220 branch) and G2 top (via B's dot at x390 branch). Then G1 = (A XOR B) XOR C? and G2 = (A XOR B) AND D? Hmm, that's possible but the question says g1_sources/g2_sources are \"the lettered inputs driving each gate\" \u2014 if A and B are shorted, both drive both gates. Weird for a puzzle.\n\nAlternatively, maybe the y190 line from x220 to x520 is actually the wire to G1's top input, and the \"y215\" line I'm imagining is wrong. I.e., A's line: y190 from x95 to x520, then bends down at x520 to y220, then right to G1 top input? But the image clearly shows a horizontal line at y~215 from x~220. Hmm, does it? The image shows below the y190 line a horizontal line starting at x220 going right. Yes, I'm fairly confident: there's a line from the dot at x220 going down and then right at y215 to G1.\n\nAnd the y190 line from x220 to x520: maybe it bends down at x520 and goes to y280? Let me check the image for a vertical at x520 between y190 and y280... I don't recall seeing one. The image shows the y190 line just ending.\n\nHmm wait, actually \u2014 maybe the y190 line from x220 to x520 is not A's wire but the top input wire of G1 extended, and G1's top input is at y190?? No, G1 box top is y195.\n\nWait wait. Let me reconsider: maybe G1's top input wire is at y~220, and the line I see at y190 from x220 to x520 is actually at y~215 and the line from x220 at y215... I'm going in circles.\n\nLet me just consider the possibility that the y190 line from x220 to x520 connects at x520 by bending down to y280 and that's wrong, OR that it's a dangling artifact. Actually \u2014 could it be that the y190 line from x220 to x520 bends down at x520 and descends to y345, and B's line ends at x520 at y345, and this is actually ONE wire: A's wire goes to x520, down to y345... no wait, B's line comes from x95.\n\nHmm, actually! What if it's: A's line y190 \u2192 x520 \u2192 down to y345? No. What if B's line y345 \u2192 x520 \u2192 UP to y190? No.\n\nWhat if the top line is: A \u2192 x520 \u2192 down \u2192 y280 \u2192 and the y280 line goes LEFT to x305? and C's vertical at x305 goes down to C? Then A, C shorted. No.\n\nOK let me try to think about it differently \u2014 the image at coordinates. The image is 1470 wide. G1 box: x615-765. The top line from A: I described it ending at x520. Actually, maybe it ends at x615? If A's line at y190 goes all the way to x615... but G1's top input is at y220, not y190. Unless the line bends down at x615? Can't bend at the box edge... Actually the wire would enter the box at y190? The box top is at y195. So no.\n\nHmm, let me just look at the image super carefully based on what was rendered:\n\nFrom the image, top area: \"A \u2022\u2014\u2014\u2014\u2014\u2014\u2022\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\" \u2014 the line extends from x95 to about x520. There's a dot at x220. Below, from the dot, a line drops to y215 and runs right to x615 (G1). \n\nActually WAIT. I bet the top line at y190 from x220 to x520 is A's wire, and at x520 it bends DOWN and goes to y280, and then... no. OR it bends down at x520 and goes to y345?? \n\nHmm, let me look at the B row: \"B \u2022\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2022\u2014\u2014\u2014\u2014\" \u2014 B's line from x95 to x520 with dot at x390. Below B's line at y365: a horizontal line from x540 to x980.\n\nAnd I see a vertical line at x~305 from y~280 to y~497 (C). And a vertical at x~390 from y~345 to y~450? Hmm, or does B's dot connect downward?\n\nAnd near G2: horizontal line at y~450 from x~540? to x615, and at y~510 from x~480 to x615.\n\nAnd a vertical at x~540 from y~365 to y~450.\n\nIf vertical x540 connects y365 line to y450 line: short between G3 bottom input and G2 top input. Contradiction. So my reading is wrong somewhere.\n\nAlternative: the vertical at x540 spans y365 to y450, the y450 line spans x540 to x615 (G2 top input), and the y365 line spans x540 to x980 (G3 bottom input) \u2014 the vertical connects them. UNLESS the y365 line doesn't start at x540 but the vertical at x540 only spans y450 to y365 and the y365 line starts at x540 \u2014 same thing. Contradiction stands.\n\nSo instead: maybe the y450 line to G2's top input starts at x390 (B's branch): vertical x390 from y345 to y450, horizontal y450 from x390 to x615. And the vertical at x540 spans from y365 UP to y280?? connecting to the y280 line (C's branch to G1 bottom)? Then C \u2192 G1 bottom AND C \u2192 G3 bottom. Junction at (540,280) would need a dot. Hmm, is there a dot at (540,280)? I don't recall one. The dots I identified: (220,190), (390,345), (305,497), (480,652), (537,652), (862,287). Six dots.\n\nAlternatively the vertical at x540 spans y365 up to y190 (A's line) \u2014 requires A's line to reach x540. If A's line ends at x540 (not 520), then A \u2192 G3 bottom input. Junction? A's line ends at x540 and bends down \u2014 a bend, no dot needed. So: A's wire: y190 from x95 to x540, bend down to y365, right to G3 bottom input. Plus dot at x220 branching to G1 top input. So A drives G1 top and G3 bottom.\n\nThen: G1 = A XOR C. G2 = B AND D. G3 = G1_out XOR A?? Hmm, that seems odd but possible. Wait, but actually, hmm, the y365 line to G3's bottom input \u2014 G3's inputs: top from G1 out (x862), bottom from A? G3 = G1 XOR A = (A XOR C) XOR A = C. That's weird but possible.\n\nHmm, alternatively the vertical at x540 connects the y365 line to B's line: B's line extends to x540, bends down to y365, right to G3. Then B \u2192 G3 bottom. G3 = G1 XOR B.\n\nAnd G2's top input from...? If B's line ends at x540 and doesn't branch down at x390... but B's dot at x390 must branch somewhere. Down to y450 \u2192 G2 top input. So B \u2192 G2 top AND B \u2192 G3 bottom.\n\nThen G2 = B AND D, G3 = G1 XOR B = (A XOR C) XOR B.\n\nHmm. Both interpretations have G3 = G1 XOR (letter). The question only asks g1_sources, g2_sources, high_input_codes, scenario_y, fault_y. So I need G1, G2 sources, and the codes where Y=1, which requires the full network. Ugh.\n\nLet me very carefully re-derive the full network from the image.\n\nLet me re-examine the image systematically. The image (1470\u00d71050):\n\nGates:\n- G1 XOR: box roughly x615-765, y195-305.\n- G2 AND: box x615-765, y425-535.\n- G3 XOR: box x980-1130, y260-395.\n- G4 OR: box x980-1130, y565-700.\n- G5 AND: box x1228-1370, y415-545. Output Y at y480.\n\nInput dots: A(95,190), B(95,345), C(95,497), D(95,652).\n\nJunction dots (filled): \n1. (220,190) on A's line.\n2. (390,345) on B's line.\n3. (305,497) on C's line.\n4. (480,652) on D's line.\n5. (537,652) on D's line.\n6. (862,287) on G1's output branch.\n\nWires (my best reading):\n\nA: y190, x95\u2192x520. \nBranch from (220,190) down to (220,215), then right y215 x220\u2192x615? Hmm, wait \u2014 actually maybe the branch goes down and the horizontal at y215 goes from x220 to x615. But actually, looking at the image, I think the line from the dot goes down to y215 and right, yes.\n\nBut then A's main line y190 x220\u2192x520 dangles. UNLESS the main line is: A y190 x95\u2192x520, and the branch at x220 goes down to y215 then right \u2014 and the segment x220\u2192x520 at y190 is actually... hmm, what if at x520 it bends down and goes to y280, then right to G1's bottom input?? And C's vertical at x305 goes up to y280 and RIGHT \u2014 merging. No.\n\nWhat if at x520 it bends down and goes all the way to y497 (C's line)? C's line spans x95\u2192x520. So A's wire would come down at x520 and meet C's line end at (520,497)? Then A and C shorted. No.\n\nWhat if it bends down at x520 and goes to y652 (D's line)? D's line spans x95\u2192x537. Meeting at (520,652)? D's line passes through x520 (since it goes to x537). So A's wire down at x520 from y190 to y652 would cross B (y345), C (y497) \u2014 crossings without dots \u2014 and terminate on D's line at (520,652) \u2014 a T-junction without a dot? Legend says filled dot = junction. A wire ending on another wire \u2014 should have a dot. There's no dot at (520,652). Hmm.\n\nOK here's another thought: what if the top line doesn't end at x520 but continues to x615 and enters G1 at y190?? G1's box top edge is y195... the input would be at y190, just at/above the box top. Unlikely.\n\nWhat if the top line ends at x520 and G1's top input wire is the y215 line, and the y190 segment is actually a mistake in my reading \u2014 maybe the y190 line from x220 to x520 doesn't exist, and A's line ends at the dot x220? But the image clearly shows the line continuing past the dot to x520.\n\nHmm, hold on, let me reconsider: maybe the image shows A's line from x95 to x520 at y190, dot at x220, and from the dot a vertical down to y215, then the y215 horizontal from x220 to x615. And the y190 segment x220-x520 \u2014 maybe it bends down at x520 to y280? Let me check if the y280 line extends from x305 to x615 \u2014 if A's wire came down at x520, there'd be a junction at (520,280) needing a dot. No dot there.\n\nI'm stuck on this segment. Let me look at the image one more and consider: maybe the top line actually goes from A to x520 and then there's a vertical at x520 going down to y345, and B's line ends at x520 \u2014 meaning A's wire connects to B's wire end?? That would be a T-junction (B's wire continues past x520? no, B's line ends at x520). If B's line ends exactly at x520 and A's wire comes down to (520,345), it's an L connecting two wire ends \u2014 that's a corner junction, typically drawn with a dot if it's a T, or it's just two wires meeting at a corner... Actually if A's wire comes down and B's wire ends there, it forms an \"L\" \u2014 connected. Hmm, but that shorts A and B.\n\nActually WAIT. What if it's the reverse: the top line at y190 from x220 to x520 is B's branch going UP? I.e., B's line at y345: from x95 to x520, dot at x390. At x520, B's wire bends UP to y190? No wait, the vertical would be at x520 from y345 to y190, then the y190 line from x520 to x220... and at x220, A's dot \u2014 junction! So B connects to A's line at x220?? That shorts A and B again. No.\n\nHmm, what if the y190 line from x220 to x520 is A's wire and it connects to G1's top input via bending down at x520 to y215, and the y215 line goes from x520 RIGHT to x615, and ALSO from x220... no.\n\nYou know what, let me just consider that maybe the y215 line from x220 to x615 doesn't exist, and instead: A's line y190 x95\u2192x520, then bends down at x520 to y220, then right to G1 top input (y220, x520\u2192x615). And the dot at (220,190) branches DOWN... to where? A vertical at x220 from y190 down to... y280? then right? Hmm, but the y280 line starts at x305.\n\nOr the dot at x220 branches down to y345? B's line? Short.\n\nHmm, I clearly see in the image a vertical line at x~220 from y190 down to y~215, and horizontal y215 to x615. Actually wait \u2014 maybe the vertical at x220 continues below y215? Down to y280? and the y280 line from x220? No, y280 line starts at x305.\n\nLet me try to think about what's between y215 and y280 on the left: the vertical at x305 (C's branch) spans y280-y497. \n\nOK, radical re-read. Let me re-examine the image as I actually see it:\n\nLine 1 (y\u2248190): from A's dot (95) to x\u2248520. Junction dot at x\u2248220.\nLine 2 (y\u2248215): from x\u2248220 to x\u2248615 (G1 top input). Wait \u2014 does line 2 start at x220? In the image, the vertical connector from the dot at (220,190) goes down to y"
+            },
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2082,
+          "completion_tokens": 16384,
+          "total_tokens": 18466,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 16384
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2829,
+          "decode_s": 292.5644,
+          "rounds": 5701,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 15535,
+          "accepted": 10682,
+          "sha256": "a0c0eadb332b2b21",
+          "tokens_per_round": 2.874,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "827ba7de5a60"
+        }
+      },
+      "elapsed_s": 294.376,
+      "score": 0,
+      "max_score": 5,
+      "checks": {
+        "g1_sources": false,
+        "g2_sources": false,
+        "high_input_codes": false,
+        "scenario_y": false,
+        "fault_y": false
+      },
+      "parse_error": "Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "id": "hard_v2_cube",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cube.png",
+      "question": "Solve the displayed fold, candidate match, and roll sequence. Return JSON: option (string), opposite_c (string), final_top (string), final_front (string), final_right (string).",
+      "expected": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      },
+      "image_sha256": "7f9d9f8486ca3e4890bc949ee81260d9cb8b5048f38ef10ffe5fda054f5e71a0",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-14192db99d754cdb9bdbb11a",
+        "object": "chat.completion",
+        "created": 1790859074,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"option\": \"Q\", \"opposite_c\": \"E\", \"final_top\": \"F\", \"final_front\": \"D\", \"final_right\": \"C\"}",
+              "reasoning_content": "Net: A on top of C, B left of C, D right of C, E right of D, F below C.\n\nFold: C front? Let's set C as front. A folds up (top), F folds down (bottom), B left, D right, E folds to back. So opposites: A-F, B-E, C-D? Wait: C center, D right, E right of D \u2192 E opposite B? Let's compute: strip B-C-D-E: B opposite D, C opposite E. A opposite F.\n\nSo opposite C is E.\n\nCheck candidates: P: top A, front C, right B. With C front, A top, B left... In folded cube: C front, A top, B left, D right, E back, F bottom. P shows top A, front C, right B \u2014 but B is left of C when A is top. So P wrong (B should be left, not right). Q: top A, front C, right D \u2014 correct! R: top A, front F, right D \u2014 F is bottom, impossible with A top. S: top C, front E, right A \u2014 C top means... C top, E front? E is opposite C, impossible. T: top B, front D, right F \u2014 B top, D front? B opposite D, impossible. U: top F, front C, right D \u2014 F top, C front, D right. Check: with F top, A bottom, C front, D right? In original: C front, D right, F bottom. Flip so F top: rotate cube 180\u00b0 about horizontal axis... F top means A bottom. C front stays? Rotating about front-back axis: F bottom\u2192top, A top\u2192bottom, B left\u2192right, D right\u2192left. Then C front, F top, D left. Not matching. Alternatively other rotations: F top, C front requires... Let's just check U: top F, front C, right D. In cube, faces adjacent to F: A opposite, and B, C, D, E around. When F is top, the ring is A? no\u2014F's opposite is A. Ring around F: B, C, D, E. Order: from net, C front, D right, E back, B left when F bottom. Flip to F top (rotate 180\u00b0 about left-right axis): F top, A bottom, C back, E front, B left, D right. So F top, C back \u2014 C can't be front. Rotate about front-back axis: F top, A bottom, B right, D left, C front. Then right is B, not D. So U impossible. Q is the answer.\n\nStart orientation: top A, front C, right D.\n\nRoll RIGHT: right face becomes bottom; top becomes right. So D bottom, A right, C front stays, top = left face = B. After roll 1: top B, front C, right A, bottom D, left F, back E.\n\nRoll AWAY: front becomes top; top becomes back. Front C \u2192 top. Top B \u2192 back. Left and right stay: left F, right A. Bottom D \u2192 front. After roll 2: top C, front D, right A, back B, left F, bottom E.\n\nRoll RIGHT: right A \u2192 bottom; top C \u2192 right. Front D stays. Left F \u2192 top. After roll 3: top F, front D, right C.\n\nFinal: top F, front D, right C. Opposite C = E."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2091,
+          "completion_tokens": 791,
+          "total_tokens": 2882,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 755
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2992,
+          "decode_s": 14.0258,
+          "rounds": 279,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 717,
+          "accepted": 511,
+          "sha256": "372b5707be4fca12",
+          "tokens_per_round": 2.832,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "161ef633080c"
+        }
+      },
+      "elapsed_s": 15.855,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "option": true,
+        "opposite_c": true,
+        "final_top": true,
+        "final_front": true,
+        "final_right": true
+      },
+      "parsed": {
+        "option": "Q",
+        "opposite_c": "E",
+        "final_top": "F",
+        "final_front": "D",
+        "final_right": "C"
+      }
+    },
+    {
+      "id": "hard_v2_resources",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_resources.png",
+      "question": "Find the optimal appointment under all displayed constraints. Return JSON: room (string), technician (string), start (HH:MM string), end (HH:MM string).",
+      "expected": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      },
+      "image_sha256": "ce0db528003bfcddfb8e90243830d255a04d76fa7082337eedd40ce495fd9131",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-37b122553ba24d919a8b62c3",
+        "object": "chat.completion",
+        "created": 1790859089,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"room\": \"R2\", \"technician\": \"Bo\", \"start\": \"10:15\", \"end\": \"11:15\"}",
+              "reasoning_content": "We need appointment 60 min: setup 15 (room+technician), scan 30 (room+scanner), finish 15 (room+technician). Room occupied whole 60; technician busy first 15 and last 15, free during scan; scanner busy middle 30.\n\nOccupied:\nR1: 09:00-10:00, 11:15-12:15\nR2: 09:00-09:30, 11:30-12:00, 12:30-13:00\nAda: 09:00-09:45, 10:30-11:30, 12:00-13:00\nBo: 09:00-10:00, 10:45-11:00, 11:45-12:30\nScanner: 09:00-09:30, 10:00-10:30, 11:30-12:00\n\nEarliest completion: try start 09:00? R1 busy, R2 busy. Start 09:15: R1 busy until 10:00. R2 free 09:30-11:30. R2 with Ada: Ada busy 09:00-09:45, so start 09:45? R2 free 09:30-11:30, Ada free 09:45-10:30. Appointment 09:45-10:45: room R2 09:45-10:45 ok (R2 free until 11:30). Ada setup 09:45-10:00 ok (Ada free 09:45-10:30). Scan 10:00-10:30: Scanner busy 10:00-10:30! Conflict.\n\nR2 with Bo: Bo busy 09:00-10:00. Start 10:00: R2 free 09:30-11:30, Bo free 10:00-10:45. Appointment 10:00-11:00: Bo setup 10:00-10:15 ok; scan 10:15-10:45: Scanner free (busy 10:00-10:30... 10:15-10:30 overlaps!). Conflict.\n\nR1 with Ada: R1 free 10:00-11:15. Ada free 09:45-10:30. Start 10:00: Ada setup 10:00-10:15 ok; scan 10:15-10:45: scanner busy until 10:30. Conflict. Start 10:15: Ada busy 10:30-11:30; setup 10:15-10:30 ok, scan 10:30-11:00 scanner free (10:30-11:30 free), finish 11:00-11:15 Ada busy at 10:30-11:30. Conflict.\n\nR1 with Bo: Bo busy 10:45-11:00. Start 10:00: setup 10:00-10:15 ok (Bo free 10:00-10:45), scan 10:15-10:45 scanner busy 10:00-10:30 conflict. Start 10:15: scan 10:30-11:00 scanner free; Bo setup 10:15-10:30 ok; finish 11:00-11:15 Bo free (busy 10:45-11:00, free after 11:00). R1 free 10:00-11:15: appointment 10:15-11:15 fits exactly. Check scanner 10:30-11:00: scanner busy 10:00-10:30 and 11:30-12:00, so free. Bo busy 10:45-11:00 \u2014 but Bo is free during scan (10:30-11:00)? Bo is occupied 10:45-11:00 per chart. Technician must be free during scan? \"Technician: setup AND finish; free during scan.\" Wait \u2014 technician is free during scan means the technician's own schedule doesn't need to be free? Actually the rule says technician is needed only for setup and finish; during scan the technician is free (not required). But if Bo has another appointment 10:45-11:00, does that conflict? The technician is not required during scan, so Bo being busy elsewhere during scan is fine? Hmm, \"All required resources must be free.\" Required resources: room (whole), technician (setup+finish), scanner (middle). So Bo busy 10:45-11:00 during scan doesn't matter.\n\nSo R1+Bo 10:15-11:15 works. Completion 11:15.\n\nCan we complete earlier? Any appointment ending before 11:15? Options: start 09:45 R2+Ada failed (scanner). Start 10:00 combos failed. Start 10:15 R2+Bo: R2 free 09:30-11:30; Bo setup 10:15-10:30 ok; scan 10:30-11:00 scanner free; finish 11:00-11:15 Bo free. R2 10:15-11:15: R2 free until 11:30. That also works! Completion 11:15 too. But problem says unique optimal plan. Hmm.\n\nCheck R2 10:15-11:15: R2 occupied 11:30-12:00, so 10:15-11:15 fine. Bo: setup 10:15-10:30 (Bo free 10:00-10:45 \u2713), finish 11:00-11:15 (Bo free after 11:00 \u2713). Scanner 10:30-11:00 free \u2713. So both R1+Bo and R2+Bo at 10:15 work. But uniqueness claimed... maybe I misread a bar.\n\nRe-check Bo bars: 09:00-10:00, 10:45-11:00, 11:45-12:30. Ada: 09:00-09:45, 10:30-11:30, 12:00-13:00.\n\nHmm, maybe \"free during scan\" means technician must actually be free (not double-booked)? The rule states technician is free during scan \u2014 meaning the technician isn't needed, so their schedule doesn't matter. But if uniqueness is claimed, maybe interpretation: technician must be free entire 60? No, rule explicitly says free during scan.\n\nWait, maybe R1+Bo: R1 free 10:00-11:15, appointment 10:15-11:15 ends exactly at 11:15 when R1 becomes busy \u2014 touching endpoints ok. Both work with completion 11:15. Unless earlier completion possible... Let me check start 09:45 more: R2+Ada 09:45-10:45, scan 10:00-10:30 scanner busy. R1+Ada 09:45: R1 busy until 10:00. Start 09:30: R2+Ada: Ada busy until 09:45. R2+Bo: Bo busy until 10:00.\n\nSo earliest completion 11:15, two options. But \"unique optimal plan\" \u2014 maybe I misread scanner bar. Scanner: 09:00-09:30, 10:00-10:30, 11:30-12:00. Yes.\n\nHmm, maybe R1+Bo: check Bo 10:45-11:00 busy \u2014 during scan 10:30-11:00. If the intended interpretation is that technician must be free during scan too (i.e., can't be double-booked even though not required)... The rule \"Technician: setup AND finish; free during scan\" describes the technician's commitment to this appointment: busy for setup and finish, free during scan. It doesn't say other bookings are ignored. Actually \"All required resources must be free\" \u2014 required during each phase. Hmm.\n\nIf technician must be free the whole 60 min: R1+Bo fails (Bo busy 10:45-11:00). R2+Bo also fails. Then next: start 11:00? R1 busy until 11:15. R2 free 09:30-11:30 but appointment 11:00-12:00 overlaps R2 11:30-12:00. R1 11:15-12:15 busy. Start 11:15: R1 busy. R2 free 11:15? R2 busy 11:30-12:00, so no. Start 12:00: R1 free after 12:15; R2 free 12:00-12:30 only 30 min. R2+Ada 12:00-13:00: R2 busy 12:30-13:00. R1+Ada 12:15-13:15 exceeds 13:00. Hmm, then no solution? So that interpretation wrong.\n\nSo technician free only during setup/finish. Then both R1+Bo and R2+Bo at 10:15 give 11:15. Uniqueness... maybe check R2+Bo: Bo finish 11:00-11:15 \u2014 Bo busy 11:45-12:30, fine. Hmm.\n\nWait, maybe I misread R1's second bar: 11:15-12:15. And R1 first 09:00-10:00. So R1 free 10:00-11:15. R1+Bo 10:15-11:15: room occupied 10:15-11:15, ends exactly 11:15 \u2713.\n\nMaybe uniqueness: perhaps earliest completion could be 11:00? Start 10:00 with some combo: scan 10:15-10:45 overlaps scanner 10:00-10:30. No. Start 09:45: scan 10:00-10:30 scanner busy. So 11:15 earliest.\n\nTwo optima though. Unless... check Ada for start 10:15: Ada busy 10:30-11:30, finish would be 11:00-11:15 conflict. Bo works in both rooms. Hmm, maybe I misread Bo's 10:45-11:00 bar \u2014 it's small, 10:45-11:00. Yes.\n\nMaybe the intended answer: since problem says unique, perhaps one of R1/R2 has an issue. R2+Bo 10:15-11:15: R2 bars 09:00-09:30, 11:30-12:00, 12:30-13:00. Free 09:30-11:30. Fine.\n\nHmm, maybe \"Touching endpoints do not overlap\" \u2014 fine.\n\nMaybe scanner needed during setup too? No, \"Scanner: occupied only during the middle 30 minutes.\"\n\nPerhaps the intended unique answer is R1+Bo because... hmm. Or maybe I misread Ada's bar 10:30-11:30 \u2014 could be 10:30-11:30 yes.\n\nLet me reconsider: maybe the scan for R2+Bo: scanner 10:30-11:00 \u2014 scanner busy 10:00-10:30 and 11:30-12:00. Free. Same for R1.\n\nBoth valid. But question expects one answer. Perhaps the intended reading: technician must be free during scan means the technician's calendar must show free? No...\n\nAlternatively maybe Bo's bar is 10:45-11:00 but during scan the technician... Actually re-read: \"Technician: setup AND finish; free during scan.\" This defines the technician's occupancy for this appointment. \"All required resources must be free\" \u2014 required resources at each time. During scan, technician not required. So Bo's 10:45-11:00 doesn't block.\n\nGiven ambiguity, maybe the puzzle intends that the technician's existing busy slot 10:45-11:00 blocks... then no 11:15 solution, and next feasible: let's search with technician busy whole appointment.\n\nTechnician fully free needed:\n- Ada free windows: 09:45-10:30, 11:30-12:00, (12:00-13:00 busy). Actually free 11:30-12:00.\n- Bo free: 10:00-10:45, 11:00-11:45, 12:30-13:00.\n\nRooms: R1 free 10:00-11:15, 12:15-13:00. R2 free 09:30-11:30, 12:00-12:30.\n\n60-min appointments:\n- R1+Ada: intersection 10:00-11:15 \u2229 ... Ada free 09:45-10:30 (45min <60), 11:30-12:00 doesn't overlap R1 free (R1 busy 11:15-12:15). R1 free 12:15-13:00, Ada busy. No.\n- R1+Bo: Bo free 10:00-10:45 (45), 11:00-11:45 \u2229 R1 10:00-11:15 = 11:00-11:15 (15). No.\n- R2+Ada: R2 09:30-11:30 \u2229 Ada 09:45-10:30: 45 min. Ada 11:30-12:00 \u2229 R2: R2 busy 11:30-12:00. No.\n- R2+Bo: 10:00-10:45 no; 11:00-11:45 \u2229 09:30-11:30 = 30 min. No.\n\nNo solution \u2192 that interpretation wrong. So technician only needed setup/finish, and both R1+Bo and R2+Bo at 10:15-11:15 work. Hmm but \"unique optimal plan.\"\n\nWait \u2014 maybe check Ada at start 10:00 with R1: scan 10:15-10:45 scanner busy until 10:30. Start 10:30 R1+Ada: Ada busy. R2+Ada start 09:45: scan 10:00-10:30 busy.\n\nWhat about start 10:15 R2+Ada? Ada setup 10:15-10:30 ok (free until 10:30), scan 10:30-11:00 scanner free, finish 11:00-11:15 Ada busy 10:30-11:30. Fail.\n\nSo two optima. Unless... maybe I misread R1's first bar end: 10:00. And R1 second start 11:15. Hmm.\n\nMaybe the answer expected is R1+Bo since R1 \"permits Ada only\"?? No \u2014 \"R1 permits Ada only. R2 permits either technician.\" So R1+Bo invalid! Yes! R1 permits Ada only. So R1+Bo is not allowed. Unique optimal: R2+Bo, 10:15-11:15.\n\nAnswer: room R2, technician Bo, start 10:15, end 11:15."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2097,
+          "completion_tokens": 3272,
+          "total_tokens": 5369,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 3241
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.3231,
+          "decode_s": 51.7833,
+          "rounds": 949,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 3147,
+          "accepted": 2322,
+          "sha256": "2c492ec48a3b4068",
+          "tokens_per_round": 3.447,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "36450c5a598a"
+        }
+      },
+      "elapsed_s": 53.633,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "room": true,
+        "technician": true,
+        "start": true,
+        "end": true
+      },
+      "parsed": {
+        "room": "R2",
+        "technician": "Bo",
+        "start": "10:15",
+        "end": "11:15"
+      }
+    },
+    {
+      "id": "hard_v2_cross_reference",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-v2/hard_v2_cross_reference.png",
+      "question": "Follow the displayed cross-reference procedure. Return JSON: node (string), probe (string), revision (integer), adjusted (integer), destination (string).",
+      "expected": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      },
+      "image_sha256": "24e4f053bda05dc11ead47923a4b3011f0e95a302bfdce94677265dbd438cdb2",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-258ec0f2aa8642febe081ed2",
+        "object": "chat.completion",
+        "created": 1790859143,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"node\": \"N4\", \"probe\": \"P7\", \"revision\": 3, \"adjusted\": 56, \"destination\": \"BAY-6\"}",
+              "reasoning_content": "Start at IN. Follow TRIANGLE edge (solid): IN \u2192 H1 (solid triangle). Then SQUARE edge: H1 \u2192 N4 (square, raw=17). N4: K2/L8, raw=17. Match LIVE registry: K2 L8 LIVE P7 rev 3 rack S2. Calibration P7 rev3: offset -3, gain 4. Adjusted = 4 \u00d7 (17 + (-3)) = 56. Rack S2, band 50\u201359 \u2192 BAY-6."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2069,
+          "completion_tokens": 147,
+          "total_tokens": 2216,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 111
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2683,
+          "decode_s": 2.015,
+          "rounds": 35,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 134,
+          "accepted": 111,
+          "sha256": "c02967e9e7414a19",
+          "tokens_per_round": 4.171,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "8b56aba985d6"
+        }
+      },
+      "elapsed_s": 3.809,
+      "score": 5,
+      "max_score": 5,
+      "checks": {
+        "node": true,
+        "probe": true,
+        "revision": true,
+        "adjusted": true,
+        "destination": true
+      },
+      "parsed": {
+        "node": "N4",
+        "probe": "P7",
+        "revision": 3,
+        "adjusted": 56,
+        "destination": "BAY-6"
+      }
+    },
+    {
+      "id": "extra01_rotated_dimensions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra01_rotated_dimensions.png",
+      "question": "Solve the pictured dimension problem. Return JSON with integer fields du_mm, dv_mm, distance_squared_mm2.",
+      "expected": {
+        "du_mm": 65,
+        "dv_mm": 33,
+        "distance_squared_mm2": 5314
+      },
+      "image_sha256": "54c6a844ac3d5eaeeba76271aec4a763937680a58f49122c6321eabbb394201d",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-456aaf8031ca49a1aa2e6035",
+        "object": "chat.completion",
+        "created": 1790859147,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"du_mm\": 65, \"dv_mm\": 33, \"distance_squared_mm2\": 5314}\n```",
+              "reasoning_content": "Plate 120\u00d770. A is located 18 from left edge (u direction) and 16 from bottom edge (v). B is 37 from right edge and 21 from top edge.\n\nA: u = 18, v = 16. B: u = 120\u221237 = 83, v = 70\u221221 = 49.\n\ndu = 83\u221218 = 65, dv = 49\u221216 = 33. Distance\u00b2 = 65\u00b2+33\u00b2 = 4225+1089 = 5314."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2046,
+          "completion_tokens": 149,
+          "total_tokens": 2195,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 119
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2308,
+          "decode_s": 2.0152,
+          "rounds": 33,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 143,
+          "accepted": 115,
+          "sha256": "8e9c048d143d0360",
+          "tokens_per_round": 4.485,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "e5e60709290d"
+        }
+      },
+      "elapsed_s": 3.751,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "du_mm": true,
+        "dv_mm": true,
+        "distance_squared_mm2": true
+      },
+      "parsed": {
+        "du_mm": 65,
+        "dv_mm": 33,
+        "distance_squared_mm2": 5314
+      }
+    },
+    {
+      "id": "extra02_scaled_plate_holes",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra02_scaled_plate_holes.png",
+      "question": "Solve the pictured plate problem. Return JSON with integer fields area_cm2, all_boundary_cm, hole_count.",
+      "expected": {
+        "area_cm2": 328,
+        "all_boundary_cm": 120,
+        "hole_count": 2
+      },
+      "image_sha256": "c6b7c5854f283b47a098ed8ca4a8e89c8fbad6a81281dca2714ff09be76fad7e",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-e3a2fc098f404305b74cd445",
+        "object": "chat.completion",
+        "created": 1790859151,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"area_cm2\": 328, \"all_boundary_cm\": 120, \"hole_count\": 2}\n```",
+              "reasoning_content": "Shape: full rectangle 12\u00d79 minus upper-right notch (x 8\u201312, y 5\u20139, 4\u00d74=16 squares) minus two holes.\n\nGrid squares: 12\u00d79 = 108; notch 4\u00d74=16; holes: void1 x5\u20137,y5\u20138 = 2\u00d73=6; void2 x2\u20134,y2\u20134 = 2\u00d72=4. Material = 108\u221216\u22126\u22124 = 82 squares \u00d7 4 cm\u00b2 = 328 cm\u00b2.\n\nBoundary: outer perimeter. Outer boundary: rectangle 12\u00d79 perimeter = 42 squares... let's trace. Outer edge: from (0,0) to (12,0): 12; (12,0) to (12,5): 5; (12,5) to (8,5): 4; (8,5) to (8,9): 4; (8,9) to (0,9): 8; (0,9) to (0,0): 9. Total = 12+5+4+4+8+9 = 42 squares = 84 cm.\n\nHoles: hole1 perimeter 2(2+3)=10 squares = 20 cm; hole2: 2(2+2)=8 squares = 16 cm.\n\nTotal boundary = 84+20+16 = 120 cm."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2046,
+          "completion_tokens": 335,
+          "total_tokens": 2381,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 306
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.1271,
+          "decode_s": 4.6718,
+          "rounds": 80,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 329,
+          "accepted": 254,
+          "sha256": "55b2588d730b824e",
+          "tokens_per_round": 4.175,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "3fb4c2890648"
+        }
+      },
+      "elapsed_s": 6.306,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "area_cm2": true,
+        "all_boundary_cm": true,
+        "hole_count": true
+      },
+      "parsed": {
+        "area_cm2": 328,
+        "all_boundary_cm": 120,
+        "hole_count": 2
+      }
+    },
+    {
+      "id": "extra03_closed_road_route",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra03_closed_road_route.png",
+      "question": "Solve the pictured route problem. Return JSON with route (list of node strings in travel order) and cost (integer).",
+      "expected": {
+        "route": [
+          "A",
+          "E",
+          "F",
+          "B",
+          "C",
+          "G",
+          "H",
+          "L"
+        ],
+        "cost": 23
+      },
+      "image_sha256": "18aeb419ff627bc4c36a28e4e91582f303b17be2128544f7be5955be5ae59f61",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-d1fedb50c29c4bd5a4960024",
+        "object": "chat.completion",
+        "created": 1790859157,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"route\": [\"A\", \"E\", \"F\", \"B\", \"C\", \"G\", \"H\", \"L\"], \"cost\": 23}",
+              "reasoning_content": "Edges: A-B 4, A-E 3, B-C 6, B-F 4, C-D 2, C-G 2, D-H 7, E-F 2, E-I 6, F-J 2, G-H 3, G-K 5, H-L 3, I-J 3, K-L 2. Closed: F-G, J-K.\n\nRoute A to L visiting F, no repeats.\n\nOptions: A-E-F (3+2=5), then F-J (2), J-I (3), I... I connects E, J. Dead end. So from J, only I (visited E). Hmm, J-I-E would revisit E. So path A-E-F-J stuck? J neighbors: E? No, J connects I and F (and closed K). I connects E and J. So A-E-F-J-I then stuck (E visited). So route via E-F fails unless we go A-B-F.\n\nA-B-F: 4+4=8. Then F-J 2, J-I 3, I-E 6, E... E connects A(visited), F(visited), I. Stuck. So from J go... J only I. Dead end.\n\nSo route must be A-B-F then F-B? No repeat. Hmm.\n\nAlternative: A-E-F then F-B? F-B 4, B-C 6, C-G 2, G-H 3, H-L 3. Total: 3+2+4+6+2+3+3 = 23. Route: A,E,F,B,C,G,H,L. Check no repeats: yes. Cost 23.\n\nAlternative: A-B-F, then F-J-I-E? stuck. A-B-F-J-I-E... E dead end. So no.\n\nAlternative: A-E-F-B-C-G-K-L: 3+2+4+6+2+5+2=24. Worse.\n\nA-E-F-B-C-D-H-L: 3+2+4+6+2+7+3=27.\n\nA-E-F-B-C-G-H-L: 3+2+4+6+2+3+3=23. Same as first.\n\nBest 23: A,E,F,B,C,G,H,L."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2048,
+          "completion_tokens": 513,
+          "total_tokens": 2561,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 479
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2191,
+          "decode_s": 8.2648,
+          "rounds": 163,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 472,
+          "accepted": 349,
+          "sha256": "c8240967696d34bc",
+          "tokens_per_round": 3.141,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "68c436fc7007"
+        }
+      },
+      "elapsed_s": 9.986,
+      "score": 2,
+      "max_score": 2,
+      "checks": {
+        "route": true,
+        "cost": true
+      },
+      "parsed": {
+        "route": [
+          "A",
+          "E",
+          "F",
+          "B",
+          "C",
+          "G",
+          "H",
+          "L"
+        ],
+        "cost": 23
+      }
+    },
+    {
+      "id": "extra04_permuted_stack_legend",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra04_permuted_stack_legend.png",
+      "question": "Solve the pictured inventory problem. Return JSON with highest_usable (string), total_usable (integer), quarantine_total (integer).",
+      "expected": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      },
+      "image_sha256": "09de75460100f292f7f7d71f74ebac90ee11d80e8c8df7a9be025bbee33c8100",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-2696f85f80de40be83ddc13b",
+        "object": "chat.completion",
+        "created": 1790859167,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\"highest_usable\": \"West\", \"total_usable\": 146, \"quarantine_total\": 43}\n```",
+              "reasoning_content": "North: allocated 18, ready 17 \u2192 35\nEast: ready 23, allocated 12 \u2192 35\nSouth: allocated 15, ready 19 \u2192 34\nWest: allocated 26, ready 16 \u2192 42\n\nHighest: West, 42. Total usable: 35+35+34+42 = 146. Quarantine: 12+8+14+9 = 43."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2050,
+          "completion_tokens": 120,
+          "total_tokens": 2170,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 90
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.1788,
+          "decode_s": 1.4222,
+          "rounds": 21,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 113,
+          "accepted": 98,
+          "sha256": "286026126d9277fe",
+          "tokens_per_round": 5.667,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "81d80535a38c"
+        }
+      },
+      "elapsed_s": 3.104,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "highest_usable": true,
+        "total_usable": true,
+        "quarantine_total": true
+      },
+      "parsed": {
+        "highest_usable": "West",
+        "total_usable": 146,
+        "quarantine_total": 43
+      }
+    },
+    {
+      "id": "extra05_formula_cell_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra05_formula_cell_binding.png",
+      "question": "Evaluate the requested pictured cells. Return JSON with integer fields D4, E5, C6.",
+      "expected": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      },
+      "image_sha256": "57edb96596b0e633b32694dd66014012f17f9cac4064c0a95c077949b2ce2294",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-223781c54c6e4fc6bd36faea",
+        "object": "chat.completion",
+        "created": 1790859170,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"D4\": 34, \"E5\": 103, \"C6\": 76}",
+              "reasoning_content": "D2=3*12=36, D3=5*9=45, D4=2*17=34, D5=SUM(D2:D4)=115.\nE2=D2-B6=36-4=32, E3=45-4=41, E4=34-4=30, E5=SUM(E2:E4)=103.\nC5=IF(E5>90,B5,0); B5=SUM(B2:B4)=3+5+2=10; E5=103>90 so C5=10.\nC6=E5-C3*B2=103-9*3=103-27=76."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2043,
+          "completion_tokens": 166,
+          "total_tokens": 2209,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 144
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.128,
+          "decode_s": 2.0289,
+          "rounds": 31,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 160,
+          "accepted": 134,
+          "sha256": "00e5c5627a82d3ac",
+          "tokens_per_round": 5.323,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "9a6eb376cf6b"
+        }
+      },
+      "elapsed_s": 3.659,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "D4": true,
+        "E5": true,
+        "C6": true
+      },
+      "parsed": {
+        "D4": 34,
+        "E5": 103,
+        "C6": 76
+      }
+    },
+    {
+      "id": "extra06_failed_directed_links",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra06_failed_directed_links.png",
+      "question": "Solve the pictured network problem. Return JSON with reachable (alphabetically sorted list of strings) and min_edges_to_G (integer).",
+      "expected": {
+        "reachable": [
+          "B",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": 3
+      },
+      "image_sha256": "b44248c32b58e801bab1c2c282e097d1b154b239f607866263a08f3047c816ef",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-722385c8e0ee4eceb3ab0dec",
+        "object": "chat.completion",
+        "created": 1790859174,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"reachable\": [\"B\", \"C\", \"D\", \"E\", \"F\", \"G\"],\n  \"min_edges_to_G\": -1\n}\n```",
+              "reasoning_content": "Edges: A\u2192B, A\u2192E, B\u2192C (failed), C\u2192D, C\u2192G, E\u2192F, F\u2192B, G\u2192H (failed), H\u2192D.\n\nReachable from A: B, E, F, C, G, D. Not H (G\u2192H failed). Sorted: B, C, D, E, F, G.\n\nMin edges to G: A\u2192E\u2192F\u2192B? B\u2192C failed. A\u2192B\u2192C failed. Hmm, how to reach C? C\u2192D, C\u2192G exist but nothing reaches C since B\u2192C failed. So G unreachable? Wait, check edges: F\u2192B (arrow up from F to B). E\u2192F. A\u2192E. So path A\u2192E\u2192F\u2192B, then B\u2192C failed. G unreachable?\n\nHmm, but question asks min edges to reach G. Maybe B\u2192C isn't failed... the X is on B\u2192C link (red). And G\u2192H red X. So G unreachable \u2014 min_edges_to_G could be -1? Or maybe I misread arrow directions. C\u2192G arrow points down from C to G. Yes.\n\nHmm, maybe the failed link is C\u2192... the X is between B and C on the red line, so B\u2192C failed. Then G unreachable. Answer: -1? Or maybe null. Common convention: -1.\n\nWait, maybe arrow F\u2192B is actually B\u2192F? Arrowhead at B top... The vertical line from F to B with arrowhead at B (pointing up into B). So F\u2192B.\n\nSo G unreachable. min_edges_to_G = -1."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2050,
+          "completion_tokens": 391,
+          "total_tokens": 2441,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 352
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.1794,
+          "decode_s": 6.4929,
+          "rounds": 130,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 328,
+          "accepted": 260,
+          "sha256": "c59af8de59ef0f2e",
+          "tokens_per_round": 3.0,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "711c7744831a"
+        }
+      },
+      "elapsed_s": 8.175,
+      "score": 0,
+      "max_score": 2,
+      "checks": {
+        "reachable": false,
+        "min_edges_to_G": false
+      },
+      "parsed": {
+        "reachable": [
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G"
+        ],
+        "min_edges_to_G": -1
+      }
+    },
+    {
+      "id": "extra07_clock_edge_binding",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra07_clock_edge_binding.png",
+      "question": "Solve the pictured register timing problem. Return JSON with q_after_edges (bit string), q_rises (integer), final_q (integer).",
+      "expected": {
+        "q_after_edges": "011011",
+        "q_rises": 2,
+        "final_q": 1
+      },
+      "image_sha256": "2e613c6eed63e005901b9331c50ce6e352423387f851f13d386ce7b2962cb00e",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-feb7bd52465148b2ba7478cd",
+        "object": "chat.completion",
+        "created": 1790859182,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"q_after_edges\": \"011011\", \"q_rises\": 2, \"final_q\": 1}",
+              "reasoning_content": "Edges at t=2,6,10,14,18,22.\n\nSignal values just after each edge time (use levels just after transition at that time).\n\nRESET: 1 from 0 to 3, 0 from 3 to 14, 1 from 14 to 15, 0 after 15.\nENABLE: 1 from 0 to 7, 0 from 7 to 13, 1 from 13 to 19, 0 after 19.\nD: 0 from 0 to 4, 1 from 4 to 10, 0 from 10 to 16, 1 from 16 to 22, 0 after 22.\n\nEdge t=2: RESET just after 2 = 1 \u2192 Q=0.\nEdge t=6: RESET=0, ENABLE=1 \u2192 Q=D at 6 = 1.\nEdge t=10: RESET=0, ENABLE=0 \u2192 hold Q=1.\nEdge t=14: RESET just after 14 = 1 \u2192 Q=0.\nEdge t=18: RESET=0, ENABLE=1 \u2192 Q=D at 18 = 1.\nEdge t=22: RESET=0, ENABLE=0 (ENABLE falls at 19) \u2192 hold Q=1.\n\nq_after_edges = \"011011\".\n\nCount 0\u21921 transitions at edges, including initial Q=1. Initial Q=1, so no transition from initial. Edges: Q after: 0,1,1,0,1,1. Transitions 0\u21921 at edges: t=6 (0\u21921), t=18 (0\u21921). q_rises=2.\n\nfinal_q = 1."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2052,
+          "completion_tokens": 390,
+          "total_tokens": 2442,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 363
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.1852,
+          "decode_s": 5.1914,
+          "rounds": 85,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 372,
+          "accepted": 304,
+          "sha256": "e49b9bf9b2989f91",
+          "tokens_per_round": 4.576,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "2ceba14a49a9"
+        }
+      },
+      "elapsed_s": 6.898,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "q_after_edges": true,
+        "q_rises": true,
+        "final_q": true
+      },
+      "parsed": {
+        "q_after_edges": "011011",
+        "q_rises": 2,
+        "final_q": 1
+      }
+    },
+    {
+      "id": "extra08_connector_view_reflection",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra08_connector_view_reflection.png",
+      "question": "Solve the pictured connector mapping. Return JSON with TX_wire, RX_wire, GND_wire (strings) and rear_top_left_pin (integer).",
+      "expected": {
+        "TX_wire": "T",
+        "RX_wire": "R",
+        "GND_wire": "V",
+        "rear_top_left_pin": 4
+      },
+      "image_sha256": "b2e2804bb258e7559d17d6a1b1f3fb886bce3c92f9ef4bd0cd67e23d18af7ec9",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-ca6851a2723c46c1b7b6a252",
+        "object": "chat.completion",
+        "created": 1790859189,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"TX_wire\": \"T\", \"RX_wire\": \"R\", \"GND_wire\": \"V\", \"rear_top_left_pin\": 4}",
+              "reasoning_content": "Front: pins 1-4 top row, 5-8 bottom row. Rear view is wire-entry side, opposite mating face, key at top, no vertical flip. Rear view is mirrored horizontally relative to front (viewed from back). So rear top-left corresponds to front pin 4? Let's think: front face viewed from mating side: pin1 top-left...pin4 top-right. Rear viewed from wire side: left-right flipped. So rear top-left = front pin 4, top row rear: W Q T P corresponds to front pins 4,3,2,1. Bottom row: U R S V = pins 8,7,6,5.\n\nTX = pin 2 \u2192 rear position top row third = T. RX = pin 7 \u2192 bottom row second = R. GND = pin 5 \u2192 V.\n\nRear top-left pin = 4."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2053,
+          "completion_tokens": 218,
+          "total_tokens": 2271,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 186
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2176,
+          "decode_s": 3.6495,
+          "rounds": 72,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 191,
+          "accepted": 145,
+          "sha256": "c41ce65a264bedc7",
+          "tokens_per_round": 3.014,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "391723093ffe"
+        }
+      },
+      "elapsed_s": 5.368,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "TX_wire": true,
+        "RX_wire": true,
+        "GND_wire": true,
+        "rear_top_left_pin": true
+      },
+      "parsed": {
+        "TX_wire": "T",
+        "RX_wire": "R",
+        "GND_wire": "V",
+        "rear_top_left_pin": 4
+      }
+    },
+    {
+      "id": "extra09_footnote_exclusions",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra09_footnote_exclusions.png",
+      "question": "Apply the pictured memo. Return JSON with eligible_rows (list of row-ID strings in displayed order), reimbursement_usd (integer), excluded_count (integer).",
+      "expected": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      },
+      "image_sha256": "654aae6e9286ba6a740f21ebe24266b98ee58bb5b83127fe3e1edb84631e728a",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-ec455dc41fb24a858280165e",
+        "object": "chat.completion",
+        "created": 1790859194,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"eligible_rows\": [\"R1\", \"R2\", \"R7\"],\n  \"reimbursement_usd\": 175,\n  \"excluded_count\": 4\n}\n```",
+              "reasoning_content": "R1: Alpha Travel approved: 75% of 120 = 90 \u2713\nR2: Alpha Meals approved: min(40,30)=30 \u2713\nR3: Beta Equipment: excluded (only Gamma) \u2717\nR4: Gamma Travel HOLD \u2717\nR5: Delta Meals: excluded \u2717\nR6: Beta Travel: excluded \u2717\nR7: Gamma Equipment approved: 50% of 110 = 55 \u2713\n\nTotal = 90+30+55 = 175. Excluded count = 4."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2070,
+          "completion_tokens": 159,
+          "total_tokens": 2229,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 115
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2465,
+          "decode_s": 2.0781,
+          "rounds": 32,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 159,
+          "accepted": 126,
+          "sha256": "41cd2803f41adac5",
+          "tokens_per_round": 4.938,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "b352db57a216"
+        }
+      },
+      "elapsed_s": 3.838,
+      "score": 3,
+      "max_score": 3,
+      "checks": {
+        "eligible_rows": true,
+        "reimbursement_usd": true,
+        "excluded_count": true
+      },
+      "parsed": {
+        "eligible_rows": [
+          "R1",
+          "R2",
+          "R7"
+        ],
+        "reimbursement_usd": 175,
+        "excluded_count": 4
+      }
+    },
+    {
+      "id": "extra10_sequential_token_tracking",
+      "difficulty": "hard",
+      "image": "/home/david/work/llmctl/evals/fixtures/vision-candidates-extra10/extra10_sequential_token_tracking.png",
+      "question": "Solve the pictured tracking problem. Return JSON with string fields P_cell, R_cell, T_cell, token_at_B3.",
+      "expected": {
+        "P_cell": "C3",
+        "R_cell": "D4",
+        "T_cell": "E2",
+        "token_at_B3": "S"
+      },
+      "image_sha256": "6a1673d7929fc139fee11f671396b60679b5e846a969bba274db242e966d2589",
+      "status": "complete",
+      "raw_response": {
+        "id": "chatcmpl-f5fefa8aa09442e5a60b4487",
+        "object": "chat.completion",
+        "created": 1790859198,
+        "model": "GLM-5.3-Flash-EXL3",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"P_cell\": \"C3\", \"R_cell\": \"D4\", \"T_cell\": \"E2\", \"token_at_B3\": \"S\"}",
+              "reasoning_content": "Frame 1: P=A2, R=C2, Q=B3, T=E3, S=D4.\n\nFrame 2: tokens at B2, C3, D3, B4, C4.\n\nFrame 3: B3, D3, E3, A4, B4.\n\nFrame 4: E2, B3, C3, B4, D4.\n\nEach token moves exactly one cell per frame (4 frames, 3 moves).\n\nLet me denote positions.\n\nFrame1: P=A2, Q=B3, R=C2, S=D4, T=E3.\n\nFrame2 positions: B2, C3, D3, B4, C4.\n\nPossible moves from frame1:\n- P(A2) \u2192 A1,A3,B2\n- Q(B3) \u2192 B2,B4,A3,C3\n- R(C2) \u2192 C1,C3,B2,D2\n- S(D4) \u2192 D3,D5,C4,E4\n- T(E3) \u2192 E2,E4,D3\n\nFrame2 set: {B2, C3, D3, B4, C4}.\n\nP must go to B2 (only option in set). So P=B2.\nQ \u2192 B4 or C3.\nR \u2192 C3.\nS \u2192 D3 or C4.\nT \u2192 D3.\n\nR=C3. Then Q=B4 (since C3 taken). S and T: S\u2192C4 or D3, T\u2192D3. So T=D3, S=C4.\n\nFrame2: P=B2, Q=B4, R=C3, S=C4, T=D3.\n\nFrame3 positions: B3, D3, E3, A4, B4.\n\nMoves:\n- P(B2) \u2192 B1,B3,A2,C2\n- Q(B4) \u2192 B3,B5,A4,C4\n- R(C3) \u2192 C2,C4,B3,D3\n- S(C4) \u2192 C3,C5,B4,D4\n- T(D3) \u2192 D2,D4,C3,E3\n\nSet: {B3, D3, E3, A4, B4}.\n\nT\u2192E3 (only option). T=E3.\nP\u2192B3.\nQ\u2192A4 or B3; B3 taken by P, so Q=A4.\nR\u2192D3 (B3 taken).\nS\u2192B4 (only remaining). S: C4\u2192B4 valid.\n\nFrame3: P=B3, Q=A4, R=D3, S=B4, T=E3.\n\nFrame4 positions: E2, B3, C3, B4, D4.\n\nMoves:\n- P(B3) \u2192 B2,B4,A3,C3\n- Q(A4) \u2192 A3,A5,B4\n- R(D3) \u2192 D2,D4,C3,E3\n- S(B4) \u2192 B3,B5,A4,C4\n- T(E3) \u2192 E2,E4,D3\n\nSet: {E2, B3, C3, B4, D4}.\n\nT\u2192E2. T=E2.\nR\u2192D4 or C3.\nP\u2192B4 or C3.\nQ\u2192B4.\nS\u2192B3.\n\nQ=B4, S=B3. Then P and R take C3 and D4. P\u2192C3, R\u2192D4.\n\nFrame4: P=C3, Q=B4, R=D4, S=B3, T=E2.\n\nToken at B3 = S."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2074,
+          "completion_tokens": 790,
+          "total_tokens": 2864,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 756
+          }
+        },
+        "tensorfold": {
+          "prefill_s": 1.2673,
+          "decode_s": 10.3087,
+          "rounds": 170,
+          "drafts": true,
+          "cached": 0,
+          "min_rows": 2,
+          "drafted": 776,
+          "accepted": 619,
+          "sha256": "bec0644a9f29a4bf",
+          "tokens_per_round": 4.641,
+          "parallel": 4,
+          "policy": "auto",
+          "token_sha": "23c9c683e984"
+        }
+      },
+      "elapsed_s": 12.103,
+      "score": 4,
+      "max_score": 4,
+      "checks": {
+        "P_cell": true,
+        "R_cell": true,
+        "T_cell": true,
+        "token_at_B3": true
+      },
+      "parsed": {
+        "P_cell": "C3",
+        "R_cell": "D4",
+        "T_cell": "E2",
+        "token_at_B3": "S"
+      }
+    }
+  ],
+  "settings": {
+    "temperature": 0,
+    "max_tokens": 16384,
+    "chat_template_kwargs": {
+      "enable_thinking": true,
+      "reasoning_effort": "high"
+    },
+    "retry": false
+  },
+  "perfect_tasks": 22,
+  "tiers": {
+    "easy": {
+      "score": 4,
+      "max_score": 4
+    },
+    "medium": {
+      "score": 7,
+      "max_score": 7
+    },
+    "hard": {
+      "score": 59,
+      "max_score": 67
+    }
+  }
+}

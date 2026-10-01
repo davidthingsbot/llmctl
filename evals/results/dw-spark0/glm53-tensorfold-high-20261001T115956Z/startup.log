@@ -1,0 +1,75 @@
+
+
+  Mia's TensorFold Start Script
+  Mia-AiLab/GLM-5.3-Flash-EXL3-TR3-4bpw · 2 x DGX Spark · 4 at once · 1048576-token window · fp8 KV · dflash2 drafts · port 18888
+
+[1/5] Setup: image and checkpoint on both Sparks
+[start.sh] Ready: tensorfold-glm53:v0.5.0 and Mia-AiLab/GLM-5.3-Flash-EXL3-TR3-4bpw on both Sparks
+[2/5] Checks: arguments, link, previous server, port, memory
+[start.sh] Link: 10.100.100.10 (enp1s0f1np1) <-> 10.100.100.11 (enp1s0f1np1), RoCE rocep1s0f1 / rocep1s0f1
+[start.sh] Arguments OK, port 18888 free, 116 GiB memory available here, 117 GiB on the worker
+[3/5] Launch: container glm53-flash-tf-trial, rank 1 on david@10.100.100.11, then rank 0 here
+[start.sh] Rank 1 on david@10.100.100.11: tensorfold serve /root/.cache/huggingface/hub/models--Mia-AiLab--GLM-5.3-Flash-EXL3-TR3-4bpw/snapshots/9eaebb7c4e96d983dcd538e18624622ba5b820a8 --tp 2 --rank 1 --master 10.100.100.10 --master-port 29551 --drafter /root/.cache/huggingface/hub/models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a --context 1048576 --parallel 4 --thinking --vision
+[start.sh] Rank 0 here: tensorfold serve /root/.cache/huggingface/hub/models--Mia-AiLab--GLM-5.3-Flash-EXL3-TR3-4bpw/snapshots/9eaebb7c4e96d983dcd538e18624622ba5b820a8 --tp 2 --rank 0 --master 10.100.100.10 --master-port 29551 --name GLM-5.3-Flash-EXL3 --host 127.0.0.1 --port 18888 --drafter /root/.cache/huggingface/hub/models--incoai--GLM-5.3-Flash-DFlash2/snapshots/bf582e4eacc1810f76656d1811693ff6c6737d2a --context 1048576 --parallel 4 --thinking --vision
+[4/5] Loading: ~80 GiB of weights on each Spark (2-6 min; the very first start also compiles CUDA kernels)
+  │ GOVERNING TERMS: The software and materials are governed by the NVIDIA Software License Agreement
+  │ (found at https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/)
+  │ and the Product-Specific Terms for NVIDIA AI Products
+  │ (found at https://www.nvidia.com/en-us/agreements/enterprise-software/product-specific-terms-for-ai-products/).
+  │ [tensorfold] EXL3 support is experimental: replies are exact, but the MLX checkpoint (Vontra/GLM-5.3-Flash-MLX-4bit-MTP) is tested more and runs faster (docs/recipes/glm-5.3-flash.md)
+  │ [tensorfold] GLM-5.3-Flash runs on two NVIDIA GPUs with 128 GB each (two DGX Sparks): pull it on both and serve with --tp 2 on both (docs/recipes/glm-5.3-flash.md)
+  │ [tensorfold] loading GLM-5.3-Flash-EXL3: GLM-5.3-Flash (glm5_next) on CUDA, rank 0 of 2
+  │ [tensorfold] all-gathers up to 512 KiB over RoCE (rocep1s0f1; b12x's RoCEnante transport), larger ones over NCCL
+  │ [tensorfold] CUDA rank 0 startup estimate 88.09 GiB within 97.61 GiB; native 1048576, allocated prompt/reply window 1048576, cache slots 1048592
+  ⋯ 16s elapsed, 11.8 of ~88.09 GiB on the GPU here, 11.4 on the worker
+  ⋯ 32s elapsed, 30.6 of ~88.09 GiB on the GPU here, 31.6 on the worker
+  ⋯ 46s elapsed, 45.7 of ~88.09 GiB on the GPU here, 46.2 on the worker
+  ⋯ 62s elapsed, 63.6 of ~88.09 GiB on the GPU here, 64.1 on the worker
+  ⋯ 75s elapsed, 76.5 of ~88.09 GiB on the GPU here, 77.4 on the worker
+  │ [tensorfold] the checkpoint's MTP head is not loaded (TF_GLM_MTP=auto): DFlash2 drafts every request
+  │ [tensorfold] building CUDA extension tensorfold_glm_l2pf_v2 (first start after an install or update; later starts reuse it)
+  │ [tensorfold] L2 prefetch in decode windows (bulk, up to 8 MiB a site): a 45 sites 8.0 MiB, f 45 sites 8.0 MiB, o 45 sites 8.0 MiB
+  ⋯ 91s elapsed, 83.4 of ~88.09 GiB on the GPU here, 91.4 on the worker
+  │ [tensorfold] building CUDA extension tensorfold_glm_hc_v2 (first start after an install or update; later starts reuse it)
+  │ [tensorfold] building CUDA extension tensorfold_qmm_v4 (first start after an install or update; later starts reuse it)
+  ⋯ 108s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  ⋯ 121s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  │ [tensorfold] building CUDA extension tensorfold_glm_kda_v2 (first start after an install or update; later starts reuse it)
+  ⋯ 137s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  │ [tensorfold] building CUDA extension tensorfold_roce_v1 (first start after an install or update; later starts reuse it)
+  ⋯ 150s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  │ [tensorfold] building CUDA extension tensorfold_experts_v8 (first start after an install or update; later starts reuse it)
+  ⋯ 166s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  │ [tensorfold] building CUDA extension tensorfold_glm_exl3_v19 (first start after an install or update; later starts reuse it)
+  ⋯ 182s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  ⋯ 195s elapsed, 91.5 of ~88.09 GiB on the GPU here, 91.5 on the worker
+  ⋯ 211s elapsed, 91.8 of ~88.09 GiB on the GPU here, 91.8 on the worker
+  ⋯ 227s elapsed, 92.2 of ~88.09 GiB on the GPU here, 92.2 on the worker
+  ⋯ 240s elapsed, 92.7 of ~88.09 GiB on the GPU here, 92.7 on the worker
+  │ [tensorfold] prompt chunks' hyper-connections: rows split between the ranks, exchanges by send/receive on a second stream in 2 pieces, the next block's front on own rows meanwhile (chunks of 64+ rows)
+  │ [tensorfold] verify windows up to 16 rows, CUDA graphs for 1, 2, 3, 4, 5, 6, 7, 8, 16 rows (TF_GLM_MAX_ROWS, TF_GLM_WIDE_GRAPHS); copies from the reply match 16 tokens (TF_GLM_COPY_REPLY_MATCH)
+  │ [tensorfold] TF_GLM_KV=fp8: the DSA latent cache and the indexer's pooled keys as e4m3 rows with a power-of-two scale each (lossy; drafted replies still equal serial ones)
+  │ [tensorfold] prompt chunks and kept prompt states on a 64-token grid (TF_GLM_PROMPT_GRID)
+  │ [tensorfold] TF_GLM_KDA_CHUNKED=1: KDA prompt chunks in chunked (WY) form, 32-row sub-chunks (close to the serial kernel, not its bits; decode keeps the serial kernel)
+  │ [tensorfold] shared-prefix prompt states: kept where a prompt stops sharing another and at the end of its system block, when they add 256+ tokens (TF_GLM_SHARED_PREFIX)
+  │ [tensorfold] building CUDA extension tensorfold_glm_kda_chunk (first start after an install or update; later starts reuse it)
+  ⋯ 257s elapsed, 92.9 of ~88.09 GiB on the GPU here, 92.9 on the worker
+  │ [tensorfold] drafter timings (ms, fastest of 7): {'v1': 26.61, 'v2': 33.31, 'v3': 39.18, 'v4': 45.18, 'v5': 49.73, 'v6': 54.29, 'v7': 56.7, 'v8': 57.94, 'block': 2.91, 'taps8': 0.39}
+  │ [tensorfold] drafter costs (ms): verify 26.6 34.6 39.2 43.7 48.3 52.8 57.4 61.9; DFlash2 block 2.91 (+0.048 a tap row)
+  │ [tensorfold] vision: image and video input, a 1.05 GiB tower with 0.75 GiB of workspace; at most 2048 tokens a picture, 16384 a clip (128 frames at 2 a second)
+  ⋯ 273s elapsed, 94.4 of ~88.09 GiB on the GPU here, 93.3 on the worker
+  │ [tensorfold] --parallel 4: up to 4 requests decode together, their caches in one pool of 2207744 tokens (each up to 1048576); DFlash2 drafts, prompt chunks of 1024 rows while others decode (TF_GLM_FILL_ROWS, TF_GLM_FILL_SHARE 0.5); waiting prompts share prompt chunks (TF_GLM_MULTI_PREFILL); sampler streams, depth policy, async messages off, lone stream on the one-stream graphs on
+  │ [tensorfold] serving GLM-5.3-Flash-EXL3 at http://127.0.0.1:18888/v1 on CUDA, rank 0 of 2 (sampling: temperature 1.0, top_p 0.95; drafts: on; context: 1048576; loaded in 281.1s)
+[start.sh] Server answered after 285s
+[5/5] Smoke test: one chat completion through both ranks
+[start.sh] OK: 'OK', 2 tokens, 0.0868 s
+
+  ✔ GLM-5.3-Flash-EXL3 is now LIVE! on port 18888
+
+    API      http://127.0.0.1:18888/v1   (model: GLM-5.3-Flash-EXL3)
+    Window   1048576 tokens · 4 at once · fp8 KV · dflash2 drafts · q4 dense weights · images and video · RoCE all-gathers · split prefill · chunked KDA
+    Drafts   fnc7:0.3 · copy drafts up to 15, code rules · shared system prompts on
+    Logs     docker logs -f glm53-flash-tf-trial   (rank 1: ssh david@10.100.100.11 docker logs -f glm53-flash-tf-trial)
+    Restart  ./start.sh restart
+    Stop     ./stop.sh
+

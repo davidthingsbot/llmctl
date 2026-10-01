@@ -1,0 +1,19 @@
+RESULT_DIRECTORY /home/david/work/llmctl/evals/results/dw-spark0/glm53-tensorfold-high-20261001T115956Z
+STEP waiting-for-prepare-lock
+STEP smoke
+RETAIN completed deep_reasoning_suite
+RETAIN completed work_quality_suite
+STEP vision-all25
+STEP concurrency-high
+STEP concurrency-off
+STEP publisher-repo-bench
+STEP long-context-retrieval
+BLOCKED {"status": "blocked", "model": "GLM-5.3-Flash-EXL3", "endpoint": "http://127.0.0.1:18888", "recipe_commit": "ed026ef92d1650120dada1294a112acb6c8f2f48", "reasoning_effort": "high", "text_ceiling": 32768, "vision_ceiling": 16384, "temperature": 0, "retry_credit": 0.7, "routing": "unchanged", "stages": {"deep_reasoning_suite": {"score": 298, "max_score": 302}, "work_quality_suite": {"score": 417, "max_score": 438}, "vision": {"score": 70, "max_score": 78}}, "step": "long-context-retrieval", "prepared_receipt": "model=Mia-AiLab/GLM-5.3-Flash-EXL3-TR3-4bpw@9eaebb7c4e96d983dcd538e18624622ba5b820a8 drafter=dflash2@bf582e4eacc1810f76656d1811693ff6c6737d2a image=sha256:67e82cade069474645782275e2bec5326e91fa0a886831adab8d490f41bbff3f worker=sha256:67e82cade069474645782275e2bec5326e91fa0a886831adab8d490f41bbff3f patches=cefe8bf45d07 worker_host=david@10.100.100.11\n", "error": "retrieval failed at 100000"}
+Traceback (most recent call last):
+  File "/home/david/work/llmctl/evals/diagnostics/run_tensorfold_trial.py", line 115, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/david/work/llmctl/evals/diagnostics/run_tensorfold_trial.py", line 110, in main
+    if not row['correct']:raise RuntimeError('retrieval failed at '+str(target))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: retrieval failed at 100000

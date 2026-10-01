@@ -1,0 +1,40 @@
+{
+  "passed": false,
+  "security_concerns": [],
+  "logic_errors": [
+    {
+      "severity": "P1",
+      "location": "evals/diagnostics/tensorfold_trial_memguard.py:17-18",
+      "issue": "The memory guard exits even when stopping the container fails.",
+      "details": "docker kill uses check=False; a nonzero result is ignored, and timeout exceptions also terminate monitoring. The inspected transient service has Restart=no. A Docker failure can therefore leave the container running under memory pressure with no guard. Mocked execution confirmed one failed kill followed by exit.",
+      "suggestion": "Verify container termination, handle kill errors and timeouts explicitly, and maintain protection until shutdown is confirmed."
+    },
+    {
+      "severity": "P1",
+      "location": "evals/diagnostics/run_tensorfold_trial.py:85-109",
+      "issue": "Resume overwrites completed and partial evidence.",
+      "details": "Only completed text suites are retained. Smoke tests, vision, concurrency, benchmarks and context checks rerun into their original filenames; failed or partial text suites also overwrite their previous checkpoints. Resuming the retained 100K failure can replace its raw answer and correct=false result. The status backup does not preserve those artifacts.",
+      "suggestion": "Skip validated completed stages and preserve every previous attempt before rerunning failed or partial stages."
+    },
+    {
+      "severity": "P2",
+      "location": "evals/diagnostics/continue_tensorfold_context.py:20-33",
+      "issue": "The continuation script does not restrict itself to unstarted checks.",
+      "details": "Every invocation resets extension status and reruns all three targets, replacing existing results with new needles and answers. It also overwrites status-before-context-extension.json. Mocked execution confirmed both result and backup replacement.",
+      "suggestion": "Load existing progress, skip recorded checks, and make original status backups immutable."
+    },
+    {
+      "severity": "P2",
+      "location": "evals/diagnostics/continue_tensorfold_context.py:33",
+      "issue": "Continuation can clear an unrelated failure and report overall completion.",
+      "details": "The script never validates the original blocked step, the 100K formatting failure, or completion of earlier stages before deleting error and setting complete_with_format_failure. In a mocked run, an earlier work_quality_suite API failure became overall completion after the three context checks.",
+      "suggestion": "Validate the expected predecessor state and required receipts before starting; derive overall status from all stages and preserve unrelated failures."
+    }
+  ],
+  "suggestions": [
+    "Add mocked regression coverage for failed or timed-out kills, repeated continuation, resume artifact preservation, and rejection of unrelated blocked states. The two staged tests pass but cover only CLI availability and wrapper imports.",
+    "Replace acceptance and safety assertions with explicit exceptions so Python optimization cannot disable model, result, health and context validation.",
+    "git diff --cached --check reports trailing blank lines in the trial notes and startup.log."
+  ],
+  "summary": "Read-only review completed; no edits, GPU work, commits or pushes. No concrete security issue identified. Four consequential reliability bugs prevent approval. Checked scores, task differences, timings, retry counts and context-token claims match retained receipts, including the preserved 100K formatting failure. Both staged unit tests passed; mocked checks reproduced guard and continuation defects. Staged notes and logs changed during review and were rechecked; Python changes remained unchanged."
+}

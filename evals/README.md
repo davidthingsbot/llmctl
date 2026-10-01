@@ -4,6 +4,8 @@
 
 ## Recent experiment records
 
+- [2026-10-01: GLM EXL3 dual-Spark TensorFold trial receipt](GLM-TENSORFOLD-TRIAL-2026-10-01.md) and [final analysis with raw results](results/dw-spark0/glm53-tensorfold-high-20261001T115956Z/ANALYSIS.md). Includes text/vision comparisons, measured performance, retrieval through 897103 actual prompt tokens, and the preserved strict-format failure.
+
 - [2026-09-16: GLM text regrading, headless stability, vision fixtures and blind frontier comparison](EXPERIMENTS-2026-09-16.md). Includes corrections for missing NumPy, invalid/interrupted runs, output-budget caveats, and the deferred provisional-switch decision.
 - [Vision suite usage](VISION.md), [six harder candidates](VISION-HARD.md), [ten additional candidates](VISION-EXTRA10.md), and [retain-all policy](VISION-RETENTION.md).
 
