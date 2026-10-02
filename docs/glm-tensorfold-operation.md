@@ -1,5 +1,41 @@
 # GLM TensorFold dual-Spark operation
 
+## Recipe v1.3.2 update (2026-10-02)
+
+Fast-forwarded the live recipe from `978b2252` (v1.3) to `92bf731c` (the v1.3.2
+merge), local `scripts/local.sh` untouched, rollback copy at
+`~/.cache/llmctl-rollback/tensorfold-v132-20261002T133539/recipe`. The four
+upstream commits after v1.3.2 (Spark-twin PCIe rails, host-name WORKER/FABRIC_PEER,
+end-of-turn probe) were deliberately not taken. Image digest and both weight
+revisions are unchanged, so no pull or rebuild happened; `prepare.sh` now compares
+images by content and follows xet blob links, neither of which engaged here.
+
+What changed at runtime, both ranks: `TF_GLM_MULTI_LONE` 1 -> 0 (v1.3.1, issues
+#12/#13) and `TF_GLM_CACHE_ENTRIES` 8 -> 32 (v1.3.2, issue #17). Service restart
+to healthy took 153 s. The KV pool shrank from 1939456 to 1867776 tokens, the
+~1 GiB the 24 extra kept-prompt states reserve.
+
+Measured with `evals/diagnostics/tensorfold_prompt_cache_probe.py` (three
+conversations taking turns, ~4.5k tokens of distinct history each, six warm
+rounds, thinking off, `cached_tokens_total` vs `prompt_tokens_total` from the
+frontend's `/health`):
+
+| run | warm prompt tokens | served from cache | wall for 18 turns |
+|---|---|---|---|
+| before (v1.3 defaults) | 108738 | 0 (0.0%) | 66.4 s |
+| after (v1.3.2 defaults) | 108738 | 107712 (99.1%) | 8.7 s |
+
+All 18 answers were correct in both runs. The same seven-check battery as the
+v1.3 update (`evals/diagnostics/verify_tensorfold_v132.py`, receipts under
+`evals/results/dw-spark0/glm53-tensorfold-v132-update/`) passed: default-thinking
+text, typed tool call and roundtrip, malformed-history recovery, five-image
+vision, four simultaneous short requests, streamed token-limit tool boundary.
+Hermes gateway stayed active on the same port and key; Open WebUI's configured
+backend answered over the LAN address; both memory guards active. The stale
+`llmctl lend` state from 2026-09-28 (which named the parked `glm53-exl3`) was
+removed first so llmctl manages the model again. Not repeated: the quality
+suites and the 897K retrieval run.
+
 ## Recipe v1.3 update (2026-10-01)
 
 Updated the live recipe from `ed026ef` to
