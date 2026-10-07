@@ -64,7 +64,8 @@ llmctl set <model>     # make it the active model
 ```
 
 Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
-(hermes integration), docker (open-webui), nvidia-smi / rocm-smi (GPU checks),
+(hermes integration), docker (open-webui), nvidia-smi / rocm-smi (GPU checks;
+an Intel iGPU needs neither — its utilization comes from `/proc/*/fdinfo` and sysfs),
 `hf` CLI (model downloads), and a vLLM venv and/or a llama.cpp build.
 
 ## Commands
@@ -76,7 +77,7 @@ Requirements: bash, systemd (user units), curl, jq, python3. Optional: PyYAML
 | `llmctl up [--no-point] <model>...` | start model(s) alongside what's running (VRAM pre-check); agents + web UI follow the last one named, `--no-point` leaves them |
 | `llmctl down <model>...\|all` | stop + remove from boot |
 | `llmctl point <model> [agent...]` | repoint agents + web UI only; name agents to repoint just those (pinned ones included) |
-| `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) |
+| `llmctl status` / `list` | units, health, agent targets, chat links, every node's CPU/RAM/GPU (this box + `PEERS`) — CUDA and ROCm cards via their smi tools, Intel iGPUs (i915/xe) via DRM fdinfo + sysfs, all in the same line |
 | `llmctl spec` | emit the configured machine, model, and companion-service registry as JSON for same-host gateways |
 | `llmctl agents` | list registered agents: type, FOLLOW, gateway state, current target |
 | `llmctl services` | list companion STT/TTS services: kind, port, health, bind host, client endpoint |
