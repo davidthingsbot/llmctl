@@ -378,7 +378,13 @@ parameters (`pcm`/`wav` versus `opus`/`mp3`, which model is registered) rather
 than a different protocol. Without the flags whisper-server keeps its native
 `/inference` path; `llmctl services`, `llmctl status`, and `llmctl spec` report
 whichever path the flags select, and the whisper health probe defaults to
-`<request-path>/`.
+`<request-path>/`. The launcher adds `--convert` (clients may post mp3/ogg/flac,
+transcoded by ffmpeg) only when `ffmpeg` is on PATH at `service up` time:
+whisper-server exits at startup if the flag is set without ffmpeg, so a box
+without it gets a WAV-only server and a warning instead of a crash-looping unit.
+A user-local ffmpeg (e.g. the static binary in the `imageio-ffmpeg` wheel,
+symlinked into `~/.local/bin`) is enough if that directory is on the systemd
+user PATH.
 
 | kind | server | endpoint clients post to |
 |---|---|---|
