@@ -12,4 +12,4 @@ if [[ "${SERVICE_RESULT:-success}" != success ]]; then
     exit 0
   fi
 fi
-exec /home/david/work/glm53-tensorfold/stop.sh
+exec /home/david/work/glm53-tensorfold-tr3-v110/stop.sh

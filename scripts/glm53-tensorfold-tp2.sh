@@ -14,7 +14,7 @@ PYTHON=/home/david/.venvs/tensorfold-frontend/bin/python
 "$PYTHON" -c 'import aiohttp'
 timeout 30 ssh -o BatchMode=yes -o ConnectTimeout=10 david@10.100.100.11 \
   'systemctl --user start glm53-tensorfold-memguard.service'
-/home/david/work/glm53-tensorfold/start.sh
+/home/david/work/glm53-tensorfold-tr3-v110/start.sh
 "$PYTHON" /home/david/work/llmctl/scripts/tensorfold_frontend.py --port "$PORT" &
 frontend=$!
 cleanup() { kill "$frontend" 2>/dev/null || true; wait "$frontend" 2>/dev/null || true; }
