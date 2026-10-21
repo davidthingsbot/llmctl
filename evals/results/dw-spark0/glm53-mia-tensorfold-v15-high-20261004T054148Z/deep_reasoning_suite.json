@@ -1,0 +1,801 @@
+{
+  "suite": "deep_reasoning_v1+hard",
+  "model": "GLM-5.3-Flash-EXL3",
+  "endpoint": "http://127.0.0.1:18888/v1/chat/completions",
+  "template_kwargs": {
+    "enable_thinking": true,
+    "reasoning_effort": "high"
+  },
+  "score": 290,
+  "max_score": 302,
+  "retry_enabled": true,
+  "retry_credit": 0.7,
+  "cost": {
+    "prompt_tokens": 6273,
+    "completion_tokens": 47999,
+    "total_tokens": 54272,
+    "task_seconds": 412.39,
+    "wall_seconds": 413.16,
+    "generation_tok_s": 116.39,
+    "truncated_tasks": [
+      "optimization_medium"
+    ],
+    "retries": 4,
+    "retry_completion_tokens": 1922
+  },
+  "tasks": [
+    {
+      "task": "logic_grid",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"Ada\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}\n```\n\n**Reasoning summary:**\n- Dion presents Logic (clue 1), and Logic comes exactly one day after Ben (clue 6), so Dion = Ben + 1.\n- History is Monday (clue 4). If Ben were Tuesday, Dion would be Wednesday, forcing Ada and Cara onto Monday/Thursday; Ada on Thursday would require Economics on Wednesday (occupied by Logic), and Ada on Monday would require Economics on Sunday \u2014 impossible. If Ben were Wednesday, Dion would be Thursday, and Ada on Tuesday would require Economics on Monday (occupied by History) \u2014 impossible.\n- So Ben presents Monday (History), Dion presents Tuesday (Logic).\n- Ada must be one day after Economics (clue 2). Ada on Wednesday would need Economics on Tuesday (occupied by Logic), so Ada presents Thursday, with Economics on Wednesday \u2014 taken by Cara (clue 3: Ben before Cara holds; clue 5: Cara doesn't present Biology, satisfied).\n- Ada gets the remaining topic, Biology.",
+      "grade_details": {
+        "Ada": true,
+        "Ben": true,
+        "Cara": true,
+        "Dion": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"Ada\": {\"day\": \"Thursday\", \"topic\": \"Biology\"},\n  \"Ben\": {\"day\": \"Monday\", \"topic\": \"History\"},\n  \"Cara\": {\"day\": \"Wednesday\", \"topic\": \"Economics\"},\n  \"Dion\": {\"day\": \"Tuesday\", \"topic\": \"Logic\"}\n}\n```\n\n**Reasoning summary:**\n- Dion presents Logic (clue 1), and Logic comes exactly one day after Ben (clue 6), so Dion = Ben + 1.\n- History is Monday (clue 4). If Ben were Tuesday, Dion would be Wednesday, forcing Ada and Cara onto Monday/Thursday; Ada on Thursday would require Economics on Wednesday (occupied by Logic), and Ada on Monday would require Economics on Sunday \u2014 impossible. If Ben were Wednesday, Dion would be Thursday, and Ada on Tuesday would require Economics on Monday (occupied by History) \u2014 impossible.\n- So Ben presents Monday (History), Dion presents Tuesday (Logic).\n- Ada must be one day after Economics (clue 2). Ada on Wednesday would need Economics on Tuesday (occupied by Logic), so Ada presents Thursday, with Economics on Wednesday \u2014 taken by Cara (clue 3: Ben before Cara holds; clue 5: Cara doesn't present Biology, satisfied).\n- Ada gets the remaining topic, Biology.",
+      "usage": {
+        "prompt_tokens": 152,
+        "completion_tokens": 4712,
+        "total_tokens": 4864,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 4431
+        }
+      },
+      "elapsed_s": 89.706
+    },
+    {
+      "task": "causal_inference",
+      "score": 12,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (fuzzy RDD)\",\n  \"instrument\": \"Scoring at or above the eligibility cutoff of 70, which sharply raises the probability of participation but is not deterministic (participation is not universal above 70 and some below 70 participate), making the cutoff crossing a quasi-random encouragement/instrument for treatment\",\n  \"estimand\": \"The local average treatment effect (LATE) for compliers at the score threshold of 70 \u2014 i.e., the effect of the job-training program on employment for individuals whose participation status changes because they just cross the cutoff, at the margin of the score distribution\",\n  \"global_generalization\": \"No. The identified effect is local to the cutoff (score \u2248 70) and to compliers; it does not automatically generalize to individuals far from the threshold, to always-takers or never-takers, or to the full eligible population\",\n  \"assumptions\": [\n    \"The running variable (score) cannot be precisely manipulated around the cutoff, so observations just above and just below 70 are comparable\",\n    \"Continuity/smoothness: all potential outcomes (and covariates) vary smoothly through the score of 70 absent treatment, so no unobserved factor jumps at the threshold\",\n    \"Exclusion restriction: crossing the cutoff affects employment only through its effect on program participation (no other policy or mechanism changes at 70)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"SUTVA/no spillovers: one individual's participation does not affect others' outcomes\",\n    \"Sufficient density of observations near the cutoff to estimate the discontinuities in participation and employment\"\n  ]\n}\n```",
+      "grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": false,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (fuzzy RDD)\",\n  \"instrument\": \"Scoring at or above the eligibility cutoff of 70, which sharply raises the probability of participation but is not deterministic (participation is not universal above 70 and some below 70 participate), making the cutoff crossing a quasi-random encouragement/instrument for treatment\",\n  \"estimand\": \"The local average treatment effect (LATE) for compliers at the score threshold of 70 \u2014 i.e., the effect of the job-training program on employment for individuals whose participation status changes because they just cross the cutoff, at the margin of the score distribution\",\n  \"global_generalization\": \"No. The identified effect is local to the cutoff (score \u2248 70) and to compliers; it does not automatically generalize to individuals far from the threshold, to always-takers or never-takers, or to the full eligible population\",\n  \"assumptions\": [\n    \"The running variable (score) cannot be precisely manipulated around the cutoff, so observations just above and just below 70 are comparable\",\n    \"Continuity/smoothness: all potential outcomes (and covariates) vary smoothly through the score of 70 absent treatment, so no unobserved factor jumps at the threshold\",\n    \"Exclusion restriction: crossing the cutoff affects employment only through its effect on program participation (no other policy or mechanism changes at 70)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"SUTVA/no spillovers: one individual's participation does not affect others' outcomes\",\n    \"Sufficient density of observations near the cutoff to estimate the discontinuities in participation and employment\"\n  ]\n}\n```",
+      "usage": {
+        "prompt_tokens": 188,
+        "completion_tokens": 448,
+        "total_tokens": 636,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 80
+        }
+      },
+      "elapsed_s": 8.814,
+      "score_first": 12,
+      "retry_feedback": "failed checks: not_global",
+      "raw_retry_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (fuzzy RDD)\",\n  \"instrument\": \"Scoring at or above the eligibility cutoff of 70, which sharply raises the probability of participation but is not deterministic (participation is not universal above 70 and some below 70 participate), making the cutoff crossing a quasi-random encouragement/instrument for treatment\",\n  \"estimand\": \"The local average treatment effect (LATE) for compliers at the score threshold of 70 \u2014 i.e., the effect of the job-training program on employment for individuals whose participation status changes because they just cross the cutoff, at the margin of the score distribution\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"The running variable (score) cannot be precisely manipulated around the cutoff, so observations just above and just below 70 are comparable\",\n    \"Continuity/smoothness: all potential outcomes (and covariates) vary smoothly through the score of 70 absent treatment, so no unobserved factor jumps at the threshold\",\n    \"Exclusion restriction: crossing the cutoff affects employment only through its effect on program participation (no other policy or mechanism changes at 70)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"SUTVA/no spillovers: one individual's participation does not affect others' outcomes\",\n    \"Sufficient density of observations near the cutoff to estimate the discontinuities in participation and employment\"\n  ]\n}\n```",
+      "retry_response": "```json\n{\n  \"design\": \"Fuzzy regression discontinuity design (fuzzy RDD)\",\n  \"instrument\": \"Scoring at or above the eligibility cutoff of 70, which sharply raises the probability of participation but is not deterministic (participation is not universal above 70 and some below 70 participate), making the cutoff crossing a quasi-random encouragement/instrument for treatment\",\n  \"estimand\": \"The local average treatment effect (LATE) for compliers at the score threshold of 70 \u2014 i.e., the effect of the job-training program on employment for individuals whose participation status changes because they just cross the cutoff, at the margin of the score distribution\",\n  \"global_generalization\": false,\n  \"assumptions\": [\n    \"The running variable (score) cannot be precisely manipulated around the cutoff, so observations just above and just below 70 are comparable\",\n    \"Continuity/smoothness: all potential outcomes (and covariates) vary smoothly through the score of 70 absent treatment, so no unobserved factor jumps at the threshold\",\n    \"Exclusion restriction: crossing the cutoff affects employment only through its effect on program participation (no other policy or mechanism changes at 70)\",\n    \"Monotonicity: crossing the cutoff weakly increases the probability of participation for everyone (no defiers)\",\n    \"SUTVA/no spillovers: one individual's participation does not affect others' outcomes\",\n    \"Sufficient density of observations near the cutoff to estimate the discontinuities in participation and employment\"\n  ]\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 599,
+        "completion_tokens": 356,
+        "total_tokens": 955,
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 37
+        }
+      },
+      "retry_elapsed_s": 3.7301,
+      "score_retry": 14,
+      "retry_grade_details": {
+        "fuzzy_rd": true,
+        "cutoff_instrument": true,
+        "late_compliers": true,
+        "not_global": true,
+        "continuity": true,
+        "no_manipulation": true,
+        "exclusion": true,
+        "monotonicity": true
+      }
+    },
+    {
+      "task": "bayesian_reasoning",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given disease status. In reality, using the same test type on the same person often produces correlated errors: shared cross-reactivities, common sample-handling or assay biases, and patient-specific factors (e.g., interfering antibodies) can cause the same false positive to repeat. If errors are positively correlated, the second positive provides less additional evidence than independence implies, so the true post-test probability would be lower than 76.6% \u2014 making the two-positive calculation overconfident.\"\n}\n```\n\n**Supporting calculations:**\n- One positive: P(+) = 0.01\u00d70.90 + 0.99\u00d70.05 = 0.0585; PPV = 0.009/0.0585 \u2248 15.4%\n- Two positives (independence): P(++) = 0.01\u00d70.81 + 0.99\u00d70.0025 = 0.010575; PPV = 0.0081/0.010575 \u2248 76.6%",
+      "grade_details": {
+        "one_positive": true,
+        "two_positive": true,
+        "conditional_independence": true,
+        "correlated_errors": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"one_positive_percent\": 15.4,\n  \"two_positive_percent\": 76.6,\n  \"independence_caveat\": \"The 76.6% figure assumes the two tests' errors are conditionally independent given disease status. In reality, using the same test type on the same person often produces correlated errors: shared cross-reactivities, common sample-handling or assay biases, and patient-specific factors (e.g., interfering antibodies) can cause the same false positive to repeat. If errors are positively correlated, the second positive provides less additional evidence than independence implies, so the true post-test probability would be lower than 76.6% \u2014 making the two-positive calculation overconfident.\"\n}\n```\n\n**Supporting calculations:**\n- One positive: P(+) = 0.01\u00d70.90 + 0.99\u00d70.05 = 0.0585; PPV = 0.009/0.0585 \u2248 15.4%\n- Two positives (independence): P(++) = 0.01\u00d70.81 + 0.99\u00d70.0025 = 0.010575; PPV = 0.0081/0.010575 \u2248 76.6%",
+      "usage": {
+        "prompt_tokens": 150,
+        "completion_tokens": 497,
+        "total_tokens": 647,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 226
+        }
+      },
+      "elapsed_s": 7.68
+    },
+    {
+      "task": "hypothesis_discrimination",
+      "score": 11,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X produces the same effect in an orthogonal signaling assay, so the original result is unlikely to be an assay artifact (H3 disfavored).\",\n    \"A validated occupancy assay detects no binding of X to R, arguing against direct blockade of R (H1 disfavored).\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating post-transcriptional loss of R protein consistent with enhanced degradation rather than reduced synthesis.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, functionally linking X's effect on signaling to proteasome-dependent loss of R protein (H2 supported).\"\n  ],\n  \"decisive_falsifier\": \"If R protein degradation is completely prevented (e.g., by genetic stabilization of R or a non-proteasomal degradation block) yet X still reduces signaling through R, the proteasomal degradation mechanism would be decisively undermined.\"\n}\n```",
+      "grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X produces the same effect in an orthogonal signaling assay, so the original result is unlikely to be an assay artifact (H3 disfavored).\",\n    \"A validated occupancy assay detects no binding of X to R, arguing against direct blockade of R (H1 disfavored).\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating post-transcriptional loss of R protein consistent with enhanced degradation rather than reduced synthesis.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, functionally linking X's effect on signaling to proteasome-dependent loss of R protein (H2 supported).\"\n  ],\n  \"decisive_falsifier\": \"If R protein degradation is completely prevented (e.g., by genetic stabilization of R or a non-proteasomal degradation block) yet X still reduces signaling through R, the proteasomal degradation mechanism would be decisively undermined.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 227,
+        "completion_tokens": 396,
+        "total_tokens": 623,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 175
+        }
+      },
+      "elapsed_s": 7.3704,
+      "score_first": 11,
+      "retry_feedback": "failed checks: valid_falsifier",
+      "raw_retry_response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X produces the same effect in an orthogonal signaling assay, so the original result is unlikely to be an assay artifact (H3 disfavored).\",\n    \"A validated occupancy assay detects no binding of X to R, arguing against direct blockade of R (H1 disfavored).\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating post-transcriptional loss of R protein consistent with enhanced degradation rather than reduced synthesis.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, functionally linking X's effect on signaling to proteasome-dependent loss of R protein (H2 supported).\"\n  ],\n  \"decisive_falsifier\": \"A future experiment shows that X still reduces signaling through R in cells in which R protein levels are unchanged (e.g., R is genetically stabilized or proteasome activity is fully blocked), demonstrating that signaling loss occurs without R-protein degradation.\"\n}\n```",
+      "retry_response": "```json\n{\n  \"best_hypothesis\": \"proteasomal_degradation\",\n  \"evidence_chain\": [\n    \"X produces the same effect in an orthogonal signaling assay, so the original result is unlikely to be an assay artifact (H3 disfavored).\",\n    \"A validated occupancy assay detects no binding of X to R, arguing against direct blockade of R (H1 disfavored).\",\n    \"R protein declines after X treatment while R mRNA is unchanged, indicating post-transcriptional loss of R protein consistent with enhanced degradation rather than reduced synthesis.\",\n    \"A proteasome inhibitor prevents both the R-protein decline and the signaling reduction, functionally linking X's effect on signaling to proteasome-dependent loss of R protein (H2 supported).\"\n  ],\n  \"decisive_falsifier\": \"A future experiment shows that X still reduces signaling through R in cells in which R protein levels are unchanged (e.g., R is genetically stabilized or proteasome activity is fully blocked), demonstrating that signaling loss occurs without R-protein degradation.\"\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 493,
+        "completion_tokens": 357,
+        "total_tokens": 850,
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 134
+        }
+      },
+      "retry_elapsed_s": 5.4584,
+      "score_retry": 12,
+      "retry_grade_details": {
+        "selects_degradation": true,
+        "orthogonal_against_artifact": true,
+        "occupancy_against_direct": true,
+        "protein_not_mrna": true,
+        "inhibitor_rescue": true,
+        "valid_falsifier": true
+      }
+    },
+    {
+      "task": "adversarial_epistemology",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "**Assessment: belief in the claim should decrease, but not to zero.**\n\n**Source dependence.** The accusation traces to a single root: S1. S2 adds nothing independent (it cites only S1), and S4 adds nothing beyond S2 and each other. All five websites are leaves on one branch; corroboration count is illusory. The evidential weight of the entire textual tradition equals that of S1 alone.\n\n**Incentives.** S1 is a rival's diary. Contemporaneity and authentication support that the rival *believed* the accusation in 1892, but political rivals have strong motives to record or repeat damaging claims, and diaries record belief, not proof. S1 gives no transaction details, so it cannot be checked against specifics. This warrants discounting, not dismissing: a rival may also have had genuine access to information.\n\n**What S3 does and does not establish.** S3 is independent of S1, internally reconciled, and shows the funds were paid to named grain suppliers. It establishes legitimate-looking disbursement \u2014 but not that grain was actually delivered at fair quantity/quality, that suppliers were not chosen through corrupt selection, or that kickbacks did not occur after payment. Reconciled ledgers can still record corrupt transactions; they just make crude embezzlement less likely.\n\n**The cousin evidence.** This cuts both ways. A conflict of interest is real and raises the possibility of favoritism or inflated pricing. But the listed price matching other suppliers that month removes the classic signature of graft (price inflation). It supports, at most, \"suspicious relationship worth investigating,\" not diversion. It slightly tempers the exculpatory force of S3 without overturning it.\n\n**Net direction.** Prior belief should fall: the accusation rests on one interested, detail-free source, contradicted in part by independent financial records. Residual probability remains because S3 cannot exclude delivery fraud, kickbacks, or rigged supplier selection.\n\n**Highest-value next evidence:** supplier-side records (delivery receipts, their own ledgers) and any contemporaneous audit or inspection reports \u2014 these directly test whether S3's payments correspond to real deliveries, the gap S1 and S3 both leave open.",
+      "grade_details": {
+        "dependency_graph": true,
+        "websites_not_independent": true,
+        "rival_incentive": true,
+        "ledger_updates_down": true,
+        "ledger_not_complete_exoneration": true,
+        "cousin_weak_not_zero": true,
+        "next_primary_evidence": true
+      },
+      "status": "complete",
+      "raw_response": "**Assessment: belief in the claim should decrease, but not to zero.**\n\n**Source dependence.** The accusation traces to a single root: S1. S2 adds nothing independent (it cites only S1), and S4 adds nothing beyond S2 and each other. All five websites are leaves on one branch; corroboration count is illusory. The evidential weight of the entire textual tradition equals that of S1 alone.\n\n**Incentives.** S1 is a rival's diary. Contemporaneity and authentication support that the rival *believed* the accusation in 1892, but political rivals have strong motives to record or repeat damaging claims, and diaries record belief, not proof. S1 gives no transaction details, so it cannot be checked against specifics. This warrants discounting, not dismissing: a rival may also have had genuine access to information.\n\n**What S3 does and does not establish.** S3 is independent of S1, internally reconciled, and shows the funds were paid to named grain suppliers. It establishes legitimate-looking disbursement \u2014 but not that grain was actually delivered at fair quantity/quality, that suppliers were not chosen through corrupt selection, or that kickbacks did not occur after payment. Reconciled ledgers can still record corrupt transactions; they just make crude embezzlement less likely.\n\n**The cousin evidence.** This cuts both ways. A conflict of interest is real and raises the possibility of favoritism or inflated pricing. But the listed price matching other suppliers that month removes the classic signature of graft (price inflation). It supports, at most, \"suspicious relationship worth investigating,\" not diversion. It slightly tempers the exculpatory force of S3 without overturning it.\n\n**Net direction.** Prior belief should fall: the accusation rests on one interested, detail-free source, contradicted in part by independent financial records. Residual probability remains because S3 cannot exclude delivery fraud, kickbacks, or rigged supplier selection.\n\n**Highest-value next evidence:** supplier-side records (delivery receipts, their own ledgers) and any contemporaneous audit or inspection reports \u2014 these directly test whether S3's payments correspond to real deliveries, the gap S1 and S3 both leave open.",
+      "usage": {
+        "prompt_tokens": 221,
+        "completion_tokens": 545,
+        "total_tokens": 766,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 84
+        }
+      },
+      "elapsed_s": 12.1513
+    },
+    {
+      "task": "value_of_information",
+      "score": 12,
+      "max_score": 12,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}\n```\n\nReasoning summary:\n- **launch_now_ev** = 0.4(120) + 0.6(\u221260) = 12.\n- **positive_probability** = 0.4(0.8) + 0.6(0.2) = 0.44.\n- **good_given_positive** = 0.32/0.44 = 8/11 \u2248 0.727.\n- **launch_ev_given_positive** = (8/11)(120) + (3/11)(\u221260) = 780/11 \u2248 70.9 \u2192 launch on positive.\n- **launch_ev_given_negative** = (1/7)(120) + (6/7)(\u221260) = \u2212240/7 \u2248 \u221234.3 \u2192 decline on negative.\n- **test_policy_ev_after_cost** = 0.44(70.9) + 0.56(0) \u2212 10 = 31.2 \u2212 10 = 21.2.\n- Since 21.2 > 12 (launch now) > 0 (decline), the **best_initial_policy** is to purchase the test.",
+      "grade_details": {
+        "launch_now_ev": true,
+        "positive_probability": true,
+        "good_given_positive": true,
+        "launch_ev_given_positive": true,
+        "launch_ev_given_negative": true,
+        "test_policy_ev_after_cost": true,
+        "positive_action": true,
+        "negative_action": true,
+        "best_policy": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"launch_now_ev\": 12.0,\n  \"positive_probability\": 0.44,\n  \"good_given_positive\": 0.7273,\n  \"launch_ev_given_positive\": 70.9,\n  \"launch_ev_given_negative\": -34.3,\n  \"test_policy_ev_after_cost\": 21.2,\n  \"positive_action\": \"launch\",\n  \"negative_action\": \"decline\",\n  \"best_initial_policy\": \"test\"\n}\n```\n\nReasoning summary:\n- **launch_now_ev** = 0.4(120) + 0.6(\u221260) = 12.\n- **positive_probability** = 0.4(0.8) + 0.6(0.2) = 0.44.\n- **good_given_positive** = 0.32/0.44 = 8/11 \u2248 0.727.\n- **launch_ev_given_positive** = (8/11)(120) + (3/11)(\u221260) = 780/11 \u2248 70.9 \u2192 launch on positive.\n- **launch_ev_given_negative** = (1/7)(120) + (6/7)(\u221260) = \u2212240/7 \u2248 \u221234.3 \u2192 decline on negative.\n- **test_policy_ev_after_cost** = 0.44(70.9) + 0.56(0) \u2212 10 = 31.2 \u2212 10 = 21.2.\n- Since 21.2 > 12 (launch now) > 0 (decline), the **best_initial_policy** is to purchase the test.",
+      "usage": {
+        "prompt_tokens": 200,
+        "completion_tokens": 637,
+        "total_tokens": 837,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 286
+        }
+      },
+      "elapsed_s": 8.0008
+    },
+    {
+      "task": "wason_selection",
+      "score": 10,
+      "max_score": 10,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is 'If a card has a vowel on one side, then it has an even number on the other side.' Card A must be turned: it shows a vowel, so the rule requires an even number on its other side. Card 7 must be turned: it shows an odd number, so if it has a vowel on the other side, the rule would be violated (this is the only way to falsify the rule). Card D does not need to be turned: it shows a consonant, and the rule says nothing about what number must accompany a consonant \u2014 finding a vowel or consonant on its back cannot violate the rule. Card 4 does not need to be turned: it shows an even number, but the rule is one-directional (vowel implies even number, not even number implies vowel), so whatever letter is on its back cannot falsify the rule. Note that turning A tests confirmation and turning 7 tests potential falsification; the 4 card would only matter if the rule were biconditional ('even number if and only if vowel'), which it is not.\"\n}\n```",
+      "grade_details": {
+        "exact_cards": true,
+        "a_can_falsify": true,
+        "seven_contrapositive": true,
+        "four_not_converse": true,
+        "d_irrelevant": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"turn_cards\": [\"A\", \"7\"],\n  \"reason\": \"The rule is 'If a card has a vowel on one side, then it has an even number on the other side.' Card A must be turned: it shows a vowel, so the rule requires an even number on its other side. Card 7 must be turned: it shows an odd number, so if it has a vowel on the other side, the rule would be violated (this is the only way to falsify the rule). Card D does not need to be turned: it shows a consonant, and the rule says nothing about what number must accompany a consonant \u2014 finding a vowel or consonant on its back cannot violate the rule. Card 4 does not need to be turned: it shows an even number, but the rule is one-directional (vowel implies even number, not even number implies vowel), so whatever letter is on its back cannot falsify the rule. Note that turning A tests confirmation and turning 7 tests potential falsification; the 4 card would only matter if the rule were biconditional ('even number if and only if vowel'), which it is not.\"\n}\n```",
+      "usage": {
+        "prompt_tokens": 138,
+        "completion_tokens": 286,
+        "total_tokens": 424,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 38
+        }
+      },
+      "elapsed_s": 5.2621
+    },
+    {
+      "task": "complex_policy_reasoning",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "**Recommendation: Do not impose automatic restrictive supervision on predictions alone. Permit, at most, a constrained pilot in which model output is one input to a human decision, never a trigger.**\n\n**What calibration does and does not justify.** Calibration within demographic groups means that among people scored above the threshold, the stated probability matches observed rates. It does not justify acting on individual predictions: with severe offenses rare, even a well-calibrated high-risk score implies most flagged defendants will not offend. Calibration is also compatible with large error-rate disparities across groups (asymmetric false-positive and false-negative burdens), so calibration alone cannot establish fairness. Low base rates make precision at any threshold unavoidably poor; the city should report positive predictive value and error rates by group, not just calibration curves.\n\n**Causation versus prediction.** The model predicts observed arrest outcomes, not offending. Because police deployment shapes who is observed and arrested, the label is a *selective label*: it reflects enforcement intensity, not true risk. Deploying more patrols in flagged neighborhoods will confirm the model's predictions\u2014arrests rise, the model looks accurate, and supervision tightens further. This feedback loop can entangle prediction with the harms of over-policing. Any evaluation must therefore use stable, enforcement-independent outcomes where possible (e.g., hospital data for severe violence) and audit whether arrests track deployment rather than crime.\n\n**Distribution shift and adaptation.** Economic and social shifts change the joint distribution the model was trained on, degrading calibration in unmeasurable ways. Defendants who learn which features are used can adapt, altering the feature\u2013outcome relationship. Neither effect can be ruled out ex ante; both argue against automation and for continuous monitoring.\n\n**Rights and due process.** Restrictive supervision is a liberty deprivation. Automatic action on a statistical score denies defendants notice of the basis, an opportunity to contest the data and the inference, and individualized assessment. Due process requires: disclosure of the factors driving each score (to the extent legally permissible), a right to challenge erroneous records, a human decision-maker with reasons on the record, and periodic review of any imposed conditions.\n\n**Deployment and evaluation design.** If used at all: (1) restrict to a pilot with a high threshold, applying only the least restrictive supervision tier; (2) randomize or phase rollout to create a comparison group; (3) pre-register metrics\u2014calibration, error-rate gaps, supervision duration, re-arrest and victimization rates, and community-level enforcement intensity\u2014reviewed quarterly by an independent board; (4) sunset after 12 months absent demonstrated benefit.\n\n**Stopping conditions.** Suspend or revise if error-rate disparities exceed pre-set bounds, flagged neighborhoods show enforcement spikes without corresponding victimization, calibration degrades after a documented shift, or harms to supervised individuals outweigh measurable public-safety gains. Absent strong evidence of net benefit, the default should remain non-use.",
+      "grade_details": {
+        "prediction_not_causation": true,
+        "calibration_limits_base_rates": true,
+        "asymmetric_errors": true,
+        "rights_due_process": true,
+        "selective_labels_feedback": true,
+        "shift_and_adaptation": true,
+        "reversible_evaluation": true
+      },
+      "status": "complete",
+      "raw_response": "**Recommendation: Do not impose automatic restrictive supervision on predictions alone. Permit, at most, a constrained pilot in which model output is one input to a human decision, never a trigger.**\n\n**What calibration does and does not justify.** Calibration within demographic groups means that among people scored above the threshold, the stated probability matches observed rates. It does not justify acting on individual predictions: with severe offenses rare, even a well-calibrated high-risk score implies most flagged defendants will not offend. Calibration is also compatible with large error-rate disparities across groups (asymmetric false-positive and false-negative burdens), so calibration alone cannot establish fairness. Low base rates make precision at any threshold unavoidably poor; the city should report positive predictive value and error rates by group, not just calibration curves.\n\n**Causation versus prediction.** The model predicts observed arrest outcomes, not offending. Because police deployment shapes who is observed and arrested, the label is a *selective label*: it reflects enforcement intensity, not true risk. Deploying more patrols in flagged neighborhoods will confirm the model's predictions\u2014arrests rise, the model looks accurate, and supervision tightens further. This feedback loop can entangle prediction with the harms of over-policing. Any evaluation must therefore use stable, enforcement-independent outcomes where possible (e.g., hospital data for severe violence) and audit whether arrests track deployment rather than crime.\n\n**Distribution shift and adaptation.** Economic and social shifts change the joint distribution the model was trained on, degrading calibration in unmeasurable ways. Defendants who learn which features are used can adapt, altering the feature\u2013outcome relationship. Neither effect can be ruled out ex ante; both argue against automation and for continuous monitoring.\n\n**Rights and due process.** Restrictive supervision is a liberty deprivation. Automatic action on a statistical score denies defendants notice of the basis, an opportunity to contest the data and the inference, and individualized assessment. Due process requires: disclosure of the factors driving each score (to the extent legally permissible), a right to challenge erroneous records, a human decision-maker with reasons on the record, and periodic review of any imposed conditions.\n\n**Deployment and evaluation design.** If used at all: (1) restrict to a pilot with a high threshold, applying only the least restrictive supervision tier; (2) randomize or phase rollout to create a comparison group; (3) pre-register metrics\u2014calibration, error-rate gaps, supervision duration, re-arrest and victimization rates, and community-level enforcement intensity\u2014reviewed quarterly by an independent board; (4) sunset after 12 months absent demonstrated benefit.\n\n**Stopping conditions.** Suspend or revise if error-rate disparities exceed pre-set bounds, flagged neighborhoods show enforcement spikes without corresponding victimization, calibration degrades after a documented shift, or harms to supervised individuals outweigh measurable public-safety gains. Absent strong evidence of net benefit, the default should remain non-use.",
+      "usage": {
+        "prompt_tokens": 204,
+        "completion_tokens": 668,
+        "total_tokens": 872,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 74
+        }
+      },
+      "elapsed_s": 14.6867
+    },
+    {
+      "task": "physics_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}\n```\n\nReasoning: Energy = 0.24 kW \u00d7 3.5 h = 0.84 kWh; cost = 0.84 \u00d7 0.28 = $0.2352; all electrical power eventually becomes heat, so steady heat = 240 W; current = 240 W \u00f7 240 V = 1.0 A.",
+      "grade_details": {
+        "expected_energy_kwh": 0.84,
+        "expected_cost_usd": 0.2352,
+        "expected_heat_watts": 240.0,
+        "expected_amps_at_240v": 1.0,
+        "parsed": true,
+        "energy_kwh": true,
+        "cost_usd": true,
+        "heat_watts": true,
+        "amps_at_240v": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"energy_kwh\": 0.84,\n  \"cost_usd\": 0.2352,\n  \"heat_watts\": 240,\n  \"amps_at_240v\": 1.0\n}\n```\n\nReasoning: Energy = 0.24 kW \u00d7 3.5 h = 0.84 kWh; cost = 0.84 \u00d7 0.28 = $0.2352; all electrical power eventually becomes heat, so steady heat = 240 W; current = 240 W \u00f7 240 V = 1.0 A.",
+      "usage": {
+        "prompt_tokens": 139,
+        "completion_tokens": 182,
+        "total_tokens": 321,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 56
+        }
+      },
+      "elapsed_s": 2.5394
+    },
+    {
+      "task": "optimization_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}\n```",
+      "grade_details": {
+        "expected_choice": "bravo",
+        "expected_quality": 91,
+        "expected_memory_left_gib": 8,
+        "expected_alpha_fits": false,
+        "parsed": true,
+        "choice": true,
+        "quality": true,
+        "memory_left_gib": true,
+        "alpha_fits": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"choice\": \"bravo\",\n  \"quality\": 91,\n  \"memory_left_gib\": 8,\n  \"alpha_fits\": false\n}\n```",
+      "usage": {
+        "prompt_tokens": 168,
+        "completion_tokens": 97,
+        "total_tokens": 265,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 57
+        }
+      },
+      "elapsed_s": 1.7754
+    },
+    {
+      "task": "causal_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}\n```",
+      "grade_details": {
+        "parsed": true,
+        "relationship": true,
+        "confounder": true,
+        "adjust_for": true,
+        "ice_cream_causes_drowning": true,
+        "banning_ice_cream_helps": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"relationship\": \"confounded\",\n  \"confounder\": \"temperature\",\n  \"adjust_for\": [\"temperature\"],\n  \"ice_cream_causes_drowning\": false,\n  \"banning_ice_cream_helps\": false\n}\n```",
+      "usage": {
+        "prompt_tokens": 215,
+        "completion_tokens": 57,
+        "total_tokens": 272,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1
+        }
+      },
+      "elapsed_s": 1.185
+    },
+    {
+      "task": "sizing_easy",
+      "score": 14,
+      "max_score": 14,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per token per layer, K and V each store 8 heads \u00d7 128 dims = 1024 elements; at 2 bytes each that's 2048 bytes per tensor, 4096 bytes for K+V, and \u00d732 layers = 131072 bytes/token. At 8192 tokens: 131072 \u00d7 8192 = 2\u00b3\u2070 bytes = 1 GiB. At 131072 tokens: 131072 \u00d7 131072 = 2\u00b3\u2074 bytes = 16 GiB.",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 131072,
+        "expected_kv_gib_at_8192": 1.0,
+        "expected_kv_gib_at_131072": 16.0,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "kv_gib_at_8192": true,
+        "kv_gib_at_131072": true,
+        "cached_k_only": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 131072,\n  \"kv_gib_at_8192\": 1,\n  \"kv_gib_at_131072\": 16\n}\n```\n\nDerivation: per token per layer, K and V each store 8 heads \u00d7 128 dims = 1024 elements; at 2 bytes each that's 2048 bytes per tensor, 4096 bytes for K+V, and \u00d732 layers = 131072 bytes/token. At 8192 tokens: 131072 \u00d7 8192 = 2\u00b3\u2070 bytes = 1 GiB. At 131072 tokens: 131072 \u00d7 131072 = 2\u00b3\u2074 bytes = 16 GiB.",
+      "usage": {
+        "prompt_tokens": 177,
+        "completion_tokens": 271,
+        "total_tokens": 448,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 103
+        }
+      },
+      "elapsed_s": 4.1367
+    },
+    {
+      "task": "physics_medium",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.48\n}\n```\n\nSupporting calculations:\n- Steady-state junction: 22 + 240 \u00d7 0.28 = 89.2 \u00b0C\n- Time constant: 0.28 K/W \u00d7 900 J/K = 252 s\n- Power limit for 85 \u00b0C: (85 \u2212 22) / 0.28 = 225 W\n- One time constant after switch-on: 22 + 67.2 \u00d7 (1 \u2212 e\u207b\u00b9) \u2248 64.48 \u00b0C",
+      "grade_details": {
+        "expected_steady_c": 89.2,
+        "expected_tau_s": 252.0,
+        "expected_power_w": 225.0,
+        "expected_after_tau_c": 64.48,
+        "parsed": true,
+        "steady_state_junction_c": true,
+        "tau_seconds": true,
+        "power_for_85c_limit_w": true,
+        "junction_after_one_tau_c": true,
+        "gave_rise_not_temperature": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"steady_state_junction_c\": 89.2,\n  \"tau_seconds\": 252,\n  \"power_for_85c_limit_w\": 225,\n  \"junction_after_one_tau_c\": 64.48\n}\n```\n\nSupporting calculations:\n- Steady-state junction: 22 + 240 \u00d7 0.28 = 89.2 \u00b0C\n- Time constant: 0.28 K/W \u00d7 900 J/K = 252 s\n- Power limit for 85 \u00b0C: (85 \u2212 22) / 0.28 = 225 W\n- One time constant after switch-on: 22 + 67.2 \u00d7 (1 \u2212 e\u207b\u00b9) \u2248 64.48 \u00b0C",
+      "usage": {
+        "prompt_tokens": 245,
+        "completion_tokens": 297,
+        "total_tokens": 542,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 135
+        }
+      },
+      "elapsed_s": 4.0742
+    },
+    {
+      "task": "optimization_medium",
+      "score": 11,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "",
+      "grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      },
+      "status": "complete",
+      "raw_response": "",
+      "usage": {
+        "prompt_tokens": 239,
+        "completion_tokens": 32768,
+        "total_tokens": 33007,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 32768
+        }
+      },
+      "elapsed_s": 156.5529,
+      "score_first": 0,
+      "retry_feedback": "response did not parse as JSON",
+      "raw_retry_response": "```json\n{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}\n```",
+      "retry_response": "```json\n{\n  \"selection\": [\"borealis\", \"cinder\"],\n  \"total_value\": 120,\n  \"total_size_gib\": 112,\n  \"greedy_by_value_density_total\": 114\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 284,
+        "completion_tokens": 662,
+        "total_tokens": 946,
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 612
+        }
+      },
+      "retry_elapsed_s": 8.6108,
+      "score_retry": 16,
+      "retry_grade_details": {
+        "expected_value": 120,
+        "expected_set": [
+          "borealis",
+          "cinder"
+        ],
+        "expected_greedy": 114,
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "greedy_total": true,
+        "reported_greedy_as_optimal": false
+      }
+    },
+    {
+      "task": "causal_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```\n\n**Reasoning:**\n\n- **adjustment_set = [\"C\"]**: The only backdoor path from T to Y is T \u2190 C \u2192 Y. Conditioning on C blocks it. (I is not needed \u2014 it points into T only and creates no backdoor path; M and Z are descendants of T and must not be adjusted for the total effect.)\n\n- **conditioning_on_M = \"direct\"**: M is a mediator (T \u2192 M \u2192 Y). Conditioning on M blocks the indirect path, so the remaining estimable effect is the direct effect T \u2192 Y.\n\n- **z_is_collider = true**: Z has two incoming arrows, T \u2192 Z \u2190 Y, so it is a collider.\n\n- **conditioning_on_Z = \"introduces_bias\"**: Conditioning on the collider Z opens the non-causal path T \u2192 Z \u2190 Y, creating an association between T and Y that is not causal (and Z is also a descendant of the outcome Y).\n\n- **i_is_instrument = true**: I affects Y only through T (I \u2192 T), has no direct edge to Y, and shares no common cause with Y (C is a cause of T and Y, but not of I), satisfying the instrument validity conditions.",
+      "grade_details": {
+        "parsed": true,
+        "adjustment_set": true,
+        "included_mediator_or_collider": false,
+        "conditioning_on_M": true,
+        "z_is_collider": true,
+        "conditioning_on_Z": true,
+        "i_is_instrument": true
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"adjustment_set\": [\"C\"],\n  \"conditioning_on_M\": \"direct\",\n  \"z_is_collider\": true,\n  \"conditioning_on_Z\": \"introduces_bias\",\n  \"i_is_instrument\": true\n}\n```\n\n**Reasoning:**\n\n- **adjustment_set = [\"C\"]**: The only backdoor path from T to Y is T \u2190 C \u2192 Y. Conditioning on C blocks it. (I is not needed \u2014 it points into T only and creates no backdoor path; M and Z are descendants of T and must not be adjusted for the total effect.)\n\n- **conditioning_on_M = \"direct\"**: M is a mediator (T \u2192 M \u2192 Y). Conditioning on M blocks the indirect path, so the remaining estimable effect is the direct effect T \u2192 Y.\n\n- **z_is_collider = true**: Z has two incoming arrows, T \u2192 Z \u2190 Y, so it is a collider.\n\n- **conditioning_on_Z = \"introduces_bias\"**: Conditioning on the collider Z opens the non-causal path T \u2192 Z \u2190 Y, creating an association between T and Y that is not causal (and Z is also a descendant of the outcome Y).\n\n- **i_is_instrument = true**: I affects Y only through T (I \u2192 T), has no direct edge to Y, and shares no common cause with Y (C is a cause of T and Y, but not of I), satisfying the instrument validity conditions.",
+      "usage": {
+        "prompt_tokens": 256,
+        "completion_tokens": 534,
+        "total_tokens": 790,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 224
+        }
+      },
+      "elapsed_s": 9.2821
+    },
+    {
+      "task": "sizing_medium",
+      "score": 18,
+      "max_score": 18,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72475\n}\n```\n\nReasoning summary:\n- Per token per sequence: 2 (K+V) \u00d7 8 heads \u00d7 128 dim \u00d7 40 layers \u00d7 1.0625 B = 87,040 bytes.\n- One sequence at 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB.\n- Four sequences: 10.625 GiB; plus 24.5 GiB weights = 35.125 GiB total (fits in 48 GiB).\n- Max context: (48 \u2212 24.5) / 4 = 5.875 GiB per sequence = 6,308,233,216 B; \u00f7 87,040 = 72,475 tokens (72,476 would exceed the budget).",
+      "grade_details": {
+        "expected_kv_bytes_per_token": 87040,
+        "expected_gib_per_sequence_at_32768": 2.6562,
+        "expected_total_gib_at_32768": 35.125,
+        "expected_max_context_per_sequence": 72475,
+        "parsed": true,
+        "kv_bytes_per_token": true,
+        "gib_per_sequence_at_32768": true,
+        "total_gib_at_32768": true,
+        "max_context_per_sequence": true,
+        "forgot_four_sequences": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 87040,\n  \"gib_per_sequence_at_32768\": 2.65625,\n  \"total_gib_at_32768\": 35.125,\n  \"max_context_per_sequence\": 72475\n}\n```\n\nReasoning summary:\n- Per token per sequence: 2 (K+V) \u00d7 8 heads \u00d7 128 dim \u00d7 40 layers \u00d7 1.0625 B = 87,040 bytes.\n- One sequence at 32,768 tokens: 87,040 \u00d7 32,768 = 2,852,126,720 B = 2.65625 GiB.\n- Four sequences: 10.625 GiB; plus 24.5 GiB weights = 35.125 GiB total (fits in 48 GiB).\n- Max context: (48 \u2212 24.5) / 4 = 5.875 GiB per sequence = 6,308,233,216 B; \u00f7 87,040 = 72,475 tokens (72,476 would exceed the budget).",
+      "usage": {
+        "prompt_tokens": 258,
+        "completion_tokens": 702,
+        "total_tokens": 960,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 450
+        }
+      },
+      "elapsed_s": 9.5332
+    },
+    {
+      "task": "physics_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.71\n}\n```\n\nReasoning summary (not part of the required output):\n- Initial junction: 22 + 120 \u00d7 0.28 = 55.6 \u00b0C (deduction).\n- New steady state: 22 + 300 \u00d7 0.28 = 106 \u00b0C (deduction).\n- Time constant: \u03c4 = 0.28 \u00d7 900 = 252 s (given relation).\n- Since 95 \u00b0C lies between 55.6 and 106 \u00b0C, throttling occurs. Solving 95 = 106 \u2212 50.4\u00b7e^(\u2212t/252) gives t = 252\u00b7ln(50.4/11) \u2248 383.6 s (deduction).\n- Sustainable power: (95 \u2212 22)/0.28 = 260.71 W (deduction); any constant load at or below this keeps the junction at or below 95 \u00b0C.",
+      "grade_details": {
+        "expected_initial_junction_c": 55.6,
+        "expected_target_junction_c": 106.0,
+        "expected_throttles": true,
+        "expected_seconds_to_95c": 383.5682,
+        "expected_sustainable_power_w": 260.7143,
+        "parsed": true,
+        "initial_junction_c": true,
+        "target_junction_c": true,
+        "throttles": true,
+        "seconds_to_95c": true,
+        "sustainable_power_w": true,
+        "used_tau_from_ambient": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"initial_junction_c\": 55.6,\n  \"target_junction_c\": 106.0,\n  \"throttles\": true,\n  \"seconds_to_95c\": 383.6,\n  \"sustainable_power_w\": 260.71\n}\n```\n\nReasoning summary (not part of the required output):\n- Initial junction: 22 + 120 \u00d7 0.28 = 55.6 \u00b0C (deduction).\n- New steady state: 22 + 300 \u00d7 0.28 = 106 \u00b0C (deduction).\n- Time constant: \u03c4 = 0.28 \u00d7 900 = 252 s (given relation).\n- Since 95 \u00b0C lies between 55.6 and 106 \u00b0C, throttling occurs. Solving 95 = 106 \u2212 50.4\u00b7e^(\u2212t/252) gives t = 252\u00b7ln(50.4/11) \u2248 383.6 s (deduction).\n- Sustainable power: (95 \u2212 22)/0.28 = 260.71 W (deduction); any constant load at or below this keeps the junction at or below 95 \u00b0C.",
+      "usage": {
+        "prompt_tokens": 266,
+        "completion_tokens": 551,
+        "total_tokens": 817,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 292
+        }
+      },
+      "elapsed_s": 7.7119
+    },
+    {
+      "task": "optimization_hard",
+      "score": 18,
+      "max_score": 22,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": false\n}\n```\n\nReasoning summary:\n- The best pairs are atlas+dunlin (95) and borealis/cinder+dunlin (88); atlas+borealis and atlas+cinder exceed memory (117 GiB), and borealis+cinder exceeds bandwidth (270 GB/s).\n- Adding a third model: most triples bust bandwidth (e.g., atlas+dunlin+ember = 270 GB/s; borealis+dunlin+fennec = 275 GB/s). Only atlas+dunlin+fennec (101 GiB, 255 GB/s, value 107), atlas+ember+fennec (98), cinder+ember+fennec (91), and dunlin+ember+fennec (59) are feasible.\n- All quadruples exceed 112 GiB.\n- Optimum: atlas+dunlin+fennec at 107. The memory-only optimum is the same set, so bandwidth does not rule it out \u2014 `bandwidth_binds` is false.",
+      "grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "total_bandwidth": true,
+        "bandwidth_binds": false,
+        "ignored_bandwidth": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": false\n}\n```\n\nReasoning summary:\n- The best pairs are atlas+dunlin (95) and borealis/cinder+dunlin (88); atlas+borealis and atlas+cinder exceed memory (117 GiB), and borealis+cinder exceeds bandwidth (270 GB/s).\n- Adding a third model: most triples bust bandwidth (e.g., atlas+dunlin+ember = 270 GB/s; borealis+dunlin+fennec = 275 GB/s). Only atlas+dunlin+fennec (101 GiB, 255 GB/s, value 107), atlas+ember+fennec (98), cinder+ember+fennec (91), and dunlin+ember+fennec (59) are feasible.\n- All quadruples exceed 112 GiB.\n- Optimum: atlas+dunlin+fennec at 107. The memory-only optimum is the same set, so bandwidth does not rule it out \u2014 `bandwidth_binds` is false.",
+      "usage": {
+        "prompt_tokens": 263,
+        "completion_tokens": 1370,
+        "total_tokens": 1633,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1107
+        }
+      },
+      "elapsed_s": 18.6074,
+      "score_first": 18,
+      "retry_feedback": "failed checks: bandwidth_binds, ignored_bandwidth",
+      "raw_retry_response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": true\n}\n```",
+      "retry_response": "```json\n{\n  \"selection\": [\"atlas\", \"dunlin\", \"fennec\"],\n  \"total_value\": 107,\n  \"total_size_gib\": 101,\n  \"total_bandwidth\": 255,\n  \"bandwidth_binds\": true\n}\n```",
+      "retry_usage": {
+        "prompt_tokens": 574,
+        "completion_tokens": 547,
+        "total_tokens": 1121,
+        "prompt_tokens_details": {
+          "cached_tokens": 256
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 486
+        }
+      },
+      "retry_elapsed_s": 8.8462,
+      "score_retry": 22,
+      "retry_grade_details": {
+        "expected_set": [
+          "atlas",
+          "dunlin",
+          "fennec"
+        ],
+        "expected_value": 107,
+        "expected_bandwidth": 255,
+        "memory_only_optimum": [
+          "borealis",
+          "cinder"
+        ],
+        "parsed": true,
+        "selection": true,
+        "total_value": true,
+        "total_size_gib": true,
+        "total_bandwidth": true,
+        "bandwidth_binds": true,
+        "ignored_bandwidth": false
+      }
+    },
+    {
+      "task": "causal_hard",
+      "score": 20,
+      "max_score": 20,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```\n\nReasoning summary:\n\n- **Backdoor**: The only backdoor path from T to Y is T \u2190 U \u2192 Y, and U is unobservable. Conditioning on M does not block this path (M is not on it), and no observed set can block it. So no backdoor adjustment set exists among {T, M, Y}.\n- **Front-door**: M satisfies the front-door criterion: (1) M intercepts all directed paths from T to Y (T \u2192 M \u2192 Y is the only causal route); (2) there is no unblocked backdoor path from T to M (U points into T, not M); (3) all backdoor paths from M to Y (M \u2190 T \u2190 U \u2192 Y) are blocked by conditioning on T. Hence the effect is identified via front-door adjustment using M.\n- **Conditioning on M alone**: This blocks the causal path T \u2192 M \u2192 Y, so the remaining T\u2013Y association reflects only the confounding path T \u2190 U \u2192 Y. The result is biased \u2014 it does not recover the causal effect.\n- **Overall**: The causal effect of T on Y **is** identifiable from observational data on T, M, Y, but only via the front-door formula, not via backdoor adjustment.",
+      "grade_details": {
+        "parsed": true,
+        "backdoor_identifiable": true,
+        "frontdoor_identifiable": true,
+        "frontdoor_mediator": true,
+        "adjust_for_m_directly": true,
+        "effect_identifiable": true,
+        "said_unidentifiable": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"backdoor_identifiable\": false,\n  \"frontdoor_identifiable\": true,\n  \"frontdoor_mediator\": \"M\",\n  \"adjust_for_m_directly\": \"biased\",\n  \"effect_identifiable\": true\n}\n```\n\nReasoning summary:\n\n- **Backdoor**: The only backdoor path from T to Y is T \u2190 U \u2192 Y, and U is unobservable. Conditioning on M does not block this path (M is not on it), and no observed set can block it. So no backdoor adjustment set exists among {T, M, Y}.\n- **Front-door**: M satisfies the front-door criterion: (1) M intercepts all directed paths from T to Y (T \u2192 M \u2192 Y is the only causal route); (2) there is no unblocked backdoor path from T to M (U points into T, not M); (3) all backdoor paths from M to Y (M \u2190 T \u2190 U \u2192 Y) are blocked by conditioning on T. Hence the effect is identified via front-door adjustment using M.\n- **Conditioning on M alone**: This blocks the causal path T \u2192 M \u2192 Y, so the remaining T\u2013Y association reflects only the confounding path T \u2190 U \u2192 Y. The result is biased \u2014 it does not recover the causal effect.\n- **Overall**: The causal effect of T on Y **is** identifiable from observational data on T, M, Y, but only via the front-door formula, not via backdoor adjustment.",
+      "usage": {
+        "prompt_tokens": 293,
+        "completion_tokens": 545,
+        "total_tokens": 838,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 231
+        }
+      },
+      "elapsed_s": 9.5651
+    },
+    {
+      "task": "sizing_hard",
+      "score": 16,
+      "max_score": 16,
+      "max_tokens": 32768,
+      "response": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "grade_details": {
+        "expected_bytes_per_token": 26112,
+        "expected_gib": 6.375,
+        "expected_max_ctx": 1028015,
+        "expected_fits": true,
+        "parsed": true,
+        "bytes_per_token": true,
+        "gib_at_262144": true,
+        "max_context": true,
+        "fits": true,
+        "counted_all_48_layers": false
+      },
+      "status": "complete",
+      "raw_response": "```json\n{\n  \"kv_bytes_per_token\": 26112,\n  \"kv_gib_at_262144\": 6.375,\n  \"max_context_tokens_in_25gib\": 1028015,\n  \"weights_87gib_and_262144_fits_in_112gib\": true\n}\n```",
+      "usage": {
+        "prompt_tokens": 324,
+        "completion_tokens": 514,
+        "total_tokens": 838,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 439
+        }
+      },
+      "elapsed_s": 7.1064
+    }
+  ],
+  "status": "complete",
+  "complete": true,
+  "completed_tasks": 20,
+  "planned_tasks": [
+    "logic_grid",
+    "causal_inference",
+    "bayesian_reasoning",
+    "hypothesis_discrimination",
+    "adversarial_epistemology",
+    "value_of_information",
+    "wason_selection",
+    "complex_policy_reasoning",
+    "physics_easy",
+    "optimization_easy",
+    "causal_easy",
+    "sizing_easy",
+    "physics_medium",
+    "optimization_medium",
+    "causal_medium",
+    "sizing_medium",
+    "physics_hard",
+    "optimization_hard",
+    "causal_hard",
+    "sizing_hard"
+  ]
+}
