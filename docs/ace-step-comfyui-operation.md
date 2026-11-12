@@ -1,5 +1,10 @@
 # ACE-Step in ComfyUI on Spark0: operation and limitations
 
+For the newer native standalone workflow, short chapter bumpers, gong/bubble
+sound design, and Spark/ASUS implementation guidance, start with the
+[local audio implementation handoff](local-audio-implementation-handoff.md).
+The historical ComfyUI baseline below remains unchanged.
+
 Operational baseline established 2026-09-30; notes recorded 2026-10-01 (PDT).
 See [the session record](../evals/ACE-STEP-SESSION-2026-09-30.md) for experiments,
 user feedback, output files, failures and the accompanying video.
